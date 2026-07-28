@@ -75,8 +75,9 @@ The runtime gate remains blocked in this workspace: no Supabase CLI, `psql`,
 Docker/Podman, or local PostgreSQL server is available, and the package
 registry is unreachable for installing one. Consequently, clean migration
 apply/reset, live RLS behavior, RPC scenarios, and constraint/trigger
-execution have not been reported as passed. They must be run in a disposable
-Supabase local environment before deployment.
+execution have not been reported as passed. See
+`docs/16-phase-1-runtime-validation.md` for the Phase 1C report and exact
+reproduction commands for a disposable local environment.
 
 ## Known limitations
 
