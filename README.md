@@ -37,7 +37,7 @@ pnpm start           # serve the production build
 
 This phase establishes the Next.js App Router shell, TypeScript, Tailwind CSS, shadcn/ui configuration, environment validation, server-only Supabase client boundaries, tests, CI, and documentation. The public page confirms the foundation is running; `/admin` is explicitly a development placeholder.
 
-Deferred until later approved phases: database schema and migrations, RLS, authentication and invitations, organizations, venues, events, public registration, attendance, participant CRM, follow-up tasks, cancellations, WhatsApp workflows, and acknowledgment workflows.
+Phase 1 adds the approved Supabase/PostgreSQL schema, migrations, RLS policies, database invariants, and generated database types. Application workflows remain deferred until later phases.
 
 The Participation acknowledgment is still PROVISIONAL. Legal review and an APPROVED acknowledgment version are production-launch blockers.
 
@@ -47,6 +47,8 @@ The Participation acknowledgment is still PROVISIONAL. Legal review and an APPRO
 - `src/components/ui` — small reusable UI primitives
 - `src/lib/config` — validated environment access
 - `src/lib/db` — browser, server, and privileged server-only Supabase client boundaries
+- `supabase/migrations` — ordered Phase 1 PostgreSQL/Supabase migrations
+- `src/types/generated` — generated database types (regenerate with `node scripts/generate-database-types.mjs`)
 - `tests` — unit/component and Playwright smoke tests
 - `docs` — approved requirements and implementation records
 
