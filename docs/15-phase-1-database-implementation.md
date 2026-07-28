@@ -53,6 +53,31 @@ The workspace does not include the Supabase CLI, PostgreSQL client/server, Docke
 
 Application data-access wrappers, authentication and invitation UI, event management, public registration UI, confirmation endpoint, attendance UI, CRM, follow-up UI, exports, calendar serializers, seed data, and integration/E2E tests remain deferred to later phases.
 
+## Phase 1B runtime validation status
+
+Migration `0009_runtime_hardening.sql` is the first forward migration after the
+committed Phase 1 baseline. It hardens trigger-generated audit writes under
+RLS, protects Host Admin registration and notification relationships from
+scoped-update tampering, requires an active organization assignment for every
+active Host Admin at transaction commit, and binds attendance/notification
+audit actors to the authenticated administrator.
+
+Repeatable validation artifacts are provided in:
+
+- `scripts/validate-database.sh` — resets a local Supabase database twice and
+  runs local lint, or runs the SQL assertions against `DATABASE_URL` when
+  `psql` is available.
+- `supabase/tests/phase-1-schema-assertions.sql` — checks the 30-table schema,
+  the public projection, the registration RPC, transition triggers, and the
+  anonymous privilege boundary.
+
+The runtime gate remains blocked in this workspace: no Supabase CLI, `psql`,
+Docker/Podman, or local PostgreSQL server is available, and the package
+registry is unreachable for installing one. Consequently, clean migration
+apply/reset, live RLS behavior, RPC scenarios, and constraint/trigger
+execution have not been reported as passed. They must be run in a disposable
+Supabase local environment before deployment.
+
 ## Known limitations
 
 - The database RPC accepts normalized contact values supplied by the trusted validation boundary; libphonenumber-compatible parsing remains an application validation responsibility.
