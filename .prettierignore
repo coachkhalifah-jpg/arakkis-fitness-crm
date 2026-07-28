@@ -1,0 +1,6 @@
+AGENTS.md
+README.md
+docs/
+node_modules/
+.next/
+pnpm-lock.yaml

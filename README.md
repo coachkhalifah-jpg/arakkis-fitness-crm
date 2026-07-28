@@ -3,18 +3,61 @@
 A lightweight multi-organization web application for fitness event booking, attendance, participant history, and coach follow-up accountability.
 
 ## Current status
-Requirements package only. Application implementation has not started.
 
-## Recommended stack
-- Next.js App Router
-- TypeScript with strict mode
-- shadcn/ui and Tailwind CSS
-- Supabase PostgreSQL, Auth, and Row Level Security
-- Server-side validation and data access with database transactions/RPCs
-- Vercel
-- Vitest, React Testing Library, and Playwright for testing
+Phase 0 project foundation is implemented. Business workflows remain intentionally deferred.
+
+## Prerequisites and installation
+
+- Node.js 22 and pnpm 10
+- Git
+
+```bash
+pnpm install
+cp .env.example .env.local
+pnpm dev
+```
+
+`.env.local` must be filled with local, non-production values before the app reads the environment. Never commit it.
+
+## Commands
+
+```bash
+pnpm dev             # local development
+pnpm lint            # ESLint
+pnpm type-check      # strict TypeScript
+pnpm test            # Vitest + React Testing Library
+pnpm test:e2e        # Playwright smoke test
+pnpm format          # format files
+pnpm format-check    # verify formatting
+pnpm build           # production build
+pnpm start           # serve the production build
+```
+
+## Phase 0 scope
+
+This phase establishes the Next.js App Router shell, TypeScript, Tailwind CSS, shadcn/ui configuration, environment validation, server-only Supabase client boundaries, tests, CI, and documentation. The public page confirms the foundation is running; `/admin` is explicitly a development placeholder.
+
+Deferred until later approved phases: database schema and migrations, RLS, authentication and invitations, organizations, venues, events, public registration, attendance, participant CRM, follow-up tasks, cancellations, WhatsApp workflows, and acknowledgment workflows.
+
+The Participation acknowledgment is still PROVISIONAL. Legal review and an APPROVED acknowledgment version are production-launch blockers.
+
+## Project structure
+
+- `src/app` — App Router pages, shell, loading, errors, and not-found handling
+- `src/components/ui` — small reusable UI primitives
+- `src/lib/config` — validated environment access
+- `src/lib/db` — browser, server, and privileged server-only Supabase client boundaries
+- `tests` — unit/component and Playwright smoke tests
+- `docs` — approved requirements and implementation records
+
+## Security and dependency hygiene
+
+Only `NEXT_PUBLIC_*` values may be used by browser-safe modules. The service-role client is marked server-only and is reserved for trusted server workflows. No credentials or real project values belong in this repository.
+
+Review dependency changes with `pnpm audit` and the lockfile before upgrading. Do not apply automatic destructive upgrades; review and test upgrades deliberately.
 
 ## Documentation order
+
 Start with:
 
 1. `docs/00-product-overview.md`
