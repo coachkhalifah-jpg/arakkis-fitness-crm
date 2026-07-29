@@ -33,3 +33,15 @@ Unit tests cover timezone conversion, validation, lifecycle transitions, capacit
 ## Deferred functionality
 
 Public event browsing/registration, registration outcomes, attendance/check-in, participant history and CRM, follow-up tasks, cancellation requests, notification delivery, WhatsApp, dashboards, payments, and all other post-Phase-3 functionality are explicitly out of scope.
+
+## Phase 3B completion plan
+
+The operational completion slice adds protected detail routes for organizations, venues, and events; reusable client action forms with pending, success, error, and confirmation states; System Admin edit workflows; practical list filtering; and Playwright flows using local synthetic identities. Host Admin pages continue to use RLS-backed reads and omit mutation controls, while direct mutation actions independently require System Admin authorization. No new migration is planned: migration `0014` remains the lifecycle and relationship guard boundary.
+
+## Phase 3B validation result
+
+Completed routes are `/admin/organizations`, `/admin/organizations/[id]`, `/admin/venues`, `/admin/venues/[id]`, `/admin/events`, and `/admin/events/[id]`. The local Chromium flow covers System Admin sign-in, organization creation/editing, venue creation/edit submission, event draft creation/editing, publication, independent copied-draft verification, and permanent cancellation verification. Existing Phase 2 browser coverage continues to pass, including Host Admin authentication and unauthorized access denial.
+
+Validation completed on 2026-07-28/29: 8 Playwright tests passed, 11 unit tests passed, strict TypeScript, ESLint, formatting, and production build passed. Migration `0014` was applied and exercised against the running local Supabase database with synthetic records; the CLI reset command remains environment-blocked by the pre-existing Docker project-name mismatch, so no new migration was added during Phase 3B. No secrets or service-role credentials are present in browser-bundled application modules.
+
+The participation acknowledgment remains provisional, so production deployment remains blocked by the existing legal gate. Full participant registration, attendance, CRM, follow-up, notification, and analytics functionality remains deferred.

@@ -1,4 +1,5 @@
 import { requireActiveAdmin } from "@/lib/authorization/server";
+import Link from "next/link";
 import { createClient } from "@/lib/db/server";
 import { archiveVenueForm, createVenueForm } from "@/lib/services/phase-3-actions";
 import { Button } from "@/components/ui/button";
@@ -83,7 +84,11 @@ export default async function VenuesPage() {
             className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-4"
           >
             <div>
-              <h2 className="font-medium">{venue.name}</h2>
+              <h2 className="font-medium">
+                <Link className="text-brand" href={`/admin/venues/${venue.id}`}>
+                  {venue.name}
+                </Link>
+              </h2>
               <p className="text-sm text-slate-500">
                 {venue.organization_id} · {venue.timezone} · {venue.active_status}
               </p>

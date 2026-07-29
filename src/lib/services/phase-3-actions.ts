@@ -200,10 +200,7 @@ export async function archiveVenue(id: string): Promise<Phase3ActionState> {
   }
 }
 
-export async function updateVenue(
-  _state: Phase3ActionState,
-  form: FormData,
-): Promise<Phase3ActionState> {
+export async function updateVenue(form: FormData): Promise<Phase3ActionState> {
   try {
     const admin = await requireSystemAdmin();
     const id = value(form, "id");
@@ -345,6 +342,83 @@ export async function cancelEvent(id: string, reason: string): Promise<Phase3Act
   }
 }
 
+export async function updateEvent(
+  _state: Phase3ActionState,
+  form: FormData,
+): Promise<Phase3ActionState> {
+  try {
+    const admin = await requireSystemAdmin();
+    const id = value(form, "id");
+    const db = await createClient();
+    const { data: old } = await db.from("events").select("*").eq("id", id).single();
+    if (!old) throw new Phase3Error("not_found", "Event not found.");
+    if (old.status === "CANCELLED" || old.status === "COMPLETED")
+      throw new Phase3Error("forbidden", "This historical event cannot be edited.");
+    const input = eventSchema.parse({
+      hostOrganizationId: value(form, "hostOrganizationId"),
+      venueId: value(form, "venueId"),
+      name: value(form, "name"),
+      description: value(form, "description"),
+      participantInstructions: value(form, "participantInstructions"),
+      startLocal: value(form, "startLocal"),
+      endLocal: value(form, "endLocal"),
+      registrationDeadlineLocal: value(form, "registrationDeadlineLocal"),
+      capacity: value(form, "capacity"),
+      visibility: value(form, "visibility"),
+    });
+    if (
+      old.status !== "DRAFT" &&
+      (input.hostOrganizationId !== old.host_organization_id || input.venueId !== old.venue_id)
+    )
+      throw new Phase3Error("forbidden", "Published event ownership cannot be changed.");
+    const { data: venue } = await db
+      .from("venues")
+      .select("organization_id,timezone")
+      .eq("id", input.venueId)
+      .eq("active_status", "ACTIVE")
+      .single();
+    if (!venue || venue.organization_id !== input.hostOrganizationId)
+      throw new Phase3Error("invalid", "Choose a venue belonging to the selected organization.");
+    const times = parseEventTimes(input, venue.timezone);
+    const { error } = await db
+      .from("events")
+      .update({
+        host_organization_id: input.hostOrganizationId,
+        venue_id: input.venueId,
+        name: input.name,
+        description: input.description || null,
+        participant_instructions: input.participantInstructions || null,
+        starts_at: times.startsAt,
+        ends_at: times.endsAt,
+        timezone: venue.timezone,
+        registration_deadline: times.registrationDeadline,
+        capacity: input.capacity,
+        visibility: input.visibility,
+      })
+      .eq("id", id);
+    if (error)
+      throw new Phase3Error(
+        "conflict",
+        error.code === "42501"
+          ? "This event cannot be edited in its current state."
+          : "Event could not be updated.",
+      );
+    await audit(
+      admin.userId,
+      "EVENT_UPDATED",
+      "EVENT",
+      id,
+      { ...input, ...times, timezone: venue.timezone },
+      old,
+    );
+    revalidatePath("/admin/events");
+    revalidatePath(`/admin/events/${id}`);
+    return { success: "Event updated." };
+  } catch (error) {
+    return { error: message(error) };
+  }
+}
+
 async function changeEventStatus(
   id: string,
   status: "OPEN",
@@ -419,6 +493,9 @@ export async function createVenueForm(form: FormData) {
 export async function createEventForm(form: FormData) {
   await createEvent({}, form);
 }
+export async function updateEventForm(form: FormData) {
+  await updateEvent({}, form);
+}
 export async function publishEventForm(id: string) {
   await publishEvent(id);
 }
@@ -435,5 +512,8 @@ export async function archiveVenueForm(id: string) {
   await archiveVenue(id);
 }
 export async function updateVenueForm(form: FormData) {
-  await updateVenue({}, form);
+  await updateVenue(form);
+}
+export async function updateVenueState(_state: Phase3ActionState, form: FormData) {
+  return updateVenue(form);
 }

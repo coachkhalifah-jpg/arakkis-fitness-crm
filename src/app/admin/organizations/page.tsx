@@ -1,4 +1,5 @@
 import { requireActiveAdmin } from "@/lib/authorization/server";
+import Link from "next/link";
 import { createClient } from "@/lib/db/server";
 import { archiveOrganizationForm, createOrganizationForm } from "@/lib/services/phase-3-actions";
 import { Button } from "@/components/ui/button";
@@ -61,7 +62,11 @@ export default async function OrganizationsPage() {
             className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-4"
           >
             <div>
-              <h2 className="font-medium">{org.name}</h2>
+              <h2 className="font-medium">
+                <Link className="text-brand" href={`/admin/organizations/${org.id}`}>
+                  {org.name}
+                </Link>
+              </h2>
               <p className="text-sm text-slate-500">
                 {org.city ? `${org.city}, ${org.state ?? ""}` : "No address"} · {org.active_status}
               </p>

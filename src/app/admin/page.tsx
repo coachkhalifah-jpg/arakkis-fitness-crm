@@ -2,6 +2,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth/session-actions";
 import { requireActiveAdmin } from "@/lib/authorization/server";
+import Link from "next/link";
 
 export default async function AdminPage() {
   const admin = await requireActiveAdmin();
@@ -15,25 +16,25 @@ export default async function AdminPage() {
         <Alert className="mt-8">Choose an operational area to continue.</Alert>
         <nav className="mt-6 grid gap-3 sm:grid-cols-3" aria-label="Operations">
           {admin.role === "SYSTEM_ADMIN" ? (
-            <a
+            <Link
               className="rounded-lg border border-slate-200 bg-white p-4 font-medium hover:border-brand"
               href="/admin/organizations"
             >
               Organizations
-            </a>
+            </Link>
           ) : null}
-          <a
+          <Link
             className="rounded-lg border border-slate-200 bg-white p-4 font-medium hover:border-brand"
             href="/admin/venues"
           >
             Venues
-          </a>
-          <a
+          </Link>
+          <Link
             className="rounded-lg border border-slate-200 bg-white p-4 font-medium hover:border-brand"
             href="/admin/events"
           >
             Events
-          </a>
+          </Link>
         </nav>
         <dl className="mt-8 space-y-4 rounded-lg border border-slate-200 bg-white p-6">
           <div>

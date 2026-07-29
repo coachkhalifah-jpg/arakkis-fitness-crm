@@ -1,4 +1,5 @@
 import { requireActiveAdmin } from "@/lib/authorization/server";
+import Link from "next/link";
 import { createClient } from "@/lib/db/server";
 import {
   cancelEventForm,
@@ -128,7 +129,11 @@ export default async function EventsPage() {
             <article key={event.id} className="rounded-lg border border-slate-200 bg-white p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h2 className="font-medium">{event.name}</h2>
+                  <h2 className="font-medium">
+                    <Link className="text-brand" href={`/admin/events/${event.id}`}>
+                      {event.name}
+                    </Link>
+                  </h2>
                   <p className="text-sm text-slate-500">
                     {venue?.name ?? "Venue"} ·{" "}
                     {new Intl.DateTimeFormat("en-US", {
