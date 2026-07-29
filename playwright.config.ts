@@ -9,6 +9,7 @@ export default defineConfig({
     command: "./node_modules/.bin/next dev",
     url: "http://127.0.0.1:3000",
     reuseExistingServer: false,
+    env: { ...process.env, APP_ENV: "test" },
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
 });

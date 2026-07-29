@@ -16,6 +16,7 @@ export async function submitRegistration(
   _state: RegistrationActionState,
   form: FormData,
 ): Promise<RegistrationActionState> {
+  let confirmationToken: string | undefined;
   try {
     const selectedEventIds = [...new Set(form.getAll("eventIds").map(String))];
     const input = participantInputSchema.parse({
@@ -72,7 +73,7 @@ export async function submitRegistration(
       return {
         error: "This submission was already received. Please return to your confirmation link.",
       };
-    redirect(`/registration/confirmation?token=${encodeURIComponent(result.confirmation_token)}`);
+    confirmationToken = result.confirmation_token;
   } catch (error) {
     if (error instanceof Error && error.name === "ZodError")
       return { error: "Please correct the highlighted registration fields." };
@@ -80,6 +81,7 @@ export async function submitRegistration(
       return { error: error.message };
     return { error: "The registration could not be completed. Please try again." };
   }
+  redirect(`/registration/confirmation?token=${encodeURIComponent(confirmationToken!)}`);
 }
 
 export { normalizeName };
