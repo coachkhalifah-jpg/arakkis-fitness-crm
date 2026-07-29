@@ -1,9 +1,13 @@
 import { defineConfig, devices } from "@playwright/test";
+import { configurePlaywrightEnvironment } from "./tests/e2e/test-environment";
+
+configurePlaywrightEnvironment();
 
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
   reporter: "line",
+  globalSetup: "./tests/e2e/global-setup.ts",
   use: { baseURL: "http://127.0.0.1:3000", trace: "on-first-retry" },
   webServer: {
     command: "./node_modules/.bin/next dev",

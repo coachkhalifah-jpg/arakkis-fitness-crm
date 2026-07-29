@@ -23,6 +23,22 @@ export default async function AdminPage() {
               Organizations
             </Link>
           ) : null}
+          {admin.role === "SYSTEM_ADMIN" ? (
+            <>
+              <Link
+                className="rounded-lg border border-slate-200 bg-white p-4 font-medium hover:border-brand"
+                href="/admin/participants"
+              >
+                Participants
+              </Link>
+              <Link
+                className="rounded-lg border border-slate-200 bg-white p-4 font-medium hover:border-brand"
+                href="/admin/follow-ups"
+              >
+                Follow-Ups
+              </Link>
+            </>
+          ) : null}
           <Link
             className="rounded-lg border border-slate-200 bg-white p-4 font-medium hover:border-brand"
             href="/admin/venues"
