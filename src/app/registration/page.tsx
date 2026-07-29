@@ -2,6 +2,8 @@ import { Card } from "@/components/ui/card";
 import { RegistrationForm } from "@/components/registration/registration-form";
 import { createClient } from "@/lib/db/server";
 import { isProductionRegistrationBlocked } from "@/lib/config/env";
+import { SectionHeader } from "@/components/ui/section-header";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default async function RegistrationPage() {
   const db = await createClient();
@@ -15,17 +17,14 @@ export default async function RegistrationPage() {
     organizations: Array<{ id: string; name: string }>;
   };
   return (
-    <section className="mx-auto max-w-5xl px-6 py-12">
-      <Card className="mb-8 border-brand/20 bg-white p-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">
-          Public registration
-        </p>
-        <h1 className="mt-2 text-4xl font-semibold text-ink">Reserve your spot</h1>
-        <p className="mt-4 max-w-2xl text-slate-600">
-          Choose upcoming dates, complete one short form, and receive a private confirmation link.
-          No participant account is required.
-        </p>
-      </Card>
+    <section className="mx-auto max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
+      <div className="mb-9">
+        <SectionHeader
+          eyebrow="Public registration"
+          title="Reserve your spot"
+          description="Choose upcoming dates, complete one short form, and receive a private confirmation link. No participant account is required."
+        />
+      </div>
       {isProductionRegistrationBlocked() ? (
         <Card className="border-amber-300 bg-amber-50 p-6" role="status">
           Registration is unavailable while the Participation acknowledgment remains provisional. No
@@ -40,7 +39,12 @@ export default async function RegistrationPage() {
           idempotencyKey={crypto.randomUUID()}
         />
       ) : (
-        <Card className="p-6">There are no eligible upcoming registration dates right now.</Card>
+        <EmptyState
+          title="No upcoming dates just yet"
+          description="We’re preparing the next sessions. Come back soon or explore the event hub for the latest availability."
+          href="/events"
+          action="Explore events"
+        />
       )}
     </section>
   );
