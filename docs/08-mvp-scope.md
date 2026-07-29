@@ -139,3 +139,11 @@
 
 ## Explicit non-goals
 The MVP is not a gym membership platform, payment processor, health record, or marketing automation suite.
+
+## Approved post-MVP Phase 7 extension
+
+Per DEC-047, the next engineering phase is Event Publishing, Registration Links, QR Distribution & Admin Invitations. It is not part of the original frozen MVP. Planned scope includes canonical event URLs, safe stable slugs, publication/unpublication, registration opening/closing and pause/resume, public availability states, link copy/preview, QR generation, and System Admin invitation-link lifecycle.
+
+The application remains the registration system. A venue administrator may eventually distribute the canonical participant URL through text, email, WhatsApp, newsletters, websites, social media, or printed QR codes; the application does not automate those channels. External form builders are not part of the approved architecture.
+
+Phase 7 remains subject to the provisional Participation acknowledgment legal gate, adds no production authorization, and does not include automated messages, participant accounts/login, participant merging, analytics or tracking/QR analytics, payments, deployment, legal approval, or Phase 8 work. Phase 7 implementation is pending and all related validation is planned rather than complete.

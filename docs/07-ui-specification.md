@@ -287,3 +287,25 @@ Public administrator signup is not shown. System Admin creates Host Admin invita
 - Require first/second occurrence selection for duplicated DST times and display the selected offset.
 - Show immutable attendance-transition history.
 - Before attendance opens, cancellation creates no attendance rows; while OPEN, show the required System Admin confirmation and EXCUSED handling; after FINALIZED, standard cancellation is blocked and exceptional invalidation requires reason/confirmation/audit.
+
+## Post-MVP Phase 7 — Publishing and distribution UI
+
+### Public event page
+
+The canonical event route is `/register/{public-slug}`. It shows only approved event name/description, host organization, venue, venue-local date/time, instructions, capacity state, registration availability, and legal-gate/unavailable messaging. It never shows internal IDs, participant/admin data, private notes, or audit details. Availability states include not yet open, open, paused, closed, full, cancelled, unpublished, unavailable, and production legally blocked.
+
+### Link management
+
+Authorized administrators see publication status, registration availability, public slug, complete canonical URL, opening/closing times, capacity/full state, legal-gate state, last published time, and audited actor. Controls include publish, unpublish, pause, resume, preview, copy link, and generate QR. Copy, preview, and QR generation have no publication or registration side effect. Copy feedback is visible, keyboard accessible, and does not store clipboard contents.
+
+### QR distribution
+
+The QR download is high contrast, printable, uses a safe event-identifying filename, and includes an accessible text alternative containing the canonical URL. The encoded value is exactly the canonical public URL and never includes tracking parameters or tokens.
+
+### Administrator invitations
+
+System Admins create Host Admin invitations with required email and read-only organization assignments. The one-time URL is displayed only at creation/regeneration for private copying; the UI explains that no email is sent automatically, links expire, each link is single-use, and exposed links should be revoked. The normal `/login` route remains the only post-activation login route. Invitees cannot change role or assignments.
+
+### Environment and legal warning
+
+Local is labeled development and may use synthetic registration. Staging is labeled non-production. Production registration remains unavailable while the Participation acknowledgment is PROVISIONAL; the warning is not presented as legal approval and remains enforced beyond the UI.

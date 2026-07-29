@@ -2,9 +2,9 @@
 
 ## Scope and requirement IDs
 
-This slice implements FR-022–FR-027, FR-034–FR-038, FR-054–FR-055 and the related BR/AT requirements for participant visibility, attendance-derived first-time status, idempotent first-attendance and finalized no-show tasks, manual copy/completion, reconciliation, and authorization. The dedicated Phase 6 brief intentionally delivers the follow-up slice alongside CRM even though the older build plan lists it under Phase 7.
+This slice implements FR-022–FR-027, FR-034–FR-038, FR-054–FR-055 and the related BR/AT requirements for participant visibility, attendance-derived first-time status, idempotent first-attendance and finalized no-show tasks, manual copy/completion, reconciliation, and authorization. The dedicated Phase 6 brief intentionally delivered the follow-up slice alongside CRM; DEC-047 now records that the older Phase 7 follow-up definition was absorbed into Phase 6 and superseded by the post-MVP publishing/link-distribution phase.
 
-Explicit exclusions remain participant accounts, participant merging, broad profile editing, automated email/SMS/WhatsApp, external CRM integrations, marketing automation, analytics dashboards, payments, deployment, and Phase 7+ functionality.
+Explicit exclusions remain participant accounts, participant merging, broad profile editing, automated email/SMS/WhatsApp, external CRM integrations, marketing automation, analytics dashboards, payments, deployment, and the not-yet-implemented Phase 7 publishing/link-distribution functionality.
 
 ## Participant CRM and visibility
 

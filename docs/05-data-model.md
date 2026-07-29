@@ -562,3 +562,12 @@ Event       0..1 ── 1 replacement Event (published replacement reference)
 EventCancellation * ── 1 CancellationTemplateVersion
 Event       1 ── * CompletedEventInvalidation
 ```
+
+## Post-MVP Phase 7 additions
+
+These are planned additive changes after migration `0019`; they do not rewrite the frozen Phase 1–6 model:
+
+- Event publication metadata: `publication_status` (`DRAFT`, `PUBLISHED`, `UNPUBLISHED`), `public_slug`, `registration_opens_at`, `registration_closes_at`, `registration_paused_at`, `last_published_at`, and publication actor/audit references. Existing cancellation and event status remain authoritative.
+- Public event lookup: a narrow server/database projection keyed by `public_slug`, returning only approved event, host, venue, local time, instructions, capacity/availability, and legal/registration state.
+- Invitation lifecycle: the existing invitation model is extended/documented for one-time URL regeneration, expiration, revocation, raw-token non-persistence, and acceptance idempotency. Organization assignments remain invitation-authoritative.
+- No series entity is introduced. Event-level links are the supported public concept; series links remain deferred pending a later decision.

@@ -127,3 +127,30 @@
 - BR-110: Every Over-Capacity Override is immutable, identifies Event/Registration/System Admin/reason/counts/time/source, leaves published capacity unchanged, and survives Registration cancellation.
 - BR-111: Every attendance change has an immutable transition record. Cancellation before attendance opens creates no attendance records; cancellation while OPEN preserves check-in history, uses EXCUSED or the documented equivalent for checked-in Participants, marks unchecked active Registrations EVENT_CANCELLED, and creates no No-Shows.
 - BR-112: Cancellation after FINALIZED is blocked through the normal action. Exceptional invalidation requires System Admin, confirmation, reason, and audit, preserves finalized history and transitions, and never silently rewrites completed outcomes.
+
+## Post-MVP Phase 7 rules
+
+- BR-113: DEC-047 defines publishing, link distribution, QR distribution, and administrator invitation controls as a post-MVP extension; they were not part of the frozen MVP under DEC-046.
+- BR-114: Only an eligible event may be published. Draft, unpublished, and cancelled events are not publicly registrable, and publication never bypasses capacity, registration windows, organization/venue state, or the legal gate.
+- BR-115: Public event slugs are lowercase, URL-safe, bounded, collision-safe, reserved-word protected, and contain no participant data or sequential private identifier. A slug identifies an event but never bypasses availability checks.
+- BR-116: Canonical public URLs use the explicit server-side application base URL and stable public slug. User-supplied Host headers are never authoritative, trailing slashes are normalized, and authentication tokens are absent.
+- BR-117: Registration availability uses server/database time and distinguishes not-yet-open, open, paused, closed, full, cancelled, unpublished, unavailable, and legally blocked states.
+- BR-118: Copying or previewing a public link and generating a QR code have no publication or registration side effect.
+- BR-119: A QR payload is exactly the canonical public URL and contains no participant data, private identifier, administrator token, tracking parameter, or analytics destination.
+- BR-120: Local may use a localhost fallback; staging and production require an explicit valid HTTPS `APP_BASE_URL`. Missing or invalid non-local configuration fails safely, and production remains legally blocked unless explicitly ready.
+- BR-121: Only authorized administrators may manage publication, slugs, links, previews, QR codes, and registration availability. Host scope is based on event host organization, never participant affiliation.
+- BR-122: Public lookup uses a narrow projection and returns only approved registration-page data. Unpublished event details, internal IDs, participant/admin data, operational notes, tokens, and raw database errors are never returned.
+- BR-123: Administrator invitation tokens are high-entropy, single-use, expiring, revocable, and hash-only at rest. Raw tokens are never logged, persisted for reuse, included in analytics, or exposed after the one-time creation/regeneration result is dismissed.
+- BR-124: Regenerating a pending invitation invalidates the prior token; accepting, revoking, expiring, or replacing an invitation makes its token unusable.
+- BR-125: Invitation acceptance verifies the intended authenticated identity, applies only the invited role and organization assignments, and cannot activate a Host Admin without active intended assignments.
+- BR-126: Existing-account invitation acceptance never infers identity from email alone, never creates duplicate Auth/admin profiles, and safely reports conflicts requiring System Admin resolution.
+- BR-127: Concurrent or repeated invitation acceptance is idempotent and creates at most one administrator relationship and one assignment set without partial privileged access.
+- BR-128: Publication, availability, slug, and invitation lifecycle changes are audited with actor, timestamp, subject, organization, and prior/new state; raw tokens are excluded.
+- BR-129: Production participant registration is denied before participant data submission while the Participation acknowledgment is PROVISIONAL. UI hiding is insufficient; server and database/RPC enforcement are required.
+- BR-130: Staging is clearly non-production and uses only synthetic or approved test data; Phase 7 does not authorize deployment or production registration.
+- BR-131: Phase 7 excludes automated email/SMS/WhatsApp, push notifications, participant accounts/login, merging, analytics, tracking links/QR analytics, payments, legal approval, production deployment, and Phase 8 work.
+- BR-132: The application remains the registration system. Administrators may eventually distribute canonical URLs through private or public operational channels, including text, email, WhatsApp, newsletters, websites, social media, or printed QR codes; the application does not automate those channels.
+- BR-133: External form builders are not part of the approved architecture because they would duplicate participant and registration data and create synchronization risk.
+- BR-134: Phase 7 migrations are additive and begin after `0019`; migrations `0001–0019` remain unchanged.
+- BR-135: Every Phase 7 requirement has planned unit/component, database/integration, authorization/security, and/or Playwright coverage before implementation is considered complete.
+- BR-136: Phase 7 implementation cannot begin until DEC-047 and all synchronized source-of-truth documents are reviewed and accepted; this documentation update does not mark any feature implemented.

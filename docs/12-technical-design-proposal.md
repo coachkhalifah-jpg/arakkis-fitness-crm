@@ -321,11 +321,15 @@ Every phase runs lint, strict type-check, unit/integration tests, relevant E2E t
 5. **Phase 4 — calendar export:** individual/all-event ICS and Google Calendar links with timezone correctness.
 6. **Phase 5 — rosters/event operations:** scoped rosters/exports, manual registration, walk-ins/over-capacity override, cancellation, attendance lifecycle/reopening, check-in, finalization, corrections, audit, WhatsApp opt-in/status/export/message, notification delivery state machine, and cancellation transaction handling.
 7. **Phase 6 — participant CRM:** System Admin search/profile, possible-duplicate review/merge, global history, timestamp-relative indicators, host-scoped views, notes.
-8. **Phase 7 — follow-up:** first-attendance trigger, idempotency, queue, editable/copyable message, complete/dismiss, correction reassessment; no automated sending.
-9. **Phase 8 — dashboards/polish:** dashboards, responsive/accessibility pass, loading/error/empty states, operational documentation.
+8. **Phase 7 — event publishing and distribution (post-MVP, DEC-047):** canonical event URLs, safe slugs, publication and availability controls, link copy/preview, QR generation, and System Admin invitation-link lifecycle; no automated sending.
+9. **Phase 8 — dashboards/polish and later work:** dashboards, responsive/accessibility pass, loading/error/empty states, and operational documentation.
 10. **Phase 9 — deployment readiness:** Vercel/Supabase production setup, secrets, backups/exports, monitoring/logging, privacy notice, invitation runbook, legal acknowledgment gate, production deployment block for PROVISIONAL status, token abuse controls, and DST/attendance operational runbooks.
 
 Do not pull participant self-cancellation, automated email, waitlists, configurable no-show triggers, direct WhatsApp Groups API integration, recurring events, or richer analytics into MVP.
+
+Phase 7 is a post-MVP extension and does not authorize production deployment or legal approval. Its detailed canonical URL, slug, QR, invitation, environment, legal-gate, migration, RLS, audit, and validation design is documented in `docs/22-phase-7-publishing-links-invitations-implementation.md`.
+
+The original traceability tables in this frozen-MVP proposal cover FR-001–FR-086, BR-001–BR-112, and AT-001–AT-098. DEC-047 adds the synchronized post-MVP Phase 7 range FR-087–FR-105, BR-113–BR-136, and AT-099–AT-132; the Phase 7 implementation document is the authoritative extension traceability matrix.
 
 ## 12. Local-development prerequisites
 

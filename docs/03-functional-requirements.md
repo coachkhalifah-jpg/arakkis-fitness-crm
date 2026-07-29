@@ -442,3 +442,64 @@ Create an immutable attendance-transition record for every attendance change. Ca
 ### FR-086 — Cancellation after finalized attendance
 Cancellation after attendance is FINALIZED is blocked through the standard cancellation action. An exceptional Invalidate Completed Event action requires System Admin authorization, a reason, confirmation, and audit; it preserves finalized attendance history and transition records and never silently rewrites completed outcomes.
 **Priority:** MUST
+
+## Post-MVP Phase 7 — Publishing, Links, QR Distribution, and Invitations
+
+The following requirements are approved by DEC-047 as a post-MVP extension. They are not part of the original frozen MVP and are not implemented by this documentation change.
+
+### FR-087 — Event publication
+Authorized administrators can publish an eligible event and unpublish a previously published event. Draft and unpublished events are not publicly registrable. Publication cannot bypass capacity, registration windows, cancellation, organization/venue state, or the legal gate. **Priority:** MUST — Phase 7
+
+### FR-088 — Stable public event slug
+Each published event has a bounded, lowercase, URL-safe, collision-safe public slug that contains no participant data or sequential private identifier. Slug lookup is server-side and publication/availability checks remain authoritative. **Priority:** MUST — Phase 7
+
+### FR-089 — Canonical public registration URL
+Published events expose a canonical participant URL using the configured application base URL and public slug, such as `/register/{public-slug}`. Canonical URLs do not trust user-supplied Host headers and do not contain authentication or participant tokens. **Priority:** MUST — Phase 7
+
+### FR-090 — Registration availability controls
+Authorized administrators can configure registration opening and closing times and pause or resume registration. Availability is evaluated with server/database time and distinguishes not-yet-open, open, paused, closed, full, cancelled, unpublished, unavailable, and legally blocked states. **Priority:** MUST — Phase 7
+
+### FR-091 — Public availability enforcement
+Public event lookup and registration enforce publication, availability, capacity, event cancellation, organization/venue state, and legal readiness at the server and database/RPC layers. The public UI is not the sole enforcement boundary and raw database errors are not exposed. **Priority:** MUST — Phase 7
+
+### FR-092 — Link management
+Authorized administrators can view publication and registration state, preview the public page, and copy the complete canonical URL. Copying or previewing never publishes an event or creates a registration. **Priority:** MUST — Phase 7
+
+### FR-093 — QR distribution
+Authorized administrators can generate a high-contrast, accessible PNG or SVG QR code whose exact payload is the canonical public URL. QR generation does not publish an event and includes no private ID, participant data, administrator token, tracking parameter, or analytics destination. **Priority:** MUST — Phase 7
+
+### FR-094 — Canonical base URL and environments
+Local may use a documented localhost fallback. Staging and production require an explicit valid HTTPS `APP_BASE_URL`; trailing slashes are normalized, and missing or invalid configuration fails safely. Environment behavior must clearly identify non-production staging and keep production registration blocked unless explicitly legally ready. **Priority:** MUST — Phase 7
+
+### FR-095 — System Admin invitation links
+System Admin can create a one-time administrator invitation link for an intended email, approved role, and required organization assignments. The application does not send the invitation automatically; it displays the raw link only at creation/regeneration time for private distribution. **Priority:** MUST — Phase 7
+
+### FR-096 — Invitation token security
+Invitation tokens are high-entropy and single-use. Only a cryptographic hash is stored server-side; raw tokens are never retained in reusable fields, logs, analytics, browser bundles, or audit payloads. **Priority:** MUST — Phase 7
+
+### FR-097 — Invitation lifecycle
+Invitations expire, can be revoked while pending, and can be regenerated so the prior pending token becomes unusable. Invalid, expired, revoked, replaced, accepted, and malformed tokens receive safe non-enumerating responses. **Priority:** MUST — Phase 7
+
+### FR-098 — Invitation acceptance and assignment
+Acceptance verifies the invited identity, creates or links the authenticated administrator profile, and transactionally applies only the invited role and organization assignments. Invitees cannot alter assignments; an active Host Admin cannot exist without active intended assignments. **Priority:** MUST — Phase 7
+
+### FR-099 — Existing-account and concurrency safety
+Existing Auth accounts are linked only after authenticated identity verification. Repeated or concurrent acceptance produces at most one administrator profile and one set of assignments, with no partial privilege. **Priority:** MUST — Phase 7
+
+### FR-100 — Publication authorization
+System Admin may publish, unpublish, pause, resume, edit approved slugs, copy links, preview pages, and generate QR codes for any eligible event. Host Admin publication authority, if enabled by the synchronized implementation design, is limited to assigned organizations and never changes environment or legal readiness. **Priority:** MUST — Phase 7
+
+### FR-101 — Cross-organization isolation
+Authenticated management queries and mutations for publication, slugs, links, QR generation, and invitations enforce organization scope and deny unassigned Host Admins, inactive administrators, non-admins, and anonymous users without leaking data. **Priority:** MUST — Phase 7
+
+### FR-102 — Public privacy
+Public routes return only approved registration-page information and never expose unpublished event data, internal IDs, administrator identity/contact data, participant data, invitation tokens, operational notes, or raw database errors. **Priority:** MUST — Phase 7
+
+### FR-103 — Auditability
+Publish, unpublish, pause, resume, slug changes, invitation creation, revocation, regeneration, and acceptance record actor, timestamp, subject, organization, and relevant prior/new state without storing raw tokens. **Priority:** MUST — Phase 7
+
+### FR-104 — Legal gate behavior
+Synthetic local registration remains permitted. Staging is non-production and restricted as configured. Production participant registration is denied before participant data submission while the Participation acknowledgment is provisional, and the gate is enforced in UI, server actions, and database/RPC paths. **Priority:** MUST — Phase 7
+
+### FR-105 — Explicit Phase 7 boundaries
+Phase 7 does not include automated email/SMS/WhatsApp, push notifications, participant accounts or login, participant merging, analytics dashboards, tracking links or QR analytics, payments, production deployment, legal approval, or Phase 8 work. **Priority:** MUST — Phase 7

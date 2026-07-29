@@ -625,3 +625,109 @@ These are business-level tests. Codex should translate them into unit, integrati
 **Given** an Event has FINALIZED attendance
 **When** an administrator uses standard cancellation
 **Then** cancellation is blocked. When System Admin uses exceptional invalidation, a reason, confirmation, and audit record are required, finalized history and transition records are preserved, and completed outcomes are not silently rewritten.
+
+## Post-MVP Phase 7 acceptance tests
+
+These scenarios are planned/pending and are not implemented by this documentation update.
+
+### AT-099 — Publish and share event
+Given an eligible draft event and an authorized administrator, when the administrator publishes it, copies its canonical URL, opens that URL anonymously, and later unpublishes it, then the public page is available only while published and the same URL becomes unavailable after unpublishing. (FR-087–FR-092)
+
+### AT-100 — Stable safe slug
+Given event information containing unsupported characters or a collision, when a slug is suggested and validated, then it is lowercase, URL-safe, bounded, reserved-word protected, collision-safe, stable after publication unless deliberately changed, and contains no private identifier or participant data. (FR-088–FR-089)
+
+### AT-101 — Canonical URL construction
+Given local, staging, and production-like configuration, when a public or invitation link is generated, then it uses the explicit canonical base URL, normalizes trailing slashes, requires HTTPS outside local development, and never uses a user-supplied Host header or authentication token. (FR-089, FR-094)
+
+### AT-102 — Availability states
+Given events in draft/unpublished, not-yet-open, open, paused, closed, full, cancelled, and legally blocked states, when an anonymous user visits or submits registration, then each state shows a safe distinct unavailable/open result and server/database checks enforce the same state. (FR-090–FR-091, FR-104)
+
+### AT-103 — Link copy and preview have no side effect
+Given an authorized administrator and an unpublished event, when the administrator previews or copies its URL, then the event remains unpublished and no registration is created. (FR-092)
+
+### AT-104 — QR canonical payload
+Given a published event, when an authorized administrator generates a high-contrast QR artifact, then decoding it yields exactly the canonical public URL with no private ID, token, participant data, tracking parameter, or analytics destination. (FR-093)
+
+### AT-105 — QR does not bypass state
+Given a QR generated for a published event, when the event is unpublished or otherwise unavailable, then visiting the decoded destination is unavailable under the same publication and registration rules. (FR-091, FR-093)
+
+### AT-106 — Create administrator invitation
+Given a System Admin, intended email, Host Admin role, and Organization A assignment, when an invitation is created, then a pending invitation and one-time canonical invitation URL are produced, the assignment is read-only to the invitee, and no email is sent automatically. (FR-095–FR-096)
+
+### AT-107 — Invitation token storage
+Given a newly generated invitation, when the database and logs are inspected, then only a secure token hash is retained and no raw token appears in reusable fields, audit data, logs, analytics, or browser bundles. (FR-096)
+
+### AT-108 — Invitation acceptance
+Given a valid pending invitation, when the intended authenticated user accepts it with matching identity, then exactly one appropriate administrator profile and Organization A assignment are activated and the invitation becomes accepted. (FR-098)
+
+### AT-109 — Invitation invalidation
+Given an invitation, when it expires, is revoked, is accepted, or is regenerated, then the prior URL fails safely and does not create or change administrative access. (FR-097)
+
+### AT-110 — Invitation regeneration
+Given a pending invitation, when System Admin generates a replacement link, then the prior hash is invalidated, the new token has a new expiration, and only the new link can be accepted. (FR-097)
+
+### AT-111 — Invitation concurrency
+Given one valid invitation, when two acceptance requests run concurrently or acceptance is retried, then at most one succeeds, no duplicate admin profile or assignment is created, and no partial privilege remains. (FR-099)
+
+### AT-112 — Existing-account behavior
+Given the invited email already belongs to an authenticated user, when that user verifies identity and accepts, then the existing Auth user is linked without duplication; email input alone cannot claim the account and conflicts require safe System Admin resolution. (FR-098–FR-099)
+
+### AT-113 — Invitation authorization matrix
+Given System Admin, assigned Host Admin, unassigned Host Admin, inactive admin, authenticated non-admin, and anonymous users, when they access invitation management or acceptance operations, then only the intended System Admin/invitee paths succeed and no role or assignment can be altered by the invitee. (FR-098–FR-101)
+
+### AT-114 — Cross-organization publication isolation
+Given Organization A and B events, when an A Host Admin attempts to view, publish, unpublish, pause, resume, edit slug, copy, preview, or generate a QR code for a B event, then access is denied without B management data leakage. (FR-100–FR-101)
+
+### AT-115 — Public privacy
+Given published, unpublished, and unrelated events, when anonymous public routes are requested, then only approved registration-page fields for the addressed published event are returned and no internal IDs, admin details, participant data, notes, tokens, unrelated events, or raw errors appear. (FR-089, FR-091, FR-102)
+
+### AT-116 — Publication audit
+Given authorized publication, availability, slug, and invitation lifecycle actions, when audit history is reviewed, then actor, timestamp, subject, organization, and prior/new state are present and raw tokens are absent. (FR-103)
+
+### AT-117 — Legal gate at page/server/database layers
+Given a provisional Participation acknowledgment, when a production-like public page, server action, modified request, or direct registration RPC is used, then registration is denied before participant data submission at every layer while synthetic local registration remains permitted. (FR-091, FR-104)
+
+### AT-118 — Environment safety
+Given local, staging, and production-like environments with missing, invalid, or valid base URL/legal-readiness configuration, when links or registration are requested, then local fallback is safe, staging identifies itself as non-production, and production fails closed without inferring readiness from environment variables alone. (FR-094, FR-104)
+
+### AT-119 — Slug tampering
+Given nonexistent, malformed, uppercase-equivalent, reserved, unpublished, cancelled, full, expired-window, and legally blocked slugs, when requested, then responses are safe and non-enumerating and no state bypass occurs. (FR-088–FR-091)
+
+### AT-120 — Registration window boundaries
+Given opening and closing instants, when requests occur immediately before, at, and after each boundary using server/database time, then the authoritative availability state is correct and capacity/cancellation/legal checks still apply. (FR-090–FR-091)
+
+### AT-121 — Pause/resume authorization
+Given an open event, when an authorized administrator pauses or resumes registration, then the public state changes accordingly, publication remains unchanged, and unauthorized or cross-organization actions fail. (FR-090, FR-100–FR-101)
+
+### AT-122 — QR filename/accessibility
+Given a generated QR artifact, when it is downloaded or rendered, then the filename is safe and event-identifying, output is printable/high contrast, and an accessible text alternative exposes the canonical destination without tokens. (FR-093)
+
+### AT-123 — No tracking links
+Given a copied public URL or decoded QR URL, when its query and path are inspected, then no tracking parameters or third-party analytics destination is present. (FR-089, FR-093, BR-119)
+
+### AT-124 — Repeated publication idempotency
+Given a published or unpublished event, when publish/unpublish is repeated or concurrent, then the final state is stable, no duplicate public identity is created, and audit history records only approved transitions/retries. (FR-087, FR-103)
+
+### AT-125 — Invitation role tampering
+Given a Host Admin invitation, when a request attempts to change its role or organization assignment, then the request is rejected and the original invitation scope remains authoritative. (FR-098)
+
+### AT-126 — Inactive organization invitation
+Given a pending invitation referencing an inactive organization, when it is accepted or regenerated, then activation fails safely and no active improperly scoped administrator exists. (FR-098–FR-099)
+
+### AT-127 — No raw token after dismissal
+Given an invitation creation or regeneration result, when the one-time URL display is dismissed and the page is revisited, then the raw token cannot be retrieved from the application. (FR-095–FR-097)
+
+### AT-128 — Safe errors
+Given unavailable events, invalid slugs, malformed tokens, unauthorized actions, and unexpected failures, when the user receives a response, then it uses an approved safe category and omits table names, RPC names, SQL, stacks, hashes, and administrator existence. (FR-091, FR-097, FR-102)
+
+### AT-129 — Mobile and keyboard flow
+Given a mobile viewport and keyboard-only interaction, when a participant uses the public page and an administrator copies/previews/generates a link, then controls have accessible labels, visible focus, usable touch targets, and clear loading/error feedback. (FR-089, FR-092–FR-093)
+
+### AT-130 — Synthetic fixture isolation
+Given a database reset, when local Phase 7 fixtures are regenerated, then Auth IDs are fresh, data is synthetic, no credentials/tokens/storage state are committed, and tests do not depend on execution order. (BR-130, BR-135)
+
+### AT-131 — Phase 1–6 regression preservation
+Given a clean reset and the Phase 1–6 suite, when Phase 7 is implemented later, then all prior schema, runtime, unit, component, and browser validations remain passing and migrations `0001–0019` are byte-for-byte unchanged. (BR-134–BR-136)
+
+### AT-132 — Scope exclusions
+Given the Phase 7 implementation plan, when the final scope is reviewed, then automated messaging, participant accounts/login, merging, analytics/tracking/QR analytics, payments, deployment, legal approval, and Phase 8 work are absent. (FR-105, BR-131)

@@ -104,20 +104,27 @@ AT-010 through AT-012, AT-021/022/028, and AT-048–AT-054 pass.
 
 Phase 6 also includes the approved merge conflict-resolution paths covered by AT-085–AT-087.
 
-## Phase 7 — Follow-up accountability
-Deliver:
-- follow-up queue
-- first-attendance trigger
-- idempotency
-- editable/copyable suggested message
-- complete/dismiss
-- history
-- attendance correction reassessment
+## Phase 7 — Event Publishing, Registration Links, QR Distribution & Admin Invitations (post-MVP)
+
+The older Phase 7 follow-up definition is superseded and absorbed into the completed Phase 6 participant CRM and follow-up milestone. This redefinition is governed by DEC-047 and does not rewrite Phase 1–6 history.
+
+Planned deliverables:
+- canonical public event registration URLs and stable safe slugs
+- event publication/unpublication and public preview
+- registration opening/closing and pause/resume controls
+- public availability states for draft, unpublished, not-yet-open, open, paused, closed, full, cancelled, and legally blocked events
+- canonical link copying without publication side effects
+- high-contrast QR generation containing only the canonical URL
+- System Admin invitation-link creation, private copying, expiration, revocation, regeneration, acceptance, and constrained role/organization assignment
+- environment-aware local/staging/production behavior and explicit legal-readiness gating
+- server-side, database-layer, RLS, audit, and cross-organization authorization controls
+
+Phase 7 is not production authorization. It cannot begin implementation until the requirements, business rules, data model, permissions, UI specification, acceptance tests, technical/security design, traceability, and Phase 7 implementation document are synchronized.
 
 Exit criteria:
-AT-015, AT-016, AT-027, AT-035, and AT-040 pass.
+Phase 7 acceptance scenarios AT-099–AT-132, planned database/security checks, planned unit/component checks, and planned Playwright flows pass after implementation; all Phase 1–6 regressions remain green; the production legal gate remains active.
 
-## Phase 8 — Dashboards and polish
+## Phase 8 — Dashboards, polish, and later product work
 Deliver:
 - System dashboard
 - Host dashboard
@@ -129,7 +136,7 @@ Deliver:
 Exit criteria:
 all MVP acceptance tests pass and no parallel spreadsheet is needed for a test event.
 
-## Phase 9 — Deployment readiness
+## Phase 9 — Deployment readiness (separate future activity)
 Deliver:
 - Vercel deployment
 - Supabase production project

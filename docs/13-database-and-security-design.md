@@ -1244,6 +1244,20 @@ Coverage verification:
 9. Does the deployment gate fail closed when no APPROVED Participation acknowledgment version exists?
 10. Are DST, token abuse, Auth invitation mismatch, merge conflicts, cancellation rollback, and finalized-attendance exception scenarios covered by automated acceptance tests?
 
+## 15. Post-MVP Phase 7 security addendum
+
+DEC-047 extends this frozen-MVP design without changing prior tables or migrations. Phase 7 implementation must add only forward migrations after `0019` and preserve RLS, fixed `search_path`, least-privilege grants, append-only audit evidence, and server-only service credentials.
+
+- Canonical URLs use a server-only `APP_BASE_URL`; local may fall back to localhost, while staging and production require valid HTTPS configuration. Trailing slashes are normalized and Host headers are ignored.
+- Event publication is additive and must compose with existing Event status, cancellation, capacity, registration deadline, organization/venue state, and acknowledgment legal status. A narrow public slug lookup must not grant broad anonymous table access or leak unpublished data.
+- Slugs are normalized, bounded, collision-safe, reserved-word protected, and unique among active public identities. Changes require authorization and audit; old-link behavior is explicitly tested before implementation.
+- QR generation encodes exactly the canonical URL, supports an approved printable format and accessible text alternative, and never adds IDs, tokens, tracking, or analytics.
+- Invitation acceptance must lock/condition the pending invitation, consume the single-use token atomically or use a documented recoverable boundary, and ensure exactly one active profile/assignment relationship under concurrent retries. Raw tokens are never stored after one-time display, logged, or included in analytics.
+- System Admin has global authority. Host Admin publication management, if enabled, is restricted to assigned event host organizations. Anonymous and non-admin management access is denied. Publicly published status never grants management access.
+- The legal gate must fail closed in the page, server action, and database/RPC path for production-like registration while Participation Risk is PROVISIONAL. Local synthetic registration remains allowed and staging remains non-production.
+
+Phase 7 planned database assertions cover publication/availability, narrow public lookup, legal gating, slug uniqueness, token hashing/expiration/revocation/single-use, invitation concurrency, RLS isolation, audit evidence, and no raw-token leakage. These are pending implementation and are not complete.
+
 ### Self-review result
 
-The design was reviewed against the frozen functional requirements FR-001–FR-086, business rules BR-001–BR-112, decisions DEC-001–DEC-046, and acceptance tests AT-001–AT-098. No product contradiction was introduced. The previously identified persistence gaps—notification transition history, cancellation template snapshots, invitation assignment activation, merge conflict records, token lifecycle metadata, DST handling, Over-Capacity Overrides, and attendance transition/invalidation history—are explicitly represented above. No SQL migrations, Supabase configuration, or application source code are included. This document is ready for implementation review.
+The design was reviewed against the frozen MVP requirements FR-001–FR-086, BR-001–BR-112, DEC-001–DEC-046, and AT-001–AT-098, plus the post-MVP extension FR-087–FR-105, BR-113–BR-136, DEC-047, and AT-099–AT-132. The Phase 7 addendum preserves the original baseline and records publication, canonical URL, slug, QR, invitation, environment, legal-gate, RLS, audit, and concurrency requirements as planned rather than implemented. No SQL migrations, Supabase configuration, or application source code are included. This document is ready for implementation review.

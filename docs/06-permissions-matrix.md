@@ -91,3 +91,18 @@ Legend:
 20. Only System Admin may publish/retire/revoke acknowledgment versions, manage immutable cancellation-template versions, resolve merge conflicts, activate invitation assignments, create Over-Capacity Overrides, or invalidate completed attendance.
 21. Invitation acceptance cannot change organization assignments and cannot activate a Host Admin without active assignments.
 22. Attendance cancellation and exceptional invalidation are System Admin-only and preserve immutable transition history.
+
+## Post-MVP Phase 7 permissions
+
+| Capability | Public Participant | Host Admin | System Admin |
+|---|---:|---:|---:|
+| View published public registration page | Yes, subject to availability/legal rules | Yes | Yes |
+| Publish/unpublish event | No | Scoped only if explicitly enabled by Phase 7 implementation design | Yes |
+| Pause/resume registration | No | Scoped only if explicitly enabled by Phase 7 implementation design | Yes |
+| Edit public slug | No | Scoped only if explicitly enabled by Phase 7 implementation design | Yes |
+| Copy/preview public URL | No | Scoped for authorized events | Yes |
+| Generate/download event QR | No | Scoped for authorized events | Yes |
+| Manage administrator invitations | No | No | Yes |
+| Accept own administrator invitation | No | Own invitation only | No |
+
+Phase 7 management actions remain server/data-layer authorized. Publicly visible events do not grant Host Admin management access, and a Host Admin cannot manage another organization’s event or invitation.
