@@ -5,10 +5,17 @@ import { createClient } from "@/lib/db/server";
 import { ActionForm } from "@/components/admin/action-form";
 import { ConfirmSubmit } from "@/components/admin/confirm-submit";
 import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
+import { SubmitButton } from "@/components/admin/submit-button";
 import {
   cancelEventForm,
   copyEventForm,
+  createWalkInSubmit,
+  finalizeAttendanceSubmit,
+  markAttendance,
+  openAttendanceSubmit,
   publishEventForm,
+  reopenAttendanceSubmit,
   updateEvent,
 } from "@/lib/services/phase-3-actions";
 
@@ -52,7 +59,9 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   ]);
   const { data: registrations } = await db
     .from("registrations")
-    .select("id,participant_id,registered_at,registration_status,registration_outcome")
+    .select(
+      "id,participant_id,registered_at,registration_status,registration_outcome,registration_group_id",
+    )
     .eq("event_id", id)
     .order("registered_at");
   const participantIds = (registrations ?? []).map((registration) => registration.participant_id);
@@ -65,6 +74,34 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   const participantById = new Map(
     (participants ?? []).map((participant) => [participant.id, participant]),
   );
+  const registrationIds = (registrations ?? []).map((registration) => registration.id);
+  const { data: attendance } = registrationIds.length
+    ? await db
+        .from("attendance")
+        .select("id,registration_id,status,checked_in_at,finalized_at,updated_at")
+        .in("registration_id", registrationIds)
+    : { data: [] };
+  const attendanceByRegistration = new Map(
+    (attendance ?? []).map((row) => [row.registration_id, row]),
+  );
+  const [{ data: participationVersion }, { data: dataUseVersion }] = await Promise.all([
+    db
+      .from("acknowledgment_versions")
+      .select("id")
+      .eq("type", "PARTICIPATION_RISK")
+      .in("legal_status", ["APPROVED", "PROVISIONAL"])
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    db
+      .from("acknowledgment_versions")
+      .select("id")
+      .eq("type", "DATA_USE")
+      .in("legal_status", ["APPROVED", "PROVISIONAL"])
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
   const canEdit =
     admin.role === "SYSTEM_ADMIN" && event.status !== "CANCELLED" && event.status !== "COMPLETED";
   return (
@@ -87,6 +124,106 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           This event is permanently cancelled and cannot be restored. Copy it to create a separate
           draft.
         </p>
+      ) : null}
+      {event.status !== "CANCELLED" && event.status !== "DRAFT" ? (
+        <div className="mt-6 rounded-lg border border-brand/30 bg-brand/5 p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold">Attendance operations</h2>
+              <p className="text-sm text-slate-600">
+                {event.attendance_processing_state} ·{" "}
+                {(registrations ?? []).filter((r) => r.registration_status === "REGISTERED").length}{" "}
+                active registrations / {event.capacity} capacity
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {event.attendance_processing_state !== "FINALIZED" ? (
+                <form action={openAttendanceSubmit}>
+                  <input type="hidden" name="eventId" value={id} />
+                  <SubmitButton>Start check-in</SubmitButton>
+                </form>
+              ) : null}
+              {event.attendance_processing_state === "OPEN" ||
+              event.attendance_processing_state === "REOPENED" ? (
+                <form action={finalizeAttendanceSubmit}>
+                  <input type="hidden" name="eventId" value={id} />
+                  <ConfirmSubmit message="Finalize attendance? Every active unmarked registration will become No-Show.">
+                    Finalize attendance
+                  </ConfirmSubmit>
+                </form>
+              ) : null}
+              {admin.role === "SYSTEM_ADMIN" &&
+              event.attendance_processing_state === "FINALIZED" ? (
+                <form action={reopenAttendanceSubmit} className="flex gap-2">
+                  <input type="hidden" name="eventId" value={id} />
+                  <input
+                    name="reason"
+                    required
+                    placeholder="Reopen reason"
+                    className="rounded border p-2 text-sm"
+                  />
+                  <ConfirmSubmit message="Reopen attendance for correction?">Reopen</ConfirmSubmit>
+                </form>
+              ) : null}
+            </div>
+          </div>
+          {event.attendance_processing_state === "FINALIZED" ? (
+            <Alert className="mt-4">
+              Attendance is finalized. Only System Admins may correct individual results.
+            </Alert>
+          ) : null}
+        </div>
+      ) : null}
+      {event.status !== "CANCELLED" && event.attendance_processing_state === "OPEN" ? (
+        <div className="mt-6 rounded-lg border border-slate-200 bg-white p-6">
+          <h2 className="text-lg font-semibold">Add walk-in</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            A walk-in is matched or created, registered, and checked in atomically.
+          </p>
+          <form action={createWalkInSubmit} className="mt-4 grid gap-3 sm:grid-cols-2">
+            <input type="hidden" name="eventId" value={id} />
+            <input
+              type="hidden"
+              name="participationVersionId"
+              value={participationVersion?.id ?? ""}
+            />
+            <input type="hidden" name="dataUseVersionId" value={dataUseVersion?.id ?? ""} />
+            <label>
+              First name
+              <input name="firstName" required className="mt-1 w-full rounded border p-2" />
+            </label>
+            <label>
+              Last name
+              <input name="lastName" required className="mt-1 w-full rounded border p-2" />
+            </label>
+            <label>
+              Phone
+              <input name="phone" required className="mt-1 w-full rounded border p-2" />
+            </label>
+            <label>
+              Country
+              <input
+                name="phoneCountry"
+                defaultValue="US"
+                required
+                className="mt-1 w-full rounded border p-2"
+              />
+            </label>
+            <label>
+              Email
+              <input name="email" type="email" className="mt-1 w-full rounded border p-2" />
+            </label>
+            <label>
+              Affiliation organization ID
+              <input name="affiliation" className="mt-1 w-full rounded border p-2" />
+            </label>
+            <label className="sm:col-span-2">
+              System Admin override reason (only used when authorized and full)
+              <input name="overrideReason" className="mt-1 w-full rounded border p-2" />
+            </label>
+            <SubmitButton>Add and check in</SubmitButton>
+          </form>
+        </div>
       ) : null}
       <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
         <h2 className="text-lg font-semibold">Event details</h2>
@@ -240,6 +377,8 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                 <th className="p-2">Phone</th>
                 <th className="p-2">Email</th>
                 <th className="p-2">Status</th>
+                <th className="p-2">Attendance</th>
+                <th className="p-2">Action</th>
                 <th className="p-2">Registered</th>
               </tr>
             </thead>
@@ -256,6 +395,53 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                     <td className="p-2">{participant?.display_phone ?? "—"}</td>
                     <td className="p-2">{participant?.email ?? "—"}</td>
                     <td className="p-2">{registration.registration_status}</td>
+                    <td className="p-2">
+                      {attendanceByRegistration.get(registration.id)?.status ?? "NOT_RECORDED"}
+                    </td>
+                    <td className="p-2">
+                      {event.status === "CANCELLED" ||
+                      registration.registration_status === "CANCELLED" ? (
+                        "—"
+                      ) : event.attendance_processing_state === "OPEN" ||
+                        event.attendance_processing_state === "REOPENED" ? (
+                        <ActionForm action={markAttendance} submitLabel="Mark attended">
+                          <input type="hidden" name="eventId" value={id} />
+                          <input type="hidden" name="registrationId" value={registration.id} />
+                          <input type="hidden" name="status" value="ATTENDED" />
+                        </ActionForm>
+                      ) : event.attendance_processing_state === "FINALIZED" &&
+                        admin.role === "SYSTEM_ADMIN" ? (
+                        <ActionForm action={markAttendance} submitLabel="Save correction">
+                          <input type="hidden" name="eventId" value={id} />
+                          <input type="hidden" name="registrationId" value={registration.id} />
+                          <label className="block text-xs">
+                            Result
+                            <select
+                              name="status"
+                              defaultValue={
+                                attendanceByRegistration.get(registration.id)?.status ?? "NO_SHOW"
+                              }
+                              className="mt-1 rounded border p-1"
+                            >
+                              <option value="ATTENDED">ATTENDED</option>
+                              <option value="NO_SHOW">NO_SHOW</option>
+                              <option value="EXCUSED">EXCUSED</option>
+                              <option value="NOT_RECORDED">NOT_RECORDED</option>
+                            </select>
+                          </label>
+                          <label className="block text-xs">
+                            Reason
+                            <input
+                              name="reason"
+                              required
+                              className="mt-1 w-full rounded border p-1"
+                            />
+                          </label>
+                        </ActionForm>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
                     <td className="p-2">
                       {new Intl.DateTimeFormat("en-US", {
                         dateStyle: "medium",

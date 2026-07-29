@@ -12,6 +12,8 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
+    pool: "forks",
+    poolOptions: { forks: { singleFork: true } },
     setupFiles: ["./tests/setup.ts"],
     include: ["tests/**/*.{test,spec}.{ts,tsx}"],
     exclude: ["tests/e2e/**"],

@@ -12,6 +12,13 @@ import {
   Phase3Error,
   venueSchema,
 } from "@/lib/services/phase-3";
+import {
+  createWalkInSubmit as phase5CreateWalkInSubmit,
+  finalizeAttendanceSubmit as phase5FinalizeAttendanceSubmit,
+  markAttendance as phase5MarkAttendance,
+  openAttendanceSubmit as phase5OpenAttendanceSubmit,
+  reopenAttendanceSubmit as phase5ReopenAttendanceSubmit,
+} from "@/lib/services/phase-5-actions";
 
 export type Phase3ActionState = { error?: string; success?: string };
 const message = (error: unknown) =>
@@ -516,4 +523,22 @@ export async function updateVenueForm(form: FormData) {
 }
 export async function updateVenueState(_state: Phase3ActionState, form: FormData) {
   return updateVenue(form);
+}
+
+// Keep event-page mutations in this route's existing server-action module so
+// Next.js includes them in the route action manifest.
+export async function openAttendanceSubmit(form: FormData) {
+  return phase5OpenAttendanceSubmit(form);
+}
+export async function finalizeAttendanceSubmit(form: FormData) {
+  return phase5FinalizeAttendanceSubmit(form);
+}
+export async function reopenAttendanceSubmit(form: FormData) {
+  return phase5ReopenAttendanceSubmit(form);
+}
+export async function markAttendance(state: Phase3ActionState, form: FormData) {
+  return phase5MarkAttendance(state, form);
+}
+export async function createWalkInSubmit(form: FormData) {
+  return phase5CreateWalkInSubmit(form);
 }
