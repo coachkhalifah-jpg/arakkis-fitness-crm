@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { requireOrganizationAccess } from "@/lib/authorization/server";
+import { redirect } from "next/navigation";
+import { requireActiveAdmin, requireOrganizationAccess } from "@/lib/authorization/server";
 import { createClient } from "@/lib/db/server";
 import { ActionForm } from "@/components/admin/action-form";
 import { ConfirmSubmit } from "@/components/admin/confirm-submit";
@@ -33,7 +34,13 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   const { id } = await params;
   const db = await createClient();
   const { data: event } = await db.from("events").select("*").eq("id", id).single();
-  if (!event) return <p className="mx-auto max-w-5xl px-6 py-12">Event not found.</p>;
+  if (!event) {
+    const admin = await requireActiveAdmin(`/admin/events/${id}`);
+    if (admin.role === "HOST_ADMIN") {
+      redirect("/admin/access-denied");
+    }
+    return <p className="mx-auto max-w-5xl px-6 py-12">Event not found.</p>;
+  }
   const admin = await requireOrganizationAccess(event.host_organization_id, `/admin/events/${id}`);
   const [{ data: organizations }, { data: venues }] = await Promise.all([
     db.from("organizations").select("id,name").eq("active_status", "ACTIVE").order("name"),

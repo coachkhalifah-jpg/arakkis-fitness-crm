@@ -1,15 +1,22 @@
 import Link from "next/link";
-import { requireOrganizationAccess } from "@/lib/authorization/server";
+import { redirect } from "next/navigation";
+import { requireActiveAdmin, requireOrganizationAccess } from "@/lib/authorization/server";
 import { createClient } from "@/lib/db/server";
-import { Button } from "@/components/ui/button";
 import { ConfirmSubmit } from "@/components/admin/confirm-submit";
-import { archiveVenue, updateVenueForm } from "@/lib/services/phase-3-actions";
+import { ActionForm } from "@/components/admin/action-form";
+import { archiveVenue, updateVenueState } from "@/lib/services/phase-3-actions";
 
 export default async function VenueDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const db = await createClient();
   const { data: venue } = await db.from("venues").select("*").eq("id", id).single();
-  if (!venue) return <p className="mx-auto max-w-5xl px-6 py-12">Venue not found.</p>;
+  if (!venue) {
+    const admin = await requireActiveAdmin(`/admin/venues/${id}`);
+    if (admin.role === "HOST_ADMIN") {
+      redirect("/admin/access-denied");
+    }
+    return <p className="mx-auto max-w-5xl px-6 py-12">Venue not found.</p>;
+  }
   const admin = await requireOrganizationAccess(venue.organization_id ?? "", `/admin/venues/${id}`);
   const { data: organizations } = await db
     .from("organizations")
@@ -28,7 +35,7 @@ export default async function VenueDetailPage({ params }: { params: Promise<{ id
       {admin.role === "SYSTEM_ADMIN" ? (
         <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
           <h2 className="text-lg font-semibold">Edit venue</h2>
-          <form action={updateVenueForm} className="grid gap-4">
+          <ActionForm action={updateVenueState} submitLabel="Save venue">
             <input type="hidden" name="id" value={id} />
             <label>
               Name
@@ -98,8 +105,7 @@ export default async function VenueDetailPage({ params }: { params: Promise<{ id
                 className="mt-1 w-full rounded border p-2"
               />
             </label>
-            <Button type="submit">Save venue</Button>
-          </form>
+          </ActionForm>
           {venue.active_status !== "ARCHIVED" ? (
             <form
               action={async () => {

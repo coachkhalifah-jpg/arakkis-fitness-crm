@@ -45,3 +45,28 @@ Completed routes are `/admin/organizations`, `/admin/organizations/[id]`, `/admi
 Validation completed on 2026-07-28/29: 8 Playwright tests passed, 11 unit tests passed, strict TypeScript, ESLint, formatting, and production build passed. Migration `0014` was applied and exercised against the running local Supabase database with synthetic records; the CLI reset command remains environment-blocked by the pre-existing Docker project-name mismatch, so no new migration was added during Phase 3B. No secrets or service-role credentials are present in browser-bundled application modules.
 
 The participation acknowledgment remains provisional, so production deployment remains blocked by the existing legal gate. Full participant registration, attendance, CRM, follow-up, notification, and analytics functionality remains deferred.
+
+## Phase 3C final acceptance validation
+
+Validation was completed locally on 2026-07-29 from commit `e8fa7810cb4f693d91715ee830a9d42ef9afef84` on branch `phase-3-organizations-events`. No hosted Supabase project, production credentials, or real identities were used.
+
+### Local Supabase reset repair
+
+The reported reset failure was a Supabase CLI 2.110.0 local wrapper/profile bootstrap defect: `supabase db reset` stopped before reaching Postgres with `failed to read profile: Config File "config" Not Found`. Docker inspection showed no project mismatch. All running containers, the database/storage/edge-runtime volumes, and the network were labeled `fitness-event-crm-codex-starter` and pointed at this repository; no unrelated Docker resources were removed.
+
+The safe workaround is the existing `scripts/validate-database.sh` procedure: stop this project with `supabase stop --no-backup`, start it again, run the database checks, repeat the stop/start reset, and rerun the checks. Both clean reset cycles applied migrations 0001–0014, passed Phase 1 schema/runtime checks, passed Phase 2 auth checks, and passed Supabase schema lint. The CLI `db reset` wrapper remains unreliable, but the underlying local reset is repeatable through this project-scoped workaround.
+
+### Synthetic browser fixtures and results
+
+Playwright creates dynamic synthetic identities and records per test. The fixtures include Organization A and B, a venue and event in each organization, a System Admin, an active Host Admin assigned only to Organization A, active registrations for capacity tests, and no real credentials or reusable secrets.
+
+- Host Admin sees only assigned organization, venue, and event data; management controls are absent.
+- Direct unassigned organization, venue, and event URLs reveal no protected entity data and resolve to a denial/not-found state. Direct authenticated mutation attempts do not change Organization B.
+- A draft event with three `REGISTERED`/`ACTIVE` registrations accepts capacity 4 and capacity 3, rejects capacity 2 with a safe error, and remains persisted at capacity 3. The database trigger and direct database update both enforce the floor. Cancelled/non-active registrations are excluded by the authoritative active-registration predicate.
+- A venue timezone update from `America/New_York` to `America/Chicago` persists through the browser and creates a `VENUE_UPDATED` audit record. The event's stored UTC start and end remain unchanged before and after the update. Invalid timezone input is rejected server-side and does not change the venue.
+
+The venue detail form now uses the shared action-state form so successful and rejected timezone updates are visible in the browser. Venue and event detail lookups now explicitly deny Host Admin access when RLS hides an inaccessible entity. No migration was added and migrations 0001–0014 were not modified.
+
+### Final validation
+
+The complete serial Chromium suite passed 11 tests. Unit tests passed 11 tests. Strict TypeScript, ESLint, Prettier, production build, database schema assertions, Phase 1 and Phase 2 runtime regressions, and schema lint passed. No browser-bundle service-role credential or machine-specific path was introduced. The requirements freeze remains in force; public registration, attendance, participant CRM, follow-up, notifications, and all Phase 4 functionality remain deferred.
