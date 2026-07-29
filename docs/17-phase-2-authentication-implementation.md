@@ -44,6 +44,16 @@ Run `supabase start`, `supabase db reset`, `pnpm lint`, `pnpm type-check`, `pnpm
 
 Invitation creation, revocation, and acceptance write `audit_events`. The acceptance RPC uses a fixed `search_path`, is granted only to `service_role`, and validates the authenticated identity email and invitation role/assignments. Role and organization values are never accepted from the invitee. Unexpected errors return generic UI messages; detailed database/auth errors stay server-side and are not logged with token material. A disabled or assignment-less admin is denied on the next server authorization resolution.
 
+## Browser validation architecture
+
+`tests/e2e/auth.spec.ts` provisions unique synthetic local Auth users and invitation rows through local Supabase Auth Admin API plus disposable local database fixtures at runtime. It never prints credentials or raw tokens, uses separate browser contexts per test, and exercises the real invitation form, server action, Auth session cookie, protected landing page, reload, sign-out, replay, and rejection paths. The service-role client exists only in the Playwright setup process and server modules; it is not bundled into the browser.
+
+## Phase 2B validation result
+
+On 2026-07-28, the local Supabase stack was reset through migration `0013_phase_2_auth_acceptance.sql`. The database validation script passed Phase 1 regression tests, Phase 2 invitation/authorization tests, schema assertions, and database lint. Playwright passed all seven Chromium tests: valid invitation acceptance with automatic session creation, reload persistence, sign-out and replay rejection; existing Host Admin sign-in; non-admin and inactive-admin denial; malformed, expired, revoked, and consumed invitation rejection; incorrect-password rejection; and unsafe redirect rejection. Format check, strict type-check, lint, unit tests, and production build also passed.
+
+No migration was added for Phase 2B. The browser fixture setup uses only local synthetic identities and disposable local database rows. No hosted or production services were used, and no Phase 3 operational functionality was added.
+
 ## Known limitations and deferred functionality
 
 Supabase Auth user creation and the PostgreSQL activation transaction cannot share one transaction boundary; compensating deletion is used for newly created users, and the boundary is documented above. The Phase 2 landing page is deliberately a proof-of-access placeholder. Invitation delivery, organization-management UI, event operations, public registration, attendance, CRM, follow-up, notifications, dashboards, and production deployment remain deferred. Production remains blocked while the Participation acknowledgment is PROVISIONAL.

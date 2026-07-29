@@ -1,9 +1,11 @@
 "use server";
 
 import { createPrivilegedClient } from "@/lib/db/privileged";
+import { createClient } from "@/lib/db/server";
 import { getServerEnv } from "@/lib/config/env";
 import { requireSystemAdmin } from "@/lib/authorization/server";
 import { createInvitationToken, hashInvitationToken } from "@/lib/auth/tokens";
+import { redirect } from "next/navigation";
 
 export type AuthActionState = { error?: string; success?: string };
 
@@ -68,23 +70,9 @@ export async function acceptInvitation(
   }
 
   const privileged = createPrivilegedClient();
-  const { data: invitation, error: lookupError } = await privileged
-    .from("admin_invitations")
-    .select("id, invited_email, status, token_expires_at")
-    .eq("token_hash", hashInvitationToken(token))
-    .maybeSingle();
-  if (
-    lookupError ||
-    !invitation ||
-    invitation.status !== "PENDING" ||
-    new Date(invitation.token_expires_at).getTime() <= Date.now() ||
-    invitation.invited_email.trim().toLowerCase() !== email
-  ) {
-    return { error: GENERIC_INVITATION_ERROR };
-  }
-
   let authUserId: string;
   let createdAuthUser = false;
+  let existingAuthUser = false;
   const { data: created, error: createError } = await privileged.auth.admin.createUser({
     email,
     password,
@@ -97,11 +85,8 @@ export async function acceptInvitation(
     const { data: users } = await privileged.auth.admin.listUsers({ page: 1, perPage: 1000 });
     const existing = users.users.find((user) => user.email?.trim().toLowerCase() === email);
     if (!existing) return { error: GENERIC_INVITATION_ERROR };
-    const { error: passwordError } = await privileged.auth.admin.updateUserById(existing.id, {
-      password,
-    });
-    if (passwordError) return { error: GENERIC_INVITATION_ERROR };
     authUserId = existing.id;
+    existingAuthUser = true;
   } else {
     return { error: GENERIC_INVITATION_ERROR };
   }
@@ -117,5 +102,17 @@ export async function acceptInvitation(
     return { error: GENERIC_INVITATION_ERROR };
   }
 
-  return { success: "Invitation accepted. You can now sign in." };
+  if (existingAuthUser) {
+    const { error: passwordError } = await privileged.auth.admin.updateUserById(authUserId, {
+      password,
+    });
+    if (passwordError) return { error: GENERIC_INVITATION_ERROR };
+  }
+
+  const sessionClient = await createClient();
+  const { error: sessionError } = await sessionClient.auth.signInWithPassword({ email, password });
+  if (sessionError) {
+    return { error: GENERIC_INVITATION_ERROR };
+  }
+  redirect("/admin");
 }
