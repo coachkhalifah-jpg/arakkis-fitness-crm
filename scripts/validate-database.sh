@@ -29,6 +29,20 @@ run_runtime_tests() {
     --file - < supabase/tests/phase-1-runtime.sql
 }
 
+run_phase_2_tests() {
+  local db_container
+  db_container="$(docker ps --filter "name=supabase_db_" --format '{{.Names}}' | head -n 1)"
+  if [[ -z "$db_container" ]]; then
+    echo 'Local Supabase database container is not running.' >&2
+    exit 2
+  fi
+  docker exec -i "$db_container" psql \
+    --set ON_ERROR_STOP=1 \
+    --username postgres \
+    --dbname postgres \
+    --file - < supabase/tests/phase-2-auth.sql
+}
+
 if command -v supabase >/dev/null 2>&1; then
   # CLI 2.110.0's db reset wrapper fails before reaching Postgres with a
   # legacy profile error. Stop with --no-backup removes only this local
@@ -49,6 +63,7 @@ if command -v supabase >/dev/null 2>&1; then
       exit 1
     fi
   fi
+  run_phase_2_tests
   exit 0
 fi
 

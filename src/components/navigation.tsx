@@ -11,7 +11,7 @@ export function Navigation() {
           Fitness Event CRM
         </Link>
         <Link className="text-sm font-medium text-slate-600 hover:text-brand" href="/admin">
-          Admin placeholder
+          Admin sign-in
         </Link>
       </nav>
     </header>

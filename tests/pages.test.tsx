@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import HomePage from "@/app/page";
-import AdminPage from "@/app/admin/page";
+import AccessDeniedPage from "@/app/admin/access-denied/page";
 
 describe("foundation pages", () => {
   it("renders the public landing page", () => {
@@ -9,11 +9,9 @@ describe("foundation pages", () => {
     expect(screen.getByRole("heading", { name: /foundation is running/i })).toBeInTheDocument();
   });
 
-  it("renders the admin placeholder without fake access", () => {
-    render(<AdminPage />);
-    expect(screen.getByRole("heading", { name: /development placeholder/i })).toBeInTheDocument();
-    expect(
-      screen.getByText(/authentication and authorization will be implemented/i),
-    ).toBeInTheDocument();
+  it("renders the access-denied state without exposing admin data", () => {
+    render(<AccessDeniedPage />);
+    expect(screen.getByRole("heading", { name: /access denied/i })).toBeInTheDocument();
+    expect(screen.getByText(/does not have active administrator access/i)).toBeInTheDocument();
   });
 });

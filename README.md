@@ -19,6 +19,10 @@ pnpm dev
 
 `.env.local` must be filled with local, non-production values before the app reads the environment. Never commit it.
 
+## Local administrator authentication
+
+Phase 2 administrator access is invitation-only. Start local Supabase, apply the migrations with `supabase db reset` (or `bash scripts/validate-database.sh` when the installed CLI requires the local stop/start workaround), and provision a synthetic initial System Admin through the local Supabase Auth admin API plus the matching `admin_profiles` row. Sign in at `/admin/sign-in`; do not add public signup or production credentials. System Admin invitation actions return a one-time local acceptance URL for Mailpit/testing. Invitation tokens are hashed before storage and expire after 72 hours.
+
 ## Commands
 
 ```bash
