@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:stack": "pnpm db:start && pnpm dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -11,10 +12,18 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:legal": "playwright test -c playwright.phase7-legal.config.ts tests/e2e/phase-7-legal.spec.ts",
     "test:concurrency": "node scripts/phase-7-concurrency.mjs",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop --no-backup",
+    "db:status": "supabase status",
+    "db:reset": "supabase stop --no-backup && supabase start",
+    "fixtures:reset": "node scripts/fixtures-reset.mjs",
+    "secret-scan": "bash scripts/secret-scan.sh",
     "format": "prettier --write .",
     "format-check": "prettier --check .",
-    "db:types": "node scripts/generate-database-types.mjs"
+    "db:types": "node scripts/generate-database-types.mjs",
+    "validate": "pnpm format-check && pnpm lint && pnpm type-check && pnpm test && pnpm secret-scan && pnpm build"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",

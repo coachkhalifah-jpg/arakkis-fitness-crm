@@ -27,4 +27,16 @@ describe("environment validation", () => {
     expect(getPublicEnv()).not.toHaveProperty("SUPABASE_SERVICE_ROLE_KEY");
     expect(getServerEnv()).toHaveProperty("SUPABASE_SERVICE_ROLE_KEY", "server-only-key");
   });
+
+  it("rejects insecure hosted URLs", () => {
+    process.env = {
+      NODE_ENV: "test",
+      NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "public-key",
+      NEXT_PUBLIC_APP_URL: "http://preview.example.com",
+      SUPABASE_SERVICE_ROLE_KEY: "server-only-key",
+      APP_ENV: "staging",
+    };
+    expect(() => getServerEnv()).toThrow(/HTTPS/);
+  });
 });

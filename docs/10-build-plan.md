@@ -160,3 +160,9 @@ Deliver:
 - security implications reviewed
 - manual test steps documented
 - Git checkpoint/commit created
+# Phase 9 synchronization
+
+Phase 9 is Deployment, Operational Readiness, and Developer Handoff. It is an operational phase,
+not a product-feature phase. See `docs/25-phase-9-deployment-operations-handoff.md` through
+`docs/35-phase-9-acceptance-ledger.md`. Hosted actions remain user-owned and require explicit
+authorization.

@@ -69,12 +69,12 @@ if command -v supabase >/dev/null 2>&1; then
   # legacy profile error. Stop with --no-backup removes only this local
   # project's data volume; start then recreates the database and reapplies
   # every tracked migration from zero.
-  supabase stop --no-backup
-  supabase start
+  supabase stop --no-backup >/dev/null
+  supabase start >/dev/null
   run_schema_assertions
   run_runtime_tests
-  supabase stop --no-backup
-  supabase start
+  supabase stop --no-backup >/dev/null
+  supabase start >/dev/null
   run_schema_assertions
   supabase db lint --local
   if command -v jq >/dev/null 2>&1; then

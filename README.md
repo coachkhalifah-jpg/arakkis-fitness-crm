@@ -4,18 +4,22 @@ A lightweight multi-organization web application for fitness event booking, atte
 
 ## Current status
 
-Phase 4 public registration, deterministic participant matching, confirmation access, calendar export,
-and organization-scoped roster visibility are implemented. Attendance, participant CRM editing,
-follow-up, notification delivery, and Phase 5 functionality remain deferred.
+Phase 9 deployment-readiness work is documented on `codex/phase-9-deployment-operations-handoff`.
+The Phase 8 release is the starting point for this branch. Production registration remains blocked
+until the Participation acknowledgment is legally approved.
 
 ## Prerequisites and installation
 
-- Node.js 22 and pnpm 10
+- Node.js 22.x and pnpm 10.x
 - Git
+- Docker and Supabase CLI 2.110.0
 
 ```bash
+corepack enable
 pnpm install
+pnpm db:start
 cp .env.example .env.local
+pnpm db:status
 pnpm dev
 ```
 
@@ -32,16 +36,33 @@ Start local Supabase and apply migrations with `bash scripts/validate-database.s
 ## Commands
 
 ```bash
-pnpm dev             # local development
-pnpm lint            # ESLint
-pnpm type-check      # strict TypeScript
-pnpm test            # Vitest + React Testing Library
-pnpm test:e2e        # Playwright smoke test
-pnpm format          # format files
-pnpm format-check    # verify formatting
-pnpm build           # production build
-pnpm start           # serve the production build
+pnpm dev              # Next.js development server
+pnpm dev:stack        # local Supabase then Next.js
+pnpm db:start         # start local Supabase/Docker stack
+pnpm db:status        # show local services and keys; do not paste secrets
+pnpm db:reset         # recreate local database and apply migrations
+pnpm fixtures:reset   # verify synthetic fixture workflow; refuses production
+pnpm test             # Vitest + component tests
+pnpm test:e2e         # browser regression suite
+pnpm test:legal       # production-equivalent legal-gate test
+pnpm test:concurrency # capacity/invitation concurrency scenarios
+pnpm lint             # ESLint
+pnpm type-check       # strict TypeScript
+pnpm format-check     # Prettier verification
+pnpm build            # production build
+pnpm validate         # formatting, lint, type, unit, secret scan, build
+pnpm db:stop          # stop local stack
 ```
+
+## Local routes
+
+- Participant registration: `http://127.0.0.1:3000/registration`
+- Events hub: `http://127.0.0.1:3000/events`
+- Stable event registration: `http://127.0.0.1:3000/register/<slug>`
+- Administrator login: `http://127.0.0.1:3000/admin/sign-in`
+
+Synthetic Auth users are generated at runtime by the Playwright harness and are never documented.
+See `docs/27-local-development.md` for the complete local workflow.
 
 ## Phase 0 scope
 
@@ -85,6 +106,17 @@ Start with:
 11. `docs/10-build-plan.md`
 12. `docs/12-technical-design-proposal.md`
 13. `docs/DECISIONS.md`
+14. `docs/25-phase-9-deployment-operations-handoff.md`
+15. `docs/26-environment-variables.md`
+16. `docs/27-local-development.md`
+17. `docs/28-deployment-runbook.md`
+18. `docs/29-operational-readiness.md`
+19. `docs/30-architecture-handoff.md`
+20. `docs/31-database-and-migrations-handoff.md`
+21. `docs/32-testing-handoff.md`
+22. `docs/33-manual-testing.md`
+23. `docs/34-developer-handoff.md`
+24. `docs/35-phase-9-acceptance-ledger.md`
 
 Codex must also follow the root `AGENTS.md`.
 
@@ -94,7 +126,8 @@ Codex must also follow the root `AGENTS.md`.
 - `README.md` — project overview and workflow
 - `docs/00-product-overview.md` through `docs/12-technical-design-proposal.md` — approved product and technical documentation
 - `docs/DECISIONS.md` — decision history and frozen MVP baseline
-- Application source and database migrations will be added only after the documentation phase is complete.
+- Application source and database migrations are maintained alongside the approved documentation;
+  migrations are ordered, reviewed, and immutable after application.
 
 ## Development workflow
 
