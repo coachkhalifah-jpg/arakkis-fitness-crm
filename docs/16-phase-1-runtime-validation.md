@@ -1,19 +1,11 @@
-# 16 — Phase 1C External Database Runtime Validation
+# 16 — Phase 1D Local Supabase Database Runtime Validation
 
 ## Status
 
-Phase 1C is **blocked**, not passed. The repository is on
-`phase-1-database-schema` at checkpoint commit `09fd63d`.
-
-The Phase 1B changes were uncommitted at the start of this continuation and
-were committed as:
-
-```text
-Prepare Phase 1 database runtime validation
-```
-
-No production database, hosted Supabase project, participant records, or
-database credentials were used.
+Phase 1D **passed locally** on 2026-07-28. Validation used only the local
+Supabase stack and disposable transaction fixtures. No hosted project was
+linked, and no production database, participant records, or credentials were
+used.
 
 ## Runtime environment
 
@@ -22,63 +14,46 @@ Detected:
 - Node.js: `v24.14.0` (workspace-bundled runtime)
 - pnpm: `11.7.0`
 - Homebrew: `5.1.0`
+- Docker Desktop / Engine: `29.6.2`
+- Supabase CLI: `2.110.0` (Homebrew)
 
-Unavailable:
-
-- Supabase CLI
-- Docker and Docker daemon
-- Podman
-- PostgreSQL client/server (`psql`, `postgres`)
-
-Homebrew contains no PostgreSQL or Supabase installation. Installing a global
-runtime was not performed. Package/network access is unavailable in the
-execution environment, so a project-local runtime could not be installed.
+The local stack exposed PostgreSQL on `54322`, the API/Kong gateway on
+`54321`, Studio on `54323`, and Mailpit on `54324`. PostgreSQL, Auth,
+PostgREST, API/Kong, Realtime, Studio, Storage API, Mailpit, and log services
+were healthy/running. Imgproxy and the pooler were excluded/stopped and were
+not required for database validation.
 
 ## Executed checks
 
 | Check | Result | Evidence |
 |---|---|---|
-| Branch and migration inventory | PASS | Branch is `phase-1-database-schema`; migrations `0001`–`0009` exist. |
-| Phase 1B checkpoint commit | PASS | Commit `09fd63d`. |
-| Shell syntax | PASS | `bash -n scripts/validate-database.sh` |
-| Secret and machine-path scan | PASS | No matches for credentials, connection strings, or machine-specific paths. |
-| Offline dependency check | PASS | `pnpm install --offline` completed. |
-| Database validator fail-safe behavior | PASS | `scripts/validate-database.sh` returned exit code `2` with an explicit tooling message. |
-| Type regeneration | PASS, no semantic diff | The approved generator produced 30 tables and 30 enums; migration `0009` adds no tables or enums. |
+| Branch and working tree pre-check | PASS | `phase-1-database-schema`; clean before validation; starting commit `22e9b471228b3a315a384d86138648cd99ec3b8e`. |
+| Docker verification | PASS | Docker Desktop running; `docker version`; disposable `hello-world` container succeeded. |
+| Supabase CLI | PASS | Homebrew CLI `2.110.0`. |
+| Empty migration apply | PASS | Migrations `0001`–`0012` applied in order. |
+| Clean reset/rebuild #1 and #2 | PASS | Local data removed and migrations reapplied twice. |
+| Schema assertions | PASS | 30 tables, 30 enums, RLS/policies/helpers/indexes/triggers, and public projection checks passed. |
+| Runtime RLS/RPC suite | PASS | Anonymous, two isolated Host Admins, System Admin, and RPC replay/duplicate/partial-success/invalid-acknowledgment cases passed. |
+| Constraints and immutable records | PASS | Duplicate/capacity/cancellation/attendance guards and audit immutability passed. |
+| Live TypeScript generation | PASS | `supabase gen types typescript --local`; 2,252-line artifact with 30 tables and 30 enums. |
+| Static checks | PASS | ESLint, strict TypeScript, Vitest (5 tests), and Next production build passed. |
 
-## Not executed because runtime tooling is unavailable
+## Not required for this database gate
 
-- Applying migrations `0001`–`0009` to an empty PostgreSQL/Supabase database.
-- Repeating a clean reset and comparing the second schema.
-- Live schema assertions in `supabase/tests/phase-1-schema-assertions.sql`.
-- Runtime RLS tests for anonymous, System Admin, and two isolated Host Admins.
-- Anonymous registration RPC scenario and contention tests.
-- Constraint, trigger, attendance, capacity, acknowledgment, token, archival,
-  and immutable-history execution tests.
-- Official live-schema TypeScript generation.
-- ESLint, strict type-check, unit tests, production build, and Playwright
-  smoke tests; the project dependency tree is incomplete because registry
-  downloads are unavailable.
-
-These checks are not described as passed.
+Playwright smoke tests, Studio UI checks, Storage API checks, and Imgproxy were
+not required for Phase 1D database runtime validation. No application feature
+or Phase 2 workflow was started.
 
 ## Validation commands for a disposable local environment
 
-After installing the supported Supabase CLI and starting its local stack:
+The completed validation command was:
 
 ```bash
-supabase start
-supabase db reset --local
-supabase db reset --local
-supabase db lint --local
-psql "$DATABASE_URL" --set ON_ERROR_STOP=1 --single-transaction \
-  -f supabase/tests/phase-1-schema-assertions.sql
 bash scripts/validate-database.sh
 ```
 
-The two resets intentionally prove first-apply and repeat-reset behavior.
-The SQL assertion script must be run against the resulting disposable local
-database and must fail the command on any assertion failure.
+The script performs two disposable local rebuilds, executes schema assertions
+after each rebuild, runs the live runtime suite, and runs local schema lint.
 
 ## Defects and corrections
 
@@ -94,13 +69,19 @@ forward migration `0009_runtime_hardening.sql`:
 - **Medium:** an active Host Admin could exist without an active organization
   assignment. A deferred constraint trigger now rejects that state at commit.
 
-No Critical or High defect was validated as remaining, but the corrections are
-not runtime-proven until a compatible disposable database executes them.
+Phase 1D found and corrected these defects with forward migrations:
+
+- **High:** the registration RPC contained ambiguous PL/pgSQL/SQL references;
+  migrations `0010` and `0011` qualify the event row and all local variables.
+- **High:** cancelled registrations/events could accept invalid attendance
+  outcomes and active-registration inserts could exceed capacity;
+  migration `0012` adds write-time attendance and capacity guards.
+
+No Critical or High defect remains from the completed runtime suite.
 
 ## Tag decision
 
-`v0.4-schema-complete` was **not created**. The required runtime migration,
-RLS, RPC, constraint, generated-live-types, and static application checks have
-not all passed.
+`v0.4-schema-complete` is eligible only after the required completion commit is
+created. It must not be created if any mandatory check is later found to fail.
 
 Phase 2 and user-facing application functionality were not implemented.

@@ -14,6 +14,10 @@ Migrations are forward-only and ordered by dependency:
 6. `0006_constraints_triggers_and_security_helpers.sql` — invariant triggers, immutable evidence guards, timestamp triggers, attendance/notification transition recorders, authorization helpers.
 7. `0007_rls_and_public_projections.sql` — RLS on every application table, scoped policies, and the narrow public event schedule view.
 8. `0008_public_registration_rpc.sql` — the only anonymous write surface: a validated, capacity-safe, multi-date registration transaction returning submission-scoped results and a raw one-time-issued confirmation token.
+9. `0009_runtime_hardening.sql` — RLS-safe audit transitions, scoped relationship guards, authenticated operational actors, and active Host Admin assignment enforcement.
+10. `0010_rpc_ambiguity_correction.sql` — qualifies the event reference in the registration RPC.
+11. `0011_rpc_variable_qualification.sql` — qualifies RPC variables and row references to prevent PL/pgSQL ambiguity.
+12. `0012_attendance_and_registration_capacity_guards.sql` — enforces cancelled-registration/event attendance restrictions and active-registration capacity at write time.
 
 ## Tables and enums
 
@@ -42,42 +46,50 @@ The current generated artifact contains 30 tables and 30 enums.
 
 ## Validation performed
 
-- Confirmed the starting worktree was clean and created the required branch.
+- Confirmed the starting worktree was clean on `phase-1-database-schema`.
 - Regenerated TypeScript database types from migrations.
 - Reviewed migration ordering, dependency edges, foreign-key delete behavior, unique indexes, immutable evidence guards, and RLS scope predicates.
-- Ran available repository checks after dependency/runtime issues are resolved.
+- Ran the Phase 1D runtime validator and project static checks.
 
-The workspace does not include the Supabase CLI, PostgreSQL client/server, Docker, or a secret-scanning executable. Therefore an empty-database apply/rollback, live RLS integration test, and dedicated secret scanner could not be run locally. The SQL remains intended for Supabase CLI application and should be applied in a disposable Supabase project before deployment.
+Phase 1D was executed against the local Supabase stack on 2026-07-28. The
+validator applied migrations `0001`–`0012` from an empty local database twice,
+ran the schema assertions and live runtime suite, and completed `supabase db
+lint --local` with no schema errors. The runtime suite covered anonymous,
+Host Admin, and System Admin RLS boundaries; anonymous RPC success, replay,
+duplicate, partial-success, and invalid-acknowledgment cases; capacity and
+duplicate-registration constraints; cancellation/attendance guards; audit
+immutability; and attendance transition recording.
+
+The official live-schema generator completed successfully with 30 tables and
+30 enums. Project lint, strict type-check, unit tests (5 tests), and production
+build all passed. Existing repository-wide Prettier checking reports only the
+pre-existing `tsconfig.json` formatting and generated Supabase temporary
+runtime output; those files were not changed by Phase 1D.
 
 ## Deferred work
 
 Application data-access wrappers, authentication and invitation UI, event management, public registration UI, confirmation endpoint, attendance UI, CRM, follow-up UI, exports, calendar serializers, seed data, and integration/E2E tests remain deferred to later phases.
 
-## Phase 1B runtime validation status
+## Phase 1D runtime validation status
 
-Migration `0009_runtime_hardening.sql` is the first forward migration after the
-committed Phase 1 baseline. It hardens trigger-generated audit writes under
-RLS, protects Host Admin registration and notification relationships from
-scoped-update tampering, requires an active organization assignment for every
-active Host Admin at transaction commit, and binds attendance/notification
-audit actors to the authenticated administrator.
+Migrations `0009`–`0012` are forward-only corrections and hardening after the
+committed Phase 1 baseline. They harden trigger-generated audit writes under
+RLS, protect Host Admin registration and notification relationships from
+scoped-update tampering, require active organization assignments, qualify the
+registration RPC, and enforce attendance/capacity invariants at write time.
 
 Repeatable validation artifacts are provided in:
 
-- `scripts/validate-database.sh` — resets a local Supabase database twice and
-  runs local lint, or runs the SQL assertions against `DATABASE_URL` when
-  `psql` is available.
-- `supabase/tests/phase-1-schema-assertions.sql` — checks the 30-table schema,
-  the public projection, the registration RPC, transition triggers, and the
-  anonymous privilege boundary.
+- `scripts/validate-database.sh` — rebuilds a local Supabase database twice,
+  runs both SQL suites, and lints the resulting schema.
+- `supabase/tests/phase-1-schema-assertions.sql` — checks the approved table,
+  enum, index, policy, RLS, helper, and trigger surface.
+- `supabase/tests/phase-1-runtime.sql` — exercises live authorization, RPC,
+  constraint, trigger, and immutable-record behavior in a rolled-back
+  transaction.
 
-The runtime gate remains blocked in this workspace: no Supabase CLI, `psql`,
-Docker/Podman, or local PostgreSQL server is available, and the package
-registry is unreachable for installing one. Consequently, clean migration
-apply/reset, live RLS behavior, RPC scenarios, and constraint/trigger
-execution have not been reported as passed. See
-`docs/16-phase-1-runtime-validation.md` for the Phase 1C report and exact
-reproduction commands for a disposable local environment.
+The runtime gate passed locally. No hosted project was linked and no
+production credentials or data were used.
 
 ## Known limitations
 
