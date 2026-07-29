@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import Link from "next/link";
 
 export default function HomePage() {
   return (
@@ -8,12 +9,17 @@ export default function HomePage() {
           Fitness Event CRM
         </p>
         <h1 className="text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
-          The foundation is running.
+          The foundation is running — move better, together.
         </h1>
         <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
-          Phase 0 establishes the application shell and engineering foundations. Event registration
-          and administration will arrive in later approved phases.
+          Find an upcoming fitness event and reserve one or more dates in a single registration.
         </p>
+        <Link
+          className="mt-8 inline-block rounded-md bg-brand px-5 py-3 font-medium text-white"
+          href="/registration"
+        >
+          View upcoming events
+        </Link>
       </Card>
     </section>
   );

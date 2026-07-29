@@ -4,7 +4,9 @@ A lightweight multi-organization web application for fitness event booking, atte
 
 ## Current status
 
-Phase 0 project foundation is implemented. Business workflows remain intentionally deferred.
+Phase 4 public registration, deterministic participant matching, confirmation access, calendar export,
+and organization-scoped roster visibility are implemented. Attendance, participant CRM editing,
+follow-up, notification delivery, and Phase 5 functionality remain deferred.
 
 ## Prerequisites and installation
 
@@ -22,6 +24,10 @@ pnpm dev
 ## Local administrator authentication
 
 Phase 2 administrator access is invitation-only. Start local Supabase, apply the migrations with `supabase db reset` (or `bash scripts/validate-database.sh` when the installed CLI requires the local stop/start workaround), and provision a synthetic initial System Admin through the local Supabase Auth admin API plus the matching `admin_profiles` row. Sign in at `/admin/sign-in`; do not add public signup or production credentials. System Admin invitation actions return a one-time local acceptance URL for Mailpit/testing. Invitation tokens are hashed before storage and expire after 72 hours.
+
+## Local public registration testing
+
+Start local Supabase and apply migrations with `bash scripts/validate-database.sh` when the installed CLI requires the local stop/start workaround. Seed synthetic future `OPEN` events and active acknowledgment versions, then open `/registration`. Confirmation links expire after 24 hours; successful registrations can be exported as Google Calendar links or `.ics`. Participation acknowledgment content is still provisional, so production launch remains blocked until legal approval.
 
 ## Commands
 

@@ -50,6 +50,21 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
       .eq("active_status", "ACTIVE")
       .order("name"),
   ]);
+  const { data: registrations } = await db
+    .from("registrations")
+    .select("id,participant_id,registered_at,registration_status,registration_outcome")
+    .eq("event_id", id)
+    .order("registered_at");
+  const participantIds = (registrations ?? []).map((registration) => registration.participant_id);
+  const { data: participants } = participantIds.length
+    ? await db
+        .from("participants")
+        .select("id,first_name,last_name,display_phone,email,primary_affiliation_organization_id")
+        .in("id", participantIds)
+    : { data: [] };
+  const participantById = new Map(
+    (participants ?? []).map((participant) => [participant.id, participant]),
+  );
   const canEdit =
     admin.role === "SYSTEM_ADMIN" && event.status !== "CANCELLED" && event.status !== "COMPLETED";
   return (
@@ -206,6 +221,53 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
             </div>
           </dl>
         )}
+      </div>
+      <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
+        <h2 className="text-lg font-semibold">Registration roster</h2>
+        <p className="mt-1 text-sm text-slate-600">
+          {
+            (registrations ?? []).filter(
+              (registration) => registration.registration_status === "REGISTERED",
+            ).length
+          }{" "}
+          active registrations · Host-scoped operational view
+        </p>
+        <div className="mt-4 overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="p-2">Participant</th>
+                <th className="p-2">Phone</th>
+                <th className="p-2">Email</th>
+                <th className="p-2">Status</th>
+                <th className="p-2">Registered</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(registrations ?? []).map((registration) => {
+                const participant = participantById.get(registration.participant_id);
+                return (
+                  <tr key={registration.id} className="border-b last:border-0">
+                    <td className="p-2">
+                      {participant
+                        ? `${participant.first_name} ${participant.last_name}`
+                        : "Participant unavailable"}
+                    </td>
+                    <td className="p-2">{participant?.display_phone ?? "—"}</td>
+                    <td className="p-2">{participant?.email ?? "—"}</td>
+                    <td className="p-2">{registration.registration_status}</td>
+                    <td className="p-2">
+                      {new Intl.DateTimeFormat("en-US", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      }).format(new Date(registration.registered_at))}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
       {admin.role === "SYSTEM_ADMIN" ? (
         <div className="mt-6 flex flex-wrap gap-3">
