@@ -9,6 +9,7 @@ const publicSchema = z.object({
 const serverSchema = publicSchema.extend({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   APP_ENV: z.enum(["development", "test", "staging", "production"]),
+  APP_BASE_URL: z.string().url().optional(),
 });
 
 export function getPublicEnv() {
@@ -28,5 +29,12 @@ export function getServerEnv() {
     ...getPublicEnv(),
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     APP_ENV: process.env.APP_ENV,
+    APP_BASE_URL: process.env.APP_BASE_URL,
   });
+}
+
+/** Production registration remains blocked until the database/legal process is approved. */
+export function isProductionRegistrationBlocked() {
+  const env = process.env.APP_ENV;
+  return env === "production";
 }

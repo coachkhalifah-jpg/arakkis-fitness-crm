@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { RegistrationForm } from "@/components/registration/registration-form";
 import { createClient } from "@/lib/db/server";
+import { isProductionRegistrationBlocked } from "@/lib/config/env";
 
 export default async function RegistrationPage() {
   const db = await createClient();
@@ -25,7 +26,12 @@ export default async function RegistrationPage() {
           No participant account is required.
         </p>
       </Card>
-      {events && events.length > 0 ? (
+      {isProductionRegistrationBlocked() ? (
+        <Card className="border-amber-300 bg-amber-50 p-6" role="status">
+          Registration is unavailable while the Participation acknowledgment remains provisional. No
+          participant information can be submitted.
+        </Card>
+      ) : events && events.length > 0 ? (
         <RegistrationForm
           events={events as never}
           organizations={registrationConfig.organizations ?? []}

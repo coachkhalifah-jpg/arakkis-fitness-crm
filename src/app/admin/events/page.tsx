@@ -1,12 +1,8 @@
 import { requireActiveAdmin } from "@/lib/authorization/server";
 import Link from "next/link";
 import { createClient } from "@/lib/db/server";
-import {
-  cancelEventForm,
-  copyEventForm,
-  createEventForm,
-  publishEventForm,
-} from "@/lib/services/phase-3-actions";
+import { copyEventForm, createEventForm, cancelEventForm } from "@/lib/services/phase-3-actions";
+import { publishPhase7EventForm, unpublishPhase7EventForm } from "@/lib/services/phase-7-actions";
 import { Button } from "@/components/ui/button";
 
 export default async function EventsPage() {
@@ -22,7 +18,7 @@ export default async function EventsPage() {
     db
       .from("events")
       .select(
-        "id,name,status,starts_at,ends_at,timezone,capacity,registration_deadline,host_organization_id,venue_id",
+        "id,name,status,publication_status,public_slug,starts_at,ends_at,timezone,capacity,registration_deadline,host_organization_id,venue_id",
       )
       .order("starts_at", { ascending: false }),
   ]);
@@ -148,10 +144,33 @@ export default async function EventsPage() {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  {admin.role === "SYSTEM_ADMIN" && event.status === "DRAFT" ? (
-                    <form action={publishEventForm.bind(null, event.id)}>
+                  {admin.role === "SYSTEM_ADMIN" &&
+                  event.status !== "CANCELLED" &&
+                  event.publication_status !== "PUBLISHED" ? (
+                    <form action={publishPhase7EventForm.bind(null, event.id)}>
                       <Button type="submit">Publish</Button>
                     </form>
+                  ) : null}
+                  {admin.role === "SYSTEM_ADMIN" && event.publication_status === "PUBLISHED" ? (
+                    <form action={unpublishPhase7EventForm.bind(null, event.id)}>
+                      <Button type="submit">Unpublish</Button>
+                    </form>
+                  ) : null}
+                  {event.public_slug ? (
+                    <Link
+                      className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      href={`/register/${event.public_slug}`}
+                    >
+                      Preview
+                    </Link>
+                  ) : null}
+                  {event.public_slug ? (
+                    <a
+                      className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      href={`/admin/events/${event.id}/qr`}
+                    >
+                      QR
+                    </a>
                   ) : null}
                   {admin.role === "SYSTEM_ADMIN" && event.status !== "CANCELLED" ? (
                     <form action={copyEventForm.bind(null, event.id)}>

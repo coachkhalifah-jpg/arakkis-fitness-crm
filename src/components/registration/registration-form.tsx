@@ -1,10 +1,14 @@
 "use client";
 
 import { useActionState } from "react";
-import { submitRegistration, type RegistrationActionState } from "@/lib/registration/actions";
+import {
+  submitRegistration,
+  submitSlugRegistration,
+  type RegistrationActionState,
+} from "@/lib/registration/actions";
 
 type Event = {
-  id: string;
+  id?: string;
   name: string;
   starts_at: string;
   ends_at: string;
@@ -24,15 +28,17 @@ export function RegistrationForm({
   participation,
   dataUse,
   idempotencyKey,
+  publicSlug,
 }: {
   events: Event[];
   organizations: Organization[];
   participation: Acknowledgment;
   dataUse: Acknowledgment;
   idempotencyKey: string;
+  publicSlug?: string;
 }) {
   const [state, action, pending] = useActionState<RegistrationActionState, FormData>(
-    submitRegistration,
+    publicSlug ? submitSlugRegistration : submitRegistration,
     {},
   );
   if (!participation || !dataUse)
@@ -54,13 +60,13 @@ export function RegistrationForm({
             const full = event.active_registration_count >= event.capacity;
             return (
               <label
-                key={event.id}
+                key={event.id ?? publicSlug ?? event.name}
                 className={`flex gap-3 rounded border p-3 ${full ? "opacity-60" : "cursor-pointer"}`}
               >
                 <input
                   type="checkbox"
-                  name="eventIds"
-                  value={event.id}
+                  name={publicSlug ? "publicSlug" : "eventIds"}
+                  value={publicSlug ?? event.id}
                   disabled={full}
                   className="mt-1 h-5 w-5"
                 />

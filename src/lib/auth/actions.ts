@@ -55,6 +55,24 @@ export async function revokeInvitation(invitationId: string) {
   return { success: "Invitation revoked." };
 }
 
+export async function regenerateInvitation(invitationId: string) {
+  const actor = await requireSystemAdmin();
+  const { token, tokenHash } = createInvitationToken();
+  const privileged = createPrivilegedClient();
+  const expires = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
+  const { data: regenerated, error } = await privileged.rpc("regenerate_admin_invitation", {
+    p_invitation_id: invitationId,
+    p_token_hash: tokenHash,
+    p_token_expires_at: expires,
+    p_actor_admin_id: actor.userId,
+  });
+  if (error || !regenerated) return { error: "Invitation could not be regenerated." };
+  const env = getServerEnv();
+  return {
+    inviteUrl: `${env.APP_BASE_URL || env.NEXT_PUBLIC_APP_URL}/admin/invitations/accept?token=${encodeURIComponent(token)}`,
+  };
+}
+
 export async function acceptInvitation(
   _previous: AuthActionState,
   formData: FormData,
@@ -70,25 +88,35 @@ export async function acceptInvitation(
   }
 
   const privileged = createPrivilegedClient();
+  const sessionClient = await createClient();
+  const { data: session } = await sessionClient.auth.getUser();
+  if (session.user && session.user.email?.trim().toLowerCase() !== email) {
+    return { error: GENERIC_INVITATION_ERROR };
+  }
   let authUserId: string;
   let createdAuthUser = false;
   let existingAuthUser = false;
-  const { data: created, error: createError } = await privileged.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-  });
-  if (created.user) {
-    authUserId = created.user.id;
-    createdAuthUser = true;
-  } else if (createError) {
-    const { data: users } = await privileged.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    const existing = users.users.find((user) => user.email?.trim().toLowerCase() === email);
-    if (!existing) return { error: GENERIC_INVITATION_ERROR };
-    authUserId = existing.id;
+  if (session.user) {
+    authUserId = session.user.id;
     existingAuthUser = true;
   } else {
-    return { error: GENERIC_INVITATION_ERROR };
+    const { data: created, error: createError } = await privileged.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
+    if (created.user) {
+      authUserId = created.user.id;
+      createdAuthUser = true;
+    } else if (createError) {
+      const { data: users } = await privileged.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      const existing = users.users.find((user) => user.email?.trim().toLowerCase() === email);
+      if (!existing) return { error: GENERIC_INVITATION_ERROR };
+      authUserId = existing.id;
+      existingAuthUser = true;
+    } else {
+      return { error: GENERIC_INVITATION_ERROR };
+    }
   }
 
   const { error: acceptanceError } = await privileged.rpc("accept_admin_invitation", {
@@ -102,17 +130,21 @@ export async function acceptInvitation(
     return { error: GENERIC_INVITATION_ERROR };
   }
 
-  if (existingAuthUser) {
+  if (existingAuthUser && !session.user) {
     const { error: passwordError } = await privileged.auth.admin.updateUserById(authUserId, {
       password,
     });
     if (passwordError) return { error: GENERIC_INVITATION_ERROR };
   }
 
-  const sessionClient = await createClient();
-  const { error: sessionError } = await sessionClient.auth.signInWithPassword({ email, password });
-  if (sessionError) {
-    return { error: GENERIC_INVITATION_ERROR };
+  if (!session.user) {
+    const { error: sessionError } = await sessionClient.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (sessionError) {
+      return { error: GENERIC_INVITATION_ERROR };
+    }
   }
   redirect("/admin");
 }

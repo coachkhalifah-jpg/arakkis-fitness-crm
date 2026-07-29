@@ -7,6 +7,7 @@ import { ConfirmSubmit } from "@/components/admin/confirm-submit";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { SubmitButton } from "@/components/admin/submit-button";
+import { CopyLinkButton } from "@/components/admin/copy-link-button";
 import {
   cancelEventForm,
   copyEventForm,
@@ -18,6 +19,14 @@ import {
   reopenAttendanceSubmit,
   updateEvent,
 } from "@/lib/services/phase-3-actions";
+import {
+  pausePhase7EventForm,
+  phase7EventUrl,
+  publishPhase7EventForm,
+  resumePhase7EventForm,
+  setPhase7SlugForm,
+  unpublishPhase7EventForm,
+} from "@/lib/services/phase-7-actions";
 
 function localValue(value: string, timezone: string) {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -104,6 +113,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   ]);
   const canEdit =
     admin.role === "SYSTEM_ADMIN" && event.status !== "CANCELLED" && event.status !== "COMPLETED";
+  const publicUrl = event.public_slug ? await phase7EventUrl(event.public_slug) : null;
   return (
     <section className="mx-auto max-w-5xl px-6 py-12">
       <Link className="text-sm text-brand" href="/admin/events">
@@ -119,6 +129,76 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         }).format(new Date(event.starts_at))}{" "}
         · {event.timezone}
       </p>
+      <div className="mt-6 rounded-lg border border-brand/30 bg-brand/5 p-6">
+        <h2 className="text-lg font-semibold">Publishing and registration link</h2>
+        <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+          <div>
+            <dt className="text-slate-500">Publication</dt>
+            <dd>{event.publication_status}</dd>
+          </div>
+          <div>
+            <dt className="text-slate-500">Registration</dt>
+            <dd>{event.registration_paused_at ? "PAUSED" : event.publication_status}</dd>
+          </div>
+        </dl>
+        {admin.role === "SYSTEM_ADMIN" && event.status !== "CANCELLED" ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {event.publication_status === "PUBLISHED" ? (
+              <form action={unpublishPhase7EventForm.bind(null, id)}>
+                <Button type="submit">Unpublish</Button>
+              </form>
+            ) : (
+              <form action={publishPhase7EventForm.bind(null, id)}>
+                <Button type="submit">Publish</Button>
+              </form>
+            )}
+            {event.registration_paused_at ? (
+              <form action={resumePhase7EventForm}>
+                <input type="hidden" name="eventId" value={id} />
+                <Button type="submit">Resume registration</Button>
+              </form>
+            ) : (
+              <form action={pausePhase7EventForm}>
+                <input type="hidden" name="eventId" value={id} />
+                <Button type="submit">Pause registration</Button>
+              </form>
+            )}
+            {publicUrl ? (
+              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm" href={publicUrl}>
+                Share Registration
+              </a>
+            ) : null}
+            {publicUrl ? <CopyLinkButton url={publicUrl} /> : null}
+            {event.public_slug ? (
+              <a
+                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                href={`/admin/events/${id}/qr`}
+              >
+                Download QR
+              </a>
+            ) : null}
+          </div>
+        ) : null}
+        {publicUrl ? (
+          <p className="mt-3 break-all text-sm text-slate-600" data-testid="canonical-url">
+            {publicUrl}
+          </p>
+        ) : null}
+        {canEdit ? (
+          <form action={setPhase7SlugForm.bind(null, id)} className="mt-4 flex gap-2">
+            <label className="sr-only" htmlFor="publicSlug">
+              Public slug
+            </label>
+            <input
+              id="publicSlug"
+              name="publicSlug"
+              defaultValue={event.public_slug ?? ""}
+              className="min-w-0 flex-1 rounded border p-2"
+            />
+            <Button type="submit">Save slug</Button>
+          </form>
+        ) : null}
+      </div>
       {event.status === "CANCELLED" ? (
         <p className="mt-4 rounded border border-red-200 bg-red-50 p-4 text-red-800">
           This event is permanently cancelled and cannot be restored. Copy it to create a separate

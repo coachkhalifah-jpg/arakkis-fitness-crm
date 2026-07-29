@@ -18,6 +18,13 @@ export type Database = {
           created_at: string;
           updated_at: string;
           archived_at: string | null;
+          publication_status: "DRAFT" | "PUBLISHED" | "UNPUBLISHED";
+          public_slug: string | null;
+          registration_opens_at: string | null;
+          registration_closes_at: string | null;
+          registration_paused_at: string | null;
+          last_published_at: string | null;
+          published_by_admin_id: string | null;
         };
         Insert: {
           id?: string;
@@ -31,6 +38,13 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           archived_at?: string;
+          publication_status?: "DRAFT" | "PUBLISHED" | "UNPUBLISHED";
+          public_slug?: string;
+          registration_opens_at?: string;
+          registration_closes_at?: string;
+          registration_paused_at?: string;
+          last_published_at?: string;
+          published_by_admin_id?: string;
         };
         Update: {
           id?: string;
@@ -44,6 +58,13 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           archived_at?: string;
+          publication_status?: "DRAFT" | "PUBLISHED" | "UNPUBLISHED";
+          public_slug?: string;
+          registration_opens_at?: string;
+          registration_closes_at?: string;
+          registration_paused_at?: string;
+          last_published_at?: string;
+          published_by_admin_id?: string;
         };
         Relationships: [];
       };
@@ -1227,7 +1248,33 @@ export type Database = {
     Views: {
       public_event_schedule: { Row: Record<string, unknown>; Relationships: [] };
     };
-    Functions: {};
+    Functions: {
+      phase7_registration_available: {
+        Args: { p_event_id: string };
+        Returns: boolean;
+      };
+      get_public_event_by_slug: {
+        Args: { p_slug: string };
+        Returns: Json;
+      };
+      phase7_event_id_by_slug: {
+        Args: { p_slug: string };
+        Returns: string;
+      };
+      regenerate_admin_invitation: {
+        Args: {
+          p_invitation_id: string;
+          p_token_hash: string;
+          p_token_expires_at: string;
+          p_actor_admin_id: string;
+        };
+        Returns: boolean;
+      };
+      phase7_registration_legal_allowed: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+    };
     Enums: {
       organization_status: "ACTIVE" | "INACTIVE" | "ARCHIVED";
       participant_status: "ACTIVE" | "ARCHIVED";
