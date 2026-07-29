@@ -3,4 +3,5 @@ README.md
 docs/
 node_modules/
 .next/
+supabase/.temp/
 pnpm-lock.yaml
