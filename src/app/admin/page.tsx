@@ -12,10 +12,29 @@ export default async function AdminPage() {
         <h1 className="mt-3 text-4xl font-semibold tracking-tight text-ink">
           Admin access verified
         </h1>
-        <Alert className="mt-8">
-          Phase 2 authentication and authorization foundation is active. Operational features remain
-          deferred.
-        </Alert>
+        <Alert className="mt-8">Choose an operational area to continue.</Alert>
+        <nav className="mt-6 grid gap-3 sm:grid-cols-3" aria-label="Operations">
+          {admin.role === "SYSTEM_ADMIN" ? (
+            <a
+              className="rounded-lg border border-slate-200 bg-white p-4 font-medium hover:border-brand"
+              href="/admin/organizations"
+            >
+              Organizations
+            </a>
+          ) : null}
+          <a
+            className="rounded-lg border border-slate-200 bg-white p-4 font-medium hover:border-brand"
+            href="/admin/venues"
+          >
+            Venues
+          </a>
+          <a
+            className="rounded-lg border border-slate-200 bg-white p-4 font-medium hover:border-brand"
+            href="/admin/events"
+          >
+            Events
+          </a>
+        </nav>
         <dl className="mt-8 space-y-4 rounded-lg border border-slate-200 bg-white p-6">
           <div>
             <dt className="text-sm text-slate-500">Signed-in identity</dt>
