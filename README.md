@@ -5,8 +5,10 @@ A lightweight multi-organization web application for fitness event booking, atte
 ## Current status
 
 Phase 9 deployment-readiness work is documented on `codex/phase-9-deployment-operations-handoff`.
-The Phase 8 release is the starting point for this branch. Production registration remains blocked
-until the Participation acknowledgment is legally approved.
+The free-tier deployment audit branch is `codex/mvp-free-tier-deployment`, based on the Phase 9
+release. Local deployment, database, security, legal-gate, concurrency, and browser validation pass;
+hosted deployment remains pending owner-authenticated GitHub, Supabase, and hosting accounts.
+Production registration remains blocked until the Participation acknowledgment is legally approved.
 
 ## Prerequisites and installation
 
