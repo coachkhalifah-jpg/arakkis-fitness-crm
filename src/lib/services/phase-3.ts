@@ -34,7 +34,21 @@ export const eventSchema = z.object({
   registrationDeadlineLocal: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
   capacity: z.coerce.number().int().positive().max(100000),
   visibility: z.enum(["PUBLIC", "AFFILIATION_RESTRICTED"]),
+  communicationUrl: z.string().trim().max(2048).optional().or(z.literal("")),
+  communicationLabel: z.string().trim().max(100).optional().or(z.literal("")),
 });
+
+export const recurrenceSchema = z
+  .object({
+    enabled: z.boolean(),
+    endsOn: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
+  })
+  .refine((value) => !value.enabled || Boolean(value.endsOn), {
+    message: "Choose an end date for the recurring series.",
+  });
 
 export class Phase3Error extends Error {
   constructor(
@@ -43,6 +57,19 @@ export class Phase3Error extends Error {
   ) {
     super(message);
   }
+}
+
+export function parseCommunicationLink(url = "", label = "") {
+  if (!url) return { url: null, label: null };
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Phase3Error("invalid", "Enter a valid HTTPS communication link.");
+  }
+  if (parsed.protocol !== "https:")
+    throw new Phase3Error("invalid", "Communication links must use HTTPS.");
+  return { url: parsed.toString(), label: label || "Join the group" };
 }
 
 function partsFor(instant: Date, timezone: string) {
@@ -124,6 +151,52 @@ export function parseEventTimes(input: z.infer<typeof eventSchema>, timezone: st
   if (new Date(registrationDeadline) > new Date(startsAt))
     throw new Phase3Error("invalid", "Registration deadline must be at or before the event start.");
   return { startsAt, endsAt, registrationDeadline };
+}
+
+function addDays(value: string, days: number) {
+  const date = new Date(`${value}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function withDate(localDateTime: string, date: string) {
+  return `${date}T${localDateTime.slice(11)}`;
+}
+
+export function buildWeeklyOccurrences(
+  input: z.infer<typeof eventSchema>,
+  timezone: string,
+  endsOn: string,
+) {
+  const startDate = input.startLocal.slice(0, 10);
+  const endDate = input.endLocal.slice(0, 10);
+  if (endsOn < startDate)
+    throw new Phase3Error(
+      "invalid",
+      "The recurrence end date must be on or after the first event.",
+    );
+  const result: Array<
+    ReturnType<typeof parseEventTimes> & { localDate: string; occurrence: number }
+  > = [];
+  for (
+    let occurrence = 1, localDate = startDate;
+    localDate <= endsOn;
+    occurrence += 1, localDate = addDays(localDate, 7)
+  ) {
+    const times = parseEventTimes(
+      {
+        ...input,
+        startLocal: withDate(input.startLocal, localDate),
+        endLocal: withDate(input.endLocal, localDate),
+        registrationDeadlineLocal: withDate(input.registrationDeadlineLocal, localDate),
+      },
+      timezone,
+    );
+    result.push({ ...times, localDate, occurrence });
+    if (result.length > 104)
+      throw new Phase3Error("invalid", "A recurring series may contain at most 104 weekly dates.");
+  }
+  return result;
 }
 
 export async function assertOrganizationScope(context: AdminContext, organizationId: string) {

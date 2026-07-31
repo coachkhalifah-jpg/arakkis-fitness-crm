@@ -294,6 +294,22 @@ Public administrator signup is not shown. System Admin creates Host Admin invita
 
 The canonical event route is `/register/{public-slug}`. It shows only approved event name/description, host organization, venue, venue-local date/time, instructions, capacity state, registration availability, and legal-gate/unavailable messaging. It never shows internal IDs, participant/admin data, private notes, or audit details. Availability states include not yet open, open, paused, closed, full, cancelled, unpublished, unavailable, and production legally blocked.
 
+For a recurring series, the route is the canonical series slug and shows the
+upcoming published occurrences within the rolling 14-day selection window. A
+participant may select multiple dates; each selected date is submitted and
+validated as an independent Event registration. Event descriptions render as
+escaped plain text with preserved whitespace; Markdown and automatic links are
+not interpreted.
+
+The public hub uses centered identity, stacked event cards, a primary action,
+responsive layout, keyboard-visible focus, and a reduced-motion mode. Desktop
+and mobile background assets are replaceable static files with a safe fallback
+gradient.
+
+After a successful registration, the confirmation page may show one optional
+HTTPS communication CTA using the event-provided label. It is not shown before
+registration or for failed results.
+
 ### Link management
 
 Authorized administrators see publication status, registration availability, public slug, complete canonical URL, opening/closing times, capacity/full state, legal-gate state, last published time, and audited actor. Controls include publish, unpublish, pause, resume, preview, copy link, and generate QR. Copy, preview, and QR generation have no publication or registration side effect. Copy feedback is visible, keyboard accessible, and does not store clipboard contents.

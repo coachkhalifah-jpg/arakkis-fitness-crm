@@ -103,16 +103,43 @@ export async function submitSlugRegistration(
       return { error: "Registration is temporarily unavailable while legal approval is pending." };
     const slug = assertPublicSlug(String(form.get("publicSlug") ?? ""));
     const privileged = createPrivilegedClient();
-    const { data: eventId, error: eventError } = await privileged.rpc("phase7_event_id_by_slug", {
-      p_slug: slug,
-    });
-    if (eventError || !eventId) return { error: "This event is unavailable." };
-    const { data: available, error } = await privileged.rpc("phase7_registration_available", {
-      p_event_id: eventId,
-    });
-    if (error || !available)
-      return { error: "Registration is no longer available for this event." };
-    confirmationToken = await executeRegistration(form, [eventId]);
+    const selectedStarts = [...new Set(form.getAll("selectedOccurrenceStartsAt").map(String))];
+    if (selectedStarts.length) {
+      const { data: series, error: seriesError } = await privileged
+        .from("event_series")
+        .select("id,selection_window_days")
+        .eq("public_slug", slug)
+        .maybeSingle();
+      if (seriesError || !series) return { error: "This recurring event is unavailable." };
+      const { data: occurrences, error: occurrenceError } = await privileged
+        .from("events")
+        .select("id,starts_at")
+        .eq("event_series_id", series.id)
+        .eq("status", "OPEN");
+      if (occurrenceError) return { error: "This recurring event is unavailable." };
+      const now = Date.now();
+      const cutoff = now + series.selection_window_days * 24 * 60 * 60 * 1000;
+      const selected = (occurrences ?? [])
+        .filter((occurrence) => {
+          const time = new Date(occurrence.starts_at).getTime();
+          return selectedStarts.includes(occurrence.starts_at) && time > now && time <= cutoff;
+        })
+        .map((occurrence) => occurrence.id);
+      if (selected.length !== selectedStarts.length)
+        return { error: "Select only available dates within the next two weeks." };
+      confirmationToken = await executeRegistration(form, selected);
+    } else {
+      const { data: eventId, error: eventError } = await privileged.rpc("phase7_event_id_by_slug", {
+        p_slug: slug,
+      });
+      if (eventError || !eventId) return { error: "This event is unavailable." };
+      const { data: available, error } = await privileged.rpc("phase7_registration_available", {
+        p_event_id: eventId,
+      });
+      if (error || !available)
+        return { error: "Registration is no longer available for this event." };
+      confirmationToken = await executeRegistration(form, [eventId]);
+    }
   } catch (error) {
     if (error instanceof Error && error.name === "ZodError")
       return { error: "Please correct the highlighted registration fields." };

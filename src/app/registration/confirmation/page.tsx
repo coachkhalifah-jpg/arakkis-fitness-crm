@@ -16,6 +16,8 @@ type ConfirmationEvent = CalendarEvent & {
   ends_at: string;
   participant_instructions?: string | null;
   host_organization_name: string;
+  communication_url?: string | null;
+  communication_label?: string | null;
 };
 const reasonText: Record<string, string> = {
   FULL: "Event full",
@@ -112,7 +114,7 @@ export default async function ConfirmationPage({
               )}
             </div>
             {event.success ? (
-              <div className="mt-4 flex gap-3 text-sm">
+              <div className="mt-4 flex flex-wrap gap-3 text-sm">
                 <a
                   className="text-brand underline"
                   href={googleCalendarUrl(toCalendarEvent(event))}
@@ -125,6 +127,21 @@ export default async function ConfirmationPage({
                 >
                   Download .ics
                 </Link>
+                {event.communication_url ? (
+                  <span className="flex w-full items-center gap-3 pt-2">
+                    <span className="font-medium text-slate-600">
+                      Stay connected with the group
+                    </span>
+                    <a
+                      className="rounded-xl bg-brand px-4 py-2 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-brand-dark"
+                      href={event.communication_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {event.communication_label || "Join the group"} ↗
+                    </a>
+                  </span>
+                ) : null}
               </div>
             ) : null}
           </Card>

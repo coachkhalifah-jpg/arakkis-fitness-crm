@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { eventSchema, localDateTimeToUtc, parseEventTimes } from "@/lib/services/phase-3";
+import {
+  buildWeeklyOccurrences,
+  eventSchema,
+  localDateTimeToUtc,
+  parseEventTimes,
+} from "@/lib/services/phase-3";
 
 describe("Phase 3 event scheduling", () => {
   it("converts venue-local time to the correct UTC instant", () => {
@@ -33,5 +38,42 @@ describe("Phase 3 event scheduling", () => {
       visibility: "PUBLIC",
     });
     expect(() => parseEventTimes(input, "America/New_York")).toThrow(/after start/i);
+  });
+
+  it("materializes weekly occurrences through an inclusive end date", () => {
+    const input = eventSchema.parse({
+      hostOrganizationId: "00000000-0000-0000-0000-000000000001",
+      venueId: "00000000-0000-0000-0000-000000000002",
+      name: "Weekly class",
+      startLocal: "2026-01-15T10:00",
+      endLocal: "2026-01-15T11:00",
+      registrationDeadlineLocal: "2026-01-15T09:00",
+      capacity: 20,
+      visibility: "PUBLIC",
+    });
+    const occurrences = buildWeeklyOccurrences(input, "America/New_York", "2026-02-05");
+    expect(occurrences).toHaveLength(4);
+    expect(occurrences.map((item) => item.localDate)).toEqual([
+      "2026-01-15",
+      "2026-01-22",
+      "2026-01-29",
+      "2026-02-05",
+    ]);
+  });
+
+  it("rejects a recurring end date before the first date", () => {
+    const input = eventSchema.parse({
+      hostOrganizationId: "00000000-0000-0000-0000-000000000001",
+      venueId: "00000000-0000-0000-0000-000000000002",
+      name: "Weekly class",
+      startLocal: "2026-01-15T10:00",
+      endLocal: "2026-01-15T11:00",
+      registrationDeadlineLocal: "2026-01-15T09:00",
+      capacity: 20,
+      visibility: "PUBLIC",
+    });
+    expect(() => buildWeeklyOccurrences(input, "America/New_York", "2026-01-08")).toThrow(
+      /on or after/i,
+    );
   });
 });

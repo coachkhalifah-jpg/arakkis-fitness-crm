@@ -57,6 +57,13 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
     }
     return <p className="mx-auto max-w-5xl px-6 py-12">Event not found.</p>;
   }
+  const { data: eventSeries } = event.event_series_id
+    ? await db
+        .from("event_series")
+        .select("id,frequency,ends_on,selection_window_days,public_slug")
+        .eq("id", event.event_series_id)
+        .maybeSingle()
+    : { data: null };
   const admin = await requireOrganizationAccess(event.host_organization_id, `/admin/events/${id}`);
   const [{ data: organizations }, { data: venues }] = await Promise.all([
     db.from("organizations").select("id,name").eq("active_status", "ACTIVE").order("name"),
@@ -113,7 +120,8 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   ]);
   const canEdit =
     admin.role === "SYSTEM_ADMIN" && event.status !== "CANCELLED" && event.status !== "COMPLETED";
-  const publicUrl = event.public_slug ? await phase7EventUrl(event.public_slug) : null;
+  const canonicalSlug = event.public_slug ?? eventSeries?.public_slug ?? null;
+  const publicUrl = canonicalSlug ? await phase7EventUrl(canonicalSlug) : null;
   return (
     <section className="mx-auto max-w-5xl px-6 py-12">
       <Link className="text-sm text-brand" href="/admin/events">
@@ -140,6 +148,14 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
             <dt className="text-slate-500">Registration</dt>
             <dd>{event.registration_paused_at ? "PAUSED" : event.publication_status}</dd>
           </div>
+          {eventSeries ? (
+            <div className="sm:col-span-2">
+              <dt className="text-slate-500">Recurring schedule</dt>
+              <dd>
+                Every week through {eventSeries.ends_on} · participants can choose 14 days at a time
+              </dd>
+            </div>
+          ) : null}
         </dl>
         {admin.role === "SYSTEM_ADMIN" && event.status !== "CANCELLED" ? (
           <div className="mt-4 flex flex-wrap gap-2">
@@ -169,7 +185,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
               </a>
             ) : null}
             {publicUrl ? <CopyLinkButton url={publicUrl} /> : null}
-            {event.public_slug ? (
+            {canonicalSlug ? (
               <a
                 className="rounded-md border border-slate-300 px-3 py-2 text-sm"
                 href={`/admin/events/${id}/qr`}
@@ -192,7 +208,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
             <input
               id="publicSlug"
               name="publicSlug"
-              defaultValue={event.public_slug ?? ""}
+              defaultValue={canonicalSlug ?? ""}
               className="min-w-0 flex-1 rounded border p-2"
             />
             <Button type="submit">Save slug</Button>
@@ -413,6 +429,25 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                 name="participantInstructions"
                 defaultValue={event.participant_instructions ?? ""}
                 className="mt-1 min-h-20 w-full rounded border p-2"
+              />
+            </label>
+            <label>
+              Communication link (optional)
+              <input
+                name="communicationUrl"
+                type="url"
+                defaultValue={event.communication_url ?? ""}
+                placeholder="https://..."
+                className="mt-1 w-full rounded border p-2"
+              />
+            </label>
+            <label>
+              Link label
+              <input
+                name="communicationLabel"
+                defaultValue={event.communication_label ?? ""}
+                placeholder="Join the group"
+                className="mt-1 w-full rounded border p-2"
               />
             </label>
           </ActionForm>

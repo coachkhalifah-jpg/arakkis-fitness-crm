@@ -30,6 +30,15 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
     availability: string;
     capacity: number;
     active_registration_count: number;
+    series_slug: string | null;
+    occurrences: Array<{
+      name: string;
+      starts_at: string;
+      ends_at: string;
+      timezone: string;
+      capacity: number;
+      active_registration_count: number;
+    }>;
   } | null;
   if (!event)
     return (
@@ -39,7 +48,13 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
     );
   const legallyBlocked = isProductionRegistrationBlocked();
   const availability = legallyBlocked ? "LEGALLY_BLOCKED" : event.availability;
-  const available = availability === "OPEN";
+  const recurringEvents = event.series_slug ? event.occurrences : [];
+  const registrationEvents = recurringEvents.length ? recurringEvents : [event];
+  const available = event.series_slug
+    ? recurringEvents.some(
+        (occurrence) => occurrence.active_registration_count < occurrence.capacity,
+      )
+    : availability === "OPEN";
   return (
     <section className="mx-auto max-w-2xl px-6 py-12">
       <Card className="border-brand/20 bg-white p-8">
@@ -77,24 +92,23 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
               {event.capacity - event.active_registration_count} spots available
             </p>
             <RegistrationForm
-              events={[
-                {
-                  name: event.name,
-                  starts_at: event.starts_at,
-                  ends_at: event.ends_at,
-                  timezone: event.timezone,
-                  venue_name: event.venue_name,
-                  host_organization_name: event.host_organization_name,
-                  active_registration_count: event.active_registration_count,
-                  capacity: event.capacity,
-                  visibility: "PUBLIC",
-                },
-              ]}
+              events={registrationEvents.map((occurrence) => ({
+                name: occurrence.name,
+                starts_at: occurrence.starts_at,
+                ends_at: occurrence.ends_at,
+                timezone: occurrence.timezone,
+                venue_name: event.venue_name,
+                host_organization_name: event.host_organization_name,
+                active_registration_count: occurrence.active_registration_count,
+                capacity: occurrence.capacity,
+                visibility: "PUBLIC",
+              }))}
               organizations={registrationConfig.organizations ?? []}
               participation={registrationConfig.participation}
               dataUse={registrationConfig.data_use}
               idempotencyKey={crypto.randomUUID()}
               publicSlug={slug}
+              seriesMode={Boolean(event.series_slug)}
             />
           </div>
         ) : null}

@@ -14,7 +14,12 @@ Phase 6 completed participant CRM and follow-up accountability. The older build 
 
 Planned Phase 7 capabilities are canonical public event URLs, stable slugs, publication/unpublication, registration opening/closing and pause/resume, public availability states, link copying and preview, QR generation, and System Admin invitation-link creation, expiration, revocation, regeneration, acceptance, and constrained role/organization assignment. Local/staging/production behavior, audit, RLS, database enforcement, and the legal gate are part of the scope.
 
-Series links are deferred. The current architecture has no approved competing series entity, so Phase 7 supports event-level links only: `/register/{public-slug}`.
+The original Phase 7 design supported event-level links only. DEC-049 now
+approves a narrow extension: a weekly Event Series materializes independent
+occurrences and exposes one canonical `/register/{series-slug}` link. The link
+resolves to the most upcoming published occurrence and offers only published
+occurrences within the rolling 14-day participant selection window. Arbitrary
+recurrence rules and recurrence editing remain deferred.
 
 ## Canonical URL and environment model
 

@@ -18,13 +18,6 @@ export type Database = {
           created_at: string;
           updated_at: string;
           archived_at: string | null;
-          publication_status: "DRAFT" | "PUBLISHED" | "UNPUBLISHED";
-          public_slug: string | null;
-          registration_opens_at: string | null;
-          registration_closes_at: string | null;
-          registration_paused_at: string | null;
-          last_published_at: string | null;
-          published_by_admin_id: string | null;
         };
         Insert: {
           id?: string;
@@ -38,13 +31,6 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           archived_at?: string;
-          publication_status?: "DRAFT" | "PUBLISHED" | "UNPUBLISHED";
-          public_slug?: string;
-          registration_opens_at?: string;
-          registration_closes_at?: string;
-          registration_paused_at?: string;
-          last_published_at?: string;
-          published_by_admin_id?: string;
         };
         Update: {
           id?: string;
@@ -58,13 +44,6 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           archived_at?: string;
-          publication_status?: "DRAFT" | "PUBLISHED" | "UNPUBLISHED";
-          public_slug?: string;
-          registration_opens_at?: string;
-          registration_closes_at?: string;
-          registration_paused_at?: string;
-          last_published_at?: string;
-          published_by_admin_id?: string;
         };
         Relationships: [];
       };
@@ -649,47 +628,29 @@ export type Database = {
           id: string;
           participant_id: string;
           event_id: string | null;
-          organization_id: string | null;
-          assigned_admin_id: string | null;
           reason: Database["public"]["Enums"]["follow_up_reason"];
           trigger_key: string | null;
           due_at: string;
           status: Database["public"]["Enums"]["follow_up_status"];
-          task_title: string;
-          task_description: string | null;
-          template_key: string;
           suggested_message: string | null;
           completion_notes: string | null;
-          completion_outcome: string | null;
-          copied_at: string | null;
-          copied_by_admin_id: string | null;
           created_at: string;
           completed_at: string | null;
           completed_by_admin_id: string | null;
-          updated_at: string;
         };
         Insert: {
           id?: string;
           participant_id: string;
           event_id?: string;
-          organization_id?: string;
-          assigned_admin_id?: string;
           reason: Database["public"]["Enums"]["follow_up_reason"];
           trigger_key?: string;
           due_at: string;
           status?: Database["public"]["Enums"]["follow_up_status"];
-          task_title?: string;
-          task_description?: string;
-          template_key?: string;
           suggested_message?: string;
           completion_notes?: string;
-          completion_outcome?: string;
-          copied_at?: string;
-          copied_by_admin_id?: string;
           created_at?: string;
           completed_at?: string;
           completed_by_admin_id?: string;
-          updated_at?: string;
         };
         Update: {
           id?: string;
@@ -1244,37 +1205,77 @@ export type Database = {
         };
         Relationships: [];
       };
+      registration_group_results: {
+        Row: {
+          id: string;
+          registration_group_id: string;
+          event_id: string;
+          success: boolean;
+          reason: string | null;
+          registration_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          registration_group_id: string;
+          event_id: string;
+          success: boolean;
+          reason?: string;
+          registration_id?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          registration_group_id: string;
+          event_id: string;
+          success: boolean;
+          reason?: string;
+          registration_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      event_series: {
+        Row: {
+          id: string;
+          frequency: Database["public"]["Enums"]["event_recurrence_frequency"];
+          interval_count: number;
+          ends_on: string;
+          selection_window_days: number;
+          public_slug: string | null;
+          created_by_admin_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          frequency?: Database["public"]["Enums"]["event_recurrence_frequency"];
+          interval_count?: number;
+          ends_on: string;
+          selection_window_days?: number;
+          public_slug?: string;
+          created_by_admin_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          frequency?: Database["public"]["Enums"]["event_recurrence_frequency"];
+          interval_count?: number;
+          ends_on: string;
+          selection_window_days?: number;
+          public_slug?: string;
+          created_by_admin_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       public_event_schedule: { Row: Record<string, unknown>; Relationships: [] };
     };
-    Functions: {
-      phase7_registration_available: {
-        Args: { p_event_id: string };
-        Returns: boolean;
-      };
-      get_public_event_by_slug: {
-        Args: { p_slug: string };
-        Returns: Json;
-      };
-      phase7_event_id_by_slug: {
-        Args: { p_slug: string };
-        Returns: string;
-      };
-      regenerate_admin_invitation: {
-        Args: {
-          p_invitation_id: string;
-          p_token_hash: string;
-          p_token_expires_at: string;
-          p_actor_admin_id: string;
-        };
-        Returns: boolean;
-      };
-      phase7_registration_legal_allowed: {
-        Args: Record<PropertyKey, never>;
-        Returns: boolean;
-      };
-    };
+    Functions: {};
     Enums: {
       organization_status: "ACTIVE" | "INACTIVE" | "ARCHIVED";
       participant_status: "ACTIVE" | "ARCHIVED";
@@ -1319,6 +1320,7 @@ export type Database = {
         | "INVALIDATION"
         | "MERGE";
       override_source: "WALK_IN" | "ADMIN_REGISTRATION" | "OTHER";
+      event_recurrence_frequency: "WEEKLY";
     };
     CompositeTypes: {};
   };

@@ -12,7 +12,7 @@ declare
     'event_cancellation_requests','event_cancellations','cancellation_template_versions',
     'participant_notification_tasks','participant_notification_deliveries','notification_delivery_transitions',
     'over_capacity_overrides','possible_duplicate_cases','participant_merges','participant_merge_conflicts',
-    'participant_notes','completed_event_invalidations','audit_events'
+    'participant_notes','completed_event_invalidations','audit_events','event_series'
   ];
   missing text;
   table_count integer;
@@ -86,7 +86,7 @@ declare
     'notification_type','notification_task_status','notification_priority','delivery_status',
     'delivery_channel','cancellation_request_status','cancellation_type','cancellation_template_type',
     'template_status','acknowledgment_type','legal_status','invitation_status','duplicate_case_status',
-    'merge_conflict_type','whatsapp_invitation_status','attendance_transition_source','override_source'
+    'merge_conflict_type','whatsapp_invitation_status','attendance_transition_source','override_source','event_recurrence_frequency'
   ];
   missing text;
   enum_count integer;
@@ -119,7 +119,7 @@ declare
     'event_cancellation_requests','event_cancellations','cancellation_template_versions',
     'participant_notification_tasks','participant_notification_deliveries','notification_delivery_transitions',
     'over_capacity_overrides','possible_duplicate_cases','participant_merges','participant_merge_conflicts',
-    'participant_notes','completed_event_invalidations','audit_events'
+    'participant_notes','completed_event_invalidations','audit_events','event_series'
   ];
 begin
   foreach table_name in array expected_tables loop

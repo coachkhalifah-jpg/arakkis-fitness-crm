@@ -11,20 +11,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const db = await createClient();
   const { data: event } = await db
     .from("events")
-    .select("id,name,host_organization_id,public_slug")
+    .select("id,name,host_organization_id,public_slug,event_series(public_slug)")
     .eq("id", id)
     .maybeSingle();
   if (
     !event ||
     (admin.role !== "SYSTEM_ADMIN" &&
       !admin.organizationIds.includes(event.host_organization_id)) ||
-    !event.public_slug
+    !(event.public_slug ?? event.event_series?.[0]?.public_slug)
   ) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   const env = getServerEnv();
   const base = (env.APP_BASE_URL || env.NEXT_PUBLIC_APP_URL).replace(/\/+$/, "");
-  const url = `${base}/register/${encodeURIComponent(assertPublicSlug(event.public_slug))}`;
+  const url = `${base}/register/${encodeURIComponent(assertPublicSlug(event.public_slug ?? event.event_series?.[0]?.public_slug))}`;
   const png = await QRCode.toBuffer(url, {
     type: "png",
     errorCorrectionLevel: "H",

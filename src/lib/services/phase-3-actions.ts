@@ -6,10 +6,13 @@ import { createClient } from "@/lib/db/server";
 import {
   audit,
   eventSchema,
+  buildWeeklyOccurrences,
   localDateTimeToUtc,
   organizationSchema,
+  parseCommunicationLink,
   parseEventTimes,
   Phase3Error,
+  recurrenceSchema,
   venueSchema,
 } from "@/lib/services/phase-3";
 import {
@@ -280,6 +283,13 @@ export async function createEvent(
       registrationDeadlineLocal: value(form, "registrationDeadlineLocal"),
       capacity: value(form, "capacity"),
       visibility: value(form, "visibility"),
+      communicationUrl: value(form, "communicationUrl"),
+      communicationLabel: value(form, "communicationLabel"),
+    });
+    const communication = parseCommunicationLink(input.communicationUrl, input.communicationLabel);
+    const recurrence = recurrenceSchema.parse({
+      enabled: form.get("recurring") === "on",
+      endsOn: value(form, "recurrenceEndsOn") || undefined,
     });
     const db = await createClient();
     const { data: venue } = await db
@@ -291,6 +301,55 @@ export async function createEvent(
     if (!venue || venue.organization_id !== input.hostOrganizationId)
       throw new Phase3Error("invalid", "Choose a venue belonging to the selected organization.");
     const times = parseEventTimes(input, venue.timezone);
+    if (recurrence.enabled) {
+      const occurrences = buildWeeklyOccurrences(input, venue.timezone, recurrence.endsOn!);
+      const { data: series, error: seriesError } = await db
+        .from("event_series")
+        .insert({
+          frequency: "WEEKLY",
+          interval_count: 1,
+          ends_on: recurrence.endsOn!,
+          selection_window_days: 14,
+          created_by_admin_id: admin.userId,
+        })
+        .select("id")
+        .single();
+      if (seriesError || !series)
+        throw new Phase3Error("conflict", "Recurring series could not be created.");
+      const { data: created, error } = await db
+        .from("events")
+        .insert(
+          occurrences.map((occurrence) => ({
+            event_series_id: series.id,
+            series_occurrence_number: occurrence.occurrence,
+            host_organization_id: input.hostOrganizationId,
+            venue_id: input.venueId,
+            name: input.name,
+            description: input.description || null,
+            participant_instructions: input.participantInstructions || null,
+            starts_at: occurrence.startsAt,
+            ends_at: occurrence.endsAt,
+            timezone: venue.timezone,
+            registration_deadline: occurrence.registrationDeadline,
+            capacity: input.capacity,
+            visibility: input.visibility,
+            communication_url: communication.url,
+            communication_label: communication.label,
+            created_by_admin_id: admin.userId,
+          })),
+        )
+        .select("id");
+      if (error || !created?.length)
+        throw new Phase3Error("conflict", "Recurring events could not be created.");
+      await audit(admin.userId, "EVENT_SERIES_CREATED", "EVENT_SERIES", series.id, {
+        ...input,
+        frequency: "WEEKLY",
+        endsOn: recurrence.endsOn,
+        occurrenceCount: occurrences.length,
+      });
+      revalidatePath("/admin/events");
+      return { success: `Recurring series created with ${created.length} weekly dates.` };
+    }
     const { data, error } = await db
       .from("events")
       .insert({
@@ -305,6 +364,8 @@ export async function createEvent(
         registration_deadline: times.registrationDeadline,
         capacity: input.capacity,
         visibility: input.visibility,
+        communication_url: communication.url,
+        communication_label: communication.label,
         created_by_admin_id: admin.userId,
       })
       .select("id")
@@ -372,7 +433,10 @@ export async function updateEvent(
       registrationDeadlineLocal: value(form, "registrationDeadlineLocal"),
       capacity: value(form, "capacity"),
       visibility: value(form, "visibility"),
+      communicationUrl: value(form, "communicationUrl"),
+      communicationLabel: value(form, "communicationLabel"),
     });
+    const communication = parseCommunicationLink(input.communicationUrl, input.communicationLabel);
     if (
       old.status !== "DRAFT" &&
       (input.hostOrganizationId !== old.host_organization_id || input.venueId !== old.venue_id)
@@ -401,6 +465,8 @@ export async function updateEvent(
         registration_deadline: times.registrationDeadline,
         capacity: input.capacity,
         visibility: input.visibility,
+        communication_url: communication.url,
+        communication_label: communication.label,
       })
       .eq("id", id);
     if (error)
@@ -460,7 +526,7 @@ export async function copyEvent(id: string): Promise<Phase3ActionState> {
     const { data: source } = await db
       .from("events")
       .select(
-        "host_organization_id, venue_id, name, description, participant_instructions, starts_at, ends_at, timezone, capacity, registration_deadline, visibility",
+        "host_organization_id, venue_id, name, description, participant_instructions, starts_at, ends_at, timezone, capacity, registration_deadline, visibility, communication_url, communication_label",
       )
       .eq("id", id)
       .single();

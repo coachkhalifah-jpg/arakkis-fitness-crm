@@ -17,6 +17,7 @@ type Event = {
   host_organization_name: string;
   active_registration_count: number;
   capacity: number;
+  availability?: string;
   visibility: string;
 };
 type Organization = { id: string; name: string };
@@ -29,6 +30,7 @@ export function RegistrationForm({
   dataUse,
   idempotencyKey,
   publicSlug,
+  seriesMode = false,
 }: {
   events: Event[];
   organizations: Organization[];
@@ -36,6 +38,7 @@ export function RegistrationForm({
   dataUse: Acknowledgment;
   idempotencyKey: string;
   publicSlug?: string;
+  seriesMode?: boolean;
 }) {
   const [state, action, pending] = useActionState<RegistrationActionState, FormData>(
     publicSlug ? submitSlugRegistration : submitRegistration,
@@ -59,20 +62,31 @@ export function RegistrationForm({
       <fieldset>
         <legend className="text-xl font-semibold tracking-tight">Choose your dates</legend>
         <p className="mt-1 text-sm text-slate-600">
-          Select one or more sessions. Your contact details are collected once.
+          {seriesMode
+            ? "Choose one or more dates in the next two weeks. Each date is reserved separately."
+            : "Select one or more sessions. Your contact details are collected once."}
         </p>
         <div className="mt-5 space-y-3">
           {events.map((event) => {
-            const full = event.active_registration_count >= event.capacity;
+            const full =
+              event.active_registration_count >= event.capacity ||
+              event.availability === "CLOSED" ||
+              event.availability === "CANCELLED";
             return (
               <label
-                key={event.id ?? publicSlug ?? event.name}
+                key={seriesMode ? event.starts_at : (event.id ?? publicSlug ?? event.name)}
                 className={`flex min-h-20 gap-3 rounded-2xl border p-4 transition ${full ? "opacity-60" : "cursor-pointer hover:border-brand hover:bg-brand/[0.03]"}`}
               >
                 <input
                   type="checkbox"
-                  name={publicSlug ? "publicSlug" : "eventIds"}
-                  value={publicSlug ?? event.id}
+                  name={
+                    seriesMode
+                      ? "selectedOccurrenceStartsAt"
+                      : publicSlug
+                        ? "publicSlug"
+                        : "eventIds"
+                  }
+                  value={seriesMode ? event.starts_at : (publicSlug ?? event.id)}
                   disabled={full}
                   className="mt-1 h-5 w-5 accent-brand"
                 />

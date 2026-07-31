@@ -44,6 +44,7 @@ pnpm db:start         # start local Supabase/Docker stack
 pnpm db:status        # show local services and keys; do not paste secrets
 pnpm db:reset         # recreate local database and apply migrations
 pnpm fixtures:reset   # verify synthetic fixture workflow; refuses production
+pnpm demo:reset       # reset local Supabase and create synthetic pilot fixtures
 pnpm test             # Vitest + component tests
 pnpm test:e2e         # browser regression suite
 pnpm test:legal       # production-equivalent legal-gate test

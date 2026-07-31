@@ -89,6 +89,8 @@ Fields:
 - created_at
 - updated_at
 - archived_at
+- event_series_id, nullable; links a materialized occurrence to an Event Series
+- series_occurrence_number, nullable; immutable positive ordinal within the series
 
 Relationships:
 - belongs to one Host Organization
@@ -97,6 +99,13 @@ Relationships:
 - has many Follow-Up Tasks
 - may have eligible organizations for affiliation-restricted registration
 - may have Event Cancellation records and Cancellation Requests
+
+## Event Series
+
+An optional weekly recurrence definition that materializes independent Event occurrences. The
+series stores the inclusive end date, canonical public slug, and a 14-day rolling participant
+selection window. Occurrences retain their own capacity, deadline, publication, registration,
+attendance, cancellation, and audit state; changing or deleting a series never rewrites history.
 
 ## RegistrationGroup
 One public/admin submission transaction.
@@ -570,4 +579,6 @@ These are planned additive changes after migration `0019`; they do not rewrite t
 - Event publication metadata: `publication_status` (`DRAFT`, `PUBLISHED`, `UNPUBLISHED`), `public_slug`, `registration_opens_at`, `registration_closes_at`, `registration_paused_at`, `last_published_at`, and publication actor/audit references. Existing cancellation and event status remain authoritative.
 - Public event lookup: a narrow server/database projection keyed by `public_slug`, returning only approved event, host, venue, local time, instructions, capacity/availability, and legal/registration state.
 - Invitation lifecycle: the existing invitation model is extended/documented for one-time URL regeneration, expiration, revocation, raw-token non-persistence, and acceptance idempotency. Organization assignments remain invitation-authoritative.
-- No series entity is introduced. Event-level links are the supported public concept; series links remain deferred pending a later decision.
+- Event Series is introduced by the approved DEC-049 extension. The supported MVP-like recurrence
+  surface is weekly materialized occurrences with one canonical series link and a rolling 14-day
+  public selection window; arbitrary recurrence rules and recurrence editing remain deferred.

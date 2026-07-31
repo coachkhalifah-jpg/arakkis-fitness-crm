@@ -24,6 +24,45 @@ export async function publishPhase7Event(id: string): Promise<Phase7ActionState>
     const { admin, db, event } = await scopedEvent(id);
     if (event.status === "CANCELLED" || event.archived_at)
       throw new Phase3Error("forbidden", "Cancelled events cannot be published.");
+    const { data: series } = event.event_series_id
+      ? await db
+          .from("event_series")
+          .select("id,public_slug")
+          .eq("id", event.event_series_id)
+          .maybeSingle()
+      : { data: null };
+    if (series) {
+      const slug = series.public_slug ?? normalizePublicSlug(event.name);
+      assertPublicSlug(slug);
+      const { error: seriesError } = await db
+        .from("event_series")
+        .update({ public_slug: slug })
+        .eq("id", series.id);
+      const { error } = await db
+        .from("events")
+        .update({
+          status: "OPEN",
+          publication_status: "PUBLISHED",
+          last_published_at: new Date().toISOString(),
+          published_by_admin_id: admin.userId,
+        })
+        .eq("event_series_id", series.id)
+        .neq("status", "CANCELLED");
+      if (seriesError || error)
+        throw new Phase3Error(
+          "conflict",
+          seriesError?.code === "23505"
+            ? "That public slug is already in use."
+            : "Recurring series could not be published.",
+        );
+      await audit(admin.userId, "EVENT_SERIES_PUBLISHED", "EVENT_SERIES", series.id, {
+        publication_status: "PUBLISHED",
+        public_slug: slug,
+      });
+      revalidatePath("/admin/events");
+      revalidatePath(`/register/${slug}`);
+      return { success: "Recurring series published." };
+    }
     const slug = event.public_slug ?? normalizePublicSlug(event.name);
     assertPublicSlug(slug);
     const { error } = await db
@@ -63,6 +102,18 @@ export async function publishPhase7Event(id: string): Promise<Phase7ActionState>
 export async function unpublishPhase7Event(id: string): Promise<Phase7ActionState> {
   try {
     const { admin, db, event } = await scopedEvent(id);
+    if (event.event_series_id) {
+      const { error } = await db
+        .from("events")
+        .update({ publication_status: "UNPUBLISHED" })
+        .eq("event_series_id", event.event_series_id);
+      if (error) throw new Phase3Error("conflict", "Recurring series could not be unpublished.");
+      await audit(admin.userId, "EVENT_SERIES_UNPUBLISHED", "EVENT_SERIES", event.event_series_id, {
+        publication_status: "UNPUBLISHED",
+      });
+      revalidatePath("/admin/events");
+      return { success: "Recurring series unpublished." };
+    }
     const { error } = await db
       .from("events")
       .update({ publication_status: "UNPUBLISHED" })
@@ -88,6 +139,28 @@ export async function setPhase7Slug(id: string, value: string): Promise<Phase7Ac
   try {
     const { admin, db, event } = await scopedEvent(id);
     const slug = assertPublicSlug(normalizePublicSlug(value));
+    if (event.event_series_id) {
+      const { error } = await db
+        .from("event_series")
+        .update({ public_slug: slug })
+        .eq("id", event.event_series_id);
+      if (error)
+        throw new Phase3Error(
+          "conflict",
+          error.code === "23505"
+            ? "That public slug is already in use."
+            : "Series public slug could not be saved.",
+        );
+      await audit(
+        admin.userId,
+        "EVENT_SERIES_SLUG_CHANGED",
+        "EVENT_SERIES",
+        event.event_series_id,
+        { public_slug: slug },
+      );
+      revalidatePath(`/admin/events/${id}`);
+      return { success: "Series public slug saved." };
+    }
     const { error } = await db.from("events").update({ public_slug: slug }).eq("id", id);
     if (error)
       throw new Phase3Error(

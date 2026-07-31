@@ -7,6 +7,27 @@ Priority values:
 
 ## Event management
 
+### Approved pilot extensions — DEC-049 and DEC-050
+
+The following controlled extensions are approved for the local pilot and remain
+within the existing event/registration model:
+
+- A System Admin may create a weekly Event Series through an inclusive end date.
+  Each occurrence is a separate Event with independent capacity, deadlines,
+  registration, attendance, cancellation, and audit history. The canonical
+  series link resolves to the next occurrence and permits selecting only
+  published occurrences within the rolling 14-day window. Recurrence schedules
+  are immutable after creation.
+- An Event may store one HTTPS communication URL and participant-facing label.
+  The link is returned only on a successful confirmation page; it is omitted
+  from public pre-registration pages and failed confirmation results.
+- Public branding is sourced from centralized typed configuration and replaceable
+  static assets. It does not introduce an upload CMS, automated messaging,
+  participant accounts, or group creation.
+
+These extensions do not authorize production registration while the
+Participation acknowledgment remains provisional.
+
 ### FR-001 — Create event
 **User:** System Admin  
 **Requirement:** Create a bookable event with name, host organization, venue, date, start time, end time, capacity, registration deadline interpreted in the Event timezone, status, description, and participant instructions. The Event timezone is inherited from the Venue and may be overridden by System Admin.  

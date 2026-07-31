@@ -325,9 +325,15 @@ Every phase runs lint, strict type-check, unit/integration tests, relevant E2E t
 9. **Phase 8 — dashboards/polish and later work:** dashboards, responsive/accessibility pass, loading/error/empty states, and operational documentation.
 10. **Phase 9 — deployment readiness:** Vercel/Supabase production setup, secrets, backups/exports, monitoring/logging, privacy notice, invitation runbook, legal acknowledgment gate, production deployment block for PROVISIONAL status, token abuse controls, and DST/attendance operational runbooks.
 
-Do not pull participant self-cancellation, automated email, waitlists, configurable no-show triggers, direct WhatsApp Groups API integration, recurring events, or richer analytics into MVP.
+Do not pull participant self-cancellation, automated email, waitlists, configurable no-show triggers, direct WhatsApp Groups API integration, or richer analytics into MVP. DEC-049 separately approves the narrow weekly, materialized recurrence extension with a 14-day selection window; arbitrary recurrence rules remain deferred.
 
-Phase 7 is a post-MVP extension and does not authorize production deployment or legal approval. Its detailed canonical URL, slug, QR, invitation, environment, legal-gate, migration, RLS, audit, and validation design is documented in `docs/22-phase-7-publishing-links-invitations-implementation.md`.
+DEC-050 also approves a nullable HTTPS communication URL/label on Event, returned
+only by the successful confirmation projection, plus typed centralized public
+branding and replaceable static background assets. The implementation must keep
+the URL server-validated and must not expose it on public pre-registration or
+failed confirmation responses.
+
+Phase 7 is a post-MVP extension and does not authorize production deployment or legal approval. Its detailed canonical URL, slug, QR, invitation, environment, legal-gate, migration, RLS, audit, and validation design is documented in `docs/22-phase-7-publishing-links-invitations-implementation.md`. The approved recurrence and pilot UX extensions are documented by DEC-049/DEC-050 and the current pilot guide.
 
 The original traceability tables in this frozen-MVP proposal cover FR-001–FR-086, BR-001–BR-112, and AT-001–AT-098. DEC-047 adds the synchronized post-MVP Phase 7 range FR-087–FR-105, BR-113–BR-136, and AT-099–AT-132; the Phase 7 implementation document is the authoritative extension traceability matrix.
 

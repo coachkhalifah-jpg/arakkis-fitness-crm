@@ -115,7 +115,7 @@
 - Waitlist
 - Configurable no-show task rule
 - Re-engagement filters/tasks
-- Recurring event series
+- Advanced recurring event series (the approved weekly-series extension is limited to one weekly cadence, an inclusive end date, materialized occurrences, and a 14-day participant selection window)
 - Multiple System Admin users with richer permissions
 - Configurable registration questions
 - Automated delivery of event cancellation notifications

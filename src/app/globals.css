@@ -42,3 +42,30 @@ textarea {
   background: #cce7df;
   color: #0e4c42;
 }
+
+.event-hub-shell {
+  background-image:
+    linear-gradient(rgba(247, 248, 245, 0.86), rgba(247, 248, 245, 0.94)), var(--hub-desktop),
+    var(--hub-fallback);
+  background-position: center;
+  background-size: cover;
+}
+
+@media (max-width: 640px) {
+  .event-hub-shell {
+    background-image:
+      linear-gradient(rgba(247, 248, 245, 0.88), rgba(247, 248, 245, 0.96)), var(--hub-mobile),
+      var(--hub-fallback);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
