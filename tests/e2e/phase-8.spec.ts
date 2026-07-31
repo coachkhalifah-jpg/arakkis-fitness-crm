@@ -88,7 +88,7 @@ test.describe("Phase 8 participant productization", () => {
     await expect(page).toHaveURL(/\/events$/);
     const card = page.getByRole("article").filter({ hasText: eventName });
     await expect(card).toBeVisible();
-    await expect(card.getByRole("link", { name: /reserve my spot/i })).toHaveAttribute(
+    await expect(card.getByRole("link", { name: /view session details/i })).toHaveAttribute(
       "href",
       `/register/${slug}`,
     );

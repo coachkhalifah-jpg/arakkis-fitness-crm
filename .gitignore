@@ -10,5 +10,7 @@ test-results/
 .env.local
 .env.*.local
 !.env.example
+.demo-credentials.local
+.demo-routes.local.md
 *.log
 .DS_Store

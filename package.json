@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:demo-auth": "node scripts/demo-reset.mjs && playwright test tests/e2e/demo-auth.spec.ts --workers=1",
     "test:legal": "playwright test -c playwright.phase7-legal.config.ts tests/e2e/phase-7-legal.spec.ts",
     "test:concurrency": "node scripts/phase-7-concurrency.mjs",
     "db:start": "supabase start",

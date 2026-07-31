@@ -45,17 +45,18 @@ textarea {
 
 .event-hub-shell {
   background-image:
-    linear-gradient(rgba(247, 248, 245, 0.86), rgba(247, 248, 245, 0.94)), var(--hub-desktop),
-    var(--hub-fallback);
-  background-position: center;
+    linear-gradient(rgba(247, 248, 245, var(--hub-overlay)), rgba(247, 248, 245, 0.94)),
+    var(--hub-desktop), var(--hub-fallback);
+  background-position: var(--hub-desktop-position);
   background-size: cover;
 }
 
 @media (max-width: 640px) {
   .event-hub-shell {
     background-image:
-      linear-gradient(rgba(247, 248, 245, 0.88), rgba(247, 248, 245, 0.96)), var(--hub-mobile),
-      var(--hub-fallback);
+      linear-gradient(rgba(247, 248, 245, var(--hub-overlay)), rgba(247, 248, 245, 0.96)),
+      var(--hub-mobile), var(--hub-fallback);
+    background-position: var(--hub-mobile-position);
   }
 }
 

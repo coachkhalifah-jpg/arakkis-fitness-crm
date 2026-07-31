@@ -45,6 +45,7 @@ pnpm db:status        # show local services and keys; do not paste secrets
 pnpm db:reset         # recreate local database and apply migrations
 pnpm fixtures:reset   # verify synthetic fixture workflow; refuses production
 pnpm demo:reset       # reset local Supabase and create synthetic pilot fixtures
+pnpm test:demo-auth   # reset local fixtures and run the focused demo-role browser smoke test
 pnpm test             # Vitest + component tests
 pnpm test:e2e         # browser regression suite
 pnpm test:legal       # production-equivalent legal-gate test
@@ -64,8 +65,10 @@ pnpm db:stop          # stop local stack
 - Stable event registration: `http://127.0.0.1:3000/register/<slug>`
 - Administrator login: `http://127.0.0.1:3000/admin/sign-in`
 
-Synthetic Auth users are generated at runtime by the Playwright harness and are never documented.
-See `docs/27-local-development.md` for the complete local workflow.
+`pnpm demo:reset` creates fresh local-only Auth users and writes their random credentials to the
+ignored `.demo-credentials.local` file. It also writes a generated route index to
+`.demo-routes.local.md`. Both files are replaced on every reset and must never be staged or used
+outside local development. See `docs/27-local-development.md` for the complete local workflow.
 
 ## Phase 0 scope
 

@@ -7,7 +7,9 @@ uses real participant data.
 
 1. Start Docker.
 2. From the repository root run `pnpm demo:reset`.
-3. Start the app with `pnpm dev` using local Supabase values in `.env.local`, or use the existing
+3. Read the generated `.demo-credentials.local` and `.demo-routes.local.md` files. They are local,
+   ignored, synthetic, and replaced after each reset; never copy credentials into documentation.
+4. Start the app with `pnpm dev` using local Supabase values in `.env.local`, or use the existing
    local stack workflow in `docs/27-local-development.md`.
 4. The reset prints fresh synthetic administrator credentials. Do not commit them.
 
@@ -28,6 +30,11 @@ uses real participant data.
 - Participant CRM: `/admin/participants`
 - Follow-up queue: `/admin/follow-ups`
 
+The generated route index also includes organizations, venues, event management, invitations, and
+the stable slugs for full, paused, not-yet-open, closed, cancelled, unpublished, and no-communication
+fixtures. A confirmation URL exists only after a successful local submission. The provisional legal
+gate remains authoritative; this local reset does not enable production registration.
+
 ## Owner journey
 
 - Open `/events` at a narrow mobile width. Confirm the branded fallback background, centered identity,
@@ -41,6 +48,8 @@ uses real participant data.
   date creates its own Registration.
 - Sign in as each fixture administrator. Confirm System Admin global access and each Venue Admin's
   organization isolation. Attempt unrelated event URLs and global CRM routes.
+- Use `pnpm test:demo-auth` for the repeatable System Admin, both Host Admin, non-admin, inactive-admin,
+  cross-organization, sign-out, and reload smoke coverage.
 - Use browser responsive mode and keyboard navigation. Emulate `prefers-reduced-motion: reduce` and
   confirm every critical action remains understandable without animation.
 
@@ -48,4 +57,3 @@ uses real participant data.
 
 Run `pnpm demo:reset` again to discard the synthetic local database and create a fresh demonstration
 state. Never run it against a hosted project.
-
