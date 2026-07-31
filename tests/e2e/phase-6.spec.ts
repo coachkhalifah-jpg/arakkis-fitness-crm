@@ -80,7 +80,7 @@ test("Host Admin is denied global participant CRM and follow-up routes", async (
 
 test("copy evidence and completion preserve the task lifecycle", async ({ page }) => {
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"], {
-    origin: "http://127.0.0.1:3000",
+    origin: process.env.NEXT_PUBLIC_APP_URL!,
   });
   await signInSystem(page, "/admin/follow-ups");
   const task = page.locator("article").filter({ hasText: `CRM Attended ${fixture.suffix}` });

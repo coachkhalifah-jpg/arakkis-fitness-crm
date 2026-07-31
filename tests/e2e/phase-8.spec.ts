@@ -41,6 +41,32 @@ function localSql(statement: string) {
   );
 }
 
+function localSqlQuery(statement: string) {
+  const container = execFileSync(
+    "docker",
+    ["ps", "--filter", "name=supabase_db_", "--format", "{{.Names}}"],
+    { encoding: "utf8" },
+  ).trim();
+  return execFileSync(
+    "docker",
+    [
+      "exec",
+      "-i",
+      container,
+      "psql",
+      "-At",
+      "-v",
+      "ON_ERROR_STOP=1",
+      "-q",
+      "-U",
+      "postgres",
+      "-d",
+      "postgres",
+    ],
+    { input: statement, encoding: "utf8" },
+  ).trim();
+}
+
 test.describe("Phase 8 participant productization", () => {
   let slug: string;
   let eventId: string;
@@ -88,10 +114,9 @@ test.describe("Phase 8 participant productization", () => {
     await expect(page).toHaveURL(/\/events$/);
     const card = page.getByRole("article").filter({ hasText: eventName });
     await expect(card).toBeVisible();
-    await expect(card.getByRole("link", { name: /view session details/i })).toHaveAttribute(
-      "href",
-      `/register/${slug}`,
-    );
+    await expect(
+      card.getByRole("link", { name: /view class|view session details/i }),
+    ).toHaveAttribute("href", `/register/${slug}`);
     expect(await page.content()).not.toContain(eventId);
   });
 
@@ -104,12 +129,80 @@ test.describe("Phase 8 participant productization", () => {
     await page.getByLabel("Mobile phone").fill("+15185550199");
     await page.getByLabel("Synthetic participation acknowledgment.").check();
     await page.getByLabel("Synthetic data-use acknowledgment.").check();
-    await page.getByRole("button", { name: /reserve selected dates/i }).press("Enter");
+    await page.getByRole("button", { name: /book class/i }).press("Enter");
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
     await expect(
       page.getByRole("heading", { name: /thanks, keyboard participant/i }),
     ).toBeVisible();
     await expect(page.getByRole("link", { name: /download all successful dates/i })).toBeVisible();
+  });
+
+  test("remembers, reuses, and forgets a participant browser token safely", async ({ page }) => {
+    await page.goto(`/register/${slug}`);
+    await page.getByLabel(eventName).check();
+    await page.getByLabel("First name").fill("Remembered");
+    await page.getByLabel("Last name").fill("Participant");
+    await page.getByLabel("Mobile phone").fill("+15185550198");
+    await page.getByLabel("Synthetic participation acknowledgment.").check();
+    await page.getByLabel("Synthetic data-use acknowledgment.").check();
+    await page.getByRole("button", { name: /book class/i }).click();
+    await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
+    await page.getByRole("button", { name: "Remember this device" }).click();
+    await expect(page.getByText(/this browser will be remembered/i)).toBeVisible();
+
+    const [cookie] = (await page.context().cookies()).filter(
+      (item) => item.name === "fitness_remembered_device",
+    );
+    expect(cookie).toBeTruthy();
+    expect(cookie.httpOnly).toBe(true);
+    expect(cookie.sameSite).toBe("Lax");
+    expect(cookie.path).toBe("/register");
+    expect(cookie.value).not.toContain("/");
+    expect(cookie.value).not.toContain("?");
+    expect(page.url()).not.toContain(cookie.value);
+
+    const service = createClient(
+      env("NEXT_PUBLIC_SUPABASE_URL"),
+      env("SUPABASE_SERVICE_ROLE_KEY"),
+      {
+        auth: { autoRefreshToken: false, persistSession: false },
+      },
+    );
+    const deviceEvidence = localSqlQuery(
+      "select encode(token_hash, 'hex') || '|' || (expires_at > now())::text || '|' || (revoked_at is null)::text from public.participant_remembered_devices order by created_at desc limit 1",
+    );
+    const [tokenHash, unexpired, notRevoked] = deviceEvidence.split("|");
+    expect(tokenHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(tokenHash).not.toBe(cookie.value);
+    expect(unexpired).toBe("true");
+    expect(notRevoked).toBe("true");
+
+    const rememberedParticipantId = localSqlQuery(
+      "select id from public.participants where normalized_phone = '+15185550198' limit 1",
+    );
+    if (!rememberedParticipantId) throw new Error("Remembered participant fixture was not created");
+    localSql(
+      `update public.registrations set registration_status = 'CANCELLED', registration_outcome = 'PARTICIPANT_CANCELLED', cancelled_at = now() where participant_id = '${rememberedParticipantId}' and event_id = '${eventId}';`,
+    );
+
+    await page.goto(`/register/${slug}`);
+    await expect(page.getByText("Welcome back")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Continue as Remembered" })).toBeVisible();
+    await page.getByLabel(eventName).check();
+    await page.getByLabel("Synthetic participation acknowledgment.").check();
+    await page.getByLabel("Synthetic data-use acknowledgment.").check();
+    await page.getByRole("button", { name: /continue as remembered/i }).click();
+    await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
+
+    await page.goto(`/register/${slug}`);
+    await page.getByRole("button", { name: "Forget this device" }).click();
+    await page.goto(`/register/${slug}`);
+    await expect(page.getByText("Welcome back")).toHaveCount(0);
+    expect(
+      localSqlQuery(
+        "select (revoked_at is not null)::text from public.participant_remembered_devices order by created_at desc limit 1",
+      ),
+    ).toBe("true");
   });
 
   test("keeps public surfaces readable on narrow mobile widths", async ({ page }) => {

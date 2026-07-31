@@ -51,6 +51,21 @@ textarea {
   background-size: cover;
 }
 
+.booking-environment {
+  background:
+    radial-gradient(circle at 15% 15%, rgba(214, 109, 85, 0.18), transparent 32rem),
+    linear-gradient(135deg, #edf4ef 0%, #f7f8f5 52%, #f4e3da 100%);
+}
+
+.event-carousel {
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+}
+
+.event-carousel::-webkit-scrollbar {
+  display: none;
+}
+
 @media (max-width: 640px) {
   .event-hub-shell {
     background-image:

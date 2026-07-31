@@ -12,9 +12,11 @@ export default async function AdminPage() {
     <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
       <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Admin area</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">
+            Operational Workspace
+          </p>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight text-ink">
-            Good to see you back.
+            Operational Workspace
           </h1>
           <p className="mt-3 text-slate-600">Your operational workspace is ready.</p>
         </div>

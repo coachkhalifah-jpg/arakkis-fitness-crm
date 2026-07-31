@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/db/server";
 import { googleCalendarUrl, type CalendarEvent } from "@/lib/registration/calendar";
+import { RememberDevice } from "@/components/registration/remember-device";
 
 type ConfirmationEvent = CalendarEvent & {
   event_id: string;
@@ -75,6 +76,11 @@ export default async function ConfirmationPage({
         </p>
         <h1 className="mt-2 text-3xl font-semibold">Thanks, {result.participant_name}</h1>
         <p className="mt-3 text-slate-600">This read-only confirmation link expires in 24 hours.</p>
+        {successful.length > 0 ? (
+          <div className="mt-5">
+            <RememberDevice confirmationToken={token} />
+          </div>
+        ) : null}
         <a
           className="mt-5 inline-block rounded-md bg-brand px-4 py-2 font-medium text-white"
           href={`/registration/confirmation/ics?token=${encodeURIComponent(token)}`}

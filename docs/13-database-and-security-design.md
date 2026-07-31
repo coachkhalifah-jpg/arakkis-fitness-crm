@@ -1266,3 +1266,6 @@ The design was reviewed against the frozen MVP requirements FR-001–FR-086, BR-
 Phase 9 preserves RLS, grants, server authorization, legal gate, audit controls, and migration
 immutability. Operational controls, secret handling, headers, logging, recovery, and incident
 response are documented in `docs/29`.
+# DEC-051 security note
+
+Remembered-device tokens are high-entropy opaque values, SHA-256 hashed in the database, scoped to `/register`, HttpOnly, SameSite=Lax, Secure in hosted production, and bounded to 180 days. Revocation removes the cookie and marks the server record revoked. Possession never grants access to profile history, administration, or unrelated organization data. SMS/phone OTP is not implemented.

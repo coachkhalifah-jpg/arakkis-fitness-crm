@@ -6,6 +6,7 @@ import { createClient } from "@/lib/db/server";
 import { createPrivilegedClient } from "@/lib/db/privileged";
 import { isProductionRegistrationBlocked } from "@/lib/config/env";
 import { assertPublicSlug } from "@/lib/services/phase-7";
+import { resolveRememberedParticipant } from "@/lib/registration/device";
 import {
   normalizeEmail,
   normalizeName,
@@ -21,15 +22,17 @@ export type RegistrationAction = (
 
 async function executeRegistration(form: FormData, selectedEventIds: string[]) {
   let confirmationToken: string | undefined;
+  const remembered =
+    form.get("continueAsRemembered") === "true" ? await resolveRememberedParticipant() : null;
   const input = participantInputSchema.parse({
-    firstName: form.get("firstName"),
-    lastName: form.get("lastName"),
-    phone: form.get("phone"),
-    phoneCountry: form.get("phoneCountry"),
-    email: form.get("email") ?? "",
+    firstName: remembered?.first_name ?? form.get("firstName"),
+    lastName: remembered?.last_name ?? form.get("lastName"),
+    phone: remembered?.display_phone ?? form.get("phone"),
+    phoneCountry: remembered?.phone_country ?? form.get("phoneCountry"),
+    email: remembered?.email ?? form.get("email") ?? "",
     affiliation: form.get("affiliation") ?? "",
     affiliationOther: form.get("affiliationOther") ?? "",
-    fitnessExperience: form.get("fitnessExperience") ?? "",
+    fitnessExperience: remembered?.fitness_experience ?? form.get("fitnessExperience") ?? "",
     eventIds: selectedEventIds,
     participationAcknowledged: form.get("participationAcknowledged"),
     dataUseAcknowledged: form.get("dataUseAcknowledged"),

@@ -106,3 +106,6 @@ Legend:
 | Accept own administrator invitation | No | Own invitation only | No |
 
 Phase 7 management actions remain server/data-layer authorized. Publicly visible events do not grant Host Admin management access, and a Host Admin cannot manage another organization’s event or invitation.
+# DEC-051 addition
+
+Remembered-device records are not readable by participants, Host Admins, or anonymous clients. Server-side booking code may resolve an active token only to a safe booking candidate. System Admin access to token records is not part of the pilot UI.

@@ -55,7 +55,7 @@ test("production-equivalent public pages remain legally blocked through copied U
   await expect(page.getByRole("heading", { name: "Phase 7 Legal Event" })).toBeVisible();
   await expect(page.getByText("Registration: LEGALLY BLOCKED")).toBeVisible();
   await expect(page.locator('input[name="publicSlug"]')).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Reserve selected dates" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Book Class" })).toHaveCount(0);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,

@@ -28,6 +28,17 @@ export default async function EventsPage() {
       : (events ?? []).filter((event) =>
           admin.organizationIds.includes(event.host_organization_id),
         );
+  const { data: registrationRows } = await db
+    .from("registrations")
+    .select("event_id,registration_status,attendance(status)");
+  const counts = new Map<string, { booked: number; checkedIn: number }>();
+  for (const row of registrationRows ?? []) {
+    const current = counts.get(row.event_id) ?? { booked: 0, checkedIn: 0 };
+    if (row.registration_status === "REGISTERED") current.booked += 1;
+    const attendance = Array.isArray(row.attendance) ? row.attendance[0] : row.attendance;
+    if (attendance?.status === "ATTENDED") current.checkedIn += 1;
+    counts.set(row.event_id, current);
+  }
   return (
     <section className="mx-auto max-w-5xl px-6 py-12">
       <h1 className="text-3xl font-semibold text-ink">Events</h1>
@@ -190,6 +201,12 @@ export default async function EventsPage() {
                       timeZone: event.timezone,
                     }).format(new Date(event.starts_at))}{" "}
                     · {event.timezone}
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-brand-dark">
+                    {counts.get(event.id)?.booked ?? 0} booked ·{" "}
+                    {counts.get(event.id)?.checkedIn ?? 0} checked in ·{" "}
+                    {Math.max(0, event.capacity - (counts.get(event.id)?.booked ?? 0))} spots
+                    remaining
                   </p>
                   <p className="text-sm text-slate-500">
                     {event.status} · capacity {event.capacity}

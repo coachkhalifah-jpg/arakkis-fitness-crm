@@ -7,6 +7,10 @@ Priority values:
 
 ## Event management
 
+### Approved pilot UX extension — DEC-051
+
+Participants may optionally remember a browser after a successful booking. The remembered device is a convenience identifier only: it may prefill/streamline a booking, but the system revalidates the participant and all authoritative booking rules at submission. Required acknowledgments remain required for every booking. No participant account, device fingerprinting, SMS, or participant history access is introduced.
+
 ### Approved pilot extensions — DEC-049 and DEC-050
 
 The following controlled extensions are approved for the local pilot and remain

@@ -174,7 +174,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await page.locator('input[type="checkbox"]').nth(0).check();
     await page.locator('input[type="checkbox"]').nth(1).check();
     await page.locator('input[type="checkbox"]').nth(2).check();
-    await page.getByRole("button", { name: "Reserve selected dates" }).click();
+    await page.getByRole("button", { name: "Book Class" }).click();
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
     await expect(page.getByText("Phase 7 Browser Event")).toBeVisible();
   });
@@ -206,7 +206,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await page.locator('input[type="checkbox"]').nth(0).check();
     await page.locator('input[type="checkbox"]').nth(1).check();
     await page.locator('input[type="checkbox"]').nth(2).check();
-    await page.getByRole("button", { name: "Reserve selected dates" }).click();
+    await page.getByRole("button", { name: "Book Class" }).click();
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
     const stored = localSqlQuery(
       `select count(*) from public.registrations where event_id = '${fixture.draftId}' and registration_status = 'REGISTERED'`,
@@ -229,7 +229,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await page.locator('input[type="checkbox"]').nth(0).check();
     await page.locator('input[type="checkbox"]').nth(1).check();
     await page.locator('input[type="checkbox"]').nth(2).check();
-    await page.getByRole("button", { name: "Reserve selected dates" }).click();
+    await page.getByRole("button", { name: "Book Class" }).click();
     await expect(page.locator('p[role="alert"]')).toContainText(
       /could not be completed|unavailable|no longer available/i,
     );
@@ -271,7 +271,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await page.locator('input[type="checkbox"]').nth(0).check();
     await page.locator('input[type="checkbox"]').nth(1).check();
     await page.locator('input[type="checkbox"]').nth(2).check();
-    await page.getByRole("button", { name: "Reserve selected dates" }).click();
+    await page.getByRole("button", { name: "Book Class" }).click();
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
     expect(
       localSqlQuery(
@@ -311,7 +311,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await page.locator('input[type="checkbox"]').nth(0).check();
     await page.locator('input[type="checkbox"]').nth(1).check();
     await page.locator('input[type="checkbox"]').nth(2).check();
-    await page.getByRole("button", { name: "Reserve selected dates" }).click();
+    await page.getByRole("button", { name: "Book Class" }).click();
     await expect(page.locator('p[role="alert"]')).toContainText(/no longer available/i);
     expect(
       localSqlQuery(
@@ -340,7 +340,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     const decoded = jsQR(new Uint8ClampedArray(image.data), image.width, image.height, {
       inversionAttempts: "dontInvert",
     });
-    const canonicalUrl = `http://127.0.0.1:3000/register/${fixture.slug}`;
+    const canonicalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/register/${fixture.slug}`;
     expect(decoded?.data).toBe(canonicalUrl);
     expect(decoded?.data).not.toMatch(new RegExp(`${fixture.eventId}|${fixture.organizationId}`));
     expect(decoded?.data).not.toMatch(/token|password|participant|analytics|utm_/i);
@@ -618,7 +618,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
       ),
     ).toBe(true);
     await expect(page.getByLabel("First name")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Reserve selected dates" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Book Class" })).toBeVisible();
 
     await page.goto("/admin/sign-in");
     await page.locator('input[name="email"]:visible').fill(fixture.email);
@@ -660,7 +660,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     ]) {
       await expect(checkbox).toBeChecked();
     }
-    await page.getByRole("button", { name: "Reserve selected dates" }).click();
+    await page.getByRole("button", { name: "Book Class" }).click();
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
 
     await page.goto("/admin/sign-in");
@@ -679,9 +679,9 @@ test.describe("Phase 7 publishing and slug registration", () => {
 
   test("supports keyboard-only invitation creation and copy-once feedback", async ({ page }) => {
     const fixture = await systemFixture();
-    await page
-      .context()
-      .grantPermissions(["clipboard-read", "clipboard-write"], { origin: "http://127.0.0.1:3000" });
+    await page.context().grantPermissions(["clipboard-read", "clipboard-write"], {
+      origin: process.env.NEXT_PUBLIC_APP_URL!,
+    });
     await page.goto("/admin/sign-in");
     await page.getByLabel("Email").fill(fixture.email);
     await page.getByLabel("Password").fill(fixture.password);

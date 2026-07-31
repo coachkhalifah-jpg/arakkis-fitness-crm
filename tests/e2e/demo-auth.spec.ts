@@ -28,47 +28,47 @@ if (!existsSync(".demo-credentials.local")) {
   const inactive = accountCredentials("Inactive admin");
 
   test.describe.serial("local demo authentication", () => {
-  test("System Admin has global access and a persistent session", async ({ page }) => {
-    await signIn(page, system);
-    await expect(page).toHaveURL(/\/admin$/);
-    await expect(page.getByText("SYSTEM_ADMIN")).toBeVisible();
-    await page.getByRole("link", { name: "Organizations" }).click();
-    await expect(page.getByText("Demo Organization A")).toBeVisible();
-    await expect(page.getByText("Demo Organization B")).toBeVisible();
-    await page.goto("/admin");
-    await page.reload();
-    await expect(page.getByText(system.email)).toBeVisible();
-    await page.getByRole("button", { name: "Sign out" }).click();
-    await expect(page).toHaveURL(/\/$/);
-  });
+    test("System Admin has global access and a persistent session", async ({ page }) => {
+      await signIn(page, system);
+      await expect(page).toHaveURL(/\/admin$/);
+      await expect(page.getByText("SYSTEM_ADMIN")).toBeVisible();
+      await page.getByRole("link", { name: "Organizations" }).click();
+      await expect(page.getByText("Demo Organization A")).toBeVisible();
+      await expect(page.getByText("Demo Organization B")).toBeVisible();
+      await page.goto("/admin");
+      await page.reload();
+      await expect(page.getByText(system.email)).toBeVisible();
+      await page.getByRole("button", { name: "Sign out" }).click();
+      await expect(page).toHaveURL(/\/$/);
+    });
 
-  test("both Host Admins are limited to their assigned organization", async ({ page }) => {
-    await signIn(page, hostA);
-    await expect(page).toHaveURL(/\/admin$/);
-    await expect(page.getByText("Demo Organization A")).toBeVisible();
-    await page.goto("/admin/events");
-    await expect(page.getByText("Demo Weekly Flow — This Week")).toBeVisible();
-    await expect(page.getByText("Demo Paused Event")).not.toBeVisible();
-    await page.goto("/admin/participants");
-    await expect(page).toHaveURL(/\/admin\/access-denied/);
-    await page.context().clearCookies();
+    test("both Host Admins are limited to their assigned organization", async ({ page }) => {
+      await signIn(page, hostA);
+      await expect(page).toHaveURL(/\/admin$/);
+      await expect(page.getByText("Demo Organization A")).toBeVisible();
+      await page.goto("/admin/events");
+      await expect(page.getByText("Demo Weekly Flow — This Week")).toBeVisible();
+      await expect(page.getByText("Demo Paused Event")).not.toBeVisible();
+      await page.goto("/admin/participants");
+      await expect(page).toHaveURL(/\/admin\/access-denied/);
+      await page.context().clearCookies();
 
-    await signIn(page, hostB);
-    await expect(page).toHaveURL(/\/admin$/);
-    await expect(page.getByText("Demo Organization B")).toBeVisible();
-    await expect(page.getByText("Demo Organization A")).not.toBeVisible();
-    await page.goto("/admin/events");
-    await expect(page.getByText("Demo Paused Event")).toBeVisible();
-    await expect(page.getByText("Demo Weekly Flow — This Week")).not.toBeVisible();
-    await page.context().clearCookies();
-  });
+      await signIn(page, hostB);
+      await expect(page).toHaveURL(/\/admin$/);
+      await expect(page.getByText("Demo Organization B")).toBeVisible();
+      await expect(page.getByText("Demo Organization A")).not.toBeVisible();
+      await page.goto("/admin/events");
+      await expect(page.getByText("Demo Paused Event")).toBeVisible();
+      await expect(page.getByText("Demo Weekly Flow — This Week")).not.toBeVisible();
+      await page.context().clearCookies();
+    });
 
-  test("non-admin and inactive administrator are denied", async ({ page }) => {
-    await signIn(page, nonAdmin);
-    await expect(page).toHaveURL(/\/admin\/access-denied/);
-    await expect(page.getByText(/does not have active administrator access/i)).toBeVisible();
-    await signIn(page, inactive);
-    await expect(page).toHaveURL(/\/admin\/access-denied/);
-  });
+    test("non-admin and inactive administrator are denied", async ({ page }) => {
+      await signIn(page, nonAdmin);
+      await expect(page).toHaveURL(/\/admin\/access-denied/);
+      await expect(page.getByText(/does not have active administrator access/i)).toBeVisible();
+      await signIn(page, inactive);
+      await expect(page).toHaveURL(/\/admin\/access-denied/);
+    });
   });
 }

@@ -201,7 +201,7 @@ async function fillRegistration(
   await page.getByLabel("Email (optional)").fill(email);
   await page.getByLabel("Participation acknowledgment.").check();
   await page.getByLabel("Synthetic data-use acknowledgment.").check();
-  await page.getByRole("button", { name: "Reserve selected dates" }).click();
+  await page.getByRole("button", { name: "Book Class" }).click();
 }
 
 test("registers multiple dates, exports only successful events, and scopes the admin roster", async ({

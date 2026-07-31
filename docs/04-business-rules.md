@@ -154,3 +154,10 @@
 - BR-134: Phase 7 migrations are additive and begin after `0019`; migrations `0001–0019` remain unchanged.
 - BR-135: Every Phase 7 requirement has planned unit/component, database/integration, authorization/security, and/or Playwright coverage before implementation is considered complete.
 - BR-136: Phase 7 implementation cannot begin until DEC-047 and all synchronized source-of-truth documents are reviewed and accepted; this documentation update does not mark any feature implemented.
+# DEC-051 remembered-device rules
+
+- Remembered-device recognition is optional, explicit, revocable, and limited to booking convenience.
+- The token is opaque, random, hashed at rest, expiring after 180 days, and stored in a server-only cookie.
+- It is not an authorization mechanism, participant account, device fingerprint, or substitute for acknowledgments.
+- A booking revalidates the token, event availability, capacity, duplicates, legal gate, and acknowledgment evidence transactionally.
+- A participant may choose not to remember the browser without blocking booking; future magic-link fallback remains a separately approved follow-up.

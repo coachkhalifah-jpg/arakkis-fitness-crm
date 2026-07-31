@@ -731,3 +731,10 @@ Given a clean reset and the Phase 1–6 suite, when Phase 7 is implemented later
 
 ### AT-132 — Scope exclusions
 Given the Phase 7 implementation plan, when the final scope is reviewed, then automated messaging, participant accounts/login, merging, analytics/tracking/QR analytics, payments, deployment, legal approval, and Phase 8 work are absent. (FR-105, BR-131)
+# DEC-051 acceptance additions
+
+- A participant can browse event cards horizontally with touch, mouse, keyboard, visible focus, and a safe one-card state.
+- Dates are grouped by human-readable date, with independent time choices and visible multi-selection state.
+- A successful booking offers optional remembered-browser consent; declining does not block booking.
+- A valid remembered token shows only a safe first-name welcome and streamlines booking; invalid, expired, revoked, or absent tokens fall back safely.
+- Required acknowledgments and the legal registration gate remain enforced for remembered bookings.

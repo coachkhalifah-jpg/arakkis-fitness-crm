@@ -1,8 +1,7 @@
-import Link from "next/link";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { EventCarousel } from "@/components/events/event-carousel";
 import { createClient } from "@/lib/db/server";
 import { publicBrand } from "@/lib/config/branding";
 import type { CSSProperties } from "react";
@@ -89,8 +88,8 @@ export default async function EventsPage() {
           />
         </div>
       ) : (
-        <div className="mx-auto mt-10 max-w-xl space-y-5">
-          {events.map((event) => {
+        <EventCarousel
+          events={events.map((event) => {
             const spots = Math.max(0, event.capacity - event.active_registration_count);
             const date = new Intl.DateTimeFormat("en-US", {
               weekday: "short",
@@ -103,48 +102,24 @@ export default async function EventsPage() {
               minute: "2-digit",
               timeZone: event.timezone,
             }).format(new Date(event.starts_at));
-            return (
-              <article key={event.id}>
-                <Card className="group overflow-hidden rounded-[1.6rem] border-white/80 bg-white/90 p-1 shadow-soft backdrop-blur-sm transition duration-150 hover:-translate-y-0.5 hover:shadow-lg">
-                  <div className="rounded-[1.35rem] p-5 sm:p-6">
-                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-coral">
-                      {date} · {time}
-                    </p>
-                    <h2 className="mt-2 text-2xl font-semibold leading-tight tracking-tight">
-                      {event.name}
-                    </h2>
-                    <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-600">
-                      <span>{event.venue_name}</span>
-                      <span>
-                        {event.venue_city}, {event.venue_state}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm font-medium text-brand-dark">
-                      {spots > 0
-                        ? `${spots} spots available · Open for registration`
-                        : "Full · Registration closed"}
-                    </p>
-                    <Link
-                      className="mt-5 inline-flex min-h-14 w-full items-center justify-between rounded-2xl bg-brand px-5 text-left font-semibold text-white transition duration-150 hover:bg-brand-dark active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-brand/40"
-                      href={event.public_slug ? `/register/${event.public_slug}` : "/registration"}
-                    >
-                      <span>View session details</span>
-                      <span aria-hidden="true" className="text-xl">
-                        →
-                      </span>
-                    </Link>
-                  </div>
-                </Card>
-              </article>
-            );
+            return {
+              id: event.id,
+              name: event.name,
+              date,
+              time,
+              venue: `${event.venue_name} · ${event.venue_city}, ${event.venue_state}`,
+              spots,
+              href: event.public_slug ? `/register/${event.public_slug}` : "/registration",
+              availability: spots > 0 ? "OPEN" : "FULL",
+            };
           })}
-        </div>
+        />
       )}
       <footer className="mx-auto mt-10 flex max-w-xl justify-center gap-4 text-sm text-slate-500">
         {publicBrand.links.map((link) => (
-          <Link key={link.href} className="underline-offset-4 hover:underline" href={link.href}>
+          <a key={link.href} className="underline-offset-4 hover:underline" href={link.href}>
             {link.label}
-          </Link>
+          </a>
         ))}
       </footer>
     </section>

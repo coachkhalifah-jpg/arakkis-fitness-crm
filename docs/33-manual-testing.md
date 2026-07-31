@@ -22,3 +22,13 @@ denial and no cross-organization data leakage, regardless of navigation visibili
 
 Record browser, viewport, role, route, expected/actual result, console/server observations, and
 whether data is synthetic. Never record credentials or tokens.
+# Participant booking pilot checks
+
+1. Open `/events`, swipe or use the previous/next controls, and confirm the next card is partially visible.
+2. Open a class, confirm the focused booking background and `Choose your dates` heading.
+3. Select multiple times across grouped dates and confirm the selected count remains visible.
+4. Complete a booking and confirm `You’re booked`/booking confirmation copy.
+5. Choose `Remember this device`, revisit `/register/[slug]` in the same browser, and confirm only `Welcome back, [First name]` appears.
+6. Choose `Not you?` and confirm manual entry remains available.
+7. Inspect the cookie: it is HttpOnly, SameSite=Lax, scoped to `/register`, and Secure in hosted production.
+8. In the admin workspace, confirm event cards show booked, checked-in, and remaining capacity; add a walk-in and confirm the roster updates without a manual reload.

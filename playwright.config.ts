@@ -1,5 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
-import { configurePlaywrightEnvironment } from "./tests/e2e/test-environment";
+import {
+  configurePlaywrightEnvironment,
+  PLAYWRIGHT_APP_URL,
+  PLAYWRIGHT_PORT,
+} from "./tests/e2e/test-environment";
 
 configurePlaywrightEnvironment();
 
@@ -12,12 +16,17 @@ export default defineConfig({
   workers: 1,
   reporter: "line",
   globalSetup: "./tests/e2e/global-setup.ts",
-  use: { baseURL: "http://127.0.0.1:3000", trace: "on-first-retry" },
+  use: { baseURL: PLAYWRIGHT_APP_URL, trace: "on-first-retry" },
   webServer: {
     command: "node scripts/playwright-server.mjs",
-    url: "http://127.0.0.1:3000",
+    url: PLAYWRIGHT_APP_URL,
     reuseExistingServer: false,
-    env: { ...process.env, APP_ENV: "test" },
+    env: {
+      ...process.env,
+      APP_ENV: "test",
+      PORT: PLAYWRIGHT_PORT,
+      NEXT_DIST_DIR: ".next-playwright",
+    },
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
 });

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireActiveAdmin, requireSystemAdmin } from "@/lib/authorization/server";
 import { createClient } from "@/lib/db/server";
 import {
@@ -561,10 +562,12 @@ export async function updateOrganizationForm(form: FormData) {
   await updateOrganization({}, form);
 }
 export async function createVenueForm(form: FormData) {
-  await createVenue({}, form);
+  const result = await createVenue({}, form);
+  if (result.success) redirect("/admin/venues");
 }
 export async function createEventForm(form: FormData) {
-  await createEvent({}, form);
+  const result = await createEvent({}, form);
+  if (result.success) redirect("/admin/events");
 }
 export async function updateEventForm(form: FormData) {
   await updateEvent({}, form);

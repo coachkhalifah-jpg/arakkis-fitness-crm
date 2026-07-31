@@ -1,8 +1,9 @@
 import { spawn } from "node:child_process";
 
-const child = spawn("./node_modules/.bin/next", ["dev"], {
+const testPort = process.env.PORT || "3100";
+const child = spawn("./node_modules/.bin/next", ["dev", "--port", testPort], {
   cwd: process.cwd(),
-  env: { ...process.env, APP_ENV: "test" },
+  env: { ...process.env, APP_ENV: process.env.APP_ENV || "test" },
   stdio: "inherit",
 });
 

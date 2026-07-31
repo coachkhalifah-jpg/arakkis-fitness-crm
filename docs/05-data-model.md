@@ -582,3 +582,6 @@ These are planned additive changes after migration `0019`; they do not rewrite t
 - Event Series is introduced by the approved DEC-049 extension. The supported MVP-like recurrence
   surface is weekly materialized occurrences with one canonical series link and a rolling 14-day
   public selection window; arbitrary recurrence rules and recurrence editing remain deferred.
+# DEC-051 addition
+
+`participant_remembered_devices` stores only a participant relationship, SHA-256 token hash, lifecycle timestamps, revocation/replacement metadata, and a safe label. Raw tokens are never persisted, logged, or exposed through anonymous table access.

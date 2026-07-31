@@ -7,6 +7,7 @@ import { ConfirmSubmit } from "@/components/admin/confirm-submit";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { SubmitButton } from "@/components/admin/submit-button";
+import { WalkInForm } from "@/components/admin/walk-in-form";
 import { CopyLinkButton } from "@/components/admin/copy-link-button";
 import {
   cancelEventForm,
@@ -99,6 +100,24 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
     : { data: [] };
   const attendanceByRegistration = new Map(
     (attendance ?? []).map((row) => [row.registration_id, row]),
+  );
+  const { data: priorAttendance } = participantIds.length
+    ? await db
+        .from("attendance")
+        .select("status,registrations!inner(participant_id,events!inner(starts_at))")
+        .eq("status", "ATTENDED")
+        .in("registrations.participant_id", participantIds)
+        .lt("registrations.events.starts_at", event.starts_at)
+    : { data: [] };
+  const firstClassParticipantIds = new Set(
+    (priorAttendance ?? [])
+      .map((row) => {
+        const registration = Array.isArray(row.registrations)
+          ? row.registrations[0]
+          : row.registrations;
+        return registration?.participant_id;
+      })
+      .filter(Boolean),
   );
   const [{ data: participationVersion }, { data: dataUseVersion }] = await Promise.all([
     db
@@ -276,49 +295,11 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           <p className="mt-1 text-sm text-slate-600">
             A walk-in is matched or created, registered, and checked in atomically.
           </p>
-          <form action={createWalkInSubmit} className="mt-4 grid gap-3 sm:grid-cols-2">
-            <input type="hidden" name="eventId" value={id} />
-            <input
-              type="hidden"
-              name="participationVersionId"
-              value={participationVersion?.id ?? ""}
-            />
-            <input type="hidden" name="dataUseVersionId" value={dataUseVersion?.id ?? ""} />
-            <label>
-              First name
-              <input name="firstName" required className="mt-1 w-full rounded border p-2" />
-            </label>
-            <label>
-              Last name
-              <input name="lastName" required className="mt-1 w-full rounded border p-2" />
-            </label>
-            <label>
-              Phone
-              <input name="phone" required className="mt-1 w-full rounded border p-2" />
-            </label>
-            <label>
-              Country
-              <input
-                name="phoneCountry"
-                defaultValue="US"
-                required
-                className="mt-1 w-full rounded border p-2"
-              />
-            </label>
-            <label>
-              Email
-              <input name="email" type="email" className="mt-1 w-full rounded border p-2" />
-            </label>
-            <label>
-              Affiliation organization ID
-              <input name="affiliation" className="mt-1 w-full rounded border p-2" />
-            </label>
-            <label className="sm:col-span-2">
-              System Admin override reason (only used when authorized and full)
-              <input name="overrideReason" className="mt-1 w-full rounded border p-2" />
-            </label>
-            <SubmitButton>Add and check in</SubmitButton>
-          </form>
+          <WalkInForm
+            eventId={id}
+            participationVersionId={participationVersion?.id ?? ""}
+            dataUseVersionId={dataUseVersion?.id ?? ""}
+          />
         </div>
       ) : null}
       <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
@@ -503,9 +484,19 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                 return (
                   <tr key={registration.id} className="border-b last:border-0">
                     <td className="p-2">
-                      {participant
-                        ? `${participant.first_name} ${participant.last_name}`
-                        : "Participant unavailable"}
+                      <span className="inline-flex items-center gap-2">
+                        {participant
+                          ? `${participant.first_name} ${participant.last_name}`
+                          : "Participant unavailable"}
+                        {participant && !firstClassParticipantIds.has(participant.id) ? (
+                          <span
+                            className="rounded-full bg-coral/10 px-2 py-1 text-xs font-bold text-coral"
+                            aria-label="First Class"
+                          >
+                            First Class
+                          </span>
+                        ) : null}
+                      </span>
                     </td>
                     <td className="p-2">{participant?.display_phone ?? "—"}</td>
                     <td className="p-2">{participant?.email ?? "—"}</td>
