@@ -446,6 +446,12 @@ body {
   border-top: 1px solid var(--admin-border);
   padding-top: 0.75rem;
 }
+.event-roster-table tbody tr {
+  transition: background-color 160ms ease-out;
+}
+.event-roster-table tbody tr:hover {
+  background: var(--surface-hover);
+}
 @keyframes admin-event-roster-in {
   from {
     opacity: 0;
