@@ -18,9 +18,11 @@ type Invitation = {
 export function InvitationManager({
   organizations,
   invitations,
+  mode = "list",
 }: {
   organizations: Array<{ id: string; name: string }>;
   invitations: Invitation[];
+  mode?: "list" | "invite";
 }) {
   const [message, setMessage] = useState<{ kind: "status" | "error"; text: string } | null>(null);
   const [oneTimeUrl, setOneTimeUrl] = useState<string | null>(null);
@@ -44,37 +46,39 @@ export function InvitationManager({
     });
   return (
     <>
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          const form = new FormData(event.currentTarget);
-          run(() => createHostInvitation(form));
-        }}
-        className="mt-8 grid gap-3 rounded-lg border border-slate-200 bg-white p-6 sm:grid-cols-2"
-      >
-        <h2 className="sm:col-span-2 text-lg font-semibold">Create Host Admin invitation</h2>
-        <label>
-          Email
-          <input name="email" type="email" required className="mt-1 w-full rounded border p-2" />
-        </label>
-        <label>
-          Organization
-          <select name="organizationIds" required className="mt-1 w-full rounded border p-2">
-            <option value="">Select organization</option>
-            {organizations.map((org) => (
-              <option key={org.id} value={org.id}>
-                {org.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <p className="sm:col-span-2 text-sm text-slate-600">
-          Invitations expire after 72 hours. No email is sent automatically.
-        </p>
-        <Button type="submit" disabled={pending}>
-          {pending ? "Creating…" : "Create invitation"}
-        </Button>
-      </form>
+      {mode === "invite" ? (
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            const form = new FormData(event.currentTarget);
+            run(() => createHostInvitation(form));
+          }}
+          className="admin-surface mt-8 grid gap-3 rounded-3xl p-6 sm:grid-cols-2"
+        >
+          <h2 className="sm:col-span-2 text-lg font-semibold">Create Host Admin invitation</h2>
+          <label>
+            Email
+            <input name="email" type="email" required className="mt-1 w-full rounded border p-2" />
+          </label>
+          <label>
+            Organization
+            <select name="organizationIds" required className="mt-1 w-full rounded border p-2">
+              <option value="">Select organization</option>
+              {organizations.map((org) => (
+                <option key={org.id} value={org.id}>
+                  {org.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p className="sm:col-span-2 text-sm text-slate-600">
+            Invitations expire after 72 hours. No email is sent automatically.
+          </p>
+          <Button type="submit" disabled={pending}>
+            {pending ? "Creating…" : "Create invitation"}
+          </Button>
+        </form>
+      ) : null}
       {oneTimeUrl ? (
         <div className="mt-4 rounded-lg border border-green-300 bg-green-50 p-4" role="status">
           <p className="font-medium">
@@ -109,46 +113,48 @@ export function InvitationManager({
           {message.text}
         </p>
       ) : null}
-      <div className="mt-8 space-y-3">
-        <h2 className="text-lg font-semibold">Invitation history</h2>
-        {invitations.map((invitation) => (
-          <article key={invitation.id} className="rounded-lg border border-slate-200 bg-white p-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h3 className="font-medium">{invitation.invited_email}</h3>
-                <p className="text-sm text-slate-600">
-                  {invitation.role} ·{" "}
-                  {invitation.organizationNames.join(", ") || "No active assignment"}
-                </p>
-                <p className="text-sm text-slate-500">
-                  {invitation.status} · expires{" "}
-                  {new Date(invitation.token_expires_at).toLocaleString()}
-                </p>
+      {mode === "list" ? (
+        <div className="mt-8 space-y-3">
+          <h2 className="text-lg font-semibold">Invitation history</h2>
+          {invitations.map((invitation) => (
+            <article key={invitation.id} className="admin-surface rounded-3xl p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-medium">{invitation.invited_email}</h3>
+                  <p className="text-sm text-slate-600">
+                    {invitation.role} ·{" "}
+                    {invitation.organizationNames.join(", ") || "No active assignment"}
+                  </p>
+                  <p className="text-sm text-slate-500">
+                    {invitation.status} · expires{" "}
+                    {new Date(invitation.token_expires_at).toLocaleString()}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  {invitation.status === "PENDING" ? (
+                    <>
+                      <Button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => run(() => regenerateInvitation(invitation.id))}
+                      >
+                        Regenerate
+                      </Button>
+                      <Button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => run(() => revokeInvitation(invitation.id))}
+                      >
+                        Revoke
+                      </Button>
+                    </>
+                  ) : null}
+                </div>
               </div>
-              <div className="flex gap-2">
-                {invitation.status === "PENDING" ? (
-                  <>
-                    <Button
-                      type="button"
-                      disabled={pending}
-                      onClick={() => run(() => regenerateInvitation(invitation.id))}
-                    >
-                      Regenerate
-                    </Button>
-                    <Button
-                      type="button"
-                      disabled={pending}
-                      onClick={() => run(() => revokeInvitation(invitation.id))}
-                    >
-                      Revoke
-                    </Button>
-                  </>
-                ) : null}
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
+            </article>
+          ))}
+        </div>
+      ) : null}
     </>
   );
 }

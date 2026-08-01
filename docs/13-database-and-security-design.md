@@ -1261,6 +1261,10 @@ Phase 7 planned database assertions cover publication/availability, narrow publi
 ### Self-review result
 
 The design was reviewed against the frozen MVP requirements FR-001–FR-086, BR-001–BR-112, DEC-001–DEC-046, and AT-001–AT-098, plus the post-MVP extension FR-087–FR-105, BR-113–BR-136, DEC-047, and AT-099–AT-132. The Phase 7 addendum preserves the original baseline and records publication, canonical URL, slug, QR, invitation, environment, legal-gate, RLS, audit, and concurrency requirements as planned rather than implemented. No SQL migrations, Supabase configuration, or application source code are included. This document is ready for implementation review.
+# DEC-052 security note
+
+No schema or RLS changes are introduced. Quick-roster data is selected only for events already resolved through the authenticated administrator’s existing scope. Phone links are rendered only in the authorized operational event context, and global participant profile/follow-up access remains System Admin-only.
+
 # Phase 9 security synchronization
 
 Phase 9 preserves RLS, grants, server authorization, legal gate, audit controls, and migration

@@ -11,6 +11,14 @@ const config: Config = {
         "brand-dark": "#0e4c42",
         sand: "#f3eee6",
         coral: "#d66d55",
+        admin: {
+          background: "var(--admin-background)",
+          surface: "var(--admin-surface)",
+          border: "var(--admin-border)",
+          text: "var(--admin-text)",
+          "text-muted": "var(--admin-text-muted)",
+          success: "var(--admin-success)",
+        },
       },
       boxShadow: {
         soft: "0 18px 50px rgba(23, 33, 43, 0.08)",

@@ -37,3 +37,23 @@ They are not Markdown or raw HTML, and URLs are not automatically linked. A What
 description is therefore visible text, not a clickable communication CTA. This avoids XSS and unsafe
 link behavior. The dedicated HTTPS communication-link field is the approved safe path for post-
 registration group handoff.
+
+## Event registration hero and admin roster visuals
+
+Public event pages use the static category fallback configured in
+`src/lib/config/admin-visual-assets.ts` (boxing, strength, yoga, community fitness, then
+default). This is a typed local asset map: there is no image CMS, runtime image generation,
+remote stock dependency, or database migration for visual styling. Replace the SVGs under
+`public/admin-assets/event-cards/` with owner-provided or properly licensed assets when available.
+Keep the subject near the center, use a cover-safe composition, and prefer optimized SVG/WebP
+assets below roughly 500 KB (1 MB maximum).
+
+The registration hero is approximately 58svh on small screens, uses a layered dark-to-page-surface
+gradient, and keeps event identity/date/venue readable over the image. The icon-only back control
+is visible near the hero and becomes non-tabbable and visually hidden once the top sentinel leaves
+the viewport; reduced-motion users receive an immediate state change.
+
+Admin event detail uses `RosterStatusCarousel` for progressive disclosure. Categories map only to
+existing registration and attendance values: Registered, Attended, No-show, and Cancelled. The
+focused dialog is a preview surface; the full roster table remains available below it for all
+existing attendance corrections and permission checks.

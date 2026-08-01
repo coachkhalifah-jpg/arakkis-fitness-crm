@@ -8,6 +8,10 @@
 - Actionable information before charts.
 - Accessibility: keyboard support, labels, contrast, error messages, touch targets.
 
+## DEC-052 administrator workspace presentation
+
+Authenticated administrator list pages use a reusable URL-backed two-mode segmented control only when an approved existing action workflow exists: Events/Create, Organizations/Create, Venues/Create, and Invitations/Invite. Participants intentionally remains Search/Profile because manual participant creation is not approved. The admin shell uses soft-white and warm-gray semantic tokens, local replaceable assets, a focus-safe contextual back link that fades after scroll, and event cards with text KPIs. Quick rosters are scoped operational summaries and link to the full roster; they do not replace attendance correction workflows.
+
 ## Public screens
 
 ### Public event schedule

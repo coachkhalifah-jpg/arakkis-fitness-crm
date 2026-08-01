@@ -374,6 +374,10 @@ The first reviewable PR should contain only repository and decision foundations:
 | Concurrency | FR-004/009–012/016/017/020/035/052/056/057/063–086, BR-001/005/006/011/027/036/037/073/078/080/083/086/089–112, AT-002/003/006/007/013–016/029/040/050/055/057/063–098 |
 | Schema/migrations | FR-001–005, FR-011/012, FR-018–026, FR-031/034, FR-045–086, BR-022–040/049–112 |
 | Testing/phases | All critical acceptance criteria, docs/10-build-plan.md, docs/11-first-codex-prompt.md, README workflow |
+# DEC-052 technical note
+
+The administrator presentation layer uses server-rendered route data plus small client components for URL-backed segmented navigation, IntersectionObserver-based contextual back visibility, and a focusable roster dialog. Visual assets are local static files configured in `src/lib/config/admin-visual-assets.ts`; no remote image dependency or database migration is required. KPI queries remain scoped to the already authorized event set.
+
 # Phase 9 operational design
 
 Local, preview/staging, and production use separate Next.js environment configuration and Supabase

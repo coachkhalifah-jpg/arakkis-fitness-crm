@@ -528,3 +528,6 @@ Synthetic local registration remains permitted. Staging is non-production and re
 
 ### FR-105 — Explicit Phase 7 boundaries
 Phase 7 does not include automated email/SMS/WhatsApp, push notifications, participant accounts or login, participant merging, analytics dashboards, tracking links or QR analytics, payments, production deployment, legal approval, or Phase 8 work. **Priority:** MUST — Phase 7
+
+### DEC-052 presentation addendum
+Administrator list pages may expose existing create/invite workflows through URL-backed segmented navigation. Events may present existing event data as local-image cards and a scoped quick roster. The Participants page retains search/profile access only; no manual participant-creation workflow is added.

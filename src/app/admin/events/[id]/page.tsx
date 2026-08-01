@@ -9,6 +9,11 @@ import { Alert } from "@/components/ui/alert";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { WalkInForm } from "@/components/admin/walk-in-form";
 import { CopyLinkButton } from "@/components/admin/copy-link-button";
+import { ContextualBack } from "@/components/admin/contextual-back";
+import {
+  RosterStatusCarousel,
+  type RosterPreviewPerson,
+} from "@/components/admin/roster-status-carousel";
 import {
   cancelEventForm,
   copyEventForm,
@@ -141,449 +146,475 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
     admin.role === "SYSTEM_ADMIN" && event.status !== "CANCELLED" && event.status !== "COMPLETED";
   const canonicalSlug = event.public_slug ?? eventSeries?.public_slug ?? null;
   const publicUrl = canonicalSlug ? await phase7EventUrl(canonicalSlug) : null;
+  const rosterPreview: RosterPreviewPerson[] = (registrations ?? []).map((registration) => {
+    const participant = participantById.get(registration.participant_id);
+    return {
+      id: registration.id,
+      name: participant
+        ? `${participant.first_name} ${participant.last_name}`
+        : "Participant unavailable",
+      phone: participant?.display_phone ?? null,
+      registrationStatus: registration.registration_status,
+      attendanceStatus: attendanceByRegistration.get(registration.id)?.status ?? "NOT_RECORDED",
+      firstClass: Boolean(participant && !firstClassParticipantIds.has(participant.id)),
+    };
+  });
   return (
-    <section className="mx-auto max-w-5xl px-6 py-12">
-      <Link className="text-sm text-brand" href="/admin/events">
-        ← Events
-      </Link>
-      <h1 className="mt-3 text-3xl font-semibold text-ink">{event.name}</h1>
-      <p className="mt-2 text-slate-600">
-        {event.status} ·{" "}
-        {new Intl.DateTimeFormat("en-US", {
-          dateStyle: "full",
-          timeStyle: "short",
-          timeZone: event.timezone,
-        }).format(new Date(event.starts_at))}{" "}
-        · {event.timezone}
-      </p>
-      <div className="mt-6 rounded-lg border border-brand/30 bg-brand/5 p-6">
-        <h2 className="text-lg font-semibold">Publishing and registration link</h2>
-        <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-          <div>
-            <dt className="text-slate-500">Publication</dt>
-            <dd>{event.publication_status}</dd>
-          </div>
-          <div>
-            <dt className="text-slate-500">Registration</dt>
-            <dd>{event.registration_paused_at ? "PAUSED" : event.publication_status}</dd>
-          </div>
-          {eventSeries ? (
-            <div className="sm:col-span-2">
-              <dt className="text-slate-500">Recurring schedule</dt>
-              <dd>
-                Every week through {eventSeries.ends_on} · participants can choose 14 days at a time
-              </dd>
-            </div>
-          ) : null}
-        </dl>
-        {admin.role === "SYSTEM_ADMIN" && event.status !== "CANCELLED" ? (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {event.publication_status === "PUBLISHED" ? (
-              <form action={unpublishPhase7EventForm.bind(null, id)}>
-                <Button type="submit">Unpublish</Button>
-              </form>
-            ) : (
-              <form action={publishPhase7EventForm.bind(null, id)}>
-                <Button type="submit">Publish</Button>
-              </form>
-            )}
-            {event.registration_paused_at ? (
-              <form action={resumePhase7EventForm}>
-                <input type="hidden" name="eventId" value={id} />
-                <Button type="submit">Resume registration</Button>
-              </form>
-            ) : (
-              <form action={pausePhase7EventForm}>
-                <input type="hidden" name="eventId" value={id} />
-                <Button type="submit">Pause registration</Button>
-              </form>
-            )}
-            {publicUrl ? (
-              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm" href={publicUrl}>
-                Share Registration
-              </a>
-            ) : null}
-            {publicUrl ? <CopyLinkButton url={publicUrl} /> : null}
-            {canonicalSlug ? (
-              <a
-                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-                href={`/admin/events/${id}/qr`}
-              >
-                Download QR
-              </a>
-            ) : null}
-          </div>
-        ) : null}
-        {publicUrl ? (
-          <p className="mt-3 break-all text-sm text-slate-600" data-testid="canonical-url">
-            {publicUrl}
-          </p>
-        ) : null}
-        {canEdit ? (
-          <form action={setPhase7SlugForm.bind(null, id)} className="mt-4 flex gap-2">
-            <label className="sr-only" htmlFor="publicSlug">
-              Public slug
-            </label>
-            <input
-              id="publicSlug"
-              name="publicSlug"
-              defaultValue={canonicalSlug ?? ""}
-              className="min-w-0 flex-1 rounded border p-2"
-            />
-            <Button type="submit">Save slug</Button>
-          </form>
-        ) : null}
-      </div>
-      {event.status === "CANCELLED" ? (
-        <p className="mt-4 rounded border border-red-200 bg-red-50 p-4 text-red-800">
-          This event is permanently cancelled and cannot be restored. Copy it to create a separate
-          draft.
+    <section className="admin-shell px-5 py-10 sm:px-8 sm:py-14">
+      <div className="relative mx-auto max-w-6xl pt-8">
+        <ContextualBack href="/admin/events" label="Events" />
+        <Link className="text-sm text-brand" href="/admin/events">
+          ← Events
+        </Link>
+        <h1 className="mt-3 text-3xl font-semibold text-ink">{event.name}</h1>
+        <p className="mt-2 text-slate-600">
+          {event.status} ·{" "}
+          {new Intl.DateTimeFormat("en-US", {
+            dateStyle: "full",
+            timeStyle: "short",
+            timeZone: event.timezone,
+          }).format(new Date(event.starts_at))}{" "}
+          · {event.timezone}
         </p>
-      ) : null}
-      {event.status !== "CANCELLED" && event.status !== "DRAFT" ? (
         <div className="mt-6 rounded-lg border border-brand/30 bg-brand/5 p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold">Publishing and registration link</h2>
+          <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
             <div>
-              <h2 className="text-lg font-semibold">Attendance operations</h2>
-              <p className="text-sm text-slate-600">
-                {event.attendance_processing_state} ·{" "}
-                {(registrations ?? []).filter((r) => r.registration_status === "REGISTERED").length}{" "}
-                active registrations / {event.capacity} capacity
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {event.attendance_processing_state !== "FINALIZED" ? (
-                <form action={openAttendanceSubmit}>
-                  <input type="hidden" name="eventId" value={id} />
-                  <SubmitButton>Start check-in</SubmitButton>
-                </form>
-              ) : null}
-              {event.attendance_processing_state === "OPEN" ||
-              event.attendance_processing_state === "REOPENED" ? (
-                <form action={finalizeAttendanceSubmit}>
-                  <input type="hidden" name="eventId" value={id} />
-                  <ConfirmSubmit message="Finalize attendance? Every active unmarked registration will become No-Show.">
-                    Finalize attendance
-                  </ConfirmSubmit>
-                </form>
-              ) : null}
-              {admin.role === "SYSTEM_ADMIN" &&
-              event.attendance_processing_state === "FINALIZED" ? (
-                <form action={reopenAttendanceSubmit} className="flex gap-2">
-                  <input type="hidden" name="eventId" value={id} />
-                  <input
-                    name="reason"
-                    required
-                    placeholder="Reopen reason"
-                    className="rounded border p-2 text-sm"
-                  />
-                  <ConfirmSubmit message="Reopen attendance for correction?">Reopen</ConfirmSubmit>
-                </form>
-              ) : null}
-            </div>
-          </div>
-          {event.attendance_processing_state === "FINALIZED" ? (
-            <Alert className="mt-4">
-              Attendance is finalized. Only System Admins may correct individual results.
-            </Alert>
-          ) : null}
-        </div>
-      ) : null}
-      {event.status !== "CANCELLED" && event.attendance_processing_state === "OPEN" ? (
-        <div className="mt-6 rounded-lg border border-slate-200 bg-white p-6">
-          <h2 className="text-lg font-semibold">Add walk-in</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            A walk-in is matched or created, registered, and checked in atomically.
-          </p>
-          <WalkInForm
-            eventId={id}
-            participationVersionId={participationVersion?.id ?? ""}
-            dataUseVersionId={dataUseVersion?.id ?? ""}
-          />
-        </div>
-      ) : null}
-      <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
-        <h2 className="text-lg font-semibold">Event details</h2>
-        {canEdit ? (
-          <ActionForm action={updateEvent} submitLabel="Save event">
-            <input type="hidden" name="id" value={id} />
-            <label>
-              Name
-              <input
-                name="name"
-                required
-                defaultValue={event.name}
-                className="mt-1 w-full rounded border p-2"
-              />
-            </label>
-            <label>
-              Organization
-              <select
-                name="hostOrganizationId"
-                defaultValue={event.host_organization_id}
-                className="mt-1 w-full rounded border p-2"
-              >
-                {(organizations ?? []).map((org) => (
-                  <option key={org.id} value={org.id}>
-                    {org.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Venue
-              <select
-                name="venueId"
-                defaultValue={event.venue_id}
-                className="mt-1 w-full rounded border p-2"
-              >
-                {(venues ?? []).map((venue) => (
-                  <option key={venue.id} value={venue.id}>
-                    {venue.name} ({venue.timezone})
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Capacity
-              <input
-                name="capacity"
-                type="number"
-                min="1"
-                required
-                defaultValue={event.capacity}
-                className="mt-1 w-full rounded border p-2"
-              />
-            </label>
-            <label>
-              Local start
-              <input
-                name="startLocal"
-                type="datetime-local"
-                required
-                defaultValue={localValue(event.starts_at, event.timezone)}
-                className="mt-1 w-full rounded border p-2"
-              />
-            </label>
-            <label>
-              Local end
-              <input
-                name="endLocal"
-                type="datetime-local"
-                required
-                defaultValue={localValue(event.ends_at, event.timezone)}
-                className="mt-1 w-full rounded border p-2"
-              />
-            </label>
-            <label>
-              Registration deadline
-              <input
-                name="registrationDeadlineLocal"
-                type="datetime-local"
-                required
-                defaultValue={localValue(event.registration_deadline, event.timezone)}
-                className="mt-1 w-full rounded border p-2"
-              />
-            </label>
-            <label>
-              Visibility
-              <select
-                name="visibility"
-                defaultValue={event.visibility}
-                className="mt-1 w-full rounded border p-2"
-              >
-                <option value="PUBLIC">Public</option>
-                <option value="AFFILIATION_RESTRICTED">Affiliation restricted</option>
-              </select>
-            </label>
-            <label>
-              Description
-              <textarea
-                name="description"
-                defaultValue={event.description ?? ""}
-                className="mt-1 min-h-20 w-full rounded border p-2"
-              />
-            </label>
-            <label>
-              Participant instructions
-              <textarea
-                name="participantInstructions"
-                defaultValue={event.participant_instructions ?? ""}
-                className="mt-1 min-h-20 w-full rounded border p-2"
-              />
-            </label>
-            <label>
-              Communication link (optional)
-              <input
-                name="communicationUrl"
-                type="url"
-                defaultValue={event.communication_url ?? ""}
-                placeholder="https://..."
-                className="mt-1 w-full rounded border p-2"
-              />
-            </label>
-            <label>
-              Link label
-              <input
-                name="communicationLabel"
-                defaultValue={event.communication_label ?? ""}
-                placeholder="Join the group"
-                className="mt-1 w-full rounded border p-2"
-              />
-            </label>
-          </ActionForm>
-        ) : (
-          <dl className="mt-4 space-y-2 text-sm">
-            <div>
-              <dt className="text-slate-500">Capacity</dt>
-              <dd>{event.capacity}</dd>
+              <dt className="text-slate-500">Publication</dt>
+              <dd>{event.publication_status}</dd>
             </div>
             <div>
-              <dt className="text-slate-500">Registration deadline</dt>
-              <dd>
-                {new Intl.DateTimeFormat("en-US", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                  timeZone: event.timezone,
-                }).format(new Date(event.registration_deadline))}
-              </dd>
+              <dt className="text-slate-500">Registration</dt>
+              <dd>{event.registration_paused_at ? "PAUSED" : event.publication_status}</dd>
             </div>
-            <div>
-              <dt className="text-slate-500">Description</dt>
-              <dd>{event.description || "—"}</dd>
-            </div>
+            {eventSeries ? (
+              <div className="sm:col-span-2">
+                <dt className="text-slate-500">Recurring schedule</dt>
+                <dd>
+                  Every week through {eventSeries.ends_on} · participants can choose 14 days at a
+                  time
+                </dd>
+              </div>
+            ) : null}
           </dl>
-        )}
-      </div>
-      <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
-        <h2 className="text-lg font-semibold">Registration roster</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          {
-            (registrations ?? []).filter(
-              (registration) => registration.registration_status === "REGISTERED",
-            ).length
-          }{" "}
-          active registrations · Host-scoped operational view
-        </p>
-        <div className="mt-4 overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="p-2">Participant</th>
-                <th className="p-2">Phone</th>
-                <th className="p-2">Email</th>
-                <th className="p-2">Status</th>
-                <th className="p-2">Attendance</th>
-                <th className="p-2">Action</th>
-                <th className="p-2">Registered</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(registrations ?? []).map((registration) => {
-                const participant = participantById.get(registration.participant_id);
-                return (
-                  <tr key={registration.id} className="border-b last:border-0">
-                    <td className="p-2">
-                      <span className="inline-flex items-center gap-2">
-                        {participant
-                          ? `${participant.first_name} ${participant.last_name}`
-                          : "Participant unavailable"}
-                        {participant && !firstClassParticipantIds.has(participant.id) ? (
-                          <span
-                            className="rounded-full bg-coral/10 px-2 py-1 text-xs font-bold text-coral"
-                            aria-label="First Class"
-                          >
-                            First Class
-                          </span>
-                        ) : null}
-                      </span>
-                    </td>
-                    <td className="p-2">{participant?.display_phone ?? "—"}</td>
-                    <td className="p-2">{participant?.email ?? "—"}</td>
-                    <td className="p-2">{registration.registration_status}</td>
-                    <td className="p-2">
-                      {attendanceByRegistration.get(registration.id)?.status ?? "NOT_RECORDED"}
-                    </td>
-                    <td className="p-2">
-                      {event.status === "CANCELLED" ||
-                      registration.registration_status === "CANCELLED" ? (
-                        "—"
-                      ) : event.attendance_processing_state === "OPEN" ||
-                        event.attendance_processing_state === "REOPENED" ? (
-                        <ActionForm action={markAttendance} submitLabel="Mark attended">
-                          <input type="hidden" name="eventId" value={id} />
-                          <input type="hidden" name="registrationId" value={registration.id} />
-                          <input type="hidden" name="status" value="ATTENDED" />
-                        </ActionForm>
-                      ) : event.attendance_processing_state === "FINALIZED" &&
-                        admin.role === "SYSTEM_ADMIN" ? (
-                        <ActionForm action={markAttendance} submitLabel="Save correction">
-                          <input type="hidden" name="eventId" value={id} />
-                          <input type="hidden" name="registrationId" value={registration.id} />
-                          <label className="block text-xs">
-                            Result
-                            <select
-                              name="status"
-                              defaultValue={
-                                attendanceByRegistration.get(registration.id)?.status ?? "NO_SHOW"
-                              }
-                              className="mt-1 rounded border p-1"
+          {admin.role === "SYSTEM_ADMIN" && event.status !== "CANCELLED" ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {event.publication_status === "PUBLISHED" ? (
+                <form action={unpublishPhase7EventForm.bind(null, id)}>
+                  <Button type="submit">Unpublish</Button>
+                </form>
+              ) : (
+                <form action={publishPhase7EventForm.bind(null, id)}>
+                  <Button type="submit">Publish</Button>
+                </form>
+              )}
+              {event.registration_paused_at ? (
+                <form action={resumePhase7EventForm}>
+                  <input type="hidden" name="eventId" value={id} />
+                  <Button type="submit">Resume registration</Button>
+                </form>
+              ) : (
+                <form action={pausePhase7EventForm}>
+                  <input type="hidden" name="eventId" value={id} />
+                  <Button type="submit">Pause registration</Button>
+                </form>
+              )}
+              {publicUrl ? (
+                <a
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  href={publicUrl}
+                >
+                  Share Registration
+                </a>
+              ) : null}
+              {publicUrl ? <CopyLinkButton url={publicUrl} /> : null}
+              {canonicalSlug ? (
+                <a
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  href={`/admin/events/${id}/qr`}
+                >
+                  Download QR
+                </a>
+              ) : null}
+            </div>
+          ) : null}
+          {publicUrl ? (
+            <p className="mt-3 break-all text-sm text-slate-600" data-testid="canonical-url">
+              {publicUrl}
+            </p>
+          ) : null}
+          {canEdit ? (
+            <form action={setPhase7SlugForm.bind(null, id)} className="mt-4 flex gap-2">
+              <label className="sr-only" htmlFor="publicSlug">
+                Public slug
+              </label>
+              <input
+                id="publicSlug"
+                name="publicSlug"
+                defaultValue={canonicalSlug ?? ""}
+                className="min-w-0 flex-1 rounded border p-2"
+              />
+              <Button type="submit">Save slug</Button>
+            </form>
+          ) : null}
+        </div>
+        {event.status === "CANCELLED" ? (
+          <p className="mt-4 rounded border border-red-200 bg-red-50 p-4 text-red-800">
+            This event is permanently cancelled and cannot be restored. Copy it to create a separate
+            draft.
+          </p>
+        ) : null}
+        {event.status !== "CANCELLED" && event.status !== "DRAFT" ? (
+          <div className="mt-6 rounded-lg border border-brand/30 bg-brand/5 p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">Attendance operations</h2>
+                <p className="text-sm text-slate-600">
+                  {event.attendance_processing_state} ·{" "}
+                  {
+                    (registrations ?? []).filter((r) => r.registration_status === "REGISTERED")
+                      .length
+                  }{" "}
+                  active registrations / {event.capacity} capacity
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {event.attendance_processing_state !== "FINALIZED" ? (
+                  <form action={openAttendanceSubmit}>
+                    <input type="hidden" name="eventId" value={id} />
+                    <SubmitButton>Start check-in</SubmitButton>
+                  </form>
+                ) : null}
+                {event.attendance_processing_state === "OPEN" ||
+                event.attendance_processing_state === "REOPENED" ? (
+                  <form action={finalizeAttendanceSubmit}>
+                    <input type="hidden" name="eventId" value={id} />
+                    <ConfirmSubmit message="Finalize attendance? Every active unmarked registration will become No-Show.">
+                      Finalize attendance
+                    </ConfirmSubmit>
+                  </form>
+                ) : null}
+                {admin.role === "SYSTEM_ADMIN" &&
+                event.attendance_processing_state === "FINALIZED" ? (
+                  <form action={reopenAttendanceSubmit} className="flex gap-2">
+                    <input type="hidden" name="eventId" value={id} />
+                    <input
+                      name="reason"
+                      required
+                      placeholder="Reopen reason"
+                      className="rounded border p-2 text-sm"
+                    />
+                    <ConfirmSubmit message="Reopen attendance for correction?">
+                      Reopen
+                    </ConfirmSubmit>
+                  </form>
+                ) : null}
+              </div>
+            </div>
+            {event.attendance_processing_state === "FINALIZED" ? (
+              <Alert className="mt-4">
+                Attendance is finalized. Only System Admins may correct individual results.
+              </Alert>
+            ) : null}
+          </div>
+        ) : null}
+        {event.status !== "CANCELLED" && event.attendance_processing_state === "OPEN" ? (
+          <div className="mt-6 rounded-lg border border-slate-200 bg-white p-6">
+            <h2 className="text-lg font-semibold">Add walk-in</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              A walk-in is matched or created, registered, and checked in atomically.
+            </p>
+            <WalkInForm
+              eventId={id}
+              participationVersionId={participationVersion?.id ?? ""}
+              dataUseVersionId={dataUseVersion?.id ?? ""}
+            />
+          </div>
+        ) : null}
+        <RosterStatusCarousel people={rosterPreview} />
+        <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
+          <h2 className="text-lg font-semibold">Event details</h2>
+          {canEdit ? (
+            <ActionForm action={updateEvent} submitLabel="Save event">
+              <input type="hidden" name="id" value={id} />
+              <label>
+                Name
+                <input
+                  name="name"
+                  required
+                  defaultValue={event.name}
+                  className="mt-1 w-full rounded border p-2"
+                />
+              </label>
+              <label>
+                Organization
+                <select
+                  name="hostOrganizationId"
+                  defaultValue={event.host_organization_id}
+                  className="mt-1 w-full rounded border p-2"
+                >
+                  {(organizations ?? []).map((org) => (
+                    <option key={org.id} value={org.id}>
+                      {org.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Venue
+                <select
+                  name="venueId"
+                  defaultValue={event.venue_id}
+                  className="mt-1 w-full rounded border p-2"
+                >
+                  {(venues ?? []).map((venue) => (
+                    <option key={venue.id} value={venue.id}>
+                      {venue.name} ({venue.timezone})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Capacity
+                <input
+                  name="capacity"
+                  type="number"
+                  min="1"
+                  required
+                  defaultValue={event.capacity}
+                  className="mt-1 w-full rounded border p-2"
+                />
+              </label>
+              <label>
+                Local start
+                <input
+                  name="startLocal"
+                  type="datetime-local"
+                  required
+                  defaultValue={localValue(event.starts_at, event.timezone)}
+                  className="mt-1 w-full rounded border p-2"
+                />
+              </label>
+              <label>
+                Local end
+                <input
+                  name="endLocal"
+                  type="datetime-local"
+                  required
+                  defaultValue={localValue(event.ends_at, event.timezone)}
+                  className="mt-1 w-full rounded border p-2"
+                />
+              </label>
+              <label>
+                Registration deadline
+                <input
+                  name="registrationDeadlineLocal"
+                  type="datetime-local"
+                  required
+                  defaultValue={localValue(event.registration_deadline, event.timezone)}
+                  className="mt-1 w-full rounded border p-2"
+                />
+              </label>
+              <label>
+                Visibility
+                <select
+                  name="visibility"
+                  defaultValue={event.visibility}
+                  className="mt-1 w-full rounded border p-2"
+                >
+                  <option value="PUBLIC">Public</option>
+                  <option value="AFFILIATION_RESTRICTED">Affiliation restricted</option>
+                </select>
+              </label>
+              <label>
+                Description
+                <textarea
+                  name="description"
+                  defaultValue={event.description ?? ""}
+                  className="mt-1 min-h-20 w-full rounded border p-2"
+                />
+              </label>
+              <label>
+                Participant instructions
+                <textarea
+                  name="participantInstructions"
+                  defaultValue={event.participant_instructions ?? ""}
+                  className="mt-1 min-h-20 w-full rounded border p-2"
+                />
+              </label>
+              <label>
+                Communication link (optional)
+                <input
+                  name="communicationUrl"
+                  type="url"
+                  defaultValue={event.communication_url ?? ""}
+                  placeholder="https://..."
+                  className="mt-1 w-full rounded border p-2"
+                />
+              </label>
+              <label>
+                Link label
+                <input
+                  name="communicationLabel"
+                  defaultValue={event.communication_label ?? ""}
+                  placeholder="Join the group"
+                  className="mt-1 w-full rounded border p-2"
+                />
+              </label>
+            </ActionForm>
+          ) : (
+            <dl className="mt-4 space-y-2 text-sm">
+              <div>
+                <dt className="text-slate-500">Capacity</dt>
+                <dd>{event.capacity}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Registration deadline</dt>
+                <dd>
+                  {new Intl.DateTimeFormat("en-US", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                    timeZone: event.timezone,
+                  }).format(new Date(event.registration_deadline))}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Description</dt>
+                <dd>{event.description || "—"}</dd>
+              </div>
+            </dl>
+          )}
+        </div>
+        <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
+          <h2 className="text-lg font-semibold">Registration roster</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            {
+              (registrations ?? []).filter(
+                (registration) => registration.registration_status === "REGISTERED",
+              ).length
+            }{" "}
+            active registrations · Host-scoped operational view
+          </p>
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="p-2">Participant</th>
+                  <th className="p-2">Phone</th>
+                  <th className="p-2">Email</th>
+                  <th className="p-2">Status</th>
+                  <th className="p-2">Attendance</th>
+                  <th className="p-2">Action</th>
+                  <th className="p-2">Registered</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(registrations ?? []).map((registration) => {
+                  const participant = participantById.get(registration.participant_id);
+                  return (
+                    <tr key={registration.id} className="border-b last:border-0">
+                      <td className="p-2">
+                        <span className="inline-flex items-center gap-2">
+                          {participant
+                            ? `${participant.first_name} ${participant.last_name}`
+                            : "Participant unavailable"}
+                          {participant && !firstClassParticipantIds.has(participant.id) ? (
+                            <span
+                              className="rounded-full bg-coral/10 px-2 py-1 text-xs font-bold text-coral"
+                              aria-label="First Class"
                             >
-                              <option value="ATTENDED">ATTENDED</option>
-                              <option value="NO_SHOW">NO_SHOW</option>
-                              <option value="EXCUSED">EXCUSED</option>
-                              <option value="NOT_RECORDED">NOT_RECORDED</option>
-                            </select>
-                          </label>
-                          <label className="block text-xs">
-                            Reason
-                            <input
-                              name="reason"
-                              required
-                              className="mt-1 w-full rounded border p-1"
-                            />
-                          </label>
-                        </ActionForm>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td className="p-2">
-                      {new Intl.DateTimeFormat("en-US", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      }).format(new Date(registration.registered_at))}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                              First Class
+                            </span>
+                          ) : null}
+                        </span>
+                      </td>
+                      <td className="p-2">{participant?.display_phone ?? "—"}</td>
+                      <td className="p-2">{participant?.email ?? "—"}</td>
+                      <td className="p-2">{registration.registration_status}</td>
+                      <td className="p-2">
+                        {attendanceByRegistration.get(registration.id)?.status ?? "NOT_RECORDED"}
+                      </td>
+                      <td className="p-2">
+                        {event.status === "CANCELLED" ||
+                        registration.registration_status === "CANCELLED" ? (
+                          "—"
+                        ) : event.attendance_processing_state === "OPEN" ||
+                          event.attendance_processing_state === "REOPENED" ? (
+                          <ActionForm action={markAttendance} submitLabel="Mark attended">
+                            <input type="hidden" name="eventId" value={id} />
+                            <input type="hidden" name="registrationId" value={registration.id} />
+                            <input type="hidden" name="status" value="ATTENDED" />
+                          </ActionForm>
+                        ) : event.attendance_processing_state === "FINALIZED" &&
+                          admin.role === "SYSTEM_ADMIN" ? (
+                          <ActionForm action={markAttendance} submitLabel="Save correction">
+                            <input type="hidden" name="eventId" value={id} />
+                            <input type="hidden" name="registrationId" value={registration.id} />
+                            <label className="block text-xs">
+                              Result
+                              <select
+                                name="status"
+                                defaultValue={
+                                  attendanceByRegistration.get(registration.id)?.status ?? "NO_SHOW"
+                                }
+                                className="mt-1 rounded border p-1"
+                              >
+                                <option value="ATTENDED">ATTENDED</option>
+                                <option value="NO_SHOW">NO_SHOW</option>
+                                <option value="EXCUSED">EXCUSED</option>
+                                <option value="NOT_RECORDED">NOT_RECORDED</option>
+                              </select>
+                            </label>
+                            <label className="block text-xs">
+                              Reason
+                              <input
+                                name="reason"
+                                required
+                                className="mt-1 w-full rounded border p-1"
+                              />
+                            </label>
+                          </ActionForm>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="p-2">
+                        {new Intl.DateTimeFormat("en-US", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        }).format(new Date(registration.registered_at))}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
+        {admin.role === "SYSTEM_ADMIN" ? (
+          <div className="mt-6 flex flex-wrap gap-3">
+            {event.status === "DRAFT" ? (
+              <form action={publishEventForm.bind(null, id)}>
+                <Button type="submit">Publish event</Button>
+              </form>
+            ) : null}
+            {event.status !== "CANCELLED" ? (
+              <form action={copyEventForm.bind(null, id)}>
+                <ConfirmSubmit message="Copy this event into a new draft? Registrations and history will not be copied.">
+                  Copy event
+                </ConfirmSubmit>
+              </form>
+            ) : null}
+            {event.status !== "CANCELLED" && event.status !== "COMPLETED" ? (
+              <form action={cancelEventForm.bind(null, id)}>
+                <ConfirmSubmit message="Cancel this event permanently? It cannot be restored.">
+                  Cancel event
+                </ConfirmSubmit>
+              </form>
+            ) : null}
+          </div>
+        ) : null}
       </div>
-      {admin.role === "SYSTEM_ADMIN" ? (
-        <div className="mt-6 flex flex-wrap gap-3">
-          {event.status === "DRAFT" ? (
-            <form action={publishEventForm.bind(null, id)}>
-              <Button type="submit">Publish event</Button>
-            </form>
-          ) : null}
-          {event.status !== "CANCELLED" ? (
-            <form action={copyEventForm.bind(null, id)}>
-              <ConfirmSubmit message="Copy this event into a new draft? Registrations and history will not be copied.">
-                Copy event
-              </ConfirmSubmit>
-            </form>
-          ) : null}
-          {event.status !== "CANCELLED" && event.status !== "COMPLETED" ? (
-            <form action={cancelEventForm.bind(null, id)}>
-              <ConfirmSubmit message="Cancel this event permanently? It cannot be restored.">
-                Cancel event
-              </ConfirmSubmit>
-            </form>
-          ) : null}
-        </div>
-      ) : null}
     </section>
   );
 }

@@ -154,6 +154,7 @@
 - BR-134: Phase 7 migrations are additive and begin after `0019`; migrations `0001–0019` remain unchanged.
 - BR-135: Every Phase 7 requirement has planned unit/component, database/integration, authorization/security, and/or Playwright coverage before implementation is considered complete.
 - BR-136: Phase 7 implementation cannot begin until DEC-047 and all synchronized source-of-truth documents are reviewed and accepted; this documentation update does not mark any feature implemented.
+- BR-136A: Administrator presentation controls, event cards, and quick rosters never expand server-side authorization. Host Admin participant names/phones remain limited to assigned event operations; System Admin-only participant profile and follow-up rules remain unchanged.
 # DEC-051 remembered-device rules
 
 - Remembered-device recognition is optional, explicit, revocable, and limited to booking convenience.

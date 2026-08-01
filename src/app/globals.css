@@ -4,6 +4,16 @@
 
 :root {
   color-scheme: light;
+  --admin-background: #f1f1ee;
+  --admin-surface: #fffefa;
+  --admin-surface-muted: #e8e9e5;
+  --admin-border: #d9dcd7;
+  --admin-text: #202624;
+  --admin-text-muted: #626b67;
+  --admin-accent: #176b5b;
+  --admin-success: #176b5b;
+  --admin-warning: #8a5b17;
+  --admin-danger: #a4413b;
 }
 
 * {
@@ -15,6 +25,138 @@ body {
   background: #f7f8f5;
   color: #17212b;
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+.admin-shell {
+  min-height: 100vh;
+  background: var(--admin-background);
+  color: var(--admin-text);
+}
+.admin-surface {
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface);
+  box-shadow: 0 14px 36px rgba(32, 38, 36, 0.06);
+}
+.admin-eyebrow {
+  color: var(--admin-accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.admin-segmented-nav {
+  display: inline-flex;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--admin-border);
+  border-radius: 999px;
+  background: var(--admin-surface-muted);
+  padding: 4px;
+  scrollbar-width: none;
+}
+.admin-segmented-nav::-webkit-scrollbar {
+  display: none;
+}
+.admin-segmented-nav a {
+  position: relative;
+  min-width: 112px;
+  border-radius: 999px;
+  padding: 0.62rem 1rem;
+  text-align: center;
+  color: var(--admin-text-muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
+}
+.admin-segmented-nav a[data-selected="true"] {
+  color: var(--admin-text);
+  background: var(--admin-surface);
+  box-shadow: 0 2px 8px rgba(32, 38, 36, 0.12);
+}
+.admin-contextual-back {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--admin-text-muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+.admin-contextual-back-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-5px);
+}
+.admin-primary-button,
+.admin-secondary-button,
+.admin-icon-button {
+  min-height: 42px;
+  border-radius: 12px;
+  padding: 0.65rem 1rem;
+  font-weight: 700;
+}
+.admin-primary-button {
+  background: var(--admin-accent);
+  color: white;
+}
+.admin-secondary-button {
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface);
+  color: var(--admin-text);
+}
+.admin-icon-button {
+  display: inline-grid;
+  place-items: center;
+  padding: 0.65rem;
+  color: var(--admin-text-muted);
+}
+.event-card-image {
+  aspect-ratio: 16 / 9;
+  background-position: center;
+  background-size: cover;
+}
+.first-class-badge {
+  display: inline-flex;
+  border: 1px solid #b8d1cb;
+  border-radius: 8px;
+  background: #e3f0ed;
+  padding: 0.2rem 0.42rem;
+  color: #155d51;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.admin-roster-sheet {
+  animation: admin-sheet-in 180ms ease-out;
+}
+@keyframes admin-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-segmented-nav a,
+  .admin-contextual-back,
+  .admin-roster-sheet,
+  .floating-back-button,
+  .roster-summary-card,
+  .admin-roster-dialog {
+    transition: none;
+    animation: none;
+  }
 }
 
 a {
@@ -55,6 +197,77 @@ textarea {
   background:
     radial-gradient(circle at 15% 15%, rgba(214, 109, 85, 0.18), transparent 32rem),
     linear-gradient(135deg, #edf4ef 0%, #f7f8f5 52%, #f4e3da 100%);
+}
+.event-hero {
+  min-height: min(58svh, 34rem);
+  background: #24345d;
+}
+.event-hero-overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(23, 33, 43, 0.18) 0%,
+    rgba(23, 33, 43, 0.12) 42%,
+    #f7f8f5 100%
+  );
+}
+.floating-back-button {
+  position: absolute;
+  left: 1.25rem;
+  top: max(1.25rem, env(safe-area-inset-top));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 999px;
+  color: white;
+  background: rgba(23, 33, 43, 0.48);
+  backdrop-filter: blur(12px);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+.floating-back-button-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px);
+}
+.roster-carousel {
+  scrollbar-width: none;
+}
+.roster-carousel::-webkit-scrollbar {
+  display: none;
+}
+.roster-summary-card {
+  border: 1px solid var(--admin-border);
+  border-radius: 1.25rem;
+  background: var(--admin-surface-muted);
+  padding: 1rem;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+.roster-summary-card:hover {
+  transform: translateY(-2px);
+}
+.roster-summary-card-selected {
+  border-color: var(--admin-accent);
+  background: #e3f0ed;
+}
+.admin-roster-dialog {
+  animation: admin-dialog-in 180ms ease-out;
+}
+@keyframes admin-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .event-carousel {

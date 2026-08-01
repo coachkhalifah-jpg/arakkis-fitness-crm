@@ -733,6 +733,10 @@ Given a clean reset and the Phase 1–6 suite, when Phase 7 is implemented later
 Given the Phase 7 implementation plan, when the final scope is reviewed, then automated messaging, participant accounts/login, merging, analytics/tracking/QR analytics, payments, deployment, legal approval, and Phase 8 work are absent. (FR-105, BR-131)
 # DEC-051 acceptance additions
 
+### AT-DEC-052 — Administrator presentation controls
+
+Given an authorized administrator, when they use Events, Organizations, Venues, or Invitations, the default list mode and approved action mode are URL-addressable, keyboard-focusable, and preserve existing server-side authorization. Participants retain the approved search/profile workflow without a fabricated add mode. Event cards and quick rosters show only scoped existing data, First Class is derived from prior ATTENDED history, phone links are authorized, and the full roster remains available for operational corrections.
+
 - A participant can browse event cards horizontally with touch, mouse, keyboard, visible focus, and a safe one-card state.
 - Dates are grouped by human-readable date, with independent time choices and visible multi-selection state.
 - A successful booking offers optional remembered-browser consent; declining does not block booking.
