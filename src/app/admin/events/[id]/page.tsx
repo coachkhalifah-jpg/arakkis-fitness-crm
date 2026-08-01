@@ -161,21 +161,20 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   });
   return (
     <section className="admin-shell px-5 py-10 sm:px-8 sm:py-14">
-      <div className="relative mx-auto max-w-6xl pt-8">
+      <div className="relative mx-auto max-w-3xl pt-8">
         <ContextualBack href="/admin/events" label="Events" />
-        <Link className="text-sm text-brand" href="/admin/events">
-          ← Events
-        </Link>
-        <h1 className="mt-3 text-3xl font-semibold text-ink">{event.name}</h1>
-        <p className="mt-2 text-slate-600">
-          {event.status} ·{" "}
-          {new Intl.DateTimeFormat("en-US", {
-            dateStyle: "full",
-            timeStyle: "short",
-            timeZone: event.timezone,
-          }).format(new Date(event.starts_at))}{" "}
-          · {event.timezone}
-        </p>
+        <div className="admin-page-header">
+          <h1>{event.name}</h1>
+          <p>
+            {event.status} ·{" "}
+            {new Intl.DateTimeFormat("en-US", {
+              dateStyle: "full",
+              timeStyle: "short",
+              timeZone: event.timezone,
+            }).format(new Date(event.starts_at))}{" "}
+            · {event.timezone}
+          </p>
+        </div>
         <div className="mt-6 rounded-lg border border-brand/30 bg-brand/5 p-6">
           <h2 className="text-lg font-semibold">Publishing and registration link</h2>
           <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
@@ -607,7 +606,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
             ) : null}
             {event.status !== "CANCELLED" && event.status !== "COMPLETED" ? (
               <form action={cancelEventForm.bind(null, id)}>
-                <ConfirmSubmit message="Cancel this event permanently? It cannot be restored.">
+                <ConfirmSubmit
+                  message="Cancel this event permanently? It cannot be restored."
+                  variant="destructive"
+                >
                   Cancel event
                 </ConfirmSubmit>
               </form>

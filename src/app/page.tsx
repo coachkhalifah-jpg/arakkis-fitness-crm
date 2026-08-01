@@ -15,15 +15,18 @@ export default function HomePage() {
             Welcoming, well-organized fitness events for real communities. Find a date that fits and
             reserve your spot in under a minute.
           </p>
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+          <div className="public-primary-stack mt-9">
             <Link
-              className="inline-flex min-h-12 items-center justify-center rounded-xl bg-brand px-6 font-semibold text-white shadow-soft transition hover:bg-brand-dark"
+              className="public-primary-control bg-white/[0.72] text-ink shadow-soft hover:bg-white/[0.85]"
               href="/events"
             >
-              Explore upcoming events <span className="ml-2">→</span>
+              Explore upcoming events{" "}
+              <span aria-hidden="true" className="ml-2">
+                →
+              </span>
             </Link>
             <Link
-              className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-6 font-semibold text-ink hover:border-brand hover:text-brand"
+              className="public-primary-control border border-white/70 bg-white/[0.58] text-ink hover:border-brand hover:bg-white/[0.8] hover:text-brand"
               href="/registration"
             >
               Reserve by date

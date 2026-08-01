@@ -1,14 +1,28 @@
 import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-export function Button({ className, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
+type ButtonVariant = "primary" | "secondary" | "tertiary" | "icon" | "success" | "destructive";
+
+type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  loading?: boolean;
+  variant?: ButtonVariant;
+};
+
+export function Button({
+  className,
+  loading = false,
+  variant = "primary",
+  disabled,
+  ...props
+}: ButtonProps) {
   return (
     <button
-      className={cn(
-        "min-h-11 rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand/40 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-        className,
-      )}
+      aria-busy={loading || undefined}
+      className={cn("ui-button", `ui-button-${variant}`, loading && "ui-button-loading", className)}
+      disabled={disabled || loading}
       {...props}
     />
   );
 }
+
+export type { ButtonVariant };

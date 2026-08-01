@@ -7,18 +7,33 @@ export function EventHero({
   venue,
   date,
   availability,
+  imageUrl,
+  mobileImageUrl,
+  focalPosition = "center",
 }: {
   eventName: string;
   host: string;
   venue: string;
   date: string;
   availability: string;
+  imageUrl?: string;
+  mobileImageUrl?: string;
+  focalPosition?: string;
 }) {
   return (
-    <div className="event-hero relative overflow-hidden rounded-b-[2.5rem]">
+    <div
+      className="event-hero relative overflow-hidden rounded-b-[2.5rem]"
+      style={
+        {
+          "--event-image": imageUrl ? `url(${imageUrl})` : undefined,
+          "--event-image-mobile": mobileImageUrl ? `url(${mobileImageUrl})` : undefined,
+          "--event-focal": focalPosition,
+        } as React.CSSProperties
+      }
+    >
       <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${eventCardAsset(eventName)})` }}
+        className="event-hero-image absolute inset-0 bg-cover"
+        style={{ backgroundImage: `var(--event-image, url(${eventCardAsset(eventName)}))` }}
         role="img"
         aria-label={`${eventName} event image`}
       />

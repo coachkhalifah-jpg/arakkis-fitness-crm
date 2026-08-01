@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { EventCarousel } from "@/components/events/event-carousel";
 import { createClient } from "@/lib/db/server";
 import { publicBrand } from "@/lib/config/branding";
+import { designAssetPublicUrl } from "@/lib/config/design-assets";
 import type { CSSProperties } from "react";
 
 type PublicEvent = {
@@ -25,19 +26,53 @@ type PublicEvent = {
 
 export default async function EventsPage() {
   const db = await createClient();
-  const { data } = await db.from("public_event_schedule").select("*").order("starts_at");
+  const [{ data }, { data: backgroundAssets }] = await Promise.all([
+    db.from("public_event_schedule").select("*").order("starts_at"),
+    db
+      .from("design_assets")
+      .select("asset_type,storage_path,focal_position")
+      .eq("active", true)
+      .in("asset_type", ["PUBLIC_BACKGROUND_DESKTOP", "PUBLIC_BACKGROUND_MOBILE"]),
+  ]);
   const events = (data ?? []) as PublicEvent[];
+  const { data: eventImageAssets } = events.length
+    ? await db
+        .from("design_assets")
+        .select("event_id,storage_path")
+        .eq("asset_type", "EVENT_IMAGE_DESKTOP")
+        .eq("active", true)
+        .in(
+          "event_id",
+          events.map((event) => event.id),
+        )
+    : { data: [] };
+  const eventImageById = new Map(
+    (eventImageAssets ?? []).map((asset) => [
+      asset.event_id,
+      designAssetPublicUrl(asset.storage_path),
+    ]),
+  );
+  const desktopBackground = backgroundAssets?.find(
+    (asset) => asset.asset_type === "PUBLIC_BACKGROUND_DESKTOP",
+  );
+  const mobileBackground = backgroundAssets?.find(
+    (asset) => asset.asset_type === "PUBLIC_BACKGROUND_MOBILE",
+  );
   return (
     <section
       className="event-hub-shell min-h-[calc(100vh-4rem)] px-5 py-12 sm:px-8 sm:py-16"
       style={
         {
-          "--hub-desktop": `url(${publicBrand.desktopBackgroundPath})`,
-          "--hub-mobile": `url(${publicBrand.mobileBackgroundPath})`,
+          "--hub-desktop": `url(${desktopBackground ? designAssetPublicUrl(desktopBackground.storage_path) : publicBrand.desktopBackgroundPath})`,
+          "--hub-mobile": `url(${mobileBackground ? designAssetPublicUrl(mobileBackground.storage_path) : desktopBackground ? designAssetPublicUrl(desktopBackground.storage_path) : publicBrand.mobileBackgroundPath})`,
           "--hub-fallback": publicBrand.fallbackBackground,
           "--hub-overlay": publicBrand.overlayStrength,
-          "--hub-desktop-position": publicBrand.desktopFocalPosition,
-          "--hub-mobile-position": publicBrand.mobileFocalPosition,
+          "--hub-desktop-position":
+            desktopBackground?.focal_position ?? publicBrand.desktopFocalPosition,
+          "--hub-mobile-position":
+            mobileBackground?.focal_position ??
+            desktopBackground?.focal_position ??
+            publicBrand.mobileFocalPosition,
         } as CSSProperties
       }
     >
@@ -111,6 +146,7 @@ export default async function EventsPage() {
               spots,
               href: event.public_slug ? `/register/${event.public_slug}` : "/registration",
               availability: spots > 0 ? "OPEN" : "FULL",
+              imageUrl: eventImageById.get(event.id),
             };
           })}
         />

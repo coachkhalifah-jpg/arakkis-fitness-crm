@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/db/server";
 import { isProductionRegistrationBlocked } from "@/lib/config/env";
 import { resolveRememberedParticipant } from "@/lib/registration/device";
+import { designAssetPublicUrl } from "@/lib/config/design-assets";
 
 export default async function PublicEventPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -18,6 +19,7 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
     organizations: Array<{ id: string; name: string }>;
   };
   const event = data as {
+    id: string;
     name: string;
     description: string | null;
     participant_instructions: string | null;
@@ -50,6 +52,13 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
     );
   const legallyBlocked = isProductionRegistrationBlocked();
   const remembered = await resolveRememberedParticipant();
+  const { data: eventAssets } = await db
+    .from("design_assets")
+    .select("asset_type,storage_path,focal_position")
+    .eq("event_id", event.id)
+    .eq("active", true);
+  const desktopAsset = eventAssets?.find((asset) => asset.asset_type === "EVENT_IMAGE_DESKTOP");
+  const mobileAsset = eventAssets?.find((asset) => asset.asset_type === "EVENT_IMAGE_MOBILE");
   const availability = legallyBlocked ? "LEGALLY_BLOCKED" : event.availability;
   const recurringEvents = event.series_slug ? event.occurrences : [];
   const registrationEvents = recurringEvents.length ? recurringEvents : [event];
@@ -66,15 +75,18 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
     timeZone: event.timezone,
   }).format(new Date(event.starts_at));
   return (
-    <section className="booking-environment min-h-screen pb-16 transition-colors duration-500">
+    <section className="booking-environment mx-auto min-h-screen w-full max-w-[720px] pb-16 transition-colors duration-500">
       <EventHero
         eventName={event.name}
         host={event.host_organization_name}
         venue={event.venue_name}
         date={formattedDate}
         availability={availability}
+        imageUrl={desktopAsset ? designAssetPublicUrl(desktopAsset.storage_path) : undefined}
+        mobileImageUrl={mobileAsset ? designAssetPublicUrl(mobileAsset.storage_path) : undefined}
+        focalPosition={desktopAsset?.focal_position ?? mobileAsset?.focal_position ?? "center"}
       />
-      <div className="mx-auto max-w-3xl px-5 pt-8 sm:px-8 sm:pt-10">
+      <div className="px-5 pt-8 sm:px-8 sm:pt-10">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm text-slate-600">
             {event.venue_street}, {event.venue_city}, {event.venue_state}

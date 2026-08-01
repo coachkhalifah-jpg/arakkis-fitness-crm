@@ -9,6 +9,20 @@ describe("Button", () => {
     render(<Button>Continue</Button>);
     expect(screen.getByRole("button", { name: "Continue" })).toBeInTheDocument();
   });
+
+  it("exposes semantic variants and keeps loading buttons disabled", () => {
+    render(
+      <>
+        <Button variant="secondary">Cancel</Button>
+        <Button variant="destructive">Delete</Button>
+        <Button loading>Saving</Button>
+      </>,
+    );
+    expect(screen.getByRole("button", { name: "Cancel" })).toHaveClass("ui-button-secondary");
+    expect(screen.getByRole("button", { name: "Delete" })).toHaveClass("ui-button-destructive");
+    expect(screen.getByRole("button", { name: "Saving" })).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByRole("button", { name: "Saving" })).toBeDisabled();
+  });
 });
 
 describe("presentation controls", () => {
@@ -17,7 +31,7 @@ describe("presentation controls", () => {
     expect(screen.getByRole("link", { name: "Back to events" })).toHaveAttribute("href", "/events");
   });
 
-  it("exposes real roster groups and opens the selected preview", async () => {
+  it("exposes real roster groups and expands the selected preview in place", async () => {
     const { userEvent } = await import("@testing-library/user-event");
     const user = userEvent.setup();
     render(
@@ -44,7 +58,10 @@ describe("presentation controls", () => {
     );
     expect(screen.getByRole("tab", { name: /registered/i })).toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: /attended/i }));
-    expect(screen.getByRole("dialog")).toHaveAccessibleName("Attended");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Attended roster" })).toBeInTheDocument();
     expect(screen.getByText("Ava Stone")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Close roster group" }));
+    expect(screen.queryByRole("region", { name: "Attended roster" })).not.toBeInTheDocument();
   });
 });

@@ -12,6 +12,7 @@ type EventCard = {
   spots: number;
   href: string;
   availability: string;
+  imageUrl?: string;
 };
 
 const art = [
@@ -38,10 +39,11 @@ export function EventCarousel({ events }: { events: EventCard[] }) {
         {events.map((event, index) => (
           <article
             key={event.id}
-            className="w-[min(82vw,25rem)] shrink-0 snap-start overflow-hidden rounded-[2rem] border-2 border-ink bg-white shadow-[0_10px_0_#17212b] transition duration-200 hover:-translate-y-1 hover:shadow-[0_14px_0_#17212b]"
+            className="public-event-card w-[min(82vw,25rem)] shrink-0 snap-start overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--surface)] shadow-[0_10px_0_rgba(10,12,15,0.55)]"
           >
             <div
-              className={`relative flex aspect-[1.18] items-end overflow-hidden bg-gradient-to-br ${art[index % art.length]} p-6`}
+              className={`relative flex aspect-[1.18] items-end overflow-hidden bg-gradient-to-br ${art[index % art.length]} bg-cover bg-center p-6`}
+              style={event.imageUrl ? { backgroundImage: `url(${event.imageUrl})` } : undefined}
             >
               <div className="absolute -right-10 -top-12 h-44 w-44 rounded-full border-[22px] border-white/25" />
               <div className="absolute bottom-8 left-8 h-20 w-20 rotate-12 rounded-3xl bg-white/20 backdrop-blur-sm" />
@@ -53,13 +55,13 @@ export function EventCarousel({ events }: { events: EventCard[] }) {
               <h2 className="min-h-[3.5rem] text-xl font-bold leading-tight tracking-[-0.025em]">
                 {event.name}
               </h2>
-              <p className="mt-3 text-sm font-semibold text-coral">
+              <p className="mt-3 text-sm font-semibold text-[var(--accent-hover)]">
                 {event.date} · {event.time}
               </p>
-              <p className="mt-1 truncate text-sm text-slate-500">{event.venue}</p>
+              <p className="mt-1 truncate text-sm text-[var(--foreground-muted)]">{event.venue}</p>
               <div className="mt-5 flex items-center justify-between gap-3">
                 <span
-                  className={`text-sm font-semibold ${event.spots > 0 ? "text-brand" : "text-slate-500"}`}
+                  className={`text-sm font-semibold ${event.spots > 0 ? "text-[var(--accent-hover)]" : "text-[var(--foreground-muted)]"}`}
                 >
                   {event.spots > 0
                     ? `${event.spots} spots left`
@@ -68,7 +70,7 @@ export function EventCarousel({ events }: { events: EventCard[] }) {
                       : "Full"}
                 </span>
                 <Link
-                  className="rounded-xl bg-brand px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-dark focus-visible:ring-2 focus-visible:ring-brand/40"
+                  className="ui-button ui-button-primary min-h-11 rounded-xl px-4 py-3"
                   href={event.href}
                 >
                   {event.spots > 0 ? "View class" : "View details"}
@@ -83,7 +85,7 @@ export function EventCarousel({ events }: { events: EventCard[] }) {
           <button
             type="button"
             onClick={() => move(-1)}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-xl shadow-sm"
+            className="ui-button ui-button-icon"
             aria-label="Previous class"
           >
             ←
@@ -91,7 +93,7 @@ export function EventCarousel({ events }: { events: EventCard[] }) {
           <button
             type="button"
             onClick={() => move(1)}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-xl shadow-sm"
+            className="ui-button ui-button-icon"
             aria-label="Next class"
           >
             →

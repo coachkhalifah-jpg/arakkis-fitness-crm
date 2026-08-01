@@ -14,23 +14,16 @@ export default async function AdminPage() {
     <section
       className="admin-shell px-5 py-10 sm:px-8 sm:py-16"
       style={{
-        backgroundImage: `linear-gradient(rgba(241,241,238,.91), rgba(241,241,238,.97)), url(${adminVisualAssets.pageBackgrounds.workspace})`,
+        backgroundImage: `linear-gradient(rgba(31,34,39,.92), rgba(31,34,39,.97)), url(${adminVisualAssets.pageBackgrounds.workspace})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
     >
-      <div className="relative mx-auto max-w-6xl pt-8">
+      <div className="relative mx-auto max-w-3xl pt-8">
         <ContextualBack />
-        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">
-              Operational Workspace
-            </p>
-            <h1 className="mt-3 text-4xl font-semibold tracking-tight text-ink">
-              Operational Workspace
-            </h1>
-            <p className="mt-3 text-slate-600">Your operational workspace is ready.</p>
-          </div>
+        <div className="admin-page-header">
+          <h1>Workspace</h1>
+          <p>Your operational workspace is ready.</p>
           <Badge>
             {admin.role === "SYSTEM_ADMIN" ? "System administrator" : "Venue administrator"}
           </Badge>
@@ -38,39 +31,30 @@ export default async function AdminPage() {
         <Alert className="mt-8">Choose an operational area to continue.</Alert>
         <nav className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Operations">
           {admin.role === "SYSTEM_ADMIN" ? (
-            <Link
-              className="rounded-2xl border border-slate-200 bg-white p-5 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:border-brand hover:shadow-soft"
-              href="/admin/organizations"
-            >
+            <Link className="admin-navigation-card" href="/admin/organizations">
               Organizations
             </Link>
           ) : null}
           {admin.role === "SYSTEM_ADMIN" ? (
             <>
-              <Link
-                className="rounded-2xl border border-slate-200 bg-white p-5 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:border-brand hover:shadow-soft"
-                href="/admin/invitations"
-              >
+              <Link className="admin-navigation-card" href="/admin/invitations">
                 Invitations
               </Link>
-              <Link
-                className="rounded-2xl border border-slate-200 bg-white p-5 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:border-brand hover:shadow-soft"
-                href="/admin/participants"
-              >
+              <Link className="admin-navigation-card" href="/admin/participants">
                 Participants
               </Link>
               <Link
-                className="rounded-lg border border-slate-200 bg-white p-4 font-medium hover:border-brand"
+                className="admin-navigation-card admin-navigation-card-compact"
                 href="/admin/follow-ups"
               >
                 Follow-Ups
               </Link>
+              <Link className="admin-navigation-card" href="/admin/design-assets">
+                Design Assets
+              </Link>
             </>
           ) : null}
-          <Link
-            className="rounded-2xl border border-slate-200 bg-white p-5 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:border-brand hover:shadow-soft"
-            href="/admin/venues"
-          >
+          <Link className="admin-navigation-card" href="/admin/venues">
             Venues
           </Link>
           <Link

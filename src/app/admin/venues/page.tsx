@@ -31,16 +31,11 @@ export default async function VenuesPage({
   const mode = (await searchParams).mode === "create" ? "create" : "list";
   return (
     <section className="admin-shell px-5 py-10 sm:px-8 sm:py-14">
-      <div className="relative mx-auto max-w-6xl pt-8">
+      <div className="relative mx-auto max-w-3xl pt-8">
         <ContextualBack />
-        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-          <div>
-            <p className="admin-eyebrow">Workspace settings</p>
-            <h1 className="mt-2 text-4xl font-semibold">Venues</h1>
-            <p className="mt-3 text-admin-text-muted">
-              Manage physical locations and their local timezones.
-            </p>
-          </div>
+        <div className="admin-page-header">
+          <h1>Venues</h1>
+          <p>Manage physical locations and their local timezones.</p>
           <SegmentedNavigation
             listLabel="Venues"
             actionLabel="Create"
@@ -115,7 +110,9 @@ export default async function VenuesPage({
                 </div>
                 {admin.role === "SYSTEM_ADMIN" && venue.active_status !== "ARCHIVED" ? (
                   <form action={archiveVenueForm.bind(null, venue.id)}>
-                    <Button type="submit">Archive</Button>
+                    <Button type="submit" variant="destructive">
+                      Archive
+                    </Button>
                   </form>
                 ) : null}
               </article>

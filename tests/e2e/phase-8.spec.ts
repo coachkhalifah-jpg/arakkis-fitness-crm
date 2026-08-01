@@ -123,7 +123,7 @@ test.describe("Phase 8 participant productization", () => {
   test("completes the participant journey with keyboard-operable controls", async ({ page }) => {
     await page.goto(`/register/${slug}`);
     await expect(page.getByRole("heading", { name: eventName })).toBeVisible();
-    await page.getByLabel(eventName).check();
+    await page.getByRole("checkbox", { name: new RegExp(eventName) }).check();
     await page.getByLabel("First name").fill("Keyboard");
     await page.getByLabel("Last name").fill("Participant");
     await page.getByLabel("Mobile phone").fill("+15185550199");
@@ -139,7 +139,7 @@ test.describe("Phase 8 participant productization", () => {
 
   test("remembers, reuses, and forgets a participant browser token safely", async ({ page }) => {
     await page.goto(`/register/${slug}`);
-    await page.getByLabel(eventName).check();
+    await page.getByRole("checkbox", { name: new RegExp(eventName) }).check();
     await page.getByLabel("First name").fill("Remembered");
     await page.getByLabel("Last name").fill("Participant");
     await page.getByLabel("Mobile phone").fill("+15185550198");
@@ -188,7 +188,7 @@ test.describe("Phase 8 participant productization", () => {
     await page.goto(`/register/${slug}`);
     await expect(page.getByText("Welcome back")).toBeVisible();
     await expect(page.getByRole("button", { name: "Continue as Remembered" })).toBeVisible();
-    await page.getByLabel(eventName).check();
+    await page.getByRole("checkbox", { name: new RegExp(eventName) }).check();
     await page.getByLabel("Synthetic participation acknowledgment.").check();
     await page.getByLabel("Synthetic data-use acknowledgment.").check();
     await page.getByRole("button", { name: /continue as remembered/i }).click();

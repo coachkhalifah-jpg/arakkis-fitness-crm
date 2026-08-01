@@ -143,6 +143,7 @@ export function InvitationManager({
                       <Button
                         type="button"
                         disabled={pending}
+                        variant="destructive"
                         onClick={() => run(() => revokeInvitation(invitation.id))}
                       >
                         Revoke

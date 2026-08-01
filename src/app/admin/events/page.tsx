@@ -6,8 +6,10 @@ import { publishPhase7EventForm, unpublishPhase7EventForm } from "@/lib/services
 import { Button } from "@/components/ui/button";
 import { SegmentedNavigation } from "@/components/admin/segmented-navigation";
 import { ContextualBack } from "@/components/admin/contextual-back";
-import { RosterDrawer } from "@/components/admin/roster-drawer";
+import { AdminEventCard } from "@/components/admin/admin-event-card";
+import { AdminEventCardRail } from "@/components/admin/admin-event-card-rail";
 import { eventCardAsset } from "@/lib/config/admin-visual-assets";
+import { designAssetPublicUrl } from "@/lib/config/design-assets";
 
 export default async function EventsPage({
   searchParams,
@@ -49,6 +51,20 @@ export default async function EventsPage({
     counts.set(row.event_id, current);
   }
   const eventIds = (visibleEvents ?? []).map((event) => event.id);
+  const { data: eventImageAssets } = eventIds.length
+    ? await db
+        .from("design_assets")
+        .select("event_id,storage_path")
+        .eq("asset_type", "EVENT_IMAGE_DESKTOP")
+        .eq("active", true)
+        .in("event_id", eventIds)
+    : { data: [] };
+  const eventImageById = new Map(
+    (eventImageAssets ?? []).map((asset) => [
+      asset.event_id,
+      designAssetPublicUrl(asset.storage_path),
+    ]),
+  );
   const { data: rosterRows } = eventIds.length
     ? await db
         .from("registrations")
@@ -111,16 +127,11 @@ export default async function EventsPage({
   }
   return (
     <section className="admin-shell px-5 py-10 sm:px-8 sm:py-14">
-      <div className="relative mx-auto max-w-6xl pt-8">
+      <div className="relative mx-auto max-w-3xl pt-8">
         <ContextualBack />
-        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-          <div>
-            <p className="admin-eyebrow">Operational workspace</p>
-            <h1 className="mt-2 text-4xl font-semibold tracking-tight">Events</h1>
-            <p className="mt-3 max-w-2xl text-admin-text-muted">
-              Create, publish, and manage your event calendar.
-            </p>
-          </div>
+        <div className="admin-page-header">
+          <h1>Events</h1>
+          <p>Create, publish, and manage your event calendar.</p>
           <SegmentedNavigation
             listLabel="Events"
             actionLabel="Create"
@@ -241,6 +252,19 @@ export default async function EventsPage({
               Description
               <textarea name="description" className="mt-1 min-h-20 w-full rounded border p-2" />
             </label>
+            <label className="sm:col-span-2">
+              Event card image (optional)
+              <input
+                name="eventImage"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                className="mt-1 block w-full rounded border border-dashed p-3"
+              />
+              <span className="mt-1 block text-xs text-admin-text-muted">
+                This image becomes the event card and public class image. JPEG, PNG, WebP, or SVG up
+                to 5 MiB.
+              </span>
+            </label>
             <label>
               Communication link (optional)
               <input
@@ -262,137 +286,94 @@ export default async function EventsPage({
           </form>
         ) : null}
         {mode === "list" ? (
-          <div className="mt-8 grid gap-6 lg:grid-cols-2">
-            {(visibleEvents ?? []).map((event) => {
-              const venue = venues?.find((item) => item.id === event.venue_id);
-              const seriesSlug = event.event_series?.[0]?.public_slug ?? null;
-              const publicSlug = event.public_slug ?? seriesSlug;
-              const count = counts.get(event.id) ?? { booked: 0, checkedIn: 0 };
-              const people = rosterByEvent.get(event.id) ?? [];
-              const durationMinutes = Math.max(
-                0,
-                Math.round(
-                  (new Date(event.ends_at).getTime() - new Date(event.starts_at).getTime()) / 60000,
-                ),
-              );
-              const firstClassCount = people.filter((person) => person.firstClass).length;
-              return (
-                <article
-                  key={event.id}
-                  className={`admin-surface overflow-hidden rounded-3xl ${event.status === "CANCELLED" ? "opacity-75" : ""}`}
-                >
-                  <div
-                    className="event-card-image relative"
-                    style={{
-                      backgroundImage: `linear-gradient(135deg, rgba(22,34,30,.25), rgba(22,34,30,.62)), url(${eventCardAsset(event.name)})`,
+          <AdminEventCardRail>
+            <div className="event-card-carousel mt-8 flex gap-4 overflow-x-auto pb-4">
+              {(visibleEvents ?? []).map((event) => {
+                const venue = venues?.find((item) => item.id === event.venue_id);
+                const seriesSlug = event.event_series?.[0]?.public_slug ?? null;
+                const publicSlug = event.public_slug ?? seriesSlug;
+                const count = counts.get(event.id) ?? { booked: 0, checkedIn: 0 };
+                const people = rosterByEvent.get(event.id) ?? [];
+                const durationMinutes = Math.max(
+                  0,
+                  Math.round(
+                    (new Date(event.ends_at).getTime() - new Date(event.starts_at).getTime()) /
+                      60000,
+                  ),
+                );
+                const firstClassCount = people.filter((person) => person.firstClass).length;
+                const startsAt = new Intl.DateTimeFormat("en-US", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                  timeZone: event.timezone,
+                }).format(new Date(event.starts_at));
+                return (
+                  <AdminEventCard
+                    key={event.id}
+                    event={{
+                      id: event.id,
+                      name: event.name,
+                      status: event.status,
+                      capacity: event.capacity,
+                      eventSeriesId: event.event_series_id,
                     }}
-                  >
-                    <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                      <p className="text-xs font-bold uppercase tracking-[.16em] text-white/75">
-                        {event.status}
-                      </p>
-                      <h2 className="mt-1 text-2xl font-semibold">
-                        <Link href={`/admin/events/${event.id}`}>{event.name}</Link>
-                      </h2>
-                    </div>
-                  </div>
-                  <div className="p-5">
-                    <p className="text-sm text-admin-text-muted">
-                      {venue?.name ?? "Venue"} ·{" "}
-                      {new Intl.DateTimeFormat("en-US", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                        timeZone: event.timezone,
-                      }).format(new Date(event.starts_at))}{" "}
-                      · {event.timezone}
-                    </p>
-                    <p className="mt-1 text-sm text-admin-text-muted">
-                      {durationMinutes} minute class
-                      {event.event_series_id ? " · recurring weekly" : ""}
-                    </p>
-                    <div className="mt-5 rounded-2xl bg-admin-surface-muted p-3">
-                      <p className="text-xs font-bold uppercase tracking-[.12em] text-admin-text-muted">
-                        Registration roster
-                      </p>
-                      <div className="mt-2 grid grid-cols-4 gap-2 text-center text-sm">
-                        <div>
-                          <strong className="block text-lg">{count.booked}</strong>
-                          <span className="text-admin-text-muted">Booked</span>
-                        </div>
-                        <div>
-                          <strong className="block text-lg">{firstClassCount}</strong>
-                          <span className="text-admin-text-muted">First Classes</span>
-                        </div>
-                        <div>
-                          <strong className="block text-lg">{count.checkedIn}</strong>
-                          <span className="text-admin-text-muted">Checked In</span>
-                        </div>
-                        <div>
-                          <strong className="block text-lg">
-                            {Math.max(0, event.capacity - count.booked)}
-                          </strong>
-                          <span className="text-admin-text-muted">Spots Left</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <Link className="admin-primary-button" href={`/admin/events/${event.id}`}>
-                        Manage event
-                      </Link>
-                      <RosterDrawer
-                        eventName={event.name}
-                        people={people}
-                        canViewPhone={admin.role === "SYSTEM_ADMIN" || admin.role === "HOST_ADMIN"}
-                        fullRosterHref={`/admin/events/${event.id}`}
-                      />
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {admin.role === "SYSTEM_ADMIN" &&
-                      event.status !== "CANCELLED" &&
-                      event.publication_status !== "PUBLISHED" ? (
-                        <form action={publishPhase7EventForm.bind(null, event.id)}>
-                          <Button type="submit">Publish</Button>
-                        </form>
-                      ) : null}
-                      {admin.role === "SYSTEM_ADMIN" && event.publication_status === "PUBLISHED" ? (
-                        <form action={unpublishPhase7EventForm.bind(null, event.id)}>
-                          <Button type="submit">Unpublish</Button>
-                        </form>
-                      ) : null}
-                      {publicSlug ? (
-                        <Link
-                          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-                          href={`/register/${publicSlug}`}
-                        >
-                          Preview
-                        </Link>
-                      ) : null}
-                      {publicSlug ? (
-                        <a
-                          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-                          href={`/admin/events/${event.id}/qr`}
-                        >
-                          QR
-                        </a>
-                      ) : null}
-                      {admin.role === "SYSTEM_ADMIN" && event.status !== "CANCELLED" ? (
-                        <form action={copyEventForm.bind(null, event.id)}>
-                          <Button type="submit">Copy</Button>
-                        </form>
-                      ) : null}
-                      {admin.role === "SYSTEM_ADMIN" &&
-                      event.status !== "CANCELLED" &&
-                      event.status !== "COMPLETED" ? (
-                        <form action={cancelEventForm.bind(null, event.id)}>
-                          <Button type="submit">Cancel</Button>
-                        </form>
-                      ) : null}
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+                    venueName={venue?.name ?? "Venue"}
+                    startsAt={startsAt}
+                    durationMinutes={durationMinutes}
+                    image={eventImageById.get(event.id) ?? eventCardAsset(event.name)}
+                    count={count}
+                    firstClassCount={firstClassCount}
+                    people={people}
+                    canViewPhone={admin.role === "SYSTEM_ADMIN" || admin.role === "HOST_ADMIN"}
+                    actions={
+                      <>
+                        {admin.role === "SYSTEM_ADMIN" &&
+                        event.status !== "CANCELLED" &&
+                        event.publication_status !== "PUBLISHED" ? (
+                          <form action={publishPhase7EventForm.bind(null, event.id)}>
+                            <Button type="submit">Publish</Button>
+                          </form>
+                        ) : null}
+                        {admin.role === "SYSTEM_ADMIN" &&
+                        event.publication_status === "PUBLISHED" ? (
+                          <form action={unpublishPhase7EventForm.bind(null, event.id)}>
+                            <Button type="submit">Unpublish</Button>
+                          </form>
+                        ) : null}
+                        {publicSlug ? (
+                          <Link className="admin-secondary-button" href={`/register/${publicSlug}`}>
+                            Preview
+                          </Link>
+                        ) : null}
+                        {publicSlug ? (
+                          <a
+                            className="admin-secondary-button"
+                            href={`/admin/events/${event.id}/qr`}
+                          >
+                            QR
+                          </a>
+                        ) : null}
+                        {admin.role === "SYSTEM_ADMIN" && event.status !== "CANCELLED" ? (
+                          <form action={copyEventForm.bind(null, event.id)}>
+                            <Button type="submit">Copy</Button>
+                          </form>
+                        ) : null}
+                        {admin.role === "SYSTEM_ADMIN" &&
+                        event.status !== "CANCELLED" &&
+                        event.status !== "COMPLETED" ? (
+                          <form action={cancelEventForm.bind(null, event.id)}>
+                            <Button type="submit" variant="destructive">
+                              Cancel
+                            </Button>
+                          </form>
+                        ) : null}
+                      </>
+                    }
+                  />
+                );
+              })}
+            </div>
+          </AdminEventCardRail>
         ) : null}
       </div>
     </section>
