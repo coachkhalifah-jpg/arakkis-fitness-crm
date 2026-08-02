@@ -551,10 +551,23 @@ body {
 }
 .confirmation-secondary-action:focus-visible,
 .confirmation-inline-action:focus-visible,
-.confirmation-what-to-bring-trigger:focus-visible,
-.confirmation-what-to-bring-close:focus-visible {
+.confirmation-what-to-bring-trigger:focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
+}
+.confirmation-what-to-bring-card {
+  overflow: hidden;
+  border: 1px solid var(--confirmation-border);
+  border-radius: 1.5rem;
+  background: #f8fafb;
+  color: var(--confirmation-text);
+  transition:
+    background-color 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+.confirmation-what-to-bring-card:hover {
+  background: #f2f5f7;
+  box-shadow: 0 8px 18px rgba(32, 37, 43, 0.1);
 }
 .confirmation-what-to-bring-trigger {
   display: flex;
@@ -562,84 +575,34 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  border: 1px solid var(--confirmation-border);
   min-height: 5.5rem;
-  border-radius: 1.5rem;
-  background: #f8fafb;
+  border: 0;
+  background: transparent;
   padding: 1.25rem;
   color: var(--confirmation-text);
   text-align: left;
-  transition:
-    background-color 160ms ease-out,
-    box-shadow 160ms ease-out,
-    transform 160ms ease-out;
 }
-.confirmation-what-to-bring-trigger:hover {
-  background: #f2f5f7;
-  box-shadow: 0 8px 18px rgba(32, 37, 43, 0.1);
-  transform: translateY(-1px);
+.confirmation-what-to-bring-chevron {
+  font-size: 1.5rem;
+  line-height: 1;
+  transition: transform 180ms ease-out;
 }
-.confirmation-what-to-bring-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(25, 31, 37, 0.34);
-  padding: 1rem;
-  animation: confirmation-backdrop-in 180ms ease-out;
-  transition: opacity 180ms ease-out;
+.confirmation-what-to-bring-chevron.is-open {
+  transform: rotate(90deg);
 }
-.confirmation-what-to-bring-backdrop.is-closing {
-  opacity: 0;
+.confirmation-what-to-bring-content-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 240ms ease-out;
 }
-.confirmation-what-to-bring-dialog {
-  position: relative;
-  display: flex;
-  width: min(100%, 520px);
-  height: calc(100dvh - 2rem);
-  min-height: 25vh;
-  max-height: 900px;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid var(--confirmation-border);
-  border-radius: 2rem;
-  background: var(--confirmation-surface);
-  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.22);
-  padding: 0;
-  color: var(--confirmation-text);
-  transform-origin: var(--sheet-origin-x, 50%) var(--sheet-origin-y, 50%);
-  animation: none;
-  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-.confirmation-what-to-bring-dialog:not(.is-ready) {
-  visibility: hidden;
-}
-.confirmation-what-to-bring-dialog.is-ready {
-  animation: confirmation-surface-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-.confirmation-what-to-bring-dialog.is-closing {
-  transform: translate(var(--sheet-delta-x), var(--sheet-delta-y)) scale(0.08);
-}
-@media (min-width: 768px) {
-  .confirmation-what-to-bring-dialog {
-    height: 90%;
-  }
-}
-.confirmation-what-to-bring-header {
-  display: flex;
-  min-height: 4rem;
-  align-items: center;
-  justify-content: center;
-  background: var(--confirmation-surface);
-  padding: 0 1.25rem;
-  text-align: center;
+.confirmation-what-to-bring-content-wrap.is-open {
+  grid-template-rows: 1fr;
 }
 .confirmation-what-to-bring-content {
   min-height: 0;
-  overflow-y: auto;
-  padding: 1.5rem 1.25rem 5rem;
+  overflow: hidden;
+  border-top: 1px solid var(--confirmation-border);
+  padding: 0 1.25rem 1.25rem;
 }
 .confirmation-section {
   margin-top: 1rem;
@@ -687,22 +650,6 @@ body {
   background: #dce2e8;
   box-shadow: 0 5px 14px rgba(32, 37, 43, 0.14);
 }
-@keyframes confirmation-surface-in {
-  from {
-    transform: translate(var(--sheet-delta-x), var(--sheet-delta-y)) scale(0.08);
-  }
-  to {
-    transform: translate(0, 0) scale(1);
-  }
-}
-@keyframes confirmation-backdrop-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
 @keyframes admin-sheet-in {
   from {
     opacity: 0;
@@ -720,9 +667,10 @@ body {
   .confirmation-success-icon,
   .confirmation-secondary-action,
   .confirmation-inline-action,
+  .confirmation-what-to-bring-card,
   .confirmation-what-to-bring-trigger,
-  .confirmation-what-to-bring-dialog,
-  .confirmation-what-to-bring-close,
+  .confirmation-what-to-bring-chevron,
+  .confirmation-what-to-bring-content-wrap,
   .floating-back-button,
   .roster-summary-card,
   .roster-expanded-surface,
