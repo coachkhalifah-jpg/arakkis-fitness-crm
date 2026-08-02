@@ -24,7 +24,7 @@ export function RememberDevice({ confirmationToken }: { confirmationToken: strin
       <p className="confirmation-body mt-1 text-sm text-[var(--confirmation-muted)]">
         Reopen your upcoming classes without entering your details again.
       </p>
-      <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+      <div className="confirmation-device-actions mt-3">
         <button
           type="submit"
           disabled={pending}
@@ -35,7 +35,7 @@ export function RememberDevice({ confirmationToken }: { confirmationToken: strin
         <button
           type="button"
           onClick={() => setDismissed(true)}
-          className="confirmation-pill-button confirmation-pill-button-tertiary"
+          className="confirmation-device-text-action"
         >
           Not now
         </button>
