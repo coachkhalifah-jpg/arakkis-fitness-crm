@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 
 export function WhatToBring({
   eventId,
@@ -11,6 +12,12 @@ export function WhatToBring({
 }) {
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [origin, setOrigin] = useState<{
+    x: number;
+    y: number;
+    deltaX: number;
+    deltaY: number;
+  } | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
@@ -65,6 +72,23 @@ export function WhatToBring({
     if (!open) triggerRef.current?.focus();
   }, [open]);
 
+  useLayoutEffect(() => {
+    if (!open || !dialogRef.current || !triggerRef.current) return;
+    const triggerRect = triggerRef.current.getBoundingClientRect();
+    const dialogRect = dialogRef.current.getBoundingClientRect();
+    const triggerCenterX = triggerRect.left + triggerRect.width / 2;
+    const triggerCenterY = triggerRect.top + triggerRect.height / 2;
+    const dialogCenterX = dialogRect.left + dialogRect.width / 2;
+    const dialogCenterY = dialogRect.top + dialogRect.height / 2;
+
+    setOrigin({
+      x: triggerCenterX - dialogRect.left,
+      y: triggerCenterY - dialogRect.top,
+      deltaX: triggerCenterX - dialogCenterX,
+      deltaY: triggerCenterY - dialogCenterY,
+    });
+  }, [open]);
+
   useEffect(() => {
     return () => {
       if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
@@ -81,6 +105,7 @@ export function WhatToBring({
         aria-controls={`what-to-bring-${eventId}`}
         onClick={() => {
           setClosing(false);
+          setOrigin(null);
           setOpen(true);
         }}
       >
@@ -104,7 +129,17 @@ export function WhatToBring({
           <section
             ref={dialogRef}
             id={`what-to-bring-${eventId}`}
-            className={`confirmation-what-to-bring-dialog${closing ? " is-closing" : ""}`}
+            className={`confirmation-what-to-bring-dialog${origin ? " is-ready" : ""}${closing ? " is-closing" : ""}`}
+            style={
+              origin
+                ? ({
+                    "--sheet-origin-x": `${origin.x}px`,
+                    "--sheet-origin-y": `${origin.y}px`,
+                    "--sheet-delta-x": `${origin.deltaX}px`,
+                    "--sheet-delta-y": `${origin.deltaY}px`,
+                  } as CSSProperties)
+                : undefined
+            }
             role="dialog"
             aria-modal="true"
             aria-labelledby={`what-to-bring-title-${eventId}`}
