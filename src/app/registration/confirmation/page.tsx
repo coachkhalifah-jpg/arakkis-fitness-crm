@@ -218,18 +218,18 @@ export default async function ConfirmationPage({
                     <p className="confirmation-calendar-date text-center text-sm text-[var(--confirmation-text)]">
                       {dateFormatter(event.timezone).format(new Date(event.starts_at))}
                     </p>
-                    <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm">
-                      <span className="confirmation-calendar-time confirmation-pill-button confirmation-pill-button-tertiary">
+                    <div className="confirmation-calendar-actions mt-2 flex flex-wrap items-center justify-center gap-2 text-sm">
+                      <span className="confirmation-calendar-time">
                         {timeFormatter(event.timezone).format(new Date(event.starts_at))}
                       </span>
                       <a
-                        className="confirmation-pill-button confirmation-pill-button-secondary"
+                        className="confirmation-calendar-link confirmation-calendar-link-primary"
                         href={googleCalendarUrl(toCalendarEvent(event))}
                       >
                         Google Calendar
                       </a>
                       <Link
-                        className="confirmation-pill-button confirmation-pill-button-tertiary"
+                        className="confirmation-calendar-link confirmation-calendar-link-secondary"
                         href={`/registration/confirmation/ics?token=${encodeURIComponent(token)}&event=${encodeURIComponent(event.event_id)}`}
                       >
                         iCal

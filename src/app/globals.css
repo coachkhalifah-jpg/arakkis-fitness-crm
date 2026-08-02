@@ -525,6 +525,37 @@ body {
 }
 .confirmation-calendar-time {
   font-weight: 400;
+  color: var(--confirmation-muted);
+}
+.confirmation-calendar-actions {
+  line-height: 1.5;
+}
+.confirmation-calendar-link {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  transition:
+    color 160ms ease-out,
+    transform 160ms ease-out;
+}
+.confirmation-calendar-link:hover {
+  transform: translateY(-1px);
+}
+.confirmation-calendar-link:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+.confirmation-calendar-link-primary {
+  color: var(--accent);
+}
+.confirmation-calendar-link-primary:hover {
+  color: var(--accent-active);
+}
+.confirmation-calendar-link-secondary {
+  color: var(--confirmation-muted);
+}
+.confirmation-calendar-link-secondary:hover {
+  color: var(--confirmation-text);
 }
 .confirmation-address-block {
   position: relative;
