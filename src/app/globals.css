@@ -477,6 +477,19 @@ body {
 .admin-roster-sheet {
   animation: admin-sheet-in 180ms ease-out;
 }
+@keyframes confirmation-success-in {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.confirmation-success-icon {
+  animation: confirmation-success-in 180ms ease-out;
+}
 @keyframes admin-sheet-in {
   from {
     opacity: 0;
@@ -491,6 +504,7 @@ body {
   .admin-segmented-nav a,
   .admin-contextual-back,
   .admin-roster-sheet,
+  .confirmation-success-icon,
   .floating-back-button,
   .roster-summary-card,
   .roster-expanded-surface,

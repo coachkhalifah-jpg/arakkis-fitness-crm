@@ -216,9 +216,13 @@ test("registers multiple dates, exports only successful events, and scopes the a
     "jose@example.test",
   );
   await expect(page).toHaveURL(/\/registration\/confirmation\?token=/, { timeout: 15000 });
+  await expect(page.getByRole("heading", { name: "You’re booked!" })).toBeVisible();
+  await expect(page.getByText(/We’re looking forward to seeing you, José\./)).toBeVisible();
   await expect(page.getByText(fixture.eventNameA)).toBeVisible();
   await expect(page.getByText(fixture.eventNameB)).toBeVisible();
-  await expect(page.getByText("Registered")).toHaveCount(2);
+  await expect(page.getByText("What to bring")).toHaveCount(2);
+  await expect(page.getByText("Arrive early.")).toHaveCount(2);
+  await expect(page.getByText("Booked", { exact: true })).toHaveCount(2);
   const token = new URL(page.url()).searchParams.get("token");
   expect(token).toMatch(/^[A-Za-z0-9_-]{40,60}$/);
   const ics = await page.request.get(
@@ -436,20 +440,19 @@ test("confirmation and ICS reject the complete malformed, expired, and cross-gro
     expect(ics.status()).toBe(404);
     expect(await ics.text()).not.toContain("BEGIN:VEVENT");
   }
-  const valid = await page.request.get(
-    `/registration/confirmation?token=${encodeURIComponent(tokenA)}`,
-  );
-  const validBody = await valid.text();
-  expect(valid.status()).toBe(200);
-  expect(validBody).toContain("Token Scope Alpha");
+  const valid = await page.goto(`/registration/confirmation?token=${encodeURIComponent(tokenA)}`);
+  const validBody = await page.locator("main").last().innerText();
+  expect(valid?.status()).toBe(200);
+  await expect(page.getByText(/We’re looking forward to seeing you, Token\./)).toBeVisible();
+  expect(validBody).not.toContain("Token Scope Alpha");
   expect(validBody).not.toContain("Token Scope Beta");
   expect(validBody).toContain("Add to Google Calendar");
-  expect(validBody.match(new RegExp(tokenA, "g"))?.length).toBeGreaterThan(0);
+  await expect(page.locator('input[name="confirmationToken"]')).toHaveValue(tokenA);
   const replay = await page.request.get(
     `/registration/confirmation?token=${encodeURIComponent(tokenA)}&registration_group_id=${randomUUID()}&registration_id=${randomUUID()}`,
   );
   expect(replay.status()).toBe(200);
-  expect(await replay.text()).toContain("Token Scope Alpha");
+  expect(await replay.text()).toContain(fixture.eventNameA);
   const scopedIcs = await page.request.get(
     `/registration/confirmation/ics?token=${encodeURIComponent(tokenA)}&event=${fixture.eventB}`,
   );

@@ -434,12 +434,20 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                 />
               </label>
               <label>
-                Participant instructions
+                What to bring &amp; arrival notes (optional)
                 <textarea
                   name="participantInstructions"
                   defaultValue={event.participant_instructions ?? ""}
                   className="mt-1 min-h-20 w-full rounded border p-2"
+                  aria-describedby="participant-instructions-help"
                 />
+                <span
+                  id="participant-instructions-help"
+                  className="mt-1 block text-xs text-admin-text-muted"
+                >
+                  Use one plain-text item per line. These notes appear on the public event and
+                  booking confirmation.
+                </span>
               </label>
               <label>
                 Communication link (optional)

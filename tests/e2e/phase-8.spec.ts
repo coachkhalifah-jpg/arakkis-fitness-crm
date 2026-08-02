@@ -143,10 +143,11 @@ test.describe("Phase 8 participant productization", () => {
     await page.getByLabel("Synthetic data-use acknowledgment.").check();
     await page.getByRole("button", { name: /book class/i }).press("Enter");
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
-    await expect(
-      page.getByRole("heading", { name: /thanks, keyboard participant/i }),
-    ).toBeVisible();
-    await expect(page.getByRole("link", { name: /download all successful dates/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "You’re booked!" })).toBeVisible();
+    await expect(page.getByText(/We’re looking forward to seeing you, Keyboard\./)).toBeVisible();
+    await expect(page.getByRole("link", { name: /download all calendar files/i })).toBeVisible();
+    await page.getByRole("button", { name: "Not now" }).click();
+    await expect(page.getByRole("button", { name: "Remember this device" })).toHaveCount(0);
   });
 
   test("remembers, reuses, and forgets a participant browser token safely", async ({ page }) => {

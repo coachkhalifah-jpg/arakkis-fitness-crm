@@ -1,13 +1,15 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { rememberDeviceAction, type DeviceActionState } from "@/lib/registration/device-actions";
 
 export function RememberDevice({ confirmationToken }: { confirmationToken: string }) {
+  const [dismissed, setDismissed] = useState(false);
   const [state, action, pending] = useActionState<DeviceActionState, FormData>(
     rememberDeviceAction,
     {},
   );
+  if (dismissed) return null;
   if (state.success) {
     return (
       <p className="text-sm text-emerald-800" role="status">
@@ -21,14 +23,25 @@ export function RememberDevice({ confirmationToken }: { confirmationToken: strin
       <p className="font-semibold text-ink">Make future bookings faster on this device</p>
       <p className="mt-1 text-sm leading-6 text-slate-600">
         We can securely remember this browser so you won’t need to enter your details every time.
-        This is optional, not advertising, and does not create an account.
+        This is optional, not advertising, and does not create an account. You can forget this
+        device later from the registration page.
       </p>
-      <button
-        disabled={pending}
-        className="mt-4 rounded-xl bg-brand px-4 py-2 font-semibold text-white disabled:opacity-60"
-      >
-        {pending ? "Saving…" : "Remember this device"}
-      </button>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <button
+          type="submit"
+          disabled={pending}
+          className="min-h-11 rounded-xl bg-brand px-4 py-2 font-semibold text-white disabled:opacity-60"
+        >
+          {pending ? "Saving…" : "Remember this device"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          className="min-h-11 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 underline underline-offset-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        >
+          Not now
+        </button>
+      </div>
       {state.error ? (
         <p className="mt-2 text-sm text-red-700" role="alert">
           {state.error}
