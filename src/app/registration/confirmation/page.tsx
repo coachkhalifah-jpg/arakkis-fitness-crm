@@ -103,7 +103,6 @@ export default async function ConfirmationPage({
   };
   const events = result.events ?? [];
   const successful = events.filter((event) => event.success);
-  const nextClass = successful[0] ?? null;
   const instructions = Array.from(
     new Set(successful.flatMap((event) => instructionLines(event.participant_instructions))),
   );
@@ -174,27 +173,6 @@ export default async function ConfirmationPage({
         )}
 
         <div className="confirmation-module-stack space-y-8 px-6 py-6 sm:px-8">
-          {nextClass ? (
-            <section aria-labelledby="next-class-heading">
-              <h2 id="next-class-heading" className="confirmation-section-title text-center">
-                Next Class
-              </h2>
-              <article className="confirmation-next-class-card confirmation-info-card mt-4">
-                <h3 className="confirmation-event-title text-center">
-                  {bookingTitle(nextClass.name).title}
-                </h3>
-                <p className="confirmation-calendar-date mt-3 text-center">
-                  {dateFormatter(nextClass.timezone).format(new Date(nextClass.starts_at))}
-                </p>
-                <p className="confirmation-metadata mt-1 text-center">
-                  {timeFormatter(nextClass.timezone).format(new Date(nextClass.starts_at))} –{" "}
-                  {timeFormatter(nextClass.timezone).format(new Date(nextClass.ends_at))}
-                </p>
-                <p className="confirmation-metadata mt-3 text-center">{nextClass.venue_name}</p>
-              </article>
-            </section>
-          ) : null}
-
           {instructions.length > 0 ? (
             <section aria-label="What to bring">
               <WhatToBring eventId="confirmation" instructions={instructions} />
