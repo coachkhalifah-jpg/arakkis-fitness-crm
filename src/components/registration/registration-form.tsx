@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useActionState } from "react";
 import { ForgetDevice } from "@/components/registration/forget-device";
 import {
   submitRegistration,
   submitSlugRegistration,
+  type RegistrationField,
   type RegistrationActionState,
 } from "@/lib/registration/actions";
 
@@ -51,6 +52,19 @@ export function RegistrationForm({
   const [useRemembered, setUseRemembered] = useState(Boolean(rememberedFirstName));
   const [showDetails, setShowDetails] = useState(!rememberedFirstName);
   const [selected, setSelected] = useState<string[]>([]);
+  const [values, setValues] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    phoneCountry: "US",
+    email: "",
+    affiliation: "",
+    fitnessExperience: "",
+  });
+  const [acknowledgments, setAcknowledgments] = useState({
+    participationAcknowledged: false,
+    dataUseAcknowledged: false,
+  });
   const grouped = useMemo(() => {
     const groups = new Map<string, Event[]>();
     for (const event of events) {
@@ -64,6 +78,29 @@ export function RegistrationForm({
     }
     return [...groups.entries()];
   }, [events]);
+  useEffect(() => {
+    if (!state.focusField) return;
+    const focusTarget =
+      document.getElementById(state.focusField) ??
+      document.querySelector<HTMLInputElement>(`[name="${state.focusField}"]`);
+    focusTarget?.focus();
+  }, [state.focusField]);
+  useEffect(() => {
+    if (!state.selectedValues && !state.acknowledgments) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (state.selectedValues) setSelected(state.selectedValues);
+      if (state.acknowledgments) setAcknowledgments(state.acknowledgments);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [state.acknowledgments, state.selectedValues]);
+  const fieldErrors = state.fieldErrors ?? {};
+  const errorFor = (field: RegistrationField) => fieldErrors[field];
+  const updateValue = (field: keyof typeof values, value: string) =>
+    setValues((current) => ({ ...current, [field]: value }));
+  const fieldProps = (field: RegistrationField) => ({
+    "aria-invalid": Boolean(errorFor(field)),
+    "aria-describedby": errorFor(field) ? `${field}-error` : undefined,
+  });
   if (!participation || !dataUse)
     return (
       <p className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-900">
@@ -72,25 +109,29 @@ export function RegistrationForm({
       </p>
     );
   return (
-    <form
-      action={action}
-      className="space-y-8 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft sm:p-8"
-    >
+    <form action={action} className="public-signup-form space-y-8" aria-busy={pending}>
       <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
       <input type="hidden" name="participationVersionId" value={participation.id} />
       <input type="hidden" name="dataUseVersionId" value={dataUse.id} />
-      <fieldset>
-        <legend className="text-xl font-semibold tracking-tight">Choose your dates</legend>
-        <p className="mt-1 text-sm text-slate-600">
+      {publicSlug ? <input type="hidden" name="registrationSlug" value={publicSlug} /> : null}
+      {seriesMode ? <input type="hidden" name="seriesMode" value="true" /> : null}
+      <fieldset className="registration-date-selection">
+        <legend className="w-full text-center text-xl font-semibold tracking-tight">
+          Choose your dates
+        </legend>
+        <p className="mt-1 text-center text-sm text-slate-600">
           {seriesMode
             ? "Choose one or more dates in the next two weeks. Each date is reserved separately."
             : "Select one or more sessions. Your contact details are collected once."}
         </p>
-        <div className="mt-5 space-y-6">
+        <div className="mt-5 grid grid-cols-2 gap-3">
           {grouped.map(([date, dateEvents]) => (
-            <div key={date}>
-              <h3 className="mb-3 text-base font-bold text-ink">{date}</h3>
-              <div className="grid gap-3 sm:grid-cols-2">
+            <div
+              key={date}
+              className={`registration-date-card ${dateEvents.length > 1 ? "registration-date-card-multiple" : ""}`}
+            >
+              <h3 className="mb-3 text-center text-sm font-bold text-ink">{date}</h3>
+              <div className="space-y-3">
                 {dateEvents.map((event) => {
                   const full =
                     event.active_registration_count >= event.capacity ||
@@ -100,10 +141,11 @@ export function RegistrationForm({
                     ? event.starts_at
                     : (publicSlug ?? event.id ?? event.name);
                   const isSelected = selected.includes(value);
+                  const spotsAvailable = event.capacity - event.active_registration_count;
                   return (
                     <label
                       key={value}
-                      className={`flex min-h-20 items-center gap-3 rounded-2xl border-2 p-4 transition ${full ? "opacity-50" : isSelected ? "border-brand bg-brand/[0.08] shadow-sm" : "cursor-pointer border-slate-200 hover:border-brand hover:bg-brand/[0.03]"}`}
+                      className={`registration-slot relative ${full ? "registration-slot-full" : ""} ${isSelected ? "registration-slot-selected" : ""}`}
                     >
                       <input
                         type="checkbox"
@@ -125,23 +167,22 @@ export function RegistrationForm({
                               : current.filter((item) => item !== value),
                           )
                         }
-                        className="mt-1 h-5 w-5 accent-brand"
+                        className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
                       />
-                      <span>
-                        <span className="block text-lg font-bold">
-                          {new Intl.DateTimeFormat("en-US", {
-                            hour: "numeric",
-                            minute: "2-digit",
-                            timeZone: event.timezone,
-                          }).format(new Date(event.starts_at))}
-                        </span>
-                        <span className="block text-sm text-slate-600">
-                          {event.venue_name} · {event.host_organization_name}
-                        </span>
+                      <span
+                        className={`registration-time-pill ${isSelected ? "registration-time-pill-selected" : ""}`}
+                      >
+                        {new Intl.DateTimeFormat("en-US", {
+                          hour: "numeric",
+                          minute: "2-digit",
+                          timeZone: event.timezone,
+                        }).format(new Date(event.starts_at))}
+                      </span>
+                      <span className="registration-slot-details">
                         <span className="block text-sm text-slate-600">
                           {full
                             ? "Full"
-                            : `${event.capacity - event.active_registration_count} spots available`}
+                            : `${spotsAvailable} ${spotsAvailable === 1 ? "spot" : "spots"} available`}
                         </span>
                       </span>
                     </label>
@@ -151,8 +192,17 @@ export function RegistrationForm({
             </div>
           ))}
         </div>
+        {errorFor("selectedOccurrenceStartsAt") ? (
+          <p
+            id="selectedOccurrenceStartsAt-error"
+            className="mt-3 text-sm font-medium text-red-700"
+            role="alert"
+          >
+            {errorFor("selectedOccurrenceStartsAt")}
+          </p>
+        ) : null}
         {selected.length ? (
-          <div className="mt-5 rounded-2xl bg-ink p-4 text-white" aria-live="polite">
+          <div className="registration-selection-alert mt-5 rounded-2xl p-4" aria-live="polite">
             <p className="font-semibold">
               {selected.length} {selected.length === 1 ? "class" : "classes"} selected
             </p>
@@ -188,7 +238,7 @@ export function RegistrationForm({
         </div>
       ) : null}
       <div className={rememberedFirstName && !showDetails ? "hidden" : ""}>
-        <h2 className="text-xl font-semibold tracking-tight">Your details</h2>
+        <h2 className="text-center text-xl font-semibold tracking-tight">Your details</h2>
         <p className="mt-1 text-sm text-slate-600">
           A phone number helps us keep your registration and event-day details together.
         </p>
@@ -200,57 +250,104 @@ export function RegistrationForm({
         <label>
           First name
           <input
+            id="firstName"
             name="firstName"
             required
             maxLength={100}
-            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+            value={values.firstName}
+            onChange={(event) => updateValue("firstName", event.target.value)}
+            {...fieldProps("firstName")}
+            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand"
           />
+          {errorFor("firstName") ? (
+            <p id="firstName-error" className="mt-1 text-sm text-red-700" role="alert">
+              {errorFor("firstName")}
+            </p>
+          ) : null}
         </label>
         <label>
           Last name
           <input
+            id="lastName"
             name="lastName"
             required
             maxLength={100}
-            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+            value={values.lastName}
+            onChange={(event) => updateValue("lastName", event.target.value)}
+            {...fieldProps("lastName")}
+            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand"
           />
+          {errorFor("lastName") ? (
+            <p id="lastName-error" className="mt-1 text-sm text-red-700" role="alert">
+              {errorFor("lastName")}
+            </p>
+          ) : null}
         </label>
         <label>
           Mobile phone
           <input
+            id="phone"
             name="phone"
             required
             maxLength={40}
-            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+            value={values.phone}
+            onChange={(event) => updateValue("phone", event.target.value)}
+            {...fieldProps("phone")}
+            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand"
           />
+          {errorFor("phone") ? (
+            <p id="phone-error" className="mt-1 text-sm text-red-700" role="alert">
+              {errorFor("phone")}
+            </p>
+          ) : null}
         </label>
         <label>
           Phone country
           <select
+            id="phoneCountry"
             name="phoneCountry"
-            defaultValue="US"
-            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            value={values.phoneCountry}
+            onChange={(event) => updateValue("phoneCountry", event.target.value)}
+            {...fieldProps("phoneCountry")}
+            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-brand"
           >
             {["US", "CA", "GB", "AU", "IN"].map((country) => (
               <option key={country}>{country}</option>
             ))}
           </select>
+          {errorFor("phoneCountry") ? (
+            <p id="phoneCountry-error" className="mt-1 text-sm text-red-700" role="alert">
+              {errorFor("phoneCountry")}
+            </p>
+          ) : null}
         </label>
         <label>
           Email (optional)
           <input
+            id="email"
             name="email"
             type="email"
             maxLength={254}
-            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+            value={values.email}
+            onChange={(event) => updateValue("email", event.target.value)}
+            {...fieldProps("email")}
+            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand"
           />
+          {errorFor("email") ? (
+            <p id="email-error" className="mt-1 text-sm text-red-700" role="alert">
+              {errorFor("email")}
+            </p>
+          ) : null}
         </label>
         <label>
           Primary affiliation
           <select
+            id="affiliation"
             name="affiliation"
-            defaultValue=""
-            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            value={values.affiliation}
+            onChange={(event) => updateValue("affiliation", event.target.value)}
+            {...fieldProps("affiliation")}
+            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-brand"
           >
             <option value="">Other / No affiliation</option>
             {organizations.map((organization) => (
@@ -259,54 +356,101 @@ export function RegistrationForm({
               </option>
             ))}
           </select>
+          {errorFor("affiliation") ? (
+            <p id="affiliation-error" className="mt-1 text-sm text-red-700" role="alert">
+              {errorFor("affiliation")}
+            </p>
+          ) : null}
         </label>
       </fieldset>
       <fieldset disabled={Boolean(rememberedFirstName && !showDetails)} className="space-y-4">
         <label>
-          Other affiliation (optional)
-          <input
-            name="affiliationOther"
-            maxLength={200}
-            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
-          />
-        </label>
-        <label>
           Fitness experience (optional)
           <textarea
+            id="fitnessExperience"
             name="fitnessExperience"
             maxLength={1000}
-            className="mt-2 min-h-28 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+            value={values.fitnessExperience}
+            onChange={(event) => updateValue("fitnessExperience", event.target.value)}
+            {...fieldProps("fitnessExperience")}
+            className="mt-2 min-h-28 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 outline-none transition focus:border-brand"
           />
+          {errorFor("fitnessExperience") ? (
+            <p id="fitnessExperience-error" className="mt-1 text-sm text-red-700" role="alert">
+              {errorFor("fitnessExperience")}
+            </p>
+          ) : null}
         </label>
       </fieldset>
       <div className="space-y-4 rounded-2xl bg-sand/70 p-5">
         <label className="flex gap-3">
           <input
+            id="participationAcknowledged"
             name="participationAcknowledged"
             type="checkbox"
             required
+            checked={acknowledgments.participationAcknowledged}
+            onChange={(event) =>
+              setAcknowledgments((current) => ({
+                ...current,
+                participationAcknowledged: event.target.checked,
+              }))
+            }
+            {...fieldProps("participationAcknowledged")}
             className="mt-1 h-5 w-5 accent-brand"
           />
           <span>{participation.text}</span>
         </label>
+        {errorFor("participationAcknowledged") ? (
+          <p id="participationAcknowledged-error" className="text-sm text-red-700" role="alert">
+            {errorFor("participationAcknowledged")}
+          </p>
+        ) : null}
         <label className="flex gap-3">
           <input
+            id="dataUseAcknowledged"
             name="dataUseAcknowledged"
             type="checkbox"
             required
+            checked={acknowledgments.dataUseAcknowledged}
+            onChange={(event) =>
+              setAcknowledgments((current) => ({
+                ...current,
+                dataUseAcknowledged: event.target.checked,
+              }))
+            }
+            {...fieldProps("dataUseAcknowledged")}
             className="mt-1 h-5 w-5 accent-brand"
           />
           <span>{dataUse.text}</span>
         </label>
+        {errorFor("dataUseAcknowledged") ? (
+          <p id="dataUseAcknowledged-error" className="text-sm text-red-700" role="alert">
+            {errorFor("dataUseAcknowledged")}
+          </p>
+        ) : null}
       </div>
       {state.error ? (
-        <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-red-800">
-          {state.error}
-        </p>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-red-800">
+          <p role="alert" aria-live="assertive">
+            {state.error}
+          </p>
+          {Object.entries(fieldErrors).length ? (
+            <ul className="mt-2 list-inside list-disc space-y-1 text-sm">
+              {Object.entries(fieldErrors).map(([field, message]) => (
+                <li key={field}>
+                  <a className="underline" href={`#${field}`}>
+                    {message}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
       ) : null}
       <button
         disabled={pending}
-        className="min-h-12 w-full rounded-xl bg-brand px-5 py-3 font-semibold text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+        className="registration-time-pill public-book-class-control mx-auto block w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
       >
         {pending ? "Booking…" : useRemembered ? `Continue as ${rememberedFirstName}` : "Book Class"}
       </button>

@@ -179,6 +179,37 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await expect(page.getByText("Phase 7 Browser Event")).toBeVisible();
   });
 
+  test("preserves participant input and focuses the invalid field after validation failure", async ({
+    page,
+  }) => {
+    const fixture = await systemFixture();
+    await page.goto(`/register/${fixture.slug}`);
+    await page.getByLabel("First name").fill("Test");
+    await page.getByLabel("Last name").fill("Booker");
+    await page.getByLabel("Mobile phone").fill("123");
+    await page.getByLabel("Email (optional)").fill("test.booker@example.test");
+    await page.locator('input[type="checkbox"]').nth(0).check();
+    await page.getByLabel("Synthetic participation acknowledgment.").check();
+    await page.getByLabel("Synthetic data-use acknowledgment.").check();
+    await page.getByRole("button", { name: "Book Class" }).click();
+
+    await expect(page).toHaveURL(new RegExp(`/register/${fixture.slug}$`));
+    await expect(page.locator("#phone-error")).toHaveText(
+      "Enter a valid phone number for the selected country.",
+    );
+    await expect(page.getByLabel("First name")).toHaveValue("Test");
+    await expect(page.getByLabel("Last name")).toHaveValue("Booker");
+    await expect(page.getByLabel("Mobile phone")).toHaveValue("123");
+    await expect(page.getByLabel("Email (optional)")).toHaveValue("test.booker@example.test");
+    await expect(page.locator('input[type="checkbox"]').nth(0)).toBeChecked();
+    await expect(page.getByLabel("Mobile phone")).toBeFocused();
+    expect(
+      localSqlQuery(
+        `select count(*) from public.registrations where event_id=${sql(fixture.eventId)} and registration_status='REGISTERED'`,
+      ),
+    ).toBe("0");
+  });
+
   test("publishes, shares, and registers a draft through the canonical slug", async ({ page }) => {
     const fixture = await systemFixture();
     await page.goto("/admin/sign-in");
