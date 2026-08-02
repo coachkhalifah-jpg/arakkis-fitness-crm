@@ -132,10 +132,10 @@ export function RegistrationForm({
       {publicSlug ? <input type="hidden" name="registrationSlug" value={publicSlug} /> : null}
       {seriesMode ? <input type="hidden" name="seriesMode" value="true" /> : null}
       <fieldset className="registration-date-selection">
-        <legend className="w-full text-left text-xl font-semibold tracking-tight">
+        <legend className="w-full text-center text-xl font-semibold tracking-tight">
           Save your spot
         </legend>
-        <p className="mt-1 text-left text-sm text-slate-600">
+        <p className="mt-1 text-center text-sm text-slate-600">
           {events.length === 1
             ? "You’re reserving the class below."
             : seriesMode || !publicSlug

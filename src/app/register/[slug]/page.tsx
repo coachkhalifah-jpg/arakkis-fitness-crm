@@ -92,58 +92,12 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
         date={formattedDate}
         time={formattedTime}
         availability={availability}
-        availableSpots={Math.max(0, event.capacity - event.active_registration_count)}
         availableSessionCount={availableSessionCount}
         imageUrl={desktopAsset ? designAssetPublicUrl(desktopAsset.storage_path) : undefined}
         mobileImageUrl={mobileAsset ? designAssetPublicUrl(mobileAsset.storage_path) : undefined}
         focalPosition={desktopAsset?.focal_position ?? mobileAsset?.focal_position ?? "center"}
       />
       <div className="public-registration-content px-4 pt-8 sm:px-5 sm:pt-10">
-        {event.venue_name ||
-        event.venue_street ||
-        event.description ||
-        event.participant_instructions ? (
-          <section className="public-class-details text-left">
-            <h2 className="text-xl font-semibold tracking-tight text-ink">Class details</h2>
-            {event.venue_name || event.venue_street ? (
-              <div className="mt-5">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-brand-dark">
-                  Location
-                </h3>
-                {event.venue_name ? (
-                  <p className="mt-2 font-medium text-ink">{event.venue_name}</p>
-                ) : null}
-                {event.venue_street || event.venue_city || event.venue_state ? (
-                  <p className="mt-1 text-slate-600">
-                    {[event.venue_street, event.venue_city, event.venue_state]
-                      .filter(Boolean)
-                      .join(", ")}
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
-            {event.description ? (
-              <div className="mt-6">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-brand-dark">
-                  About this class
-                </h3>
-                <p className="mt-2 whitespace-pre-wrap leading-7 text-slate-600">
-                  {event.description}
-                </p>
-              </div>
-            ) : null}
-            {event.participant_instructions ? (
-              <div className="mt-6">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-brand-dark">
-                  What to bring
-                </h3>
-                <p className="mt-2 whitespace-pre-wrap leading-7 text-slate-600">
-                  {event.participant_instructions}
-                </p>
-              </div>
-            ) : null}
-          </section>
-        ) : null}
         {available ? (
           <div className="mt-8">
             <RegistrationForm

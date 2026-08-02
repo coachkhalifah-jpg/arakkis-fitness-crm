@@ -132,6 +132,9 @@ test.describe("Phase 8 participant productization", () => {
     await expect(page.getByRole("heading", { name: displayEventName })).toBeVisible();
     expect(await page.locator("main").innerText()).not.toContain(fixtureSuffix);
     await expect(page.getByText("Save your spot")).toBeVisible();
+    await expect(page.getByText("Class details")).toHaveCount(0);
+    await expect(page.getByText("Location")).toHaveCount(0);
+    await expect(page.getByText("open", { exact: true })).toBeVisible();
     await expect(page.getByText("You’re reserving the class below.")).toBeVisible();
     await expect(page.locator('.registration-slot input[type="checkbox"]')).toBeChecked();
     await expect(page.getByText("Selected", { exact: true })).toBeVisible();

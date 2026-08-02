@@ -12,7 +12,6 @@ export function EventHero({
   date,
   time,
   availability,
-  availableSpots,
   availableSessionCount,
   imageUrl,
   mobileImageUrl,
@@ -24,7 +23,6 @@ export function EventHero({
   date: string;
   time: string;
   availability: string;
-  availableSpots: number;
   availableSessionCount: number;
   imageUrl?: string;
   mobileImageUrl?: string;
@@ -125,8 +123,8 @@ export function EventHero({
             {availability === "LEGALLY_BLOCKED"
               ? "Registration: LEGALLY BLOCKED"
               : availableSessionCount > 1
-                ? `${availability.charAt(0)}${availability.slice(1).toLowerCase()} · ${availableSessionCount} class times available`
-                : `${availability.charAt(0)}${availability.slice(1).toLowerCase()} · ${availableSpots} ${availableSpots === 1 ? "spot" : "spots"} available`}
+                ? `${availableSessionCount} class times available`
+                : availability.toLowerCase()}
           </span>
         </div>
       </div>

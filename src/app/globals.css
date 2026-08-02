@@ -625,10 +625,10 @@ textarea {
   padding: 0.75rem;
 }
 .registration-date-card-multiple .registration-slot {
-  align-items: flex-start;
+  align-items: center;
 }
 .registration-date-card-multiple .registration-slot-details {
-  text-align: left;
+  text-align: center;
 }
 .registration-slot-full {
   cursor: not-allowed;
@@ -873,14 +873,10 @@ textarea {
 .event-hero-status {
   display: block;
   margin-top: 1rem;
-  color: var(--foreground);
+  color: var(--accent);
   font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.4;
-}
-.public-class-details {
-  border-top: 1px solid var(--border-subtle);
-  padding-top: 1.5rem;
 }
 @media (max-width: 640px) {
   .event-hero-image {
