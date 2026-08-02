@@ -566,11 +566,11 @@ body {
 }
 .confirmation-device-text-action {
   grid-column: 3;
-  justify-self: start;
+  justify-self: end;
   padding: 0.5rem 0;
   color: var(--confirmation-muted);
   font-size: 0.875rem;
-  font-weight: 400;
+  font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 0.2em;
   transition:
