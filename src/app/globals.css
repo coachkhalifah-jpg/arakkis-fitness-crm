@@ -492,10 +492,10 @@ body {
 }
 .confirmation-page {
   --confirmation-background: #ffffff;
-  --confirmation-surface: #ffffff;
-  --confirmation-text: #20252b;
-  --confirmation-muted: #4f5963;
-  --confirmation-border: #d8dee5;
+  --confirmation-surface: #fffdfa;
+  --confirmation-text: #292622;
+  --confirmation-muted: #55504a;
+  --confirmation-border: rgba(77, 63, 48, 0.14);
   color: var(--confirmation-text);
 }
 .confirmation-hero-title {
@@ -591,9 +591,9 @@ body {
   min-width: 2.5rem;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--confirmation-border);
+  border: 0;
   border-radius: 999px;
-  background: var(--confirmation-surface);
+  background: #f1eee8;
   color: var(--confirmation-muted);
   transition:
     background-color 160ms ease-out,
@@ -601,8 +601,8 @@ body {
     transform 160ms ease-out;
 }
 .confirmation-copy-directions-button:hover {
-  background: #f2f5f7;
-  color: var(--confirmation-text);
+  background: #4d4741;
+  color: #fff;
   transform: translateY(-1px);
 }
 .confirmation-copy-directions-button:active {
@@ -622,9 +622,10 @@ body {
   stroke-width: 1.7;
 }
 .confirmation-surface {
-  border-color: var(--confirmation-border);
+  border: 0;
   background: var(--confirmation-surface);
   color: var(--confirmation-text);
+  box-shadow: 0 18px 50px rgba(80, 60, 40, 0.12);
 }
 .confirmation-header {
   background: var(--confirmation-surface);
@@ -644,12 +645,13 @@ body {
   font-weight: 400;
 }
 .confirmation-device-card {
-  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--confirmation-border));
+  border: 0;
   border-radius: 0.9rem;
-  background: color-mix(in srgb, var(--accent) 7%, var(--confirmation-surface));
+  background: #fff3e7;
   padding: 0.8rem 1rem;
   color: var(--confirmation-text);
   text-align: center;
+  box-shadow: 0 8px 22px rgba(119, 79, 43, 0.1);
 }
 .confirmation-device-actions {
   display: grid;
@@ -692,15 +694,18 @@ body {
   padding: 0.65rem 1.1rem;
   font-weight: 600;
   text-align: center;
+  box-shadow: 0 4px 12px rgba(80, 60, 40, 0.1);
   transition:
     background-color 160ms ease-out,
     border-color 160ms ease-out,
     transform 160ms ease-out;
 }
 .confirmation-pill-button:hover {
+  box-shadow: 0 7px 16px rgba(80, 60, 40, 0.15);
   transform: translateY(-1px);
 }
 .confirmation-pill-button:active {
+  box-shadow: 0 2px 6px rgba(80, 60, 40, 0.1);
   transform: scale(0.985);
 }
 .confirmation-pill-button:focus-visible,
@@ -709,43 +714,45 @@ body {
   outline-offset: 3px;
 }
 .confirmation-pill-button-primary {
-  background: var(--accent);
+  background: #e88a58;
   color: #fff;
 }
 .confirmation-pill-button-primary:hover {
-  background: var(--accent-active);
+  background: #f09a68;
 }
 .confirmation-pill-button-secondary {
-  border-color: var(--confirmation-border);
-  background: var(--confirmation-surface);
+  border-color: transparent;
+  background: #f1eee8;
   color: var(--confirmation-text);
 }
 .confirmation-pill-button-secondary:hover {
-  border-color: #b9c2cb;
-  background: #f2f5f7;
+  border-color: transparent;
+  background: #4d4741;
+  color: #fff;
 }
 .confirmation-pill-button-tertiary {
   border-color: transparent;
-  background: #f2f5f7;
+  background: transparent;
   color: var(--confirmation-muted);
 }
 .confirmation-pill-button-tertiary:hover {
-  background: #e5eaee;
+  background: #f1eee8;
   color: var(--confirmation-text);
 }
 .confirmation-what-to-bring-card {
   overflow: hidden;
-  border: 1px solid var(--confirmation-border);
+  border: 0;
   border-radius: 1.5rem;
-  background: #f8fafb;
+  background: #fffaf4;
   color: var(--confirmation-text);
   transition:
     background-color 160ms ease-out,
     box-shadow 160ms ease-out;
+  box-shadow: 0 8px 24px rgba(80, 60, 40, 0.1);
 }
 .confirmation-what-to-bring-card:hover {
-  background: #f2f5f7;
-  box-shadow: 0 8px 18px rgba(32, 37, 43, 0.1);
+  background: #fffdf9;
+  box-shadow: 0 12px 28px rgba(80, 60, 40, 0.15);
 }
 .confirmation-what-to-bring-trigger {
   display: flex;
@@ -801,9 +808,9 @@ body {
   align-items: center;
   justify-content: center;
   margin: 1rem 0 0 auto;
-  border: 1px solid var(--confirmation-border);
+  border: 0;
   border-radius: 999px;
-  background: #e9edf1;
+  background: #f1eee8;
   color: var(--confirmation-text);
   font-size: 1.4rem;
   line-height: 1;
@@ -812,8 +819,9 @@ body {
     box-shadow 160ms ease-out;
 }
 .confirmation-what-to-bring-close:hover {
-  background: #dce2e8;
-  box-shadow: 0 5px 14px rgba(32, 37, 43, 0.14);
+  background: #4d4741;
+  color: #fff;
+  box-shadow: 0 5px 14px rgba(80, 60, 40, 0.16);
 }
 .confirmation-section {
   margin-top: 1rem;
