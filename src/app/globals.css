@@ -581,22 +581,27 @@ textarea {
 }
 .public-signup-form {
   width: 100%;
-  max-width: 40rem;
+  max-width: 32.5rem;
   margin-inline: auto;
   border: 0;
   border-radius: 0;
   background: transparent;
-  padding: clamp(1.25rem, 4vw, 2rem);
+  padding: 0;
   box-shadow: none;
 }
 .registration-slot {
   display: flex;
+  width: 100%;
   min-height: 4.5rem;
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
   border-radius: 1rem;
+  padding: 0.75rem 0.5rem;
   cursor: pointer;
+  transition:
+    background-color 160ms ease-out,
+    transform 160ms ease-out;
 }
 .registration-date-card {
   min-width: 0;
@@ -608,6 +613,9 @@ textarea {
 .registration-date-card-multiple .registration-slot {
   align-items: flex-start;
 }
+.registration-date-card-multiple .registration-slot-details {
+  text-align: left;
+}
 .registration-slot-full {
   cursor: not-allowed;
   opacity: 0.52;
@@ -617,8 +625,20 @@ textarea {
   background: var(--accent);
   color: var(--accent-foreground);
 }
+.registration-slot-full:hover .registration-time-pill {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--foreground);
+}
+.registration-slot:has(input:focus-visible) {
+  outline: 3px solid color-mix(in srgb, var(--accent) 68%, transparent);
+  outline-offset: 3px;
+}
 .registration-slot:active .registration-time-pill {
   transform: scale(0.985);
+}
+.registration-slot-selected {
+  background: color-mix(in srgb, var(--accent-soft) 68%, transparent);
 }
 .registration-time-pill {
   display: inline-flex;
@@ -823,6 +843,13 @@ textarea {
   font-weight: 600;
   line-height: 1.5;
 }
+.event-hero-time {
+  margin-top: 0.2rem;
+  color: var(--foreground);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
 .event-hero-venue {
   margin-top: 0.35rem;
   color: var(--foreground-muted);
@@ -830,16 +857,16 @@ textarea {
   line-height: 1.4;
 }
 .event-hero-status {
-  display: inline-flex;
+  display: block;
   margin-top: 1rem;
-  border: 1px solid rgba(246, 246, 244, 0.3);
-  border-radius: 999px;
-  background: rgba(31, 34, 39, 0.48);
-  padding: 0.35rem 0.75rem;
   color: var(--foreground);
   font-size: 0.875rem;
   font-weight: 600;
-  backdrop-filter: blur(8px);
+  line-height: 1.4;
+}
+.public-class-details {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 1.5rem;
 }
 @media (max-width: 640px) {
   .event-hero-image {

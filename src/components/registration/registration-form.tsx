@@ -9,6 +9,7 @@ import {
   type RegistrationField,
   type RegistrationActionState,
 } from "@/lib/registration/actions";
+import { participantDisplayName } from "@/lib/registration/display";
 
 type Event = {
   id?: string;
@@ -25,6 +26,13 @@ type Event = {
 };
 type Organization = { id: string; name: string };
 type Acknowledgment = { id: string; text: string } | null;
+
+function isUnavailableEvent(event: Event) {
+  return (
+    event.active_registration_count >= event.capacity ||
+    ["FULL", "CLOSED", "CANCELLED", "PAUSED", "NOT_YET_OPEN"].includes(event.availability ?? "")
+  );
+}
 
 export function RegistrationForm({
   events,
@@ -51,7 +59,12 @@ export function RegistrationForm({
   );
   const [useRemembered, setUseRemembered] = useState(Boolean(rememberedFirstName));
   const [showDetails, setShowDetails] = useState(!rememberedFirstName);
-  const [selected, setSelected] = useState<string[]>([]);
+  const selectionValue = (event: Event) =>
+    seriesMode ? event.starts_at : (publicSlug ?? event.id ?? event.name);
+  const eligibleEvents = events.filter((event) => !isUnavailableEvent(event));
+  const [selected, setSelected] = useState<string[]>(() =>
+    eligibleEvents.length === 1 ? [selectionValue(eligibleEvents[0])] : [],
+  );
   const [values, setValues] = useState({
     firstName: "",
     lastName: "",
@@ -66,7 +79,10 @@ export function RegistrationForm({
   });
   const grouped = useMemo(() => {
     const groups = new Map<string, Event[]>();
-    for (const event of events) {
+    const sortedEvents = [...events].sort(
+      (left, right) => new Date(left.starts_at).getTime() - new Date(right.starts_at).getTime(),
+    );
+    for (const event of sortedEvents) {
       const date = new Intl.DateTimeFormat("en-US", {
         weekday: "long",
         month: "long",
@@ -116,34 +132,41 @@ export function RegistrationForm({
       {publicSlug ? <input type="hidden" name="registrationSlug" value={publicSlug} /> : null}
       {seriesMode ? <input type="hidden" name="seriesMode" value="true" /> : null}
       <fieldset className="registration-date-selection">
-        <legend className="w-full text-center text-xl font-semibold tracking-tight">
-          Choose your dates
+        <legend className="w-full text-left text-xl font-semibold tracking-tight">
+          Save your spot
         </legend>
-        <p className="mt-1 text-center text-sm text-slate-600">
-          {seriesMode
-            ? "Choose one or more dates in the next two weeks. Each date is reserved separately."
-            : "Select one or more sessions. Your contact details are collected once."}
+        <p className="mt-1 text-left text-sm text-slate-600">
+          {events.length === 1
+            ? "You’re reserving the class below."
+            : seriesMode || !publicSlug
+              ? "Choose one or more class times that work for you."
+              : "Choose the class time that works for you."}
         </p>
-        <div
-          className={`mt-5 grid gap-3 ${grouped.length === 1 ? "grid-cols-1 justify-items-center" : "grid-cols-2"}`}
-        >
+        <div className="mt-5 flex flex-col gap-3">
           {grouped.map(([date, dateEvents]) => (
             <div
               key={date}
-              className={`registration-date-card w-full ${grouped.length === 1 ? "max-w-sm" : ""} ${dateEvents.length > 1 ? "registration-date-card-multiple" : ""}`}
+              className={`registration-date-card w-full ${dateEvents.length > 1 ? "registration-date-card-multiple" : ""}`}
             >
               <h3 className="mb-3 text-center text-sm font-bold text-ink">{date}</h3>
               <div className="space-y-3">
                 {dateEvents.map((event) => {
-                  const full =
-                    event.active_registration_count >= event.capacity ||
-                    event.availability === "CLOSED" ||
-                    event.availability === "CANCELLED";
-                  const value = seriesMode
-                    ? event.starts_at
-                    : (publicSlug ?? event.id ?? event.name);
+                  const full = isUnavailableEvent(event);
+                  const value = selectionValue(event);
                   const isSelected = selected.includes(value);
                   const spotsAvailable = event.capacity - event.active_registration_count;
+                  const displayName = participantDisplayName(event.name);
+                  const time = new Intl.DateTimeFormat("en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                    timeZone: event.timezone,
+                  }).format(new Date(event.starts_at));
+                  const availabilityLabel = full
+                    ? event.active_registration_count >= event.capacity ||
+                      event.availability === "FULL"
+                      ? "Full"
+                      : "Unavailable"
+                    : `${spotsAvailable} ${spotsAvailable === 1 ? "spot" : "spots"} available`;
                   return (
                     <label
                       key={value}
@@ -151,7 +174,7 @@ export function RegistrationForm({
                     >
                       <input
                         type="checkbox"
-                        aria-label={`${event.name}, ${date}, ${new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: event.timezone }).format(new Date(event.starts_at))}`}
+                        aria-label={`${displayName}, ${date}, ${time}, ${availabilityLabel}, ${isSelected ? "selected" : "not selected"}`}
                         name={
                           seriesMode
                             ? "selectedOccurrenceStartsAt"
@@ -174,18 +197,15 @@ export function RegistrationForm({
                       <span
                         className={`registration-time-pill ${isSelected ? "registration-time-pill-selected" : ""}`}
                       >
-                        {new Intl.DateTimeFormat("en-US", {
-                          hour: "numeric",
-                          minute: "2-digit",
-                          timeZone: event.timezone,
-                        }).format(new Date(event.starts_at))}
+                        {time}
                       </span>
                       <span className="registration-slot-details">
-                        <span className="block text-sm text-slate-600">
-                          {full
-                            ? "Full"
-                            : `${spotsAvailable} ${spotsAvailable === 1 ? "spot" : "spots"} available`}
-                        </span>
+                        <span className="block text-sm text-slate-600">{availabilityLabel}</span>
+                        {isSelected ? (
+                          <span className="registration-slot-state mt-1 block text-xs font-semibold uppercase tracking-[0.12em] text-brand-dark">
+                            Selected
+                          </span>
+                        ) : null}
                       </span>
                     </label>
                   );
@@ -335,7 +355,7 @@ export function RegistrationForm({
             <option value="">Other / No affiliation</option>
             {organizations.map((organization) => (
               <option key={organization.id} value={organization.id}>
-                {organization.name}
+                {participantDisplayName(organization.name)}
               </option>
             ))}
           </select>

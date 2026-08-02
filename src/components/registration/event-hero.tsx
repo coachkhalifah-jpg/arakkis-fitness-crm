@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { eventCardAsset } from "@/lib/config/admin-visual-assets";
 import { FloatingBackButton } from "@/components/registration/floating-back-button";
+import { participantDisplayName } from "@/lib/registration/display";
 
 export function EventHero({
   eventName,
@@ -11,6 +12,8 @@ export function EventHero({
   date,
   time,
   availability,
+  availableSpots,
+  availableSessionCount,
   imageUrl,
   mobileImageUrl,
   focalPosition = "center",
@@ -21,11 +24,16 @@ export function EventHero({
   date: string;
   time: string;
   availability: string;
+  availableSpots: number;
+  availableSessionCount: number;
   imageUrl?: string;
   mobileImageUrl?: string;
   focalPosition?: string;
 }) {
   const heroRef = useRef<HTMLDivElement>(null);
+  const displayEventName = participantDisplayName(eventName);
+  const displayHost = participantDisplayName(host);
+  const displayVenue = participantDisplayName(venue);
   const image = imageUrl ?? eventCardAsset(eventName);
 
   useEffect(() => {
@@ -102,22 +110,23 @@ export function EventHero({
         className="event-hero-image event-hero-image-sharp absolute inset-0 bg-cover"
         style={imageStyle}
         role="img"
-        aria-label={`${eventName} event image`}
+        aria-label={`${displayEventName} event image`}
       />
       <div className="event-hero-overlay absolute inset-0" aria-hidden="true" />
       <div className="form-page-scroll-fade relative mx-auto flex h-full max-w-3xl flex-col justify-end px-5 pb-12 pt-20 sm:px-8">
         <FloatingBackButton />
         <div className="event-hero-identity mx-auto max-w-[92%] text-center text-white">
-          <p className="event-hero-host">{host}</p>
-          <h1 className="event-hero-title">{eventName}</h1>
-          <p className="event-hero-date">
-            <span>{date}</span>
-            <span aria-hidden="true"> · </span>
-            <span>{time}</span>
-          </p>
-          <p className="event-hero-venue">{venue}</p>
+          <p className="event-hero-host">{displayHost}</p>
+          <h1 className="event-hero-title">{displayEventName}</h1>
+          <p className="event-hero-date">{date}</p>
+          <p className="event-hero-time">{time}</p>
+          <p className="event-hero-venue">{displayVenue}</p>
           <span className="event-hero-status">
-            Registration: {availability.replaceAll("_", " ")}
+            {availability === "LEGALLY_BLOCKED"
+              ? "Registration: LEGALLY BLOCKED"
+              : availableSessionCount > 1
+                ? `${availability.charAt(0)}${availability.slice(1).toLowerCase()} · ${availableSessionCount} class times available`
+                : `${availability.charAt(0)}${availability.slice(1).toLowerCase()} · ${availableSpots} ${availableSpots === 1 ? "spot" : "spots"} available`}
           </span>
         </div>
       </div>

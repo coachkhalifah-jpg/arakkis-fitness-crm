@@ -17,7 +17,7 @@ export default async function RegistrationPage() {
     organizations: Array<{ id: string; name: string }>;
   };
   return (
-    <section className="mx-auto max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
+    <section className="booking-environment mx-auto min-h-screen w-full max-w-[520px] px-4 py-10 sm:px-5 sm:py-12">
       <div className="mb-9">
         <SectionHeader
           eyebrow="Public registration"

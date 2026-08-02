@@ -5,6 +5,7 @@ import { EventCarousel } from "@/components/events/event-carousel";
 import { createClient } from "@/lib/db/server";
 import { publicBrand } from "@/lib/config/branding";
 import { designAssetPublicUrl } from "@/lib/config/design-assets";
+import { participantDisplayName } from "@/lib/registration/display";
 import type { CSSProperties } from "react";
 
 type PublicEvent = {
@@ -139,7 +140,7 @@ export default async function EventsPage() {
             }).format(new Date(event.starts_at));
             return {
               id: event.id,
-              name: event.name,
+              name: participantDisplayName(event.name),
               date,
               time,
               venue: `${event.venue_name} · ${event.venue_city}, ${event.venue_state}`,

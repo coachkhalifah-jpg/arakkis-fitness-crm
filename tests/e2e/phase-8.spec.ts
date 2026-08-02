@@ -71,6 +71,8 @@ test.describe("Phase 8 participant productization", () => {
   let slug: string;
   let eventId: string;
   let eventName: string;
+  let displayEventName: string;
+  let fixtureSuffix: string;
 
   test.beforeAll(async () => {
     const service = createClient(
@@ -79,6 +81,7 @@ test.describe("Phase 8 participant productization", () => {
       { auth: { autoRefreshToken: false, persistSession: false } },
     );
     const suffix = randomUUID().slice(0, 8);
+    fixtureSuffix = suffix;
     const version = 9800 + (Number.parseInt(suffix, 16) % 1000);
     const email = `phase8-browser-${suffix}@example.test`;
     const { data, error } = await service.auth.admin.createUser({
@@ -94,6 +97,7 @@ test.describe("Phase 8 participant productization", () => {
     const dataUseId = randomUUID();
     slug = `phase-eight-${suffix}`;
     eventName = `Phase 8 Community Flow ${suffix}`;
+    displayEventName = "Phase 8 Community Flow";
     localSql(`
       insert into public.admin_profiles (id, display_name, email, role, status) values (${sql(data.user.id)}, 'Phase 8 Browser Admin', ${sql(email)}, 'SYSTEM_ADMIN', 'ACTIVE');
       insert into public.organizations (id, name) values (${sql(organizationId)}, ${sql(`Phase 8 Organization ${suffix}`)});
@@ -112,18 +116,26 @@ test.describe("Phase 8 participant productization", () => {
     await page.goto("/");
     await page.getByRole("link", { name: /explore upcoming events/i }).click();
     await expect(page).toHaveURL(/\/events$/);
-    const card = page.getByRole("article").filter({ hasText: eventName });
+    const card = page
+      .getByRole("article")
+      .filter({ has: page.locator(`a[href="/register/${slug}"]`) });
     await expect(card).toBeVisible();
     await expect(
       card.getByRole("link", { name: /view class|view session details/i }),
     ).toHaveAttribute("href", `/register/${slug}`);
     expect(await page.content()).not.toContain(eventId);
+    expect(await card.innerText()).not.toContain(fixtureSuffix);
   });
 
   test("completes the participant journey with keyboard-operable controls", async ({ page }) => {
     await page.goto(`/register/${slug}`);
-    await expect(page.getByRole("heading", { name: eventName })).toBeVisible();
-    await page.getByRole("checkbox", { name: new RegExp(eventName) }).check();
+    await expect(page.getByRole("heading", { name: displayEventName })).toBeVisible();
+    expect(await page.locator("main").innerText()).not.toContain(fixtureSuffix);
+    await expect(page.getByText("Save your spot")).toBeVisible();
+    await expect(page.getByText("You’re reserving the class below.")).toBeVisible();
+    await expect(page.locator('.registration-slot input[type="checkbox"]')).toBeChecked();
+    await expect(page.getByText("Selected", { exact: true })).toBeVisible();
+    await page.getByRole("checkbox", { name: new RegExp(displayEventName) }).check();
     await page.getByLabel("First name").fill("Keyboard");
     await page.getByLabel("Last name").fill("Participant");
     await page.getByLabel("Mobile phone").fill("+15185550199");
@@ -139,7 +151,7 @@ test.describe("Phase 8 participant productization", () => {
 
   test("remembers, reuses, and forgets a participant browser token safely", async ({ page }) => {
     await page.goto(`/register/${slug}`);
-    await page.getByRole("checkbox", { name: new RegExp(eventName) }).check();
+    await page.getByRole("checkbox", { name: new RegExp(displayEventName) }).check();
     await page.getByLabel("First name").fill("Remembered");
     await page.getByLabel("Last name").fill("Participant");
     await page.getByLabel("Mobile phone").fill("+15185550198");
@@ -188,7 +200,7 @@ test.describe("Phase 8 participant productization", () => {
     await page.goto(`/register/${slug}`);
     await expect(page.getByText("Welcome back")).toBeVisible();
     await expect(page.getByRole("button", { name: "Continue as Remembered" })).toBeVisible();
-    await page.getByRole("checkbox", { name: new RegExp(eventName) }).check();
+    await page.getByRole("checkbox", { name: new RegExp(displayEventName) }).check();
     await page.getByLabel("Synthetic participation acknowledgment.").check();
     await page.getByLabel("Synthetic data-use acknowledgment.").check();
     await page.getByRole("button", { name: /continue as remembered/i }).click();
