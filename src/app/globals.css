@@ -863,6 +863,13 @@ body {
 .confirmation-calendar-row {
   padding-bottom: 0.1rem;
 }
+.confirmation-calendar-session-card {
+  border: 1px solid var(--confirmation-border);
+  border-radius: 1.25rem;
+  background: #fffdfa;
+  padding: 0.9rem 1rem;
+  box-shadow: 0 6px 16px rgba(80, 60, 40, 0.07);
+}
 @keyframes admin-sheet-in {
   from {
     opacity: 0;

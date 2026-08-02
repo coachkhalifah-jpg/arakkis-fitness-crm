@@ -214,7 +214,10 @@ export default async function ConfirmationPage({
               </h2>
               <div className="mt-4 space-y-4">
                 {successful.map((event) => (
-                  <div key={event.event_id} className="confirmation-calendar-row">
+                  <div
+                    key={event.event_id}
+                    className="confirmation-calendar-row confirmation-calendar-session-card"
+                  >
                     <p className="confirmation-calendar-date text-center text-sm text-[var(--confirmation-text)]">
                       {dateFormatter(event.timezone).format(new Date(event.starts_at))}
                     </p>
