@@ -28,7 +28,7 @@ export function WhatToBring({
       setOpen(false);
       setClosing(false);
       closeTimerRef.current = null;
-    }, 180);
+    }, 320);
   }, [closing, open]);
 
   useEffect(() => {

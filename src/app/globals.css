@@ -609,14 +609,12 @@ body {
   box-shadow: 0 22px 60px rgba(15, 23, 42, 0.22);
   padding: 0;
   color: var(--confirmation-text);
-  animation: confirmation-surface-in 180ms ease-out;
-  transition:
-    opacity 180ms ease-out,
-    transform 180ms ease-out;
+  transform-origin: 50% 100%;
+  animation: confirmation-surface-in 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .confirmation-what-to-bring-dialog.is-closing {
-  opacity: 0;
-  transform: scale(0.985) translateY(8px);
+  transform: translateY(100%) scaleY(0.94);
 }
 @media (min-width: 768px) {
   .confirmation-what-to-bring-dialog {
@@ -685,12 +683,10 @@ body {
 }
 @keyframes confirmation-surface-in {
   from {
-    opacity: 0;
-    transform: scale(0.985) translateY(8px);
+    transform: translateY(100%) scaleY(0.94);
   }
   to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translateY(0) scaleY(1);
   }
 }
 @keyframes confirmation-backdrop-in {
