@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useEffect, useRef } from "react";
 
 export function WhatToBring({
   eventId,
@@ -11,11 +12,31 @@ export function WhatToBring({
 }) {
   const [open, setOpen] = useState(false);
   const contentId = `what-to-bring-${eventId}`;
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const preview = instructions.length > 1 ? `${instructions[0]}…` : instructions[0];
+
+  useEffect(() => {
+    if (!open) {
+      triggerRef.current?.focus();
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
   return (
     <div className={`confirmation-what-to-bring-card${open ? " is-expanded" : ""}`}>
       <button
         type="button"
+        ref={triggerRef}
         className="confirmation-what-to-bring-trigger"
         aria-expanded={open}
         aria-controls={contentId}
@@ -23,7 +44,7 @@ export function WhatToBring({
       >
         <span>
           <span className="block font-semibold">What to bring</span>
-          <span className="mt-1 block text-sm">{instructions.join(", ")}</span>
+          <span className="mt-1 block text-sm">{preview}</span>
         </span>
         <span
           aria-hidden="true"
@@ -44,6 +65,14 @@ export function WhatToBring({
               <li key={`${eventId}-expanded-instruction-${index}`}>{instruction}</li>
             ))}
           </ul>
+          <button
+            type="button"
+            className="confirmation-what-to-bring-close"
+            aria-label="Close What to bring"
+            onClick={() => setOpen(false)}
+          >
+            <span aria-hidden="true">×</span>
+          </button>
         </div>
       </div>
     </div>

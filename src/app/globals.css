@@ -593,16 +593,48 @@ body {
 .confirmation-what-to-bring-content-wrap {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 240ms ease-out;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows 240ms ease-out,
+    opacity 180ms ease-out,
+    visibility 0s linear 240ms;
 }
 .confirmation-what-to-bring-content-wrap.is-open {
   grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    grid-template-rows 240ms ease-out,
+    opacity 180ms ease-out,
+    visibility 0s linear 0s;
 }
 .confirmation-what-to-bring-content {
   min-height: 0;
   overflow: hidden;
   border-top: 1px solid var(--confirmation-border);
   padding: 0 1.25rem 1.25rem;
+}
+.confirmation-what-to-bring-close {
+  display: flex;
+  min-height: 2.5rem;
+  min-width: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  margin: 1rem 0 0 auto;
+  border: 1px solid var(--confirmation-border);
+  border-radius: 999px;
+  background: #e9edf1;
+  color: var(--confirmation-text);
+  font-size: 1.4rem;
+  line-height: 1;
+  transition:
+    background-color 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+.confirmation-what-to-bring-close:hover {
+  background: #dce2e8;
+  box-shadow: 0 5px 14px rgba(32, 37, 43, 0.14);
 }
 .confirmation-section {
   margin-top: 1rem;
@@ -671,6 +703,7 @@ body {
   .confirmation-what-to-bring-trigger,
   .confirmation-what-to-bring-chevron,
   .confirmation-what-to-bring-content-wrap,
+  .confirmation-what-to-bring-close,
   .floating-back-button,
   .roster-summary-card,
   .roster-expanded-surface,
