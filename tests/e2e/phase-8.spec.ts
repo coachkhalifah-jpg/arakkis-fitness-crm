@@ -134,10 +134,11 @@ test.describe("Phase 8 participant productization", () => {
     await expect(page.getByText("Save your spot")).toBeVisible();
     await expect(page.getByText("Class details")).toHaveCount(0);
     await expect(page.getByText("Location")).toHaveCount(0);
-    await expect(page.getByText("open", { exact: true })).toBeVisible();
+    await expect(page.locator(".event-hero-status")).toHaveText("open");
     await expect(page.getByText("You’re reserving the class below.")).toBeVisible();
     await expect(page.locator('.registration-slot input[type="checkbox"]')).toBeChecked();
-    await expect(page.getByText("Selected", { exact: true })).toBeVisible();
+    await expect(page.getByText("SELECTED", { exact: true })).toBeVisible();
+    await expect(page.getByText(/class(?:es)? selected/i)).toHaveCount(0);
     await page.getByRole("checkbox", { name: new RegExp(displayEventName) }).check();
     await page.getByLabel("First name").fill("Keyboard");
     await page.getByLabel("Last name").fill("Participant");

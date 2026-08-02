@@ -651,9 +651,6 @@ textarea {
 .registration-slot:active .registration-time-pill {
   transform: scale(0.985);
 }
-.registration-slot-selected {
-  background: color-mix(in srgb, var(--accent-soft) 68%, transparent);
-}
 .registration-time-pill {
   display: inline-flex;
   min-width: 5rem;

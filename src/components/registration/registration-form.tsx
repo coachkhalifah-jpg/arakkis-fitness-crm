@@ -142,7 +142,7 @@ export function RegistrationForm({
               ? "Choose one or more class times that work for you."
               : "Choose the class time that works for you."}
         </p>
-        <div className="mt-5 flex flex-col gap-3">
+        <div className="mt-5 grid grid-cols-2 gap-3">
           {grouped.map(([date, dateEvents]) => (
             <div
               key={date}
@@ -154,7 +154,6 @@ export function RegistrationForm({
                   const full = isUnavailableEvent(event);
                   const value = selectionValue(event);
                   const isSelected = selected.includes(value);
-                  const spotsAvailable = event.capacity - event.active_registration_count;
                   const displayName = participantDisplayName(event.name);
                   const time = new Intl.DateTimeFormat("en-US", {
                     hour: "numeric",
@@ -166,11 +165,11 @@ export function RegistrationForm({
                       event.availability === "FULL"
                       ? "Full"
                       : "Unavailable"
-                    : `${spotsAvailable} ${spotsAvailable === 1 ? "spot" : "spots"} available`;
+                    : "open";
                   return (
                     <label
                       key={value}
-                      className={`registration-slot relative ${full ? "registration-slot-full" : ""} ${isSelected ? "registration-slot-selected" : ""}`}
+                      className={`registration-slot relative ${full ? "registration-slot-full" : ""}`}
                     >
                       <input
                         type="checkbox"
@@ -202,8 +201,8 @@ export function RegistrationForm({
                       <span className="registration-slot-details">
                         <span className="block text-sm text-slate-600">{availabilityLabel}</span>
                         {isSelected ? (
-                          <span className="registration-slot-state mt-1 block text-xs font-semibold uppercase tracking-[0.12em] text-brand-dark">
-                            Selected
+                          <span className="registration-slot-state mt-1 block text-xs font-semibold uppercase tracking-[0.12em] text-brand">
+                            SELECTED
                           </span>
                         ) : null}
                       </span>
@@ -222,16 +221,6 @@ export function RegistrationForm({
           >
             {errorFor("selectedOccurrenceStartsAt")}
           </p>
-        ) : null}
-        {selected.length ? (
-          <div className="registration-selection-alert mt-5 rounded-2xl p-4" aria-live="polite">
-            <p className="font-semibold">
-              {selected.length} {selected.length === 1 ? "class" : "classes"} selected
-            </p>
-            <p className="mt-1 text-sm text-white/75">
-              Your choices are saved while you complete the booking.
-            </p>
-          </div>
         ) : null}
       </fieldset>
       {rememberedFirstName && !showDetails ? (
