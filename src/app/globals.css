@@ -567,6 +567,7 @@ body {
 .confirmation-device-text-action {
   grid-column: 3;
   justify-self: end;
+  margin-right: 1rem;
   padding: 0.5rem 0;
   color: var(--confirmation-muted);
   font-size: 0.875rem;
