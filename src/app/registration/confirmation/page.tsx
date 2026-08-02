@@ -177,47 +177,49 @@ export default async function ConfirmationPage({
 
           {communicationEvent?.communication_url ? (
             <section className="confirmation-section" aria-labelledby="stay-connected-heading">
-              <h2 id="stay-connected-heading" className="text-base font-semibold">
+              <h2 id="stay-connected-heading" className="text-center text-base font-semibold">
                 Stay connected with your class
               </h2>
-              <p className="mt-1 text-sm leading-6 text-[var(--confirmation-muted)]">
+              <p className="mt-1 text-center text-sm leading-6 text-[var(--confirmation-muted)]">
                 Join the group for welcome notes and class updates.
               </p>
-              <a
-                className="mt-3 inline-flex min-h-11 items-center rounded-xl bg-brand px-4 py-2 font-semibold text-white transition hover:bg-brand-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                href={communicationEvent.communication_url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Invite link <span aria-hidden="true">↗</span>
-                <span className="sr-only"> (opens in a new tab)</span>
-              </a>
+              <div className="mt-3 flex justify-center">
+                <a
+                  className="confirmation-pill-button confirmation-pill-button-primary"
+                  href={communicationEvent.communication_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Invite link <span aria-hidden="true">↗</span>
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              </div>
             </section>
           ) : null}
 
           {successful.length > 0 ? (
             <section className="confirmation-section" aria-labelledby="calendar-heading">
-              <h2 id="calendar-heading" className="text-base font-semibold">
+              <h2 id="calendar-heading" className="text-center text-base font-semibold">
                 Add to calendar
               </h2>
               <div className="mt-4 space-y-4">
                 {successful.map((event) => (
                   <div key={event.event_id} className="confirmation-calendar-row">
-                    <p className="text-sm font-medium text-[var(--confirmation-text)]">
+                    <p className="text-center text-sm font-medium text-[var(--confirmation-text)]">
                       {dateFormatter(event.timezone).format(new Date(event.starts_at))}
                     </p>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                      <span className="text-[var(--confirmation-muted)]">
+                    <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm">
+                      <span className="confirmation-pill-button confirmation-pill-button-tertiary">
                         {timeFormatter(event.timezone).format(new Date(event.starts_at))}
                       </span>
                       <a
-                        className="font-semibold text-brand underline"
+                        className="confirmation-pill-button confirmation-pill-button-secondary"
                         href={googleCalendarUrl(toCalendarEvent(event))}
                       >
                         Google Calendar
                       </a>
                       <Link
-                        className="font-medium text-[var(--confirmation-muted)] underline"
+                        className="confirmation-pill-button confirmation-pill-button-tertiary"
                         href={`/registration/confirmation/ics?token=${encodeURIComponent(token)}&event=${encodeURIComponent(event.event_id)}`}
                       >
                         iCal
@@ -231,7 +233,7 @@ export default async function ConfirmationPage({
 
           {directions.length > 0 ? (
             <section className="confirmation-section" aria-labelledby="directions-heading">
-              <h2 id="directions-heading" className="text-base font-semibold">
+              <h2 id="directions-heading" className="text-center text-base font-semibold">
                 Directions
               </h2>
               <div className="mt-3 space-y-4">
@@ -271,12 +273,14 @@ export default async function ConfirmationPage({
           ) : null}
 
           {successful.length > 0 ? (
-            <a
-              className="confirmation-secondary-action"
-              href={`/registration/confirmation/ics?token=${encodeURIComponent(token)}`}
-            >
-              Download all calendar files
-            </a>
+            <div className="flex justify-center">
+              <a
+                className="confirmation-pill-button confirmation-pill-button-secondary"
+                href={`/registration/confirmation/ics?token=${encodeURIComponent(token)}`}
+              >
+                Download all calendar files
+              </a>
+            </div>
           ) : (
             <p className="text-sm leading-6 text-[var(--confirmation-muted)]">
               No selected dates were successfully reserved.
@@ -290,9 +294,14 @@ export default async function ConfirmationPage({
           ) : null}
 
           <nav aria-label="After booking">
-            <Link className="confirmation-secondary-action" href="/events">
-              Browse more classes
-            </Link>
+            <div className="flex justify-center">
+              <Link
+                className="confirmation-pill-button confirmation-pill-button-secondary"
+                href="/events"
+              >
+                Browse more classes
+              </Link>
+            </div>
           </nav>
         </div>
       </Card>

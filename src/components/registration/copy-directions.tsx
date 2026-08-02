@@ -16,10 +16,10 @@ export function CopyDirections({ directions }: { directions: string }) {
   }
 
   return (
-    <div className="mt-2 flex items-center gap-3">
+    <div className="mt-3 flex items-center justify-center gap-3">
       <button
         type="button"
-        className="confirmation-inline-action"
+        className="confirmation-pill-button confirmation-pill-button-secondary"
         onClick={copy}
         aria-label="Copy directions"
       >

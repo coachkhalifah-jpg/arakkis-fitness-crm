@@ -24,18 +24,18 @@ export function RememberDevice({ confirmationToken }: { confirmationToken: strin
       <p className="mt-1 text-sm leading-6 text-[var(--confirmation-muted)]">
         Reopen your upcoming classes without entering your details again.
       </p>
-      <div className="mt-3 flex flex-wrap items-center gap-3">
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
         <button
           type="submit"
           disabled={pending}
-          className="min-h-11 rounded-xl bg-brand px-4 py-2 font-semibold text-white transition hover:bg-brand-dark disabled:opacity-60"
+          className="confirmation-pill-button confirmation-pill-button-primary disabled:opacity-60"
         >
-          {pending ? "Saving…" : "Save my bookings"}
+          {pending ? "Saving…" : "Save"}
         </button>
         <button
           type="button"
           onClick={() => setDismissed(true)}
-          className="min-h-11 rounded-xl px-3 py-2 text-sm font-semibold text-[var(--confirmation-muted)] underline underline-offset-2 hover:text-[var(--confirmation-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          className="confirmation-pill-button confirmation-pill-button-tertiary"
         >
           Not now
         </button>

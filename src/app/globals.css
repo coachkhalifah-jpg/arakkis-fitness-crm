@@ -508,13 +508,13 @@ body {
 }
 .confirmation-header .confirmation-device-card {
   margin-top: 1.25rem;
-  text-align: left;
+  text-align: center;
 }
 .confirmation-compact-banner {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.6rem;
-  border-bottom: 1px solid var(--confirmation-border);
   padding: 0.9rem 1.5rem;
   color: var(--confirmation-muted);
   font-size: 0.875rem;
@@ -526,17 +526,17 @@ body {
   background: color-mix(in srgb, var(--accent) 7%, var(--confirmation-surface));
   padding: 0.8rem 1rem;
   color: var(--confirmation-text);
+  text-align: center;
 }
-.confirmation-secondary-action {
-  display: flex;
+.confirmation-pill-button {
+  display: inline-flex;
   min-height: 2.9rem;
-  width: 100%;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--confirmation-border);
-  border-radius: 0.8rem;
-  padding: 0.7rem 1rem;
-  color: var(--confirmation-text);
+  gap: 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.65rem 1.1rem;
   font-weight: 650;
   text-align: center;
   transition:
@@ -544,16 +544,41 @@ body {
     border-color 160ms ease-out,
     transform 160ms ease-out;
 }
-.confirmation-secondary-action:hover {
-  border-color: #b9c2cb;
-  background: #f2f5f7;
+.confirmation-pill-button:hover {
   transform: translateY(-1px);
 }
-.confirmation-secondary-action:focus-visible,
-.confirmation-inline-action:focus-visible,
+.confirmation-pill-button:active {
+  transform: scale(0.985);
+}
+.confirmation-pill-button:focus-visible,
 .confirmation-what-to-bring-trigger:focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
+}
+.confirmation-pill-button-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.confirmation-pill-button-primary:hover {
+  background: var(--accent-active);
+}
+.confirmation-pill-button-secondary {
+  border-color: var(--confirmation-border);
+  background: var(--confirmation-surface);
+  color: var(--confirmation-text);
+}
+.confirmation-pill-button-secondary:hover {
+  border-color: #b9c2cb;
+  background: #f2f5f7;
+}
+.confirmation-pill-button-tertiary {
+  border-color: transparent;
+  background: #f2f5f7;
+  color: var(--confirmation-muted);
+}
+.confirmation-pill-button-tertiary:hover {
+  background: #e5eaee;
+  color: var(--confirmation-text);
 }
 .confirmation-what-to-bring-card {
   overflow: hidden;
@@ -637,49 +662,9 @@ body {
 }
 .confirmation-section {
   margin-top: 1rem;
-  border-top: 1px solid var(--confirmation-border);
-  padding-top: 1rem;
 }
 .confirmation-calendar-row {
   padding-bottom: 0.1rem;
-}
-.confirmation-inline-action {
-  min-height: 2.75rem;
-  border: 1px solid var(--confirmation-border);
-  border-radius: 999px;
-  padding: 0.55rem 0.9rem;
-  color: var(--confirmation-text);
-  font-size: 0.875rem;
-  font-weight: 650;
-  transition:
-    background-color 160ms ease-out,
-    border-color 160ms ease-out;
-}
-.confirmation-inline-action:hover {
-  border-color: #b9c2cb;
-  background: #f2f5f7;
-}
-.confirmation-what-to-bring-close {
-  position: absolute;
-  right: 1rem;
-  bottom: 1rem;
-  display: inline-flex;
-  min-height: 2.75rem;
-  min-width: 2.75rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  background: #e9edf1;
-  color: var(--confirmation-text);
-  font-size: 1.6rem;
-  line-height: 1;
-  transition:
-    background-color 160ms ease-out,
-    box-shadow 160ms ease-out;
-}
-.confirmation-what-to-bring-close:hover {
-  background: #dce2e8;
-  box-shadow: 0 5px 14px rgba(32, 37, 43, 0.14);
 }
 @keyframes admin-sheet-in {
   from {
@@ -696,8 +681,7 @@ body {
   .admin-contextual-back,
   .admin-roster-sheet,
   .confirmation-success-icon,
-  .confirmation-secondary-action,
-  .confirmation-inline-action,
+  .confirmation-pill-button,
   .confirmation-what-to-bring-card,
   .confirmation-what-to-bring-trigger,
   .confirmation-what-to-bring-chevron,
