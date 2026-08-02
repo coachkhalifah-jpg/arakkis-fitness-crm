@@ -12,7 +12,7 @@ export const adminVisualAssets = {
     strength: "/admin-assets/event-cards/strength.svg",
     yoga: "/admin-assets/event-cards/yoga.svg",
     communityFitness: "/admin-assets/event-cards/community-fitness.svg",
-    default: "/admin-assets/event-cards/default.svg",
+    default: "/admin-assets/event-cards/default.jpg",
   },
   focalPositions: { page: "center", event: "center" },
   overlayStrength: 0.18,

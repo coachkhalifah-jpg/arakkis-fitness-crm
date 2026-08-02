@@ -110,6 +110,10 @@ Phase 7 management actions remain server/data-layer authorized. Publicly visible
 ## DEC-052 presentation controls
 
 Segmented navigation, contextual back links, event-card actions, and quick-roster drawers are convenience surfaces only. They call the same server-authorized routes and queries as the underlying pages. The Participants page remains System Admin-only for global search/profile access; no participant-create permission is added.
+
+## DEC-053 design assets
+
+Design Asset settings and all upload, replacement, activation, retirement, and storage-object operations are System Admin-only. Public users may read only active, non-sensitive asset metadata needed to render approved public imagery. Host Admins cannot view or manage the global asset library or event-specific asset assignments.
 # DEC-051 addition
 
 Remembered-device records are not readable by participants, Host Admins, or anonymous clients. Server-side booking code may resolve an active token only to a safe booking candidate. System Admin access to token records is not part of the pilot UI.

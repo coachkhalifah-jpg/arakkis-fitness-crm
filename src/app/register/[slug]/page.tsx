@@ -70,8 +70,14 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
         )
       : availability === "OPEN");
   const formattedDate = new Intl.DateTimeFormat("en-US", {
-    dateStyle: "full",
-    timeStyle: "short",
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    timeZone: event.timezone,
+  }).format(new Date(event.starts_at));
+  const formattedTime = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
     timeZone: event.timezone,
   }).format(new Date(event.starts_at));
   return (
@@ -81,6 +87,7 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
         host={event.host_organization_name}
         venue={event.venue_name}
         date={formattedDate}
+        time={formattedTime}
         availability={availability}
         imageUrl={desktopAsset ? designAssetPublicUrl(desktopAsset.storage_path) : undefined}
         mobileImageUrl={mobileAsset ? designAssetPublicUrl(mobileAsset.storage_path) : undefined}

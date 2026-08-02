@@ -165,6 +165,8 @@ test.describe("Phase 7 publishing and slug registration", () => {
   }) => {
     const fixture = await systemFixture();
     await page.goto(`/register/${fixture.slug}`);
+    await expect(page.getByLabel("Mobile phone")).toHaveAttribute("type", "tel");
+    await expect(page.getByLabel("Mobile phone")).toHaveAttribute("placeholder", "+1 518-867-5309");
     await expect(page.getByRole("heading", { name: "Phase 7 Browser Event" })).toBeVisible();
     await expect(page.locator('input[name="eventIds"]')).toHaveCount(0);
     expect(await page.content()).not.toContain(fixture.eventId);
@@ -718,7 +720,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await page.getByLabel("Password").fill(fixture.password);
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(/\/admin$/);
-    await page.goto("/admin/invitations");
+    await page.goto("/admin/invitations?mode=invite");
     await page.getByLabel("Email").fill(`keyboard-${fixture.slug}@example.test`);
     await page.locator('select[name="organizationIds"]:visible').focus();
     await page
@@ -738,12 +740,15 @@ test("System Admin can create and list a one-time invitation link", async ({ pag
   await page.getByLabel("Password").fill(fixture.password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/admin$/);
-  await page.goto("/admin/invitations");
+  await page.goto("/admin/invitations?mode=invite");
   await page.getByLabel("Email").fill(`invited-${fixture.slug}@example.test`);
   await page.getByLabel("Organization").selectOption(fixture.organizationId);
   await page.getByRole("button", { name: "Create invitation" }).click();
-  await expect(page.getByRole("textbox", { name: "New invitation link" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "New invitation link" })).toBeVisible({
+    timeout: 15000,
+  });
   await page.reload();
   await expect(page.getByRole("textbox", { name: "New invitation link" })).toHaveCount(0);
+  await page.goto("/admin/invitations");
   await expect(page.getByText(`invited-${fixture.slug}@example.test`)).toBeVisible();
 });

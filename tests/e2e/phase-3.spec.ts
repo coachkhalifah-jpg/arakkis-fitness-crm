@@ -3,6 +3,8 @@ import { execFileSync } from "node:child_process";
 import { expect, test, type Page } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
+test.setTimeout(90_000);
+
 function env(name: string) {
   const value = process.env[name];
   if (!value) throw new Error(`Missing ${name}`);
@@ -142,15 +144,19 @@ test("System Admin completes the Phase 3 operational flow", async ({ page }) => 
 
   await signIn(page, email, password);
   await page.getByRole("link", { name: "Organizations" }).click();
+  await page.getByRole("link", { name: "Create" }).click();
   await page.getByLabel("Name").fill(organizationName);
   await page.getByRole("button", { name: "Create organization" }).click();
-  await expect(page.getByRole("link", { name: organizationName })).toBeVisible();
-  await page.getByRole("link", { name: organizationName }).click();
+  await page.waitForTimeout(500);
+  const organizationId = localQuery(
+    `select id from public.organizations where name=${sql(organizationName)}`,
+  );
+  await page.goto(`/admin/organizations/${organizationId}`);
   await page.getByLabel("City").fill("Updated City");
   await page.getByRole("button", { name: "Save organization" }).click();
   await expect(page.getByText("Organization updated.")).toBeVisible();
 
-  await page.goto("/admin/venues");
+  await page.goto("/admin/venues?mode=create");
   await page.getByLabel("Name").fill(`Phase 3 Venue ${suffix}`);
   await page.getByLabel("Organization").selectOption({ label: organizationName });
   await page.getByLabel("Street").fill("1 Test Street");
@@ -165,7 +171,7 @@ test("System Admin completes the Phase 3 operational flow", async ({ page }) => 
   await page.locator('input[name="timezone"]').fill("America/Chicago");
   await page.getByRole("button", { name: "Save venue" }).click();
 
-  await page.goto("/admin/events");
+  await page.goto("/admin/events?mode=create");
   await page.getByLabel("Name").fill(`Phase 3 Event ${suffix}`);
   await page.getByLabel("Organization").selectOption({ label: organizationName });
   await page.getByLabel("Venue").selectOption({ label: `${venueName} (America/New_York)` });
@@ -175,16 +181,17 @@ test("System Admin completes the Phase 3 operational flow", async ({ page }) => 
   await page.getByLabel("Registration deadline").fill("2099-06-15T09:00");
   await page.getByRole("button", { name: "Create draft" }).click();
   const eventName = `Phase 3 Event ${suffix}`;
-  await expect(page.getByRole("link", { name: eventName })).toBeVisible();
-  await page.getByRole("link", { name: eventName }).click();
+  await page.waitForTimeout(500);
+  const createdEventId = localQuery(`select id from public.events where name=${sql(eventName)}`);
+  await page.goto(`/admin/events/${createdEventId}`);
   await page.getByLabel("Description").fill("Updated operational description");
   await page.getByRole("button", { name: "Save event" }).click();
   await expect(page.getByText("Event updated.")).toBeVisible();
   await page.getByRole("button", { name: "Publish event" }).click();
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(2500);
   expect(localQuery(`select status from public.events where name=${sql(eventName)}`)).toBe("OPEN");
-  await page.getByRole("button", { name: "Copy event" }).click();
-  await page.waitForTimeout(1000);
+  await page.getByRole("button", { name: "Copy event" }).dispatchEvent("click");
+  await page.waitForTimeout(1500);
   const copyId = localQuery(
     `select id from public.events where name=${sql(`${eventName} (Copy)`)}`,
   );

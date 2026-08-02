@@ -37,16 +37,11 @@ export default async function InvitationsPage({
   const mode = (await searchParams).mode === "invite" ? "invite" : "list";
   return (
     <section className="admin-shell px-5 py-10 sm:px-8 sm:py-14">
-      <div className="relative mx-auto max-w-6xl pt-8">
+      <div className="relative mx-auto max-w-3xl pt-8">
         <ContextualBack />
-        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-          <div>
-            <p className="admin-eyebrow">Access control</p>
-            <h1 className="mt-2 text-4xl font-semibold">Invitations</h1>
-            <p className="mt-3 text-admin-text-muted">
-              Invite scoped administrators without exposing raw tokens.
-            </p>
-          </div>
+        <div className="admin-page-header">
+          <h1>Invitations</h1>
+          <p>Invite scoped administrators without exposing raw tokens.</p>
           <SegmentedNavigation
             listLabel="Invitations"
             actionLabel="Invite"

@@ -26,11 +26,22 @@ within the existing event/registration model:
   The link is returned only on a successful confirmation page; it is omitted
   from public pre-registration pages and failed confirmation results.
 - Public branding is sourced from centralized typed configuration and replaceable
-  static assets. It does not introduce an upload CMS, automated messaging,
-  participant accounts, or group creation.
+  static assets. Under DEC-053, approved non-sensitive design assets may also be
+  managed through the protected System Admin Design Assets page; this does not
+  introduce participant uploads, automated messaging, participant accounts, or group creation.
 
 These extensions do not authorize production registration while the
 Participation acknowledgment remains provisional.
+
+### Approved design-assets extension — DEC-053
+
+System Admins can manage non-sensitive visual assets from a protected Design Assets page. The
+page supports global public desktop/mobile backgrounds, event-specific desktop/mobile images, and
+category fallback images. Uploads validate MIME type and size server-side, store files in the
+dedicated design-assets bucket, retain immutable audit history, and allow only one active asset per
+scope/type. Public pages may read active asset metadata only; event-specific assets take precedence
+over category and local static fallbacks. Participant uploads, arbitrary file hosting, external
+storage providers, automated messaging, and client-side service-role access remain excluded.
 
 ### FR-001 — Create event
 **User:** System Admin  

@@ -25,6 +25,7 @@ describe("Phase 4 registration normalization", () => {
   it("normalizes domestic and international phones to E.164", () => {
     expect(normalizePhone("(703) 555-1212", "US").e164).toBe("+17035551212");
     expect(normalizePhone("020 7946 0018", "GB").e164).toBe("+442079460018");
+    expect(normalizePhone("+44 20 7946 0018", "US").e164).toBe("+442079460018");
   });
 
   it("trims and lowercases optional email", () => {

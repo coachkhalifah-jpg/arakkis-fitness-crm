@@ -2,6 +2,7 @@
   "name": "fitness-event-crm",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.15.1",
   "scripts": {
     "dev": "next dev",
     "dev:stack": "pnpm db:start && pnpm dev",

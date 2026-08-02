@@ -31,7 +31,7 @@ export function ContextualBack({
         onBlur={() => setFocused(false)}
         className={`admin-contextual-back ${compact && !focused ? "admin-contextual-back-hidden" : ""}`}
       >
-        <ArrowLeft aria-hidden="true" size={17} /> <span>{label}</span>
+        <ArrowLeft aria-hidden="true" size={20} />
       </Link>
     </>
   );

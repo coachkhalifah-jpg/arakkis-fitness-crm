@@ -44,6 +44,7 @@ export function configurePlaywrightEnvironment() {
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = local.anonKey;
   process.env.SUPABASE_SERVICE_ROLE_KEY = local.serviceRoleKey;
   process.env.NEXT_PUBLIC_APP_URL = PLAYWRIGHT_APP_URL;
+  process.env.APP_BASE_URL = PLAYWRIGHT_APP_URL;
 }
 
 export function assertPlaywrightEnvironment() {
@@ -57,6 +58,7 @@ export function assertPlaywrightEnvironment() {
     "NEXT_PUBLIC_SUPABASE_ANON_KEY",
     "SUPABASE_SERVICE_ROLE_KEY",
     "NEXT_PUBLIC_APP_URL",
+    "APP_BASE_URL",
   ]) {
     if (!process.env[name]) throw new Error(`Playwright test environment is missing ${name}`);
   }

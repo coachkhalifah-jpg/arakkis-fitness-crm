@@ -56,7 +56,6 @@ export function RegistrationForm({
     firstName: "",
     lastName: "",
     phone: "",
-    phoneCountry: "US",
     email: "",
     affiliation: "",
     fitnessExperience: "",
@@ -113,6 +112,7 @@ export function RegistrationForm({
       <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
       <input type="hidden" name="participationVersionId" value={participation.id} />
       <input type="hidden" name="dataUseVersionId" value={dataUse.id} />
+      <input type="hidden" name="phoneCountry" value="US" />
       {publicSlug ? <input type="hidden" name="registrationSlug" value={publicSlug} /> : null}
       {seriesMode ? <input type="hidden" name="seriesMode" value="true" /> : null}
       <fieldset className="registration-date-selection">
@@ -124,11 +124,13 @@ export function RegistrationForm({
             ? "Choose one or more dates in the next two weeks. Each date is reserved separately."
             : "Select one or more sessions. Your contact details are collected once."}
         </p>
-        <div className="mt-5 grid grid-cols-2 gap-3">
+        <div
+          className={`mt-5 grid gap-3 ${grouped.length === 1 ? "grid-cols-1 justify-items-center" : "grid-cols-2"}`}
+        >
           {grouped.map(([date, dateEvents]) => (
             <div
               key={date}
-              className={`registration-date-card ${dateEvents.length > 1 ? "registration-date-card-multiple" : ""}`}
+              className={`registration-date-card w-full ${grouped.length === 1 ? "max-w-sm" : ""} ${dateEvents.length > 1 ? "registration-date-card-multiple" : ""}`}
             >
               <h3 className="mb-3 text-center text-sm font-bold text-ink">{date}</h3>
               <div className="space-y-3">
@@ -243,10 +245,7 @@ export function RegistrationForm({
           A phone number helps us keep your registration and event-day details together.
         </p>
       </div>
-      <fieldset
-        disabled={Boolean(rememberedFirstName && !showDetails)}
-        className="grid gap-4 sm:grid-cols-2"
-      >
+      <fieldset disabled={Boolean(rememberedFirstName && !showDetails)} className="grid gap-4">
         <label>
           First name
           <input
@@ -288,8 +287,12 @@ export function RegistrationForm({
           <input
             id="phone"
             name="phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
             required
             maxLength={40}
+            placeholder="+1 518-867-5309"
             value={values.phone}
             onChange={(event) => updateValue("phone", event.target.value)}
             {...fieldProps("phone")}
@@ -298,26 +301,6 @@ export function RegistrationForm({
           {errorFor("phone") ? (
             <p id="phone-error" className="mt-1 text-sm text-red-700" role="alert">
               {errorFor("phone")}
-            </p>
-          ) : null}
-        </label>
-        <label>
-          Phone country
-          <select
-            id="phoneCountry"
-            name="phoneCountry"
-            value={values.phoneCountry}
-            onChange={(event) => updateValue("phoneCountry", event.target.value)}
-            {...fieldProps("phoneCountry")}
-            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-brand"
-          >
-            {["US", "CA", "GB", "AU", "IN"].map((country) => (
-              <option key={country}>{country}</option>
-            ))}
-          </select>
-          {errorFor("phoneCountry") ? (
-            <p id="phoneCountry-error" className="mt-1 text-sm text-red-700" role="alert">
-              {errorFor("phoneCountry")}
             </p>
           ) : null}
         </label>

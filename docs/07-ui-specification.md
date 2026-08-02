@@ -10,7 +10,7 @@
 
 ## DEC-052 administrator workspace presentation
 
-Authenticated administrator list pages use a reusable URL-backed two-mode segmented control only when an approved existing action workflow exists: Events/Create, Organizations/Create, Venues/Create, and Invitations/Invite. Participants intentionally remains Search/Profile because manual participant creation is not approved. The admin shell uses soft-white and warm-gray semantic tokens, local replaceable assets, a focus-safe contextual back link that fades after scroll, and event cards with text KPIs. Quick rosters are scoped operational summaries and link to the full roster; they do not replace attendance correction workflows.
+Authenticated administrator list pages use a reusable URL-backed two-mode segmented control only when an approved existing action workflow exists: Events/Create, Organizations/Create, Venues/Create, and Invitations/Invite. Participants intentionally remains Search/Profile because manual participant creation is not approved. The admin shell uses soft-white and warm-gray semantic tokens, local replaceable assets, a focus-safe contextual back link that fades after scroll, and compact horizontal event cards with image-led tiles, white caption strips, subtle hover lift, and shadow. Event actions and quick roster details remain hidden until the selected card expands in place; the expanded roster is an operational summary and does not replace attendance correction workflows.
 
 ## Public screens
 
@@ -81,7 +81,17 @@ Confirmation pages use an opaque, read-only token that expires after 24 hours an
 - Participants
 - Follow-Ups
 - Organizations
+- Design Assets
 - Settings
+
+## Design Assets settings — DEC-053
+
+The System Admin-only page provides clearly separated sections for global public backgrounds,
+category fallbacks, and event-specific images. Each section shows the active preview, upload field,
+asset type, focal-position/alt-text fields, validation guidance, and a replace/retire action. The
+page must communicate the 5 MiB image limit, accepted image types, and that public assets contain no
+private participant data. Upload and retirement use server actions and return accessible success or
+error status messages.
 
 ## Host Admin navigation
 - Dashboard
@@ -127,6 +137,11 @@ Metrics:
 - first time with coach
 - first time at host
 - returning
+
+Roster group summaries use an in-place progressive expansion: selecting a summary card keeps
+that card as the visual anchor and grows its rounded participant surface beneath it within the
+same constrained event page. Other summaries remain visible but de-emphasized; dismissing the
+surface collapses it back to the selected summary without opening a generic dialog.
 
 Actions:
 - Add Participant

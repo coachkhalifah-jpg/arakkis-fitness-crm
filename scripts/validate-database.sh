@@ -64,6 +64,21 @@ run_phase_7_tests() {
   docker exec -i "$db_container" psql --set ON_ERROR_STOP=1 --username postgres --dbname postgres --file - < supabase/tests/phase-7-runtime.sql
 }
 
+run_pnpm_script() {
+  if command -v pnpm >/dev/null 2>&1; then
+    pnpm "$@"
+  elif command -v corepack >/dev/null 2>&1; then
+    corepack pnpm "$@"
+  elif command -v npx >/dev/null 2>&1; then
+    # Keep the repository-declared package manager while supporting clean
+    # environments where Corepack has not been installed or enabled.
+    npx --yes -p pnpm@10.15.1 pnpm "$@"
+  else
+    echo 'pnpm 10.15.1 is required for the concurrency validation.' >&2
+    exit 2
+  fi
+}
+
 if command -v supabase >/dev/null 2>&1; then
   # CLI 2.110.0's db reset wrapper fails before reaching Postgres with a
   # legacy profile error. Stop with --no-backup removes only this local
@@ -87,7 +102,7 @@ if command -v supabase >/dev/null 2>&1; then
   run_phase_2_tests
   run_phase_6_tests
   run_phase_7_tests
-  pnpm test:concurrency
+  run_pnpm_script test:concurrency
   exit 0
 fi
 

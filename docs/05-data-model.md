@@ -107,6 +107,32 @@ series stores the inclusive end date, canonical public slug, and a 14-day rollin
 selection window. Occurrences retain their own capacity, deadline, publication, registration,
 attendance, cancellation, and audit state; changing or deleting a series never rewrites history.
 
+## DesignAsset
+
+Represents a non-sensitive visual asset managed by a System Admin.
+
+Fields:
+- id
+- asset_type
+- event_id, nullable for global/category assets
+- category_key, nullable for event/global assets
+- storage_path
+- original_filename, nullable display metadata only
+- mime_type
+- byte_size
+- alt_text
+- focal_position
+- active
+- created_by_admin_id
+- created_at
+- updated_at
+- retired_at
+
+Relationships:
+- optionally belongs to one Event
+- belongs to one creating System Admin
+- has one public storage object while active
+
 ## RegistrationGroup
 One public/admin submission transaction.
 

@@ -20,8 +20,9 @@ size targets. SVG or WebP is acceptable. Do not embed text in the image; keep th
 quiet, place the subject near the focal center, and preserve contrast beneath the UI overlay.
 
 The hub uses `cover`, separate mobile/desktop assets, a readable overlay, and a gradient fallback when
-an asset is absent. Restart or refresh the local app after replacing an asset. This is a static-file
-workflow, not a media-upload CMS.
+an asset is absent. Restart or refresh the local app after replacing an asset. This remains the
+static fallback workflow. DEC-053 additionally provides a protected System Admin Design Assets page
+for approved non-sensitive uploads; static assets remain the safe fallback when no managed asset is active.
 
 Recommended replacement workflow: use a desktop image near 2400×1600 and a mobile image near
 1440×1920, preferably WebP or SVG below 500 KB and never above roughly 1 MB. Keep the focal subject

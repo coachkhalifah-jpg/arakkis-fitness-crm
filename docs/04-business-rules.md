@@ -155,6 +155,15 @@
 - BR-135: Every Phase 7 requirement has planned unit/component, database/integration, authorization/security, and/or Playwright coverage before implementation is considered complete.
 - BR-136: Phase 7 implementation cannot begin until DEC-047 and all synchronized source-of-truth documents are reviewed and accepted; this documentation update does not mark any feature implemented.
 - BR-136A: Administrator presentation controls, event cards, and quick rosters never expand server-side authorization. Host Admin participant names/phones remain limited to assigned event operations; System Admin-only participant profile and follow-up rules remain unchanged.
+
+# Design assets — DEC-053
+
+- Design asset uploads are System Admin-only and are never accepted from participants or Host Admins.
+- Allowed files are image/jpeg, image/png, image/webp, and image/svg+xml; each file is limited to 5 MiB.
+- Asset types are `PUBLIC_BACKGROUND_DESKTOP`, `PUBLIC_BACKGROUND_MOBILE`, `EVENT_IMAGE_DESKTOP`, `EVENT_IMAGE_MOBILE`, and `CATEGORY_IMAGE`.
+- Event-specific active assets override category assets, which override approved local static fallbacks.
+- Only active asset metadata is publicly readable; storage paths contain opaque identifiers and no participant data.
+- Replacing or removing an asset preserves the metadata row and audit history; storage objects are deleted only after the metadata operation succeeds.
 # DEC-051 remembered-device rules
 
 - Remembered-device recognition is optional, explicit, revocable, and limited to booking convenience.

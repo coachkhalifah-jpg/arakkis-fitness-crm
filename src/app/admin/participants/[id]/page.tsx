@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSystemAdmin } from "@/lib/authorization/server";
 import { createClient } from "@/lib/db/server";
+import { ContextualBack } from "@/components/admin/contextual-back";
 
 export default async function ParticipantProfilePage({
   params,
@@ -48,74 +49,79 @@ export default async function ParticipantProfilePage({
     : { data: [] };
   const attendanceByRegistration = new Map((attendance ?? []).map((a) => [a.registration_id, a]));
   return (
-    <section className="mx-auto max-w-5xl px-6 py-12">
-      <Link href="/admin/participants" className="text-sm text-brand">
-        ← Participants
-      </Link>
-      <h1 className="mt-3 text-3xl font-semibold">
-        {participant.first_name} {participant.last_name}
-      </h1>
-      <p className="mt-2 text-slate-600">
-        {participant.display_phone} · {participant.email ?? "No email"}
-      </p>
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <div className="rounded border bg-white p-4">
-          <p className="text-sm text-slate-500">Affiliation</p>
-          <p>{participant.primary_affiliation_organization_id ?? "No affiliation"}</p>
-        </div>
-        <div className="rounded border bg-white p-4">
-          <p className="text-sm text-slate-500">Attended</p>
+    <section className="admin-shell px-5 py-10 sm:px-8 sm:py-14">
+      <div className="relative mx-auto max-w-3xl pt-8">
+        <ContextualBack href="/admin/participants" label="Participants" />
+        <div className="admin-page-header">
+          <h1>
+            {participant.first_name} {participant.last_name}
+          </h1>
           <p>
-            {(attendance ?? []).filter((a) => a.status === "ATTENDED" && a.finalized_at).length}
+            {participant.display_phone} · {participant.email ?? "No email"}
           </p>
         </div>
-        <div className="rounded border bg-white p-4">
-          <p className="text-sm text-slate-500">No-shows</p>
-          <p>{(attendance ?? []).filter((a) => a.status === "NO_SHOW" && a.finalized_at).length}</p>
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <div className="rounded border bg-white p-4">
+            <p className="text-sm text-slate-500">Affiliation</p>
+            <p>{participant.primary_affiliation_organization_id ?? "No affiliation"}</p>
+          </div>
+          <div className="rounded border bg-white p-4">
+            <p className="text-sm text-slate-500">Attended</p>
+            <p>
+              {(attendance ?? []).filter((a) => a.status === "ATTENDED" && a.finalized_at).length}
+            </p>
+          </div>
+          <div className="rounded border bg-white p-4">
+            <p className="text-sm text-slate-500">No-shows</p>
+            <p>
+              {(attendance ?? []).filter((a) => a.status === "NO_SHOW" && a.finalized_at).length}
+            </p>
+          </div>
         </div>
-      </div>
-      <div className="mt-8 rounded border bg-white p-6">
-        <h2 className="text-xl font-semibold">Registration and attendance history</h2>
-        <div className="mt-4 divide-y">
-          {(registrations ?? []).map((r) => {
-            const event = eventById.get(r.event_id);
-            const a = attendanceByRegistration.get(r.id);
-            return (
-              <div key={r.id} className="py-3">
-                <p className="font-medium">{event?.name ?? "Event unavailable"}</p>
+        <div className="mt-8 rounded border bg-white p-6">
+          <h2 className="text-xl font-semibold">Registration and attendance history</h2>
+          <div className="mt-4 divide-y">
+            {(registrations ?? []).map((r) => {
+              const event = eventById.get(r.event_id);
+              const a = attendanceByRegistration.get(r.id);
+              return (
+                <div key={r.id} className="py-3">
+                  <p className="font-medium">{event?.name ?? "Event unavailable"}</p>
+                  <p className="text-sm text-slate-600">
+                    {event
+                      ? new Intl.DateTimeFormat("en-US", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                          timeZone: event.timezone,
+                        }).format(new Date(event.starts_at))
+                      : "—"}{" "}
+                    · Registration {r.registration_status} · Attendance{" "}
+                    {a?.status ?? "NOT_RECORDED"}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="mt-8 rounded border bg-white p-6">
+          <h2 className="text-xl font-semibold">Follow-up history</h2>
+          <div className="mt-4 divide-y">
+            {(tasks ?? []).map((task) => (
+              <div key={task.id} className="py-3">
+                <p className="font-medium">
+                  {task.task_title} · {task.status}
+                </p>
                 <p className="text-sm text-slate-600">
-                  {event
-                    ? new Intl.DateTimeFormat("en-US", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                        timeZone: event.timezone,
-                      }).format(new Date(event.starts_at))
-                    : "—"}{" "}
-                  · Registration {r.registration_status} · Attendance {a?.status ?? "NOT_RECORDED"}
+                  Due{" "}
+                  {new Intl.DateTimeFormat("en-US", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  }).format(new Date(task.due_at))}{" "}
+                  · {eventById.get(task.event_id ?? "")?.name ?? "Event unavailable"}
                 </p>
               </div>
-            );
-          })}
-        </div>
-      </div>
-      <div className="mt-8 rounded border bg-white p-6">
-        <h2 className="text-xl font-semibold">Follow-up history</h2>
-        <div className="mt-4 divide-y">
-          {(tasks ?? []).map((task) => (
-            <div key={task.id} className="py-3">
-              <p className="font-medium">
-                {task.task_title} · {task.status}
-              </p>
-              <p className="text-sm text-slate-600">
-                Due{" "}
-                {new Intl.DateTimeFormat("en-US", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                }).format(new Date(task.due_at))}{" "}
-                · {eventById.get(task.event_id ?? "")?.name ?? "Event unavailable"}
-              </p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>

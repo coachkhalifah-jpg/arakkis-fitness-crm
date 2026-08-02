@@ -1271,6 +1271,96 @@ export type Database = {
         };
         Relationships: [];
       };
+      participant_remembered_devices: {
+        Row: {
+          id: string;
+          participant_id: string;
+          token_hash: string;
+          created_at: string;
+          last_used_at: string | null;
+          expires_at: string;
+          revoked_at: string | null;
+          replaced_by_device_id: string | null;
+          label: string;
+        };
+        Insert: {
+          id?: string;
+          participant_id: string;
+          token_hash: string;
+          created_at?: string;
+          last_used_at?: string;
+          expires_at: string;
+          revoked_at?: string;
+          replaced_by_device_id?: string;
+          label?: string;
+        };
+        Update: {
+          id?: string;
+          participant_id: string;
+          token_hash: string;
+          created_at?: string;
+          last_used_at?: string;
+          expires_at: string;
+          revoked_at?: string;
+          replaced_by_device_id?: string;
+          label?: string;
+        };
+        Relationships: [];
+      };
+      design_assets: {
+        Row: {
+          id: string;
+          asset_type: string;
+          event_id: string | null;
+          category_key: string | null;
+          storage_path: string;
+          original_filename: string | null;
+          mime_type: string;
+          byte_size: number;
+          alt_text: string;
+          focal_position: string;
+          active: boolean;
+          created_by_admin_id: string;
+          created_at: string;
+          updated_at: string;
+          retired_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          asset_type: string;
+          event_id?: string;
+          category_key?: string;
+          storage_path: string;
+          original_filename?: string;
+          mime_type: string;
+          byte_size: number;
+          alt_text: string;
+          focal_position?: string;
+          active?: boolean;
+          created_by_admin_id: string;
+          created_at?: string;
+          updated_at?: string;
+          retired_at?: string;
+        };
+        Update: {
+          id?: string;
+          asset_type: string;
+          event_id?: string;
+          category_key?: string;
+          storage_path: string;
+          original_filename?: string;
+          mime_type: string;
+          byte_size: number;
+          alt_text: string;
+          focal_position?: string;
+          active?: boolean;
+          created_by_admin_id: string;
+          created_at?: string;
+          updated_at?: string;
+          retired_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       public_event_schedule: { Row: Record<string, unknown>; Relationships: [] };

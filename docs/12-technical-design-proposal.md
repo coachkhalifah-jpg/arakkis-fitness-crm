@@ -378,6 +378,17 @@ The first reviewable PR should contain only repository and decision foundations:
 
 The administrator presentation layer uses server-rendered route data plus small client components for URL-backed segmented navigation, IntersectionObserver-based contextual back visibility, and a focusable roster dialog. Visual assets are local static files configured in `src/lib/config/admin-visual-assets.ts`; no remote image dependency or database migration is required. KPI queries remain scoped to the already authorized event set.
 
+# DEC-053 technical note
+
+Design Assets uses a `design_assets` metadata table and a dedicated public Supabase Storage bucket.
+The upload server action calls `requireSystemAdmin()` before validating an image `File` (JPEG, PNG,
+WebP, or SVG; maximum 5 MiB), writes to an opaque storage path, then inserts metadata and an audit
+event. A failed metadata insert removes the newly uploaded object. Public pages query only active
+metadata through RLS and build public storage URLs; all upload, replacement, retirement, and object
+deletion operations remain server-only. Event-specific desktop/mobile assets override category and
+local static assets. No participant data, arbitrary file types, client service-role key, or public
+write policy is introduced.
+
 # Phase 9 operational design
 
 Local, preview/staging, and production use separate Next.js environment configuration and Supabase

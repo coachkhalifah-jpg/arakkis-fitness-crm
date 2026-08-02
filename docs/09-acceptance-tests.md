@@ -742,3 +742,13 @@ Given an authorized administrator, when they use Events, Organizations, Venues, 
 - A successful booking offers optional remembered-browser consent; declining does not block booking.
 - A valid remembered token shows only a safe first-name welcome and streamlines booking; invalid, expired, revoked, or absent tokens fall back safely.
 - Required acknowledgments and the legal registration gate remain enforced for remembered bookings.
+
+### AT-DEC-053 — Design asset administration
+
+Given an authenticated System Admin, when they open Design Assets, then they can upload a valid
+image for a global background, category fallback, or selected event, preview it, and activate it;
+the public event/hub page uses the event-specific asset before category/static fallback. Invalid
+MIME types, files over 5 MiB, missing required scope, Host Admin access, anonymous access, and
+participant access are rejected server-side. Public responses expose only active asset metadata and
+never service-role credentials, participant data, or retired storage paths. Replacing/retiring an
+asset preserves audit history and does not alter event, registration, authorization, or legal state.

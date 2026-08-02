@@ -24,13 +24,12 @@ export default async function ParticipantsPage({
   }>;
   return (
     <section className="admin-shell px-5 py-10 sm:px-8 sm:py-14">
-      <div className="relative mx-auto max-w-6xl pt-8">
+      <div className="relative mx-auto max-w-3xl pt-8">
         <ContextualBack />
-        <p className="admin-eyebrow">Participant CRM</p>
-        <h1 className="mt-2 text-4xl font-semibold">Participants</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          System Admin operational directory. Search requires at least two characters.
-        </p>
+        <div className="admin-page-header">
+          <h1>Participants</h1>
+          <p>Search the operational directory using at least two characters.</p>
+        </div>
         <form className="admin-surface mt-6 flex gap-2 rounded-3xl p-4">
           <input
             name="q"
@@ -38,7 +37,9 @@ export default async function ParticipantsPage({
             placeholder="Name, phone, or email"
             className="w-full rounded border p-2"
           />
-          <button className="rounded bg-brand px-4 py-2 text-white">Search</button>
+          <button className="admin-primary-button" type="submit">
+            Search
+          </button>
         </form>
         {error ? (
           <p className="mt-6 rounded border border-red-200 bg-red-50 p-4">

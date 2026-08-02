@@ -1,9 +1,11 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireActiveAdmin, requireSystemAdmin } from "@/lib/authorization/server";
 import { createClient } from "@/lib/db/server";
+import { createPrivilegedClient } from "@/lib/db/privileged";
 import {
   audit,
   eventSchema,
@@ -30,6 +32,85 @@ const message = (error: unknown) =>
     ? error.message
     : "The request could not be completed.";
 const value = (form: FormData, key: string) => String(form.get(key) ?? "").trim();
+const eventImageMimeTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
+const maxEventImageBytes = 5 * 1024 * 1024;
+
+function eventImageFile(form: FormData) {
+  const file = form.get("eventImage");
+  if (!(file instanceof File) || file.size === 0) return null;
+  if (file.size > maxEventImageBytes)
+    throw new Phase3Error("invalid", "Event images must be 5 MiB or smaller.");
+  if (!eventImageMimeTypes.includes(file.type))
+    throw new Phase3Error("invalid", "Use a JPEG, PNG, WebP, or SVG event image.");
+  return file;
+}
+
+function eventImageExtension(file: File) {
+  if (file.type === "image/svg+xml") return ".svg";
+  if (file.type === "image/png") return ".png";
+  if (file.type === "image/webp") return ".webp";
+  return ".jpg";
+}
+
+async function saveEventImages(
+  db: Awaited<ReturnType<typeof createClient>>,
+  adminId: string,
+  eventIds: string[],
+  eventName: string,
+  file: File | null,
+) {
+  if (!file || !eventIds.length) return;
+  const storage = createPrivilegedClient();
+  const uploadedPaths: string[] = [];
+  try {
+    for (const eventId of eventIds) {
+      const path = `event_image_desktop/${eventId}/${randomUUID()}${eventImageExtension(file)}`;
+      const { error: uploadError } = await storage.storage
+        .from("design-assets")
+        .upload(path, await file.arrayBuffer(), {
+          contentType: file.type,
+          cacheControl: "31536000",
+          upsert: false,
+        });
+      if (uploadError) throw new Phase3Error("conflict", "The event image could not be uploaded.");
+      uploadedPaths.push(path);
+      const { data: asset, error: insertError } = await db
+        .from("design_assets")
+        .insert({
+          asset_type: "EVENT_IMAGE_DESKTOP",
+          event_id: eventId,
+          storage_path: path,
+          original_filename: file.name.slice(0, 255),
+          mime_type: file.type,
+          byte_size: file.size,
+          alt_text: `${eventName} event image`,
+          focal_position: "center",
+          created_by_admin_id: adminId,
+        })
+        .select("id")
+        .single();
+      if (insertError || !asset)
+        throw new Phase3Error("conflict", "The event image metadata could not be saved.");
+      const { error: auditError } = await db.from("audit_events").insert({
+        actor_admin_id: adminId,
+        action: "DESIGN_ASSET_UPLOADED",
+        entity_type: "DESIGN_ASSET",
+        entity_id: asset.id,
+        new_values: {
+          asset_type: "EVENT_IMAGE_DESKTOP",
+          event_id: eventId,
+          mime_type: file.type,
+          byte_size: file.size,
+        },
+      });
+      if (auditError)
+        throw new Phase3Error("conflict", "The event image change could not be recorded.");
+    }
+  } catch (error) {
+    if (uploadedPaths.length) await storage.storage.from("design-assets").remove(uploadedPaths);
+    throw error;
+  }
+}
 
 export async function createOrganization(
   _state: Phase3ActionState,
@@ -287,6 +368,7 @@ export async function createEvent(
       communicationUrl: value(form, "communicationUrl"),
       communicationLabel: value(form, "communicationLabel"),
     });
+    const imageFile = eventImageFile(form);
     const communication = parseCommunicationLink(input.communicationUrl, input.communicationLabel);
     const recurrence = recurrenceSchema.parse({
       enabled: form.get("recurring") === "on",
@@ -342,6 +424,13 @@ export async function createEvent(
         .select("id");
       if (error || !created?.length)
         throw new Phase3Error("conflict", "Recurring events could not be created.");
+      await saveEventImages(
+        db,
+        admin.userId,
+        created.map((event) => event.id),
+        input.name,
+        imageFile,
+      );
       await audit(admin.userId, "EVENT_SERIES_CREATED", "EVENT_SERIES", series.id, {
         ...input,
         frequency: "WEEKLY",
@@ -372,6 +461,7 @@ export async function createEvent(
       .select("id")
       .single();
     if (error || !data) throw new Phase3Error("conflict", "Event could not be created.");
+    await saveEventImages(db, admin.userId, [data.id], input.name, imageFile);
     await audit(admin.userId, "EVENT_CREATED", "EVENT", data.id, {
       ...input,
       ...times,

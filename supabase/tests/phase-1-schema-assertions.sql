@@ -12,7 +12,7 @@ declare
     'event_cancellation_requests','event_cancellations','cancellation_template_versions',
     'participant_notification_tasks','participant_notification_deliveries','notification_delivery_transitions',
     'over_capacity_overrides','possible_duplicate_cases','participant_merges','participant_merge_conflicts',
-    'participant_notes','completed_event_invalidations','audit_events','event_series'
+    'participant_notes','completed_event_invalidations','audit_events','event_series','design_assets'
   ];
   missing text;
   table_count integer;
@@ -24,7 +24,7 @@ begin
     select string_agg(t, ', ' order by t) into missing
     from unnest(expected_tables) t
     where to_regclass('public.' || t) is null;
-    raise exception 'schema assertion failed: expected 30 tables, found %, missing %', table_count, missing;
+    raise exception 'schema assertion failed: expected 31 tables, found %, missing %', table_count, missing;
   end if;
 
   if not exists (select 1 from pg_proc where pronamespace = 'public'::regnamespace and proname = 'register_selected_events') then
@@ -60,6 +60,9 @@ begin
   end if;
   if has_table_privilege('anon', 'public.attendance', 'SELECT') then
     raise exception 'security assertion failed: anon can select attendance';
+  end if;
+  if not has_table_privilege('anon', 'public.design_assets', 'SELECT') then
+    raise exception 'security assertion failed: anon cannot select design asset metadata';
   end if;
   if not has_table_privilege('anon', 'public.public_event_schedule', 'SELECT') then
     raise exception 'security assertion failed: anon cannot select public schedule';
@@ -119,7 +122,7 @@ declare
     'event_cancellation_requests','event_cancellations','cancellation_template_versions',
     'participant_notification_tasks','participant_notification_deliveries','notification_delivery_transitions',
     'over_capacity_overrides','possible_duplicate_cases','participant_merges','participant_merge_conflicts',
-    'participant_notes','completed_event_invalidations','audit_events','event_series'
+    'participant_notes','completed_event_invalidations','audit_events','event_series','design_assets'
   ];
 begin
   foreach table_name in array expected_tables loop
@@ -150,6 +153,9 @@ begin
   if not exists (select 1 from pg_indexes where schemaname = 'public' and indexname = 'admin_profiles_active_email_uq') then
     raise exception 'schema assertion failed: active admin email unique index is missing';
   end if;
+  if not exists (select 1 from pg_indexes where schemaname = 'public' and indexname = 'design_assets_active_event_uq') then
+    raise exception 'schema assertion failed: active event design asset index is missing';
+  end if;
 end;
 $$;
 
@@ -159,7 +165,8 @@ declare
   required_policies constant text[] := array[
     'system_admin_all_events','system_admin_all_participants','host_read_events',
     'host_read_registrations','host_read_attendance','host_read_participants',
-    'host_read_notification_tasks','host_update_notification_deliveries'
+    'host_read_notification_tasks','host_update_notification_deliveries',
+    'design_assets_public_read','design_assets_system_admin_all'
   ];
 begin
   foreach required_policy in array required_policies loop

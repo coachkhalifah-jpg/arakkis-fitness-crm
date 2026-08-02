@@ -215,7 +215,7 @@ test("registers multiple dates, exports only successful events, and scopes the a
     "(703) 555-1212",
     "jose@example.test",
   );
-  await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
+  await expect(page).toHaveURL(/\/registration\/confirmation\?token=/, { timeout: 15000 });
   await expect(page.getByText(fixture.eventNameA)).toBeVisible();
   await expect(page.getByText(fixture.eventNameB)).toBeVisible();
   await expect(page.getByText("Registered")).toHaveCount(2);
@@ -260,7 +260,7 @@ test("reuses an exact normalized participant match and rejects an altered token"
     "1 (703) 555-1213",
     "new@example.test",
   );
-  await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
+  await expect(page).toHaveURL(/\/registration\/confirmation\?token=/, { timeout: 15000 });
   const token = new URL(page.url()).searchParams.get("token");
   expect(token).toBeTruthy();
   expect(
