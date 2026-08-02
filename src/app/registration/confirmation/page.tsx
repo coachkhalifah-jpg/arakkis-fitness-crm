@@ -151,7 +151,7 @@ export default async function ConfirmationPage({
                 stroke="currentColor"
                 strokeWidth="2.5"
               >
-                <path d="M5 12h13M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="m5 12 4 4L19 6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
             <h1 className="mt-5 text-sm font-semibold uppercase tracking-[0.18em] text-brand">

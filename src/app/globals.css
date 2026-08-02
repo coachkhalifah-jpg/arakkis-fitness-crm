@@ -563,10 +563,10 @@ body {
   justify-content: space-between;
   gap: 1rem;
   border: 1px solid var(--confirmation-border);
-  min-height: 3rem;
-  border-radius: 999px;
+  min-height: 5.5rem;
+  border-radius: 1.5rem;
   background: #f8fafb;
-  padding: 0.7rem 1rem;
+  padding: 1.25rem;
   color: var(--confirmation-text);
   text-align: left;
   transition:
