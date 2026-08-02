@@ -25,7 +25,11 @@ export function CopyDirections({ directions }: { directions: string }) {
       >
         Copy directions
       </button>
-      <span className="text-sm text-[var(--confirmation-muted)]" role="status" aria-live="polite">
+      <span
+        className="confirmation-metadata text-sm text-[var(--confirmation-muted)]"
+        role="status"
+        aria-live="polite"
+      >
         {copied ? "Copied" : null}
       </span>
     </div>

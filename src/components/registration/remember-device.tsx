@@ -12,7 +12,7 @@ export function RememberDevice({ confirmationToken }: { confirmationToken: strin
   if (dismissed) return null;
   if (state.success) {
     return (
-      <p className="text-sm text-emerald-800" role="status">
+      <p className="confirmation-metadata text-sm text-emerald-800" role="status">
         This browser will be remembered for faster bookings.
       </p>
     );
@@ -20,8 +20,8 @@ export function RememberDevice({ confirmationToken }: { confirmationToken: strin
   return (
     <form action={action} className="confirmation-device-card">
       <input type="hidden" name="confirmationToken" value={confirmationToken} />
-      <p className="font-semibold">Save my bookings on this device</p>
-      <p className="mt-1 text-sm leading-6 text-[var(--confirmation-muted)]">
+      <p className="confirmation-section-title">Save my bookings on this device</p>
+      <p className="confirmation-body mt-1 text-sm text-[var(--confirmation-muted)]">
         Reopen your upcoming classes without entering your details again.
       </p>
       <div className="mt-3 flex flex-wrap items-center justify-center gap-2">

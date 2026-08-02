@@ -154,14 +154,14 @@ export default async function ConfirmationPage({
                 <path d="m5 12 4 4L19 6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <h1 className="mt-5 text-sm font-semibold uppercase tracking-[0.18em] text-brand">
+            <h1 className="confirmation-hero-title mt-5 text-sm uppercase text-brand">
               Your spot is saved
             </h1>
-            <p className="mx-auto mt-3 max-w-sm text-base leading-7 text-[var(--confirmation-muted)]">
+            <p className="confirmation-welcome mx-auto mt-3 max-w-sm text-base text-[var(--confirmation-muted)]">
               We’re looking forward to seeing you, {firstName}.
             </p>
             {successful.length > 0 ? <RememberDevice confirmationToken={token} /> : null}
-            <p className="mt-4 text-xs leading-5 text-[var(--confirmation-muted)]">
+            <p className="confirmation-metadata mt-4 text-xs text-[var(--confirmation-muted)]">
               This confirmation link expires in 24 hours. Save this device to securely access your
               upcoming classes later.
             </p>
@@ -177,10 +177,13 @@ export default async function ConfirmationPage({
 
           {communicationEvent?.communication_url ? (
             <section className="confirmation-section" aria-labelledby="stay-connected-heading">
-              <h2 id="stay-connected-heading" className="text-center text-base font-semibold">
+              <h2
+                id="stay-connected-heading"
+                className="confirmation-section-title text-center text-base"
+              >
                 Stay connected with your class
               </h2>
-              <p className="mt-1 text-center text-sm leading-6 text-[var(--confirmation-muted)]">
+              <p className="confirmation-body mt-1 text-center text-sm text-[var(--confirmation-muted)]">
                 Join the group for welcome notes and class updates.
               </p>
               <div className="mt-3 flex justify-center">
@@ -199,17 +202,20 @@ export default async function ConfirmationPage({
 
           {successful.length > 0 ? (
             <section className="confirmation-section" aria-labelledby="calendar-heading">
-              <h2 id="calendar-heading" className="text-center text-base font-semibold">
+              <h2
+                id="calendar-heading"
+                className="confirmation-section-title text-center text-base"
+              >
                 Add to calendar
               </h2>
               <div className="mt-4 space-y-4">
                 {successful.map((event) => (
                   <div key={event.event_id} className="confirmation-calendar-row">
-                    <p className="text-center text-sm font-medium text-[var(--confirmation-text)]">
+                    <p className="confirmation-calendar-date text-center text-sm text-[var(--confirmation-text)]">
                       {dateFormatter(event.timezone).format(new Date(event.starts_at))}
                     </p>
                     <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm">
-                      <span className="confirmation-pill-button confirmation-pill-button-tertiary">
+                      <span className="confirmation-calendar-time confirmation-pill-button confirmation-pill-button-tertiary">
                         {timeFormatter(event.timezone).format(new Date(event.starts_at))}
                       </span>
                       <a
@@ -233,18 +239,21 @@ export default async function ConfirmationPage({
 
           {directions.length > 0 ? (
             <section className="confirmation-section" aria-labelledby="directions-heading">
-              <h2 id="directions-heading" className="text-center text-base font-semibold">
+              <h2
+                id="directions-heading"
+                className="confirmation-section-title text-center text-base"
+              >
                 Directions
               </h2>
               <div className="mt-3 space-y-4">
                 {directions.map(({ event, address }) => (
                   <div key={`${event.event_id}-directions`}>
                     {directions.length > 1 ? (
-                      <p className="text-sm font-medium text-[var(--confirmation-text)]">
+                      <p className="confirmation-calendar-date text-sm text-[var(--confirmation-text)]">
                         {dateFormatter(event.timezone).format(new Date(event.starts_at))}
                       </p>
                     ) : null}
-                    <p className="mt-1 text-sm leading-6 text-[var(--confirmation-muted)]">
+                    <p className="confirmation-metadata mt-1 text-sm text-[var(--confirmation-muted)]">
                       {event.venue_name} · {address}
                     </p>
                     <CopyDirections directions={`${event.venue_name} · ${address}`} />
@@ -256,16 +265,18 @@ export default async function ConfirmationPage({
 
           {events.some((event) => !event.success) ? (
             <section className="confirmation-section" aria-labelledby="unsuccessful-heading">
-              <h2 id="unsuccessful-heading" className="text-base font-semibold">
+              <h2 id="unsuccessful-heading" className="confirmation-section-title text-base">
                 Some selections were not booked
               </h2>
-              <div className="mt-3 space-y-3 text-sm leading-6 text-[var(--confirmation-muted)]">
+              <div className="confirmation-body mt-3 space-y-3 text-sm text-[var(--confirmation-muted)]">
                 {events
                   .filter((event) => !event.success)
                   .map((event) => (
                     <p key={event.event_id}>
-                      {bookingTitle(event.name).title}:{" "}
-                      {reasonText[event.reason ?? ""] ?? "This selection could not be reserved."}
+                      <span className="confirmation-event-title">
+                        {bookingTitle(event.name).title}
+                      </span>
+                      : {reasonText[event.reason ?? ""] ?? "This selection could not be reserved."}
                     </p>
                   ))}
               </div>
@@ -282,13 +293,13 @@ export default async function ConfirmationPage({
               </a>
             </div>
           ) : (
-            <p className="text-sm leading-6 text-[var(--confirmation-muted)]">
+            <p className="confirmation-body text-sm text-[var(--confirmation-muted)]">
               No selected dates were successfully reserved.
             </p>
           )}
 
           {hasRememberedDevice ? (
-            <p className="text-center text-xs leading-5 text-[var(--confirmation-muted)]">
+            <p className="confirmation-metadata text-center text-xs text-[var(--confirmation-muted)]">
               This confirmation link expires in 24 hours.
             </p>
           ) : null}

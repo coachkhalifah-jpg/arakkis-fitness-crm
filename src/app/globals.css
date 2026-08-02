@@ -494,9 +494,37 @@ body {
   --confirmation-background: #ffffff;
   --confirmation-surface: #ffffff;
   --confirmation-text: #20252b;
-  --confirmation-muted: #59636e;
+  --confirmation-muted: #4f5963;
   --confirmation-border: #d8dee5;
   color: var(--confirmation-text);
+}
+.confirmation-hero-title {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.confirmation-section-title {
+  font-weight: 600;
+  line-height: 1.3;
+}
+.confirmation-welcome,
+.confirmation-body {
+  font-weight: 400;
+  line-height: 1.5;
+}
+.confirmation-metadata {
+  color: var(--confirmation-muted);
+  font-weight: 400;
+  line-height: 1.5;
+}
+.confirmation-event-title {
+  font-weight: 600;
+}
+.confirmation-calendar-date {
+  font-weight: 600;
+  line-height: 1.35;
+}
+.confirmation-calendar-time {
+  font-weight: 400;
 }
 .confirmation-surface {
   border-color: var(--confirmation-border);
@@ -518,7 +546,7 @@ body {
   padding: 0.9rem 1.5rem;
   color: var(--confirmation-muted);
   font-size: 0.875rem;
-  font-weight: 650;
+  font-weight: 400;
 }
 .confirmation-device-card {
   border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--confirmation-border));
@@ -537,7 +565,7 @@ body {
   border: 1px solid transparent;
   border-radius: 999px;
   padding: 0.65rem 1.1rem;
-  font-weight: 650;
+  font-weight: 600;
   text-align: center;
   transition:
     background-color 160ms ease-out,
@@ -637,6 +665,8 @@ body {
 .confirmation-what-to-bring-content {
   min-height: 0;
   overflow: hidden;
+  font-weight: 400;
+  line-height: 1.5;
   padding: 0 1.25rem 1.25rem;
 }
 .confirmation-what-to-bring-close {
