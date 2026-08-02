@@ -320,10 +320,7 @@ export default async function ConfirmationPage({
 
           <nav aria-label="After booking">
             <div className="flex justify-center">
-              <Link
-                className="confirmation-pill-button confirmation-pill-button-secondary"
-                href="/events"
-              >
+              <Link className="confirmation-browse-link" href="/events">
                 Browse more classes
               </Link>
             </div>
