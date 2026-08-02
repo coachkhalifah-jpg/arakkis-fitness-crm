@@ -33,7 +33,6 @@ export default async function RegistrationPage() {
       ) : events && events.length > 0 ? (
         <RegistrationForm
           events={events as never}
-          organizations={registrationConfig.organizations ?? []}
           participation={registrationConfig.participation}
           dataUse={registrationConfig.data_use}
           idempotencyKey={crypto.randomUUID()}

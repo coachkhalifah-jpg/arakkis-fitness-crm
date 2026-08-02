@@ -23,8 +23,9 @@ export type RegistrationField =
   | "phone"
   | "phoneCountry"
   | "email"
-  | "affiliation"
   | "fitnessExperience"
+  | "referralSource"
+  | "referralSourceOther"
   | "participationAcknowledged"
   | "dataUseAcknowledged";
 
@@ -113,9 +114,9 @@ async function executeRegistration(form: FormData, selectedEventIds: string[]) {
     phone: remembered?.display_phone ?? form.get("phone"),
     phoneCountry: remembered?.phone_country ?? form.get("phoneCountry"),
     email: remembered?.email ?? form.get("email") ?? "",
-    affiliation: form.get("affiliation") ?? "",
-    affiliationOther: form.get("affiliationOther") ?? "",
     fitnessExperience: remembered?.fitness_experience ?? form.get("fitnessExperience") ?? "",
+    referralSource: form.get("referralSource") ?? "",
+    referralSourceOther: form.get("referralSourceOther") ?? "",
     eventIds: selectedEventIds,
     participationAcknowledged: form.get("participationAcknowledged"),
     dataUseAcknowledged: form.get("dataUseAcknowledged"),
@@ -137,7 +138,7 @@ async function executeRegistration(form: FormData, selectedEventIds: string[]) {
     (process.env.NODE_ENV === "development" ? "127.0.0.1" : null);
   if (!userAgent || !ipAddress) throw new Error("registration evidence unavailable");
   const db = await createClient();
-  const { data, error } = await db.rpc("register_selected_events", {
+  const { data, error } = await db.rpc("register_selected_events_with_referral", {
     p_first_name: input.firstName.trim(),
     p_last_name: input.lastName.trim(),
     p_display_phone: input.phone.trim(),
@@ -145,8 +146,6 @@ async function executeRegistration(form: FormData, selectedEventIds: string[]) {
     p_phone_country: normalizedPhone.country,
     p_email: normalizedEmail,
     p_normalized_email: normalizedEmail,
-    p_primary_affiliation_organization_id: input.affiliation || null,
-    p_affiliation_other_text: input.affiliationOther || null,
     p_fitness_experience: input.fitnessExperience || null,
     p_event_ids: input.eventIds,
     p_participation_acknowledgment_version_id: String(form.get("participationVersionId")),
@@ -156,6 +155,9 @@ async function executeRegistration(form: FormData, selectedEventIds: string[]) {
     p_ip_address: ipAddress,
     p_user_agent: userAgent,
     p_idempotency_key: String(form.get("idempotencyKey") || crypto.randomUUID()),
+    p_referral_source: input.referralSource || null,
+    p_referral_source_other_text:
+      input.referralSource === "OTHER" ? input.referralSourceOther || null : null,
   } as never);
   if (error || !data) throw new Error("registration unavailable");
   const result = data as { confirmation_token?: string };

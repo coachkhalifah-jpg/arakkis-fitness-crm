@@ -10,6 +10,7 @@ import {
   type RegistrationActionState,
 } from "@/lib/registration/actions";
 import { participantDisplayName } from "@/lib/registration/display";
+import { referralSourceOptions } from "@/lib/registration/referral";
 
 type Event = {
   id?: string;
@@ -24,7 +25,6 @@ type Event = {
   availability?: string;
   visibility: string;
 };
-type Organization = { id: string; name: string };
 type Acknowledgment = { id: string; text: string } | null;
 
 function isUnavailableEvent(event: Event) {
@@ -36,7 +36,6 @@ function isUnavailableEvent(event: Event) {
 
 export function RegistrationForm({
   events,
-  organizations,
   participation,
   dataUse,
   idempotencyKey,
@@ -45,7 +44,6 @@ export function RegistrationForm({
   rememberedFirstName = null,
 }: {
   events: Event[];
-  organizations: Organization[];
   participation: Acknowledgment;
   dataUse: Acknowledgment;
   idempotencyKey: string;
@@ -70,8 +68,9 @@ export function RegistrationForm({
     lastName: "",
     phone: "",
     email: "",
-    affiliation: "",
     fitnessExperience: "",
+    referralSource: "",
+    referralSourceOther: "",
   });
   const [acknowledgments, setAcknowledgments] = useState({
     participationAcknowledged: false,
@@ -332,28 +331,54 @@ export function RegistrationForm({
           ) : null}
         </label>
         <label>
-          Primary affiliation
+          How did you hear about us? — Optional
           <select
-            id="affiliation"
-            name="affiliation"
-            value={values.affiliation}
-            onChange={(event) => updateValue("affiliation", event.target.value)}
-            {...fieldProps("affiliation")}
+            id="referralSource"
+            name="referralSource"
+            value={values.referralSource}
+            onChange={(event) =>
+              setValues((current) => ({
+                ...current,
+                referralSource: event.target.value,
+                referralSourceOther:
+                  event.target.value === "OTHER" ? current.referralSourceOther : "",
+              }))
+            }
+            {...fieldProps("referralSource")}
             className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-brand"
           >
-            <option value="">Other / No affiliation</option>
-            {organizations.map((organization) => (
-              <option key={organization.id} value={organization.id}>
-                {participantDisplayName(organization.name)}
+            <option value="">Select an option</option>
+            {referralSourceOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </select>
-          {errorFor("affiliation") ? (
-            <p id="affiliation-error" className="mt-1 text-sm text-red-700" role="alert">
-              {errorFor("affiliation")}
+          {errorFor("referralSource") ? (
+            <p id="referralSource-error" className="mt-1 text-sm text-red-700" role="alert">
+              {errorFor("referralSource")}
             </p>
           ) : null}
         </label>
+        {values.referralSource === "OTHER" ? (
+          <label>
+            Tell us a little more (optional)
+            <input
+              id="referralSourceOther"
+              name="referralSourceOther"
+              maxLength={200}
+              value={values.referralSourceOther}
+              onChange={(event) => updateValue("referralSourceOther", event.target.value)}
+              {...fieldProps("referralSourceOther")}
+              className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand"
+            />
+            {errorFor("referralSourceOther") ? (
+              <p id="referralSourceOther-error" className="mt-1 text-sm text-red-700" role="alert">
+                {errorFor("referralSourceOther")}
+              </p>
+            ) : null}
+          </label>
+        ) : null}
       </fieldset>
       <fieldset disabled={Boolean(rememberedFirstName && !showDetails)} className="space-y-4">
         <label>

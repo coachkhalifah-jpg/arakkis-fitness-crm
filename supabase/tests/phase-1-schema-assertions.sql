@@ -34,6 +34,20 @@ begin
     raise exception 'schema assertion failed: public event schedule projection is missing';
   end if;
   if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'registrations' and column_name = 'referral_source'
+  ) or not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'registrations' and column_name = 'referral_source_other_text'
+  ) then
+    raise exception 'schema assertion failed: registration referral fields are missing';
+  end if;
+  if not exists (
+    select 1 from pg_proc where pronamespace = 'public'::regnamespace and proname = 'register_selected_events_with_referral'
+  ) then
+    raise exception 'schema assertion failed: referral registration RPC is missing';
+  end if;
+  if not exists (
     select 1 from pg_trigger
     where tgname = 'attendance_transition_recorder'
       and tgfoid = 'public.record_attendance_transition()'::regprocedure
@@ -77,6 +91,13 @@ begin
   ) then
     raise exception 'security assertion failed: anon cannot execute registration RPC';
   end if;
+  if not has_function_privilege(
+    'anon',
+    'public.register_selected_events_with_referral(text,text,text,text,text,text,text,text,uuid[],uuid,uuid,timestamptz,timestamptz,inet,text,text,text,text)',
+    'EXECUTE'
+  ) then
+    raise exception 'security assertion failed: anon cannot execute referral registration RPC';
+  end if;
 end;
 $$;
 
@@ -89,7 +110,8 @@ declare
     'notification_type','notification_task_status','notification_priority','delivery_status',
     'delivery_channel','cancellation_request_status','cancellation_type','cancellation_template_type',
     'template_status','acknowledgment_type','legal_status','invitation_status','duplicate_case_status',
-    'merge_conflict_type','whatsapp_invitation_status','attendance_transition_source','override_source','event_recurrence_frequency'
+    'merge_conflict_type','whatsapp_invitation_status','attendance_transition_source','override_source',
+    'event_recurrence_frequency','registration_referral_source'
   ];
   missing text;
   enum_count integer;

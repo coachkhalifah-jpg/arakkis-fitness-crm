@@ -112,7 +112,6 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
                 capacity: occurrence.capacity,
                 visibility: "PUBLIC",
               }))}
-              organizations={registrationConfig.organizations ?? []}
               participation={registrationConfig.participation}
               dataUse={registrationConfig.data_use}
               idempotencyKey={crypto.randomUUID()}

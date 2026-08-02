@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { googleCalendarUrl, icsContent } from "@/lib/registration/calendar";
-import { normalizeEmail, normalizeName, normalizePhone } from "@/lib/registration/normalization";
+import {
+  normalizeEmail,
+  normalizeName,
+  normalizePhone,
+  participantInputSchema,
+} from "@/lib/registration/normalization";
 
 const event = {
   eventId: "event-a",
@@ -31,6 +36,42 @@ describe("Phase 4 registration normalization", () => {
   it("trims and lowercases optional email", () => {
     expect(normalizeEmail("  PERSON@Example.COM ")).toBe("person@example.com");
     expect(normalizeEmail("")).toBeNull();
+  });
+
+  it("accepts an optional referral source without participant affiliation input", () => {
+    const result = participantInputSchema.parse({
+      firstName: "Ava",
+      lastName: "Example",
+      phone: "+1 518-867-5309",
+      phoneCountry: "US",
+      email: "",
+      fitnessExperience: "",
+      referralSource: "OTHER",
+      referralSourceOther: "A partner flyer",
+      eventIds: ["00000000-0000-0000-0000-000000000001"],
+      participationAcknowledged: "on",
+      dataUseAcknowledged: "on",
+      affiliation: "browser-supplied-value",
+    });
+
+    expect(result).not.toHaveProperty("affiliation");
+    expect(result.referralSource).toBe("OTHER");
+  });
+
+  it("rejects referral detail unless Other is selected", () => {
+    expect(() =>
+      participantInputSchema.parse({
+        firstName: "Ava",
+        lastName: "Example",
+        phone: "+1 518-867-5309",
+        phoneCountry: "US",
+        referralSource: "PREVIOUS_CLASS",
+        referralSourceOther: "Unexpected detail",
+        eventIds: ["00000000-0000-0000-0000-000000000001"],
+        participationAcknowledged: "on",
+        dataUseAcknowledged: "on",
+      }),
+    ).toThrow("Referral detail can only be used with Other.");
   });
 });
 

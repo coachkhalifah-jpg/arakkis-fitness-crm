@@ -106,6 +106,56 @@ end;
 $$;
 
 -- Anonymous registration: valid call, replay, duplicate, partial success, and invalid evidence.
+set role postgres;
+insert into public.participants (
+  id, first_name, last_name, normalized_first_name, normalized_last_name,
+  display_phone, normalized_phone, phone_country, primary_affiliation_organization_id,
+  affiliation_other_text
+)
+values (
+  '50000000-0000-0000-0000-000000000006', 'Existing', 'Affiliated', 'existing', 'affiliated',
+  '+15550000006', '+15550000006', 'US', '20000000-0000-0000-0000-000000000001', 'Existing CRM affiliation'
+);
+set role anon;
+do $$
+declare
+  response jsonb;
+begin
+  response := public.register_selected_events_with_referral(
+    'Existing', 'Affiliated', '+15550000006', '+15550000006', 'US', null, null, null,
+    array['40000000-0000-0000-0000-000000000002'::uuid],
+    '60000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002',
+    now(), now(), '127.0.0.1', 'phase-1-referral-runtime', 'runtime-referral',
+    'OTHER', 'Partner recommendation'
+  );
+  perform set_config('app.referral_group_id', response->>'registration_group_id', true);
+end;
+$$;
+
+set role postgres;
+do $$
+declare
+  referral_group_id uuid := current_setting('app.referral_group_id')::uuid;
+begin
+  if (select primary_affiliation_organization_id from public.participants where id = '50000000-0000-0000-0000-000000000006')
+      <> '20000000-0000-0000-0000-000000000001'::uuid then
+    raise exception 'existing participant primary affiliation changed';
+  end if;
+  if (select referral_source from public.registrations where registration_group_id = referral_group_id)
+      <> 'OTHER'::public.registration_referral_source then
+    raise exception 'referral source was not stored';
+  end if;
+  if (select referral_source_other_text from public.registrations where registration_group_id = referral_group_id)
+      <> 'Partner recommendation' then
+    raise exception 'referral detail was not stored';
+  end if;
+  if (select host_organization_id from public.events where id = '40000000-0000-0000-0000-000000000002')
+      <> '20000000-0000-0000-0000-000000000002'::uuid then
+    raise exception 'event host organization changed';
+  end if;
+end;
+$$;
+
 set role anon;
 do $$
 declare

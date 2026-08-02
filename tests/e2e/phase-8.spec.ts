@@ -131,6 +131,8 @@ test.describe("Phase 8 participant productization", () => {
     await page.goto(`/register/${slug}`);
     await expect(page.getByRole("heading", { name: displayEventName })).toBeVisible();
     expect(await page.locator("main").innerText()).not.toContain(fixtureSuffix);
+    await expect(page.getByLabel("Primary affiliation")).toHaveCount(0);
+    await expect(page.getByLabel("How did you hear about us? — Optional")).toBeVisible();
     await expect(page.getByText("Save your spot")).toBeVisible();
     await expect(page.getByText("Class details")).toHaveCount(0);
     await expect(page.getByText("Location")).toHaveCount(0);

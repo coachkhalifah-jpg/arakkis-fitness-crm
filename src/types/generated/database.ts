@@ -499,6 +499,8 @@ export type Database = {
           event_id: string;
           affiliation_organization_id_at_registration: string | null;
           affiliation_other_text_at_registration: string | null;
+          referral_source: Database["public"]["Enums"]["registration_referral_source"] | null;
+          referral_source_other_text: string | null;
           registration_status: Database["public"]["Enums"]["registration_status"];
           registration_outcome: Database["public"]["Enums"]["registration_outcome"];
           registered_at: string;
@@ -521,6 +523,8 @@ export type Database = {
           event_id: string;
           affiliation_organization_id_at_registration?: string;
           affiliation_other_text_at_registration?: string;
+          referral_source?: Database["public"]["Enums"]["registration_referral_source"];
+          referral_source_other_text?: string;
           registration_status?: Database["public"]["Enums"]["registration_status"];
           registration_outcome?: Database["public"]["Enums"]["registration_outcome"];
           registered_at?: string;
@@ -543,6 +547,8 @@ export type Database = {
           event_id: string;
           affiliation_organization_id_at_registration?: string;
           affiliation_other_text_at_registration?: string;
+          referral_source?: Database["public"]["Enums"]["registration_referral_source"];
+          referral_source_other_text?: string;
           registration_status?: Database["public"]["Enums"]["registration_status"];
           registration_outcome?: Database["public"]["Enums"]["registration_outcome"];
           registered_at?: string;
@@ -1411,6 +1417,14 @@ export type Database = {
         | "MERGE";
       override_source: "WALK_IN" | "ADMIN_REGISTRATION" | "OTHER";
       event_recurrence_frequency: "WEEKLY";
+      registration_referral_source:
+        | "FRIEND_OR_FAMILY"
+        | "WHATSAPP_OR_GROUP_CHAT"
+        | "INSTAGRAM_OR_SOCIAL_MEDIA"
+        | "FLYER_OR_QR_CODE"
+        | "VENUE_ANNOUNCEMENT"
+        | "PREVIOUS_CLASS"
+        | "OTHER";
     };
     CompositeTypes: {};
   };
