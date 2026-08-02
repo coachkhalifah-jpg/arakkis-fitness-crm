@@ -558,9 +558,13 @@ body {
   color: var(--confirmation-text);
 }
 .confirmation-address-block {
-  position: relative;
-  padding-inline: 2.75rem;
   text-align: center;
+}
+.confirmation-address-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
 }
 .confirmation-browse-link {
   color: var(--confirmation-muted);
@@ -581,9 +585,7 @@ body {
   outline-offset: 3px;
 }
 .confirmation-copy-directions {
-  position: absolute;
-  top: 0.25rem;
-  right: 0.25rem;
+  flex: none;
 }
 .confirmation-copy-directions-button {
   display: inline-flex;

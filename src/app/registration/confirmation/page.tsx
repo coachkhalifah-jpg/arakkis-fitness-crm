@@ -269,16 +269,18 @@ export default async function ConfirmationPage({
                       </p>
                     ) : null}
                     <div className="confirmation-address-block">
-                      <p className="confirmation-metadata text-sm font-medium text-[var(--confirmation-text)]">
-                        {event.venue_name}
-                      </p>
+                      <div className="confirmation-address-title">
+                        <p className="confirmation-metadata text-sm font-medium text-[var(--confirmation-text)]">
+                          {event.venue_name}
+                        </p>
+                        <CopyDirections directions={`${event.venue_name} · ${address}`} />
+                      </div>
                       <p className="confirmation-metadata mt-1 text-sm text-[var(--confirmation-muted)]">
                         {event.venue_street}
                       </p>
                       <p className="confirmation-metadata text-sm text-[var(--confirmation-muted)]">
                         {cityLineFor(event)}
                       </p>
-                      <CopyDirections directions={`${event.venue_name} · ${address}`} />
                     </div>
                   </div>
                 ))}
