@@ -212,7 +212,9 @@ export default async function ConfirmationPage({
               >
                 Add to calendar
               </h2>
-              <div className="mt-4 space-y-4">
+              <div
+                className={`confirmation-calendar-session-list mt-4${successful.length > 1 ? " is-multi" : ""}`}
+              >
                 {successful.map((event) => (
                   <div
                     key={event.event_id}

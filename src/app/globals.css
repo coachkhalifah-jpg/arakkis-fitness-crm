@@ -863,12 +863,21 @@ body {
 .confirmation-calendar-row {
   padding-bottom: 0.1rem;
 }
+.confirmation-calendar-session-list {
+  display: grid;
+  gap: 1rem;
+}
+.confirmation-calendar-session-list.is-multi {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
 .confirmation-calendar-session-card {
-  border: 1px solid var(--confirmation-border);
-  border-radius: 1.25rem;
-  background: #fffdfa;
-  padding: 0.9rem 1rem;
-  box-shadow: 0 6px 16px rgba(80, 60, 40, 0.07);
+  border: 1.5px solid #242321;
+  border-radius: 2rem;
+  background: #fff;
+  padding: 0.9rem 0.75rem;
+  box-shadow:
+    0 5px 0 #242321,
+    0 10px 18px rgba(36, 35, 33, 0.1);
 }
 @keyframes admin-sheet-in {
   from {
