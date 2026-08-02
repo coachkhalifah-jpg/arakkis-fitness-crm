@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export function WhatToBring({
   eventId,
@@ -10,18 +10,35 @@ export function WhatToBring({
   instructions: string[];
 }) {
   const [open, setOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
+  const closeTimerRef = useRef<number | null>(null);
+
+  const close = useCallback(() => {
+    if (!open || closing) return;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion) {
+      setOpen(false);
+      return;
+    }
+    setClosing(true);
+    closeTimerRef.current = window.setTimeout(() => {
+      setOpen(false);
+      setClosing(false);
+      closeTimerRef.current = null;
+    }, 180);
+  }, [closing, open]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || closing) return;
     closeRef.current?.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        setOpen(false);
+        close();
         return;
       }
       if (event.key !== "Tab" || !dialogRef.current) return;
@@ -42,11 +59,17 @@ export function WhatToBring({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open]);
+  }, [close, closing, open]);
 
   useEffect(() => {
     if (!open) triggerRef.current?.focus();
   }, [open]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
+    };
+  }, []);
 
   return (
     <>
@@ -56,7 +79,10 @@ export function WhatToBring({
         className="confirmation-what-to-bring-trigger"
         aria-expanded={open}
         aria-controls={`what-to-bring-${eventId}`}
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setClosing(false);
+          setOpen(true);
+        }}
       >
         <span>
           <span className="block font-semibold">What to bring</span>
@@ -69,16 +95,16 @@ export function WhatToBring({
 
       {open ? (
         <div
-          className="confirmation-what-to-bring-backdrop"
+          className={`confirmation-what-to-bring-backdrop${closing ? " is-closing" : ""}`}
           role="presentation"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setOpen(false);
+            if (event.target === event.currentTarget) close();
           }}
         >
           <section
             ref={dialogRef}
             id={`what-to-bring-${eventId}`}
-            className="confirmation-what-to-bring-dialog"
+            className={`confirmation-what-to-bring-dialog${closing ? " is-closing" : ""}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby={`what-to-bring-title-${eventId}`}
@@ -100,7 +126,7 @@ export function WhatToBring({
               type="button"
               className="confirmation-what-to-bring-close"
               aria-label="Close What to bring"
-              onClick={() => setOpen(false)}
+              onClick={close}
             >
               ×
             </button>
