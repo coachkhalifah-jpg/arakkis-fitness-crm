@@ -156,10 +156,7 @@ test.describe("Phase 8 participant productization", () => {
     await expect(page.getByRole("heading", { name: "Directions" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Copy directions" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "What to Bring" })).toBeVisible();
-    await page.getByRole("button", { name: "What to Bring" }).click();
-    await expect(page.getByRole("dialog", { name: "What to Bring" })).toBeVisible();
-    await page.getByRole("button", { name: "Close What to Bring" }).last().click();
-    await expect(page.getByRole("dialog", { name: "What to Bring" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /What to bring/i })).toHaveCount(0);
     await expect(page.getByRole("link", { name: /download all calendar files/i })).toBeVisible();
     await page.getByRole("button", { name: "Not now" }).click();
     await expect(page.getByRole("button", { name: "Save" })).toHaveCount(0);
