@@ -616,7 +616,6 @@ body {
   min-height: 4rem;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid var(--confirmation-border);
   background: var(--confirmation-surface);
   padding: 0 1.25rem;
   text-align: center;
