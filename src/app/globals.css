@@ -728,6 +728,7 @@ body {
 }
 .confirmation-save-button:hover,
 .confirmation-save-button:active {
+  border-color: transparent;
   background: #e88a58;
   color: #fff;
 }
