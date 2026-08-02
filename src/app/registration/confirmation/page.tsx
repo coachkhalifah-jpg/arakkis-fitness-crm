@@ -103,6 +103,7 @@ export default async function ConfirmationPage({
   };
   const events = result.events ?? [];
   const successful = events.filter((event) => event.success);
+  const nextClass = successful[0] ?? null;
   const instructions = Array.from(
     new Set(successful.flatMap((event) => instructionLines(event.participant_instructions))),
   );
@@ -172,7 +173,28 @@ export default async function ConfirmationPage({
           </header>
         )}
 
-        <div className="space-y-5 px-6 py-6 sm:px-8">
+        <div className="confirmation-module-stack space-y-8 px-6 py-6 sm:px-8">
+          {nextClass ? (
+            <section aria-labelledby="next-class-heading">
+              <h2 id="next-class-heading" className="confirmation-section-title text-center">
+                Next Class
+              </h2>
+              <article className="confirmation-next-class-card confirmation-info-card mt-4">
+                <h3 className="confirmation-event-title text-center">
+                  {bookingTitle(nextClass.name).title}
+                </h3>
+                <p className="confirmation-calendar-date mt-3 text-center">
+                  {dateFormatter(nextClass.timezone).format(new Date(nextClass.starts_at))}
+                </p>
+                <p className="confirmation-metadata mt-1 text-center">
+                  {timeFormatter(nextClass.timezone).format(new Date(nextClass.starts_at))} –{" "}
+                  {timeFormatter(nextClass.timezone).format(new Date(nextClass.ends_at))}
+                </p>
+                <p className="confirmation-metadata mt-3 text-center">{nextClass.venue_name}</p>
+              </article>
+            </section>
+          ) : null}
+
           {instructions.length > 0 ? (
             <section aria-label="What to bring">
               <WhatToBring eventId="confirmation" instructions={instructions} />
@@ -180,12 +202,15 @@ export default async function ConfirmationPage({
           ) : null}
 
           {communicationEvent?.communication_url ? (
-            <section className="confirmation-section" aria-labelledby="stay-connected-heading">
+            <section
+              className="confirmation-section confirmation-info-card"
+              aria-labelledby="stay-connected-heading"
+            >
               <h2
                 id="stay-connected-heading"
                 className="confirmation-section-title text-center text-base"
               >
-                Stay connected with your class
+                Stay Connected
               </h2>
               <p className="confirmation-body mt-1 text-center text-sm text-[var(--confirmation-muted)]">
                 Join the group for welcome notes and class updates.
@@ -197,7 +222,8 @@ export default async function ConfirmationPage({
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Invite link <span aria-hidden="true">↗</span>
+                  {communicationEvent.communication_label ?? "Join the group"}{" "}
+                  <span aria-hidden="true">↗</span>
                   <span className="sr-only"> (opens in a new tab)</span>
                 </a>
               </div>
@@ -205,44 +231,59 @@ export default async function ConfirmationPage({
           ) : null}
 
           {successful.length > 0 ? (
-            <section className="confirmation-section" aria-labelledby="calendar-heading">
+            <section
+              className="confirmation-section confirmation-calendar-section"
+              aria-labelledby="calendar-heading"
+            >
               <h2
                 id="calendar-heading"
                 className="confirmation-section-title text-center text-base"
               >
-                Add to calendar
+                Keep this Class on Your Calendar
               </h2>
               <div className="mt-4 space-y-4">
                 {successful.map((event) => (
-                  <div key={event.event_id} className="confirmation-calendar-row">
+                  <article
+                    key={event.event_id}
+                    className="confirmation-calendar-card confirmation-info-card"
+                  >
                     <p className="confirmation-calendar-date text-center text-sm text-[var(--confirmation-text)]">
                       {dateFormatter(event.timezone).format(new Date(event.starts_at))}
                     </p>
-                    <div className="confirmation-calendar-actions mt-2 flex flex-wrap items-center justify-center gap-2 text-sm">
-                      <span className="confirmation-calendar-time">
-                        {timeFormatter(event.timezone).format(new Date(event.starts_at))}
-                      </span>
+                    <p className="confirmation-calendar-time mt-1 text-center">
+                      {timeFormatter(event.timezone).format(new Date(event.starts_at))}
+                    </p>
+                    <div className="confirmation-calendar-actions mt-4 grid grid-cols-2 gap-3">
                       <a
-                        className="confirmation-calendar-link confirmation-calendar-link-primary"
+                        className="confirmation-calendar-action-card"
                         href={googleCalendarUrl(toCalendarEvent(event))}
                       >
+                        <span className="confirmation-calendar-action-icon" aria-hidden="true">
+                          ◫
+                        </span>
                         Google Calendar
                       </a>
                       <Link
-                        className="confirmation-calendar-link confirmation-calendar-link-secondary"
+                        className="confirmation-calendar-action-card"
                         href={`/registration/confirmation/ics?token=${encodeURIComponent(token)}&event=${encodeURIComponent(event.event_id)}`}
                       >
-                        iCal
+                        <span className="confirmation-calendar-action-icon" aria-hidden="true">
+                          ◫
+                        </span>
+                        Apple / Outlook Calendar
                       </Link>
                     </div>
-                  </div>
+                  </article>
                 ))}
               </div>
             </section>
           ) : null}
 
           {directions.length > 0 ? (
-            <section className="confirmation-section" aria-labelledby="directions-heading">
+            <section
+              className="confirmation-section confirmation-info-card"
+              aria-labelledby="directions-heading"
+            >
               <h2
                 id="directions-heading"
                 className="confirmation-section-title text-center text-base"
@@ -277,17 +318,6 @@ export default async function ConfirmationPage({
             </section>
           ) : null}
 
-          {successful.length > 0 ? (
-            <div className="confirmation-download-action flex justify-center">
-              <a
-                className="confirmation-pill-button confirmation-pill-button-secondary confirmation-download-button"
-                href={`/registration/confirmation/ics?token=${encodeURIComponent(token)}`}
-              >
-                Download all calendar files
-              </a>
-            </div>
-          ) : null}
-
           {events.some((event) => !event.success) ? (
             <section className="confirmation-section" aria-labelledby="unsuccessful-heading">
               <h2 id="unsuccessful-heading" className="confirmation-section-title text-base">
@@ -320,12 +350,24 @@ export default async function ConfirmationPage({
             </p>
           ) : null}
 
-          <nav aria-label="After booking">
-            <div className="flex justify-center">
-              <Link className="confirmation-browse-link" href="/events">
-                Browse more classes
-              </Link>
+          {successful.length > 0 ? (
+            <div className="confirmation-download-action flex justify-center">
+              <a
+                className="confirmation-pill-button confirmation-pill-button-secondary confirmation-download-button"
+                href={`/registration/confirmation/ics?token=${encodeURIComponent(token)}`}
+              >
+                Download all calendar files
+              </a>
             </div>
+          ) : null}
+
+          <nav aria-label="After booking">
+            <Link className="confirmation-return-card" href="/events">
+              <span className="confirmation-info-card-icon" aria-hidden="true">
+                ↗
+              </span>
+              <span className="confirmation-section-title">View More Classes</span>
+            </Link>
           </nav>
         </div>
       </Card>
