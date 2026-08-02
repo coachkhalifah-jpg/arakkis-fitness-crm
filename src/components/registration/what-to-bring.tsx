@@ -41,7 +41,7 @@ export function WhatToBring({
         aria-controls={contentId}
         onClick={() => setOpen((current) => !current)}
       >
-        <span>
+        <span className="confirmation-what-to-bring-label">
           <span className="block font-semibold">What to bring</span>
         </span>
         <span

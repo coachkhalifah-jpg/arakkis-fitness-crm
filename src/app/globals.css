@@ -757,6 +757,7 @@ body {
   box-shadow: 0 12px 28px rgba(80, 60, 40, 0.15);
 }
 .confirmation-what-to-bring-trigger {
+  position: relative;
   display: flex;
   width: 100%;
   align-items: center;
@@ -769,7 +770,13 @@ body {
   color: var(--confirmation-text);
   text-align: left;
 }
+.confirmation-what-to-bring-label {
+  width: 100%;
+  text-align: center;
+}
 .confirmation-what-to-bring-chevron {
+  position: absolute;
+  right: 1.25rem;
   font-size: 1.5rem;
   line-height: 1;
   transition: transform 180ms ease-out;
