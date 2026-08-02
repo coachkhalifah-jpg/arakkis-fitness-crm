@@ -722,6 +722,7 @@ body {
   color: #fff;
 }
 .confirmation-save-button {
+  border-color: #242321;
   background: #f1eee8;
   color: var(--confirmation-text);
 }
