@@ -216,10 +216,10 @@ test("registers multiple dates, exports only successful events, and scopes the a
     "jose@example.test",
   );
   await expect(page).toHaveURL(/\/registration\/confirmation\?token=/, { timeout: 15000 });
-  await expect(page.getByRole("heading", { name: "You’re booked!" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your spot is saved" })).toBeVisible();
   await expect(page.getByText(/We’re looking forward to seeing you, José\./)).toBeVisible();
-  await expect(page.getByText(fixture.eventNameA)).toBeVisible();
-  await expect(page.getByText(fixture.eventNameB)).toBeVisible();
+  await expect(page.getByRole("link", { name: "Google Calendar" })).toHaveCount(2);
+  await expect(page.getByRole("link", { name: "iCal" })).toHaveCount(2);
   await expect(page.getByText("What to bring")).toHaveCount(2);
   await expect(page.getByText("Arrive early.")).toHaveCount(2);
   await expect(page.getByText("Booked", { exact: true })).toHaveCount(2);
@@ -446,7 +446,7 @@ test("confirmation and ICS reject the complete malformed, expired, and cross-gro
   await expect(page.getByText(/We’re looking forward to seeing you, Token\./)).toBeVisible();
   expect(validBody).not.toContain("Token Scope Alpha");
   expect(validBody).not.toContain("Token Scope Beta");
-  expect(validBody).toContain("Add to Google Calendar");
+  expect(validBody).toContain("Google Calendar");
   await expect(page.locator('input[name="confirmationToken"]')).toHaveValue(tokenA);
   const replay = await page.request.get(
     `/registration/confirmation?token=${encodeURIComponent(tokenA)}&registration_group_id=${randomUUID()}&registration_id=${randomUUID()}`,

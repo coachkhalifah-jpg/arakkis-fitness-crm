@@ -3,6 +3,9 @@ import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/db/server";
 import { googleCalendarUrl, type CalendarEvent } from "@/lib/registration/calendar";
 import { RememberDevice } from "@/components/registration/remember-device";
+import { WhatToBring } from "@/components/registration/what-to-bring";
+import { CopyDirections } from "@/components/registration/copy-directions";
+import { resolveRememberedParticipant } from "@/lib/registration/device";
 
 type ConfirmationEvent = CalendarEvent & {
   event_id: string;
@@ -32,9 +35,8 @@ const reasonText: Record<string, string> = {
 const dateFormatter = (timezone: string) =>
   new Intl.DateTimeFormat("en-US", {
     weekday: "long",
-    month: "long",
+    month: "short",
     day: "numeric",
-    year: "numeric",
     timeZone: timezone,
   });
 
@@ -59,6 +61,14 @@ function addressFor(event: ConfirmationEvent) {
   ]
     .filter(Boolean)
     .join(" · ");
+}
+
+function bookingTitle(name: string) {
+  const match = name.match(/^(.*?)(?:\s+—\s+(This Week|Next Week))$/);
+  return {
+    title: match?.[1] ?? name,
+    week: match?.[2] ?? null,
+  };
 }
 
 export default async function ConfirmationPage({
@@ -89,7 +99,20 @@ export default async function ConfirmationPage({
   };
   const events = result.events ?? [];
   const successful = events.filter((event) => event.success);
+  const instructions = Array.from(
+    new Set(successful.flatMap((event) => instructionLines(event.participant_instructions))),
+  );
+  const communicationEvent = successful.find((event) => event.communication_url);
+  const directions = Array.from(
+    new Map(
+      successful.map((event) => [
+        `${event.venue_name}|${addressFor(event)}`,
+        { event, address: addressFor(event) },
+      ]),
+    ).values(),
+  );
   const firstName = result.participant_name.trim().split(/\s+/)[0] || "there";
+  const hasRememberedDevice = Boolean(await resolveRememberedParticipant());
   const toCalendarEvent = (event: ConfirmationEvent): CalendarEvent => ({
     eventId: event.event_id,
     name: event.name,
@@ -106,167 +129,173 @@ export default async function ConfirmationPage({
   });
 
   return (
-    <main className="mx-auto w-full max-w-[520px] px-4 py-8 sm:px-5 sm:py-12">
-      <Card className="overflow-hidden rounded-[30px] border-slate-200/80 bg-white/95 shadow-[0_18px_50px_rgba(15,23,42,0.10)]">
-        <header className="px-6 pb-6 pt-8 text-center sm:px-8 sm:pt-10">
-          <div
-            className="confirmation-success-icon mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
-            aria-hidden="true"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              className="h-7 w-7"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            >
-              <path d="m5 12 4 4L19 6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+    <main className="confirmation-page mx-auto w-full max-w-[520px] px-4 py-6 sm:px-5 sm:py-10">
+      <Card className="confirmation-surface overflow-hidden rounded-[30px] shadow-[0_18px_50px_rgba(15,23,42,0.10)]">
+        {hasRememberedDevice ? (
+          <div className="confirmation-compact-banner" role="status">
+            <span aria-hidden="true" className="text-lg font-bold text-emerald-700">
+              ✓
+            </span>
+            <span>Bookings saved on this device</span>
           </div>
-          <p className="mt-5 text-sm font-semibold uppercase tracking-[0.18em] text-brand">
-            Registration confirmed
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink">You’re booked!</h1>
-          <p className="mx-auto mt-3 max-w-sm text-base leading-7 text-slate-600">
-            We’re looking forward to seeing you, {firstName}.
-          </p>
-        </header>
-
-        <div className="space-y-6 border-t border-slate-200/80 px-6 py-6 sm:px-8">
-          {successful.length > 0 ? <RememberDevice confirmationToken={token} /> : null}
-
-          <section aria-labelledby="booked-classes-heading">
-            <h2 id="booked-classes-heading" className="text-lg font-semibold text-ink">
-              Your class{successful.length === 1 ? "" : "es"}
-            </h2>
-            <div className="mt-4 space-y-4">
-              {events.map((event) => {
-                const instructions = instructionLines(event.participant_instructions);
-                return (
-                  <article
-                    key={event.event_id}
-                    className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h3 className="text-base font-semibold text-ink">{event.name}</h3>
-                        {event.success ? (
-                          <div className="mt-3 space-y-1 text-sm leading-6 text-slate-600">
-                            <p>{dateFormatter(event.timezone).format(new Date(event.starts_at))}</p>
-                            <p>
-                              {timeFormatter(event.timezone).format(new Date(event.starts_at))} –{" "}
-                              {timeFormatter(event.timezone).format(new Date(event.ends_at))}
-                            </p>
-                            <p className="font-medium text-slate-700">{event.venue_name}</p>
-                            <p>{addressFor(event)}</p>
-                            <p>{event.host_organization_name}</p>
-                          </div>
-                        ) : (
-                          <p className="mt-3 text-sm leading-6 text-red-700">
-                            {reasonText[event.reason ?? ""] ??
-                              "This selection could not be reserved."}
-                          </p>
-                        )}
-                      </div>
-                      <span
-                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-                          event.success
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-slate-200 text-slate-700"
-                        }`}
-                      >
-                        {event.success ? "Booked" : "Not booked"}
-                      </span>
-                    </div>
-
-                    {event.success ? (
-                      <>
-                        {instructions.length > 0 ? (
-                          <section
-                            className="mt-5 border-t border-slate-200 pt-4"
-                            aria-labelledby={`bring-${event.event_id}`}
-                          >
-                            <h4
-                              id={`bring-${event.event_id}`}
-                              className="text-sm font-semibold text-ink"
-                            >
-                              What to bring
-                            </h4>
-                            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-slate-600">
-                              {instructions.map((line, index) => (
-                                <li key={`${event.event_id}-instruction-${index}`}>{line}</li>
-                              ))}
-                            </ul>
-                          </section>
-                        ) : null}
-
-                        <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 border-t border-slate-200 pt-4 text-sm">
-                          <a
-                            className="font-medium text-brand underline"
-                            href={googleCalendarUrl(toCalendarEvent(event))}
-                          >
-                            Add to Google Calendar
-                          </a>
-                          <Link
-                            className="font-medium text-brand underline"
-                            href={`/registration/confirmation/ics?token=${encodeURIComponent(token)}&event=${encodeURIComponent(event.event_id)}`}
-                          >
-                            Download calendar file
-                          </Link>
-                        </div>
-
-                        {event.communication_url ? (
-                          <div className="mt-4 rounded-2xl bg-brand/[0.07] p-4">
-                            <p className="text-sm font-semibold text-ink">
-                              Stay connected with your class
-                            </p>
-                            <p className="mt-1 text-sm leading-6 text-slate-600">
-                              Join the group for welcome notes and class updates.
-                            </p>
-                            <a
-                              className="mt-3 inline-flex min-h-11 items-center rounded-xl bg-brand px-4 py-2 font-semibold text-white transition hover:bg-brand-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                              href={event.communication_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {event.communication_label || "Join the group"}{" "}
-                              <span aria-hidden="true">↗</span>
-                              <span className="sr-only"> (opens in a new tab)</span>
-                            </a>
-                          </div>
-                        ) : null}
-                      </>
-                    ) : null}
-                  </article>
-                );
-              })}
+        ) : (
+          <header className="confirmation-header px-6 pb-6 pt-7 text-center sm:px-8 sm:pt-8">
+            <div
+              className="confirmation-success-icon mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
+              aria-hidden="true"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-7 w-7"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <path d="M5 12h13M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </div>
-          </section>
+            <h1 className="mt-5 text-sm font-semibold uppercase tracking-[0.18em] text-brand">
+              Your spot is saved
+            </h1>
+            <p className="mx-auto mt-3 max-w-sm text-base leading-7 text-[var(--confirmation-muted)]">
+              We’re looking forward to seeing you, {firstName}.
+            </p>
+            {successful.length > 0 ? <RememberDevice confirmationToken={token} /> : null}
+            <p className="mt-4 text-xs leading-5 text-[var(--confirmation-muted)]">
+              This confirmation link expires in 24 hours. Save this device to securely access your
+              upcoming classes later.
+            </p>
+          </header>
+        )}
+
+        <div className="space-y-5 px-6 py-6 sm:px-8">
+          {instructions.length > 0 ? (
+            <section aria-label="What to bring">
+              <WhatToBring eventId="confirmation" instructions={instructions} />
+            </section>
+          ) : null}
+
+          {communicationEvent?.communication_url ? (
+            <section className="confirmation-section" aria-labelledby="stay-connected-heading">
+              <h2 id="stay-connected-heading" className="text-base font-semibold">
+                Stay connected with your class
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-[var(--confirmation-muted)]">
+                Join the group for welcome notes and class updates.
+              </p>
+              <a
+                className="mt-3 inline-flex min-h-11 items-center rounded-xl bg-brand px-4 py-2 font-semibold text-white transition hover:bg-brand-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                href={communicationEvent.communication_url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Invite link <span aria-hidden="true">↗</span>
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a>
+            </section>
+          ) : null}
+
+          {successful.length > 0 ? (
+            <section className="confirmation-section" aria-labelledby="calendar-heading">
+              <h2 id="calendar-heading" className="text-base font-semibold">
+                Add to calendar
+              </h2>
+              <div className="mt-4 space-y-4">
+                {successful.map((event) => (
+                  <div key={event.event_id} className="confirmation-calendar-row">
+                    <p className="text-sm font-medium text-[var(--confirmation-text)]">
+                      {dateFormatter(event.timezone).format(new Date(event.starts_at))}
+                    </p>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                      <span className="text-[var(--confirmation-muted)]">
+                        {timeFormatter(event.timezone).format(new Date(event.starts_at))}
+                      </span>
+                      <a
+                        className="font-semibold text-brand underline"
+                        href={googleCalendarUrl(toCalendarEvent(event))}
+                      >
+                        Google Calendar
+                      </a>
+                      <Link
+                        className="font-medium text-[var(--confirmation-muted)] underline"
+                        href={`/registration/confirmation/ics?token=${encodeURIComponent(token)}&event=${encodeURIComponent(event.event_id)}`}
+                      >
+                        iCal
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {directions.length > 0 ? (
+            <section className="confirmation-section" aria-labelledby="directions-heading">
+              <h2 id="directions-heading" className="text-base font-semibold">
+                Directions
+              </h2>
+              <div className="mt-3 space-y-4">
+                {directions.map(({ event, address }) => (
+                  <div key={`${event.event_id}-directions`}>
+                    {directions.length > 1 ? (
+                      <p className="text-sm font-medium text-[var(--confirmation-text)]">
+                        {dateFormatter(event.timezone).format(new Date(event.starts_at))}
+                      </p>
+                    ) : null}
+                    <p className="mt-1 text-sm leading-6 text-[var(--confirmation-muted)]">
+                      {event.venue_name} · {address}
+                    </p>
+                    <CopyDirections directions={`${event.venue_name} · ${address}`} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {events.some((event) => !event.success) ? (
+            <section className="confirmation-section" aria-labelledby="unsuccessful-heading">
+              <h2 id="unsuccessful-heading" className="text-base font-semibold">
+                Some selections were not booked
+              </h2>
+              <div className="mt-3 space-y-3 text-sm leading-6 text-[var(--confirmation-muted)]">
+                {events
+                  .filter((event) => !event.success)
+                  .map((event) => (
+                    <p key={event.event_id}>
+                      {bookingTitle(event.name).title}:{" "}
+                      {reasonText[event.reason ?? ""] ?? "This selection could not be reserved."}
+                    </p>
+                  ))}
+              </div>
+            </section>
+          ) : null}
 
           {successful.length > 0 ? (
             <a
-              className="flex min-h-12 w-full items-center justify-center rounded-xl border border-slate-300 px-4 py-3 text-center font-semibold text-ink transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              className="confirmation-secondary-action"
               href={`/registration/confirmation/ics?token=${encodeURIComponent(token)}`}
             >
               Download all calendar files
             </a>
           ) : (
-            <p className="text-sm leading-6 text-slate-600">
+            <p className="text-sm leading-6 text-[var(--confirmation-muted)]">
               No selected dates were successfully reserved.
             </p>
           )}
 
-          <p className="text-center text-xs leading-5 text-slate-500">
-            This read-only confirmation link expires in 24 hours.
-          </p>
+          {hasRememberedDevice ? (
+            <p className="text-center text-xs leading-5 text-[var(--confirmation-muted)]">
+              This confirmation link expires in 24 hours.
+            </p>
+          ) : null}
+
+          <nav aria-label="After booking">
+            <Link className="confirmation-secondary-action" href="/events">
+              Browse more classes
+            </Link>
+          </nav>
         </div>
       </Card>
-
-      <nav className="mt-6 flex justify-center" aria-label="After booking">
-        <Link className="text-sm font-semibold text-brand underline" href="/events">
-          View more classes
-        </Link>
-      </nav>
     </main>
   );
 }
