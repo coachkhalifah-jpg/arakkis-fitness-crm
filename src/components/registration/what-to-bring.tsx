@@ -13,7 +13,6 @@ export function WhatToBring({
   const [open, setOpen] = useState(false);
   const contentId = `what-to-bring-${eventId}`;
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const preview = instructions.length > 1 ? `${instructions[0]}…` : instructions[0];
 
   useEffect(() => {
     if (!open) {
@@ -44,7 +43,6 @@ export function WhatToBring({
       >
         <span>
           <span className="block font-semibold">What to bring</span>
-          <span className="mt-1 block text-sm">{preview}</span>
         </span>
         <span
           aria-hidden="true"

@@ -612,7 +612,6 @@ body {
 .confirmation-what-to-bring-content {
   min-height: 0;
   overflow: hidden;
-  border-top: 1px solid var(--confirmation-border);
   padding: 0 1.25rem 1.25rem;
 }
 .confirmation-what-to-bring-close {
