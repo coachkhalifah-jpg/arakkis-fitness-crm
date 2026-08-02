@@ -152,14 +152,18 @@ test.describe("Phase 8 participant productization", () => {
     await expect(page.getByRole("heading", { name: "Your spot is saved" })).toBeVisible();
     await expect(page.getByText(/We’re looking forward to seeing you, Keyboard\./)).toBeVisible();
     await expect(page.getByRole("link", { name: /Google Calendar/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Apple \/ Outlook Calendar/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /iCal/i })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Directions" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Copy directions" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "What to Bring" })).toBeVisible();
-    await expect(page.getByRole("button", { name: /What to bring/i })).toHaveCount(0);
+    const whatToBring = page.getByRole("button", { name: "What to bring", exact: false });
+    await expect(whatToBring).toBeVisible();
+    await whatToBring.click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.getByRole("button", { name: "Close What to bring" }).click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(page.getByRole("link", { name: /download all calendar files/i })).toBeVisible();
     await page.getByRole("button", { name: "Not now" }).click();
-    await expect(page.getByRole("button", { name: "Save" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Save my bookings" })).toHaveCount(0);
   });
 
   test("remembers, reuses, and forgets a participant browser token safely", async ({ page }) => {
@@ -172,7 +176,7 @@ test.describe("Phase 8 participant productization", () => {
     await page.getByLabel("Synthetic data-use acknowledgment.").check();
     await page.getByRole("button", { name: /book class/i }).click();
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
-    await page.getByRole("button", { name: "Save" }).click();
+    await page.getByRole("button", { name: "Save my bookings" }).click();
     await expect(
       page.getByText(/this browser will be remembered|bookings saved on this device/i),
     ).toBeVisible();
