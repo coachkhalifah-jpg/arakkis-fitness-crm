@@ -241,17 +241,6 @@ export default async function ConfirmationPage({
             </section>
           ) : null}
 
-          {successful.length > 0 ? (
-            <div className="flex justify-center">
-              <a
-                className="confirmation-pill-button confirmation-pill-button-secondary"
-                href={`/registration/confirmation/ics?token=${encodeURIComponent(token)}`}
-              >
-                Download all calendar files
-              </a>
-            </div>
-          ) : null}
-
           {directions.length > 0 ? (
             <section className="confirmation-section" aria-labelledby="directions-heading">
               <h2
@@ -286,6 +275,17 @@ export default async function ConfirmationPage({
                 ))}
               </div>
             </section>
+          ) : null}
+
+          {successful.length > 0 ? (
+            <div className="confirmation-download-action flex justify-center">
+              <a
+                className="confirmation-pill-button confirmation-pill-button-secondary confirmation-download-button"
+                href={`/registration/confirmation/ics?token=${encodeURIComponent(token)}`}
+              >
+                Download all calendar files
+              </a>
+            </div>
           ) : null}
 
           {events.some((event) => !event.success) ? (

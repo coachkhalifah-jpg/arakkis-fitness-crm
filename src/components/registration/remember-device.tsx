@@ -28,7 +28,7 @@ export function RememberDevice({ confirmationToken }: { confirmationToken: strin
         <button
           type="submit"
           disabled={pending}
-          className="confirmation-pill-button confirmation-pill-button-primary disabled:opacity-60"
+          className="confirmation-pill-button confirmation-save-button disabled:opacity-60"
         >
           {pending ? "Saving…" : "Save"}
         </button>

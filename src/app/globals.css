@@ -624,7 +624,7 @@ body {
   stroke-width: 1.7;
 }
 .confirmation-surface {
-  border: 0;
+  border: 1px solid var(--confirmation-border);
   background: var(--confirmation-surface);
   color: var(--confirmation-text);
   box-shadow: 0 18px 50px rgba(80, 60, 40, 0.12);
@@ -647,8 +647,8 @@ body {
   font-weight: 400;
 }
 .confirmation-device-card {
-  border: 0;
-  border-radius: 0.9rem;
+  border: 1px solid var(--confirmation-border);
+  border-radius: 1.25rem;
   background: #fff3e7;
   padding: 0.8rem 1rem;
   color: var(--confirmation-text);
@@ -662,7 +662,7 @@ body {
   column-gap: 1rem;
   padding-inline: 0.25rem;
 }
-.confirmation-device-actions > .confirmation-pill-button-primary {
+.confirmation-device-actions > .confirmation-save-button {
   grid-column: 2;
 }
 .confirmation-device-text-action {
@@ -721,6 +721,15 @@ body {
   background: #e88a58;
   color: #fff;
 }
+.confirmation-save-button {
+  background: #f1eee8;
+  color: var(--confirmation-text);
+}
+.confirmation-save-button:hover,
+.confirmation-save-button:active {
+  background: #e88a58;
+  color: #fff;
+}
 .confirmation-pill-button-primary:hover {
   background: #f09a68;
 }
@@ -745,7 +754,7 @@ body {
 }
 .confirmation-what-to-bring-card {
   overflow: hidden;
-  border: 0;
+  border: 1px solid var(--confirmation-border);
   border-radius: 1.5rem;
   background: #fffaf4;
   color: var(--confirmation-text);
@@ -836,6 +845,12 @@ body {
 }
 .confirmation-section {
   margin-top: 1rem;
+}
+.confirmation-download-action {
+  padding-top: 0.5rem;
+}
+.confirmation-download-button {
+  font-weight: 400;
 }
 .confirmation-calendar-row {
   padding-bottom: 0.1rem;
