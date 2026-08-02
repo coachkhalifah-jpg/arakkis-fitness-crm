@@ -63,6 +63,10 @@ function addressFor(event: ConfirmationEvent) {
     .join(" · ");
 }
 
+function cityLineFor(event: ConfirmationEvent) {
+  return [event.venue_city, event.venue_state, event.venue_postal_code].filter(Boolean).join(", ");
+}
+
 function bookingTitle(name: string) {
   const match = name.match(/^(.*?)(?:\s+—\s+(This Week|Next Week))$/);
   return {
@@ -264,10 +268,18 @@ export default async function ConfirmationPage({
                         {dateFormatter(event.timezone).format(new Date(event.starts_at))}
                       </p>
                     ) : null}
-                    <p className="confirmation-metadata mt-1 text-sm text-[var(--confirmation-muted)]">
-                      {event.venue_name} · {address}
-                    </p>
-                    <CopyDirections directions={`${event.venue_name} · ${address}`} />
+                    <div className="confirmation-address-block">
+                      <p className="confirmation-metadata text-sm font-medium text-[var(--confirmation-text)]">
+                        {event.venue_name}
+                      </p>
+                      <p className="confirmation-metadata mt-1 text-sm text-[var(--confirmation-muted)]">
+                        {event.venue_street}
+                      </p>
+                      <p className="confirmation-metadata text-sm text-[var(--confirmation-muted)]">
+                        {cityLineFor(event)}
+                      </p>
+                      <CopyDirections directions={`${event.venue_name} · ${address}`} />
+                    </div>
                   </div>
                 ))}
               </div>

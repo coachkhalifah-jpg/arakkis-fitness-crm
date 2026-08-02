@@ -16,21 +16,21 @@ export function CopyDirections({ directions }: { directions: string }) {
   }
 
   return (
-    <div className="mt-3 flex items-center justify-center gap-3">
+    <div className="confirmation-copy-directions">
       <button
         type="button"
-        className="confirmation-pill-button confirmation-pill-button-secondary"
+        className="confirmation-copy-directions-button"
         onClick={copy}
         aria-label="Copy directions"
+        title="Copy directions"
       >
-        Copy directions
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M9 9.5A2.5 2.5 0 0 1 11.5 7H17a2.5 2.5 0 0 1 2.5 2.5V15a2.5 2.5 0 0 1-2.5 2.5h-5.5A2.5 2.5 0 0 1 9 15V9.5Z" />
+          <path d="M15 7V6.5A2.5 2.5 0 0 0 12.5 4H7A2.5 2.5 0 0 0 4.5 6.5V12A2.5 2.5 0 0 0 7 14.5h2" />
+        </svg>
       </button>
-      <span
-        className="confirmation-metadata text-sm text-[var(--confirmation-muted)]"
-        role="status"
-        aria-live="polite"
-      >
-        {copied ? "Copied" : null}
+      <span className="sr-only" role="status" aria-live="polite">
+        {copied ? "Directions copied" : ""}
       </span>
     </div>
   );

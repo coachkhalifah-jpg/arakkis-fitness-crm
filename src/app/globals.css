@@ -526,6 +526,52 @@ body {
 .confirmation-calendar-time {
   font-weight: 400;
 }
+.confirmation-address-block {
+  position: relative;
+  padding-right: 2.75rem;
+  text-align: left;
+}
+.confirmation-copy-directions {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.confirmation-copy-directions-button {
+  display: inline-flex;
+  min-height: 2.5rem;
+  min-width: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--confirmation-border);
+  border-radius: 999px;
+  background: var(--confirmation-surface);
+  color: var(--confirmation-muted);
+  transition:
+    background-color 160ms ease-out,
+    color 160ms ease-out,
+    transform 160ms ease-out;
+}
+.confirmation-copy-directions-button:hover {
+  background: #f2f5f7;
+  color: var(--confirmation-text);
+  transform: translateY(-1px);
+}
+.confirmation-copy-directions-button:active {
+  transform: scale(0.985);
+}
+.confirmation-copy-directions-button:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+.confirmation-copy-directions-button svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
 .confirmation-surface {
   border-color: var(--confirmation-border);
   background: var(--confirmation-surface);
@@ -742,6 +788,7 @@ body {
   .admin-roster-sheet,
   .confirmation-success-icon,
   .confirmation-pill-button,
+  .confirmation-copy-directions-button,
   .confirmation-device-text-action,
   .confirmation-what-to-bring-card,
   .confirmation-what-to-bring-trigger,
