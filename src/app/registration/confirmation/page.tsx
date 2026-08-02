@@ -159,7 +159,7 @@ export default async function ConfirmationPage({
               </svg>
             </div>
             <h1 className="confirmation-hero-title mt-5 text-sm uppercase text-brand">
-              Your spot is saved
+              You&apos;re in!
             </h1>
             <p className="confirmation-welcome mx-auto mt-3 max-w-sm text-base text-[var(--confirmation-muted)]">
               We’re looking forward to seeing you, {firstName}.

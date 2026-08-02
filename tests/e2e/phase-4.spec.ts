@@ -216,7 +216,7 @@ test("registers multiple dates, exports only successful events, and scopes the a
     "jose@example.test",
   );
   await expect(page).toHaveURL(/\/registration\/confirmation\?token=/, { timeout: 15000 });
-  await expect(page.getByRole("heading", { name: "Your spot is saved" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "You're in!" })).toBeVisible();
   await expect(page.getByText(/We’re looking forward to seeing you, José\./)).toBeVisible();
   await expect(page.getByRole("link", { name: "Google Calendar" })).toHaveCount(2);
   await expect(page.getByRole("link", { name: "iCal" })).toHaveCount(2);

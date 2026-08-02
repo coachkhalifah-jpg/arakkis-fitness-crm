@@ -754,18 +754,24 @@ body {
 }
 .confirmation-what-to-bring-card {
   overflow: hidden;
-  border: 1px solid var(--confirmation-border);
-  border-radius: 1.5rem;
-  background: #fffaf4;
+  border: 1.5px solid #242321;
+  border-radius: 2rem;
+  background: #fff;
   color: var(--confirmation-text);
   transition:
     background-color 160ms ease-out,
-    box-shadow 160ms ease-out;
-  box-shadow: 0 8px 24px rgba(80, 60, 40, 0.1);
+    box-shadow 160ms ease-out,
+    transform 160ms ease-out;
+  box-shadow:
+    0 5px 0 #242321,
+    0 10px 18px rgba(36, 35, 33, 0.1);
 }
 .confirmation-what-to-bring-card:hover {
-  background: #fffdf9;
-  box-shadow: 0 12px 28px rgba(80, 60, 40, 0.15);
+  background: #fffdfb;
+  box-shadow:
+    0 6px 0 #242321,
+    0 13px 22px rgba(36, 35, 33, 0.14);
+  transform: translateY(-1px);
 }
 .confirmation-what-to-bring-trigger {
   position: relative;
@@ -774,10 +780,10 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  min-height: 5.5rem;
+  min-height: 4rem;
   border: 0;
   background: transparent;
-  padding: 1.25rem;
+  padding: 0.75rem 1.25rem;
   color: var(--confirmation-text);
   text-align: left;
 }
@@ -819,7 +825,7 @@ body {
   overflow: hidden;
   font-weight: 400;
   line-height: 1.5;
-  padding: 0 1.25rem 1.25rem;
+  padding: 0 1.25rem 1rem;
 }
 .confirmation-what-to-bring-close {
   display: flex;
@@ -886,6 +892,7 @@ body {
   .admin-event-roster-modal {
     transition: none;
     animation: none;
+    transform: none;
   }
 }
 
