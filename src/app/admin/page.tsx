@@ -30,6 +30,20 @@ export default async function AdminPage() {
         </div>
         <Alert className="mt-6">Choose an operational area to continue.</Alert>
         <nav className="mt-5 grid gap-3" aria-label="Operations">
+          <Link
+            className="rounded-2xl border border-slate-200 bg-white p-5 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:border-brand hover:shadow-soft"
+            href="/admin/events"
+          >
+            Events
+          </Link>
+          {admin.role === "SYSTEM_ADMIN" ? (
+            <Link
+              className="admin-navigation-card admin-navigation-card-compact"
+              href="/admin/follow-ups"
+            >
+              Follow-Ups
+            </Link>
+          ) : null}
           {admin.role === "SYSTEM_ADMIN" ? (
             <Link className="admin-navigation-card" href="/admin/organizations">
               Organizations
@@ -43,12 +57,6 @@ export default async function AdminPage() {
               <Link className="admin-navigation-card" href="/admin/participants">
                 Participants
               </Link>
-              <Link
-                className="admin-navigation-card admin-navigation-card-compact"
-                href="/admin/follow-ups"
-              >
-                Follow-Ups
-              </Link>
               <Link className="admin-navigation-card" href="/admin/design-assets">
                 Design Assets
               </Link>
@@ -56,12 +64,6 @@ export default async function AdminPage() {
           ) : null}
           <Link className="admin-navigation-card" href="/admin/venues">
             Venues
-          </Link>
-          <Link
-            className="rounded-2xl border border-slate-200 bg-white p-5 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:border-brand hover:shadow-soft"
-            href="/admin/events"
-          >
-            Events
           </Link>
         </nav>
         <Card className="mt-6 space-y-4 p-5">
