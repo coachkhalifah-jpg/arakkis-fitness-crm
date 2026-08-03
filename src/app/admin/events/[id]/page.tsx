@@ -24,6 +24,7 @@ import {
   publishEventForm,
   reopenAttendanceSubmit,
   updateEvent,
+  setOccurrenceLocationOverrideSubmit,
 } from "@/lib/services/phase-3-actions";
 import {
   pausePhase7EventForm,
@@ -333,6 +334,43 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         <RosterStatusCarousel people={rosterPreview} />
         <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
           <h2 className="text-lg font-semibold">Event details</h2>
+          {admin.role === "SYSTEM_ADMIN" ? (
+            <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <h3 className="font-semibold text-amber-950">Occurrence location</h3>
+              <p className="mt-1 text-sm text-amber-900">
+                This changes this occurrence only; the series and other dates keep their locations.
+              </p>
+              <form
+                action={setOccurrenceLocationOverrideSubmit}
+                className="mt-3 flex flex-wrap gap-2"
+              >
+                <input type="hidden" name="eventId" value={id} />
+                <select
+                  name="venueId"
+                  defaultValue={event.location_override_venue_id ?? event.venue_id}
+                  className="rounded border p-2 text-sm"
+                >
+                  {(venues ?? []).map((venue) => (
+                    <option key={venue.id} value={venue.id}>
+                      {venue.name} ({venue.timezone})
+                    </option>
+                  ))}
+                </select>
+                <input
+                  name="note"
+                  placeholder="Optional location note"
+                  className="rounded border p-2 text-sm"
+                  maxLength={200}
+                />
+                <button
+                  type="submit"
+                  className="rounded bg-brand px-3 py-2 text-sm font-semibold text-white"
+                >
+                  Save occurrence location
+                </button>
+              </form>
+            </div>
+          ) : null}
           {canEdit ? (
             <ActionForm action={updateEvent} submitLabel="Save event">
               <input type="hidden" name="id" value={id} />

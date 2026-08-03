@@ -19,6 +19,10 @@ type Event = {
   ends_at: string;
   timezone: string;
   venue_name: string;
+  venue_street?: string;
+  venue_city?: string;
+  venue_state?: string;
+  venue_postal_code?: string;
   host_organization_name: string;
   active_registration_count: number;
   capacity: number;

@@ -35,6 +35,55 @@ const value = (form: FormData, key: string) => String(form.get(key) ?? "").trim(
 const eventImageMimeTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
 const maxEventImageBytes = 5 * 1024 * 1024;
 
+export async function setOccurrenceLocationOverride(form: FormData): Promise<Phase3ActionState> {
+  try {
+    const admin = await requireSystemAdmin();
+    const eventId = value(form, "eventId");
+    const venueId = value(form, "venueId");
+    const db = await createClient();
+    const { data: event } = await db
+      .from("events")
+      .select("id,venue_id,host_organization_id")
+      .eq("id", eventId)
+      .single();
+    if (!event) throw new Phase3Error("not_found", "Occurrence not found.");
+    const { data: venue } = await db
+      .from("venues")
+      .select("id,organization_id,active_status")
+      .eq("id", venueId)
+      .single();
+    if (!venue || venue.active_status !== "ACTIVE")
+      throw new Phase3Error("invalid", "Choose an active venue.");
+    const { error } = await db
+      .from("events")
+      .update({
+        location_override_venue_id: venue.id,
+        location_override_at: new Date().toISOString(),
+        location_override_by_admin_id: admin.userId,
+        location_override_note: value(form, "note") || null,
+      })
+      .eq("id", eventId);
+    if (error) throw new Phase3Error("conflict", "Occurrence location could not be updated.");
+    await audit(
+      admin.userId,
+      "EVENT_OCCURRENCE_LOCATION_UPDATED",
+      "EVENT",
+      eventId,
+      { old_venue_id: event.venue_id, new_venue_id: venue.id, note: value(form, "note") },
+      event,
+    );
+    revalidatePath(`/admin/events/${eventId}`);
+    revalidatePath("/events");
+    return { success: "This occurrence now uses the selected venue." };
+  } catch (error) {
+    return { error: message(error) };
+  }
+}
+
+export async function setOccurrenceLocationOverrideSubmit(form: FormData): Promise<void> {
+  await setOccurrenceLocationOverride(form);
+}
+
 function eventImageFile(form: FormData) {
   const file = form.get("eventImage");
   if (!(file instanceof File) || file.size === 0) return null;

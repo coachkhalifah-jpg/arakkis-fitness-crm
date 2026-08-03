@@ -31,17 +31,25 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
     venue_street: string;
     venue_city: string;
     venue_state: string;
+    venue_postal_code: string;
     availability: string;
     capacity: number;
     active_registration_count: number;
     series_slug: string | null;
     occurrences: Array<{
+      id: string;
       name: string;
       starts_at: string;
       ends_at: string;
       timezone: string;
       capacity: number;
       active_registration_count: number;
+      venue_name: string;
+      venue_street: string;
+      venue_city: string;
+      venue_state: string;
+      venue_postal_code: string;
+      host_organization_name: string;
     }>;
   } | null;
   if (!event)
@@ -102,12 +110,18 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
           <div className="mt-8">
             <RegistrationForm
               events={registrationEvents.map((occurrence) => ({
+                id: occurrence.id,
                 name: occurrence.name,
                 starts_at: occurrence.starts_at,
                 ends_at: occurrence.ends_at,
                 timezone: occurrence.timezone,
-                venue_name: event.venue_name,
-                host_organization_name: event.host_organization_name,
+                venue_name: occurrence.venue_name ?? event.venue_name,
+                venue_street: occurrence.venue_street ?? event.venue_street,
+                venue_city: occurrence.venue_city ?? event.venue_city,
+                venue_state: occurrence.venue_state ?? event.venue_state,
+                venue_postal_code: occurrence.venue_postal_code ?? event.venue_postal_code,
+                host_organization_name:
+                  occurrence.host_organization_name ?? event.host_organization_name,
                 active_registration_count: occurrence.active_registration_count,
                 capacity: occurrence.capacity,
                 visibility: "PUBLIC",

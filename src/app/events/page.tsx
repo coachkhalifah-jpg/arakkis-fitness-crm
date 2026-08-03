@@ -6,6 +6,7 @@ import { createClient } from "@/lib/db/server";
 import { publicBrand } from "@/lib/config/branding";
 import { designAssetPublicUrl } from "@/lib/config/design-assets";
 import { participantDisplayName } from "@/lib/registration/display";
+import { resolveRememberedParticipant } from "@/lib/registration/device";
 import type { CSSProperties } from "react";
 
 type PublicEvent = {
@@ -27,13 +28,14 @@ type PublicEvent = {
 
 export default async function EventsPage() {
   const db = await createClient();
-  const [{ data }, { data: backgroundAssets }] = await Promise.all([
+  const [{ data }, { data: backgroundAssets }, remembered] = await Promise.all([
     db.from("public_event_schedule").select("*").order("starts_at"),
     db
       .from("design_assets")
       .select("asset_type,storage_path,focal_position")
       .eq("active", true)
       .in("asset_type", ["PUBLIC_BACKGROUND_DESKTOP", "PUBLIC_BACKGROUND_MOBILE"]),
+    resolveRememberedParticipant(),
   ]);
   const events = (data ?? []) as PublicEvent[];
   const { data: eventImageAssets } = events.length
@@ -78,6 +80,23 @@ export default async function EventsPage() {
       }
     >
       <div className="mx-auto flex max-w-xl flex-col items-center text-center">
+        {remembered ? (
+          <div className="mb-6 w-full rounded-2xl border border-white/80 bg-white/80 p-5 text-left shadow-soft">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-brand">
+              Welcome back, {remembered.first_name} 👋
+            </p>
+            <p className="mt-2 text-slate-700">Your upcoming classes are ready.</p>
+            <a
+              className="mt-4 inline-flex rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white"
+              href="/manage-bookings"
+            >
+              Manage My Bookings
+            </a>
+            <a className="ml-3 text-sm font-semibold text-ink underline" href="/events">
+              Book Another Class
+            </a>
+          </div>
+        ) : null}
         <Image
           className="h-20 w-20 rounded-[1.6rem] border border-white/80 bg-white/80 p-1 shadow-soft"
           src={publicBrand.logoPath}
