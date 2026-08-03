@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check, Copy } from "lucide-react";
 import { recordFollowUpCopy, recordGroupChatReminderCopy } from "@/lib/services/phase-6-actions";
 
 type Props = { task: { id: string; suggested_message: string | null } };
@@ -13,8 +14,15 @@ export function FollowUpCopyButton({ task }: Props) {
     setCopied(true);
   }
   return (
-    <button type="button" className="rounded border px-3 py-1 text-sm" onClick={copy}>
-      {copied ? "Copied" : "Copy"}
+    <button
+      type="button"
+      className="copy-message-button"
+      aria-label={copied ? "Copied" : "Copy message"}
+      title={copied ? "Copied" : "Copy message"}
+      onClick={copy}
+    >
+      {copied ? <Check aria-hidden="true" size={18} /> : <Copy aria-hidden="true" size={18} />}
+      <span className="sr-only">{copied ? "Copied" : "Copy message"}</span>
     </button>
   );
 }
@@ -31,8 +39,15 @@ export function GroupChatCopyButton({
     setCopied(true);
   }
   return (
-    <button type="button" className="ui-button ui-button-secondary" onClick={copy}>
-      {copied ? "Copied" : "Copy Message"}
+    <button
+      type="button"
+      className="copy-message-button"
+      aria-label={copied ? "Copied" : "Copy message"}
+      title={copied ? "Copied" : "Copy message"}
+      onClick={copy}
+    >
+      {copied ? <Check aria-hidden="true" size={18} /> : <Copy aria-hidden="true" size={18} />}
+      <span className="sr-only">{copied ? "Copied" : "Copy message"}</span>
     </button>
   );
 }

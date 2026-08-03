@@ -85,7 +85,7 @@ test("copy evidence and completion preserve the task lifecycle", async ({ page }
   await signInSystem(page, "/admin/follow-ups");
   const task = page.locator("article").filter({ hasText: `CRM Attended ${fixture.suffix}` });
   await expect(task).toBeVisible();
-  await task.getByRole("button", { name: "Copy" }).click();
+  await task.getByRole("button", { name: "Copy message" }).click();
   await expect(task.getByRole("button", { name: "Copied" })).toBeVisible();
   expect(
     localQuery(`select status from public.follow_up_tasks where id=${sql(attendedTaskId)}`),

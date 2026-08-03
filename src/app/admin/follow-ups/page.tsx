@@ -62,6 +62,17 @@ function triggerLabel(reason: string, title: string | null) {
   return title ?? "Follow-Up";
 }
 
+function triggerTone(reason: string, title: string | null) {
+  const value = `${reason} ${title ?? ""}`.toLowerCase();
+  if (value.includes("no_show") || value.includes("no-show")) return "no-show";
+  if (value.includes("third")) return "third-milestone";
+  if (value.includes("tenth")) return "tenth-milestone";
+  if (value.includes("return")) return "returning";
+  if (value.includes("cancel")) return "cancellation";
+  if (value.includes("first")) return "first-class";
+  return "community";
+}
+
 function isMilestone(task: { reason: string; task_title: string | null }) {
   return /milestone|third|tenth/i.test(`${task.reason} ${task.task_title ?? ""}`);
 }
@@ -220,6 +231,9 @@ export default async function FollowUpsPage({
     ["Community Check-Ins", community],
   ] as const;
   const linkFor = (nextFilter: string) => `/admin/follow-ups?status=${status}&filter=${nextFilter}`;
+  const commonFilters = filterOptions.slice(0, 3);
+  const moreFilters = filterOptions.slice(3);
+  const activeFilterLabel = filterOptions.find(([value]) => value === filter)?.[1];
 
   if (mode === "group") {
     return (
@@ -233,7 +247,7 @@ export default async function FollowUpsPage({
   }
 
   return (
-    <section className="admin-shell min-h-screen px-5 py-10 sm:px-8 sm:py-14">
+    <section className="follow-up-page-shell admin-shell min-h-screen px-3 py-8 sm:px-8 sm:py-14">
       <div className="mx-auto max-w-5xl">
         <div className="admin-page-header">
           <p className="admin-eyebrow">Community engagement queue</p>
@@ -259,7 +273,7 @@ export default async function FollowUpsPage({
         </div>
         <nav className="follow-up-mode-nav mt-6" aria-label="Community queue mode">
           <Link href="/admin/follow-ups?status=PENDING" data-selected>
-            Individual Follow-Ups
+            Touch Base
           </Link>
           <Link href="/admin/follow-ups?mode=group&status=PENDING" data-selected={false}>
             Group Chat
@@ -280,13 +294,38 @@ export default async function FollowUpsPage({
           </Link>
         </nav>
         {status !== "COMPLETED" && status !== "DISMISSED" ? (
-          <nav className="follow-up-filter-nav mt-4" aria-label="Follow-up filters">
-            {filterOptions.map(([value, label]) => (
-              <Link key={value} href={linkFor(value)} data-selected={filter === value}>
-                {label}
-              </Link>
-            ))}
-          </nav>
+          <div className="follow-up-filter-shell mt-4">
+            <div className="follow-up-filter-nav" aria-label="Follow-up filters">
+              {commonFilters.map(([value, label]) => (
+                <Link key={value} href={linkFor(value)} data-selected={filter === value}>
+                  {label}
+                </Link>
+              ))}
+              <details
+                open={moreFilters.some(([value]) => value === filter)}
+                className="follow-up-more-filters"
+              >
+                <summary>
+                  More Filters{moreFilters.some(([value]) => value === filter) ? " · Active" : ""}
+                </summary>
+                <div className="follow-up-more-filter-list">
+                  {moreFilters.map(([value, label]) => (
+                    <Link key={value} href={linkFor(value)} data-selected={filter === value}>
+                      {label}
+                    </Link>
+                  ))}
+                </div>
+              </details>
+              {filter !== "ALL_OPEN" ? (
+                <Link href={`/admin/follow-ups?status=${status}`}>Clear Filters</Link>
+              ) : null}
+            </div>
+            {filter !== "ALL_OPEN" ? (
+              <p className="follow-up-active-filter">
+                Active filter: <strong>{activeFilterLabel}</strong>
+              </p>
+            ) : null}
+          </div>
         ) : null}
         {status === "PENDING" ? (
           <p className="mt-5 text-sm text-slate-400">
@@ -383,7 +422,9 @@ function FollowUpCard({
     <article className={`follow-up-card ${overdue ? "follow-up-card-overdue" : ""}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <span className="follow-up-trigger-badge">
+          <span
+            className={`follow-up-trigger-badge follow-up-trigger-${triggerTone(task.reason, task.task_title)}`}
+          >
             {triggerLabel(task.reason, task.task_title)}
           </span>
           <h3 className="mt-2 text-xl font-semibold">{participantName}</h3>
@@ -412,10 +453,15 @@ function FollowUpCard({
       <p className="mt-1 text-sm text-slate-400">
         Assigned to: {assignee?.display_name ?? assignee?.email ?? "Unassigned"}
       </p>
-      <form action={updateFollowUpMessage} className="mt-4">
-        <label className="block text-sm font-semibold" htmlFor={`message-${task.id}`}>
-          Suggested message
-        </label>
+      <form action={updateFollowUpMessage} className="follow-up-message-form mt-4">
+        <div className="follow-up-message-heading">
+          <label className="block text-sm font-semibold" htmlFor={`message-${task.id}`}>
+            Suggested message
+          </label>
+          {pending ? (
+            <FollowUpCopyButton task={{ id: task.id, suggested_message: task.suggested_message }} />
+          ) : null}
+        </div>
         <textarea
           id={`message-${task.id}`}
           name="suggestedMessage"
@@ -431,8 +477,7 @@ function FollowUpCard({
         ) : null}
       </form>
       {pending ? (
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <FollowUpCopyButton task={{ id: task.id, suggested_message: task.suggested_message }} />
+        <div className="follow-up-actions mt-4 flex flex-wrap items-center gap-2">
           {participant?.display_phone ? (
             <a className="ui-button ui-button-secondary" href={`tel:${participant.display_phone}`}>
               Call
@@ -530,7 +575,7 @@ function GroupChatQueue({
   const linkFor = (nextFilter: string) =>
     `/admin/follow-ups?mode=group&status=${status}&filter=${nextFilter}`;
   return (
-    <section className="admin-shell min-h-screen px-5 py-10 sm:px-8 sm:py-14">
+    <section className="follow-up-page-shell admin-shell min-h-screen px-3 py-8 sm:px-8 sm:py-14">
       <div className="mx-auto max-w-5xl">
         <div className="admin-page-header">
           <p className="admin-eyebrow">Community engagement queue</p>
@@ -553,7 +598,7 @@ function GroupChatQueue({
         </div>
         <nav className="follow-up-mode-nav mt-6" aria-label="Community queue mode">
           <Link href="/admin/follow-ups?status=PENDING" data-selected={false}>
-            Individual Follow-Ups
+            Touch Base
           </Link>
           <Link href="/admin/follow-ups?mode=group&status=PENDING" data-selected>
             Group Chat
@@ -583,13 +628,7 @@ function GroupChatQueue({
           </Link>
         </nav>
         {status !== "COMPLETED" && status !== "DISMISSED" ? (
-          <nav className="follow-up-filter-nav mt-4" aria-label="Group chat filters">
-            {groupFilterOptions.map(([value, label]) => (
-              <Link key={value} href={linkFor(value)} data-selected={filter === value}>
-                {label}
-              </Link>
-            ))}
-          </nav>
+          <GroupChatFilters filter={filter} status={status} />
         ) : null}
         {sections.map(([heading, sectionReminders]) =>
           sectionReminders.length ? (
@@ -643,6 +682,44 @@ function GroupChatQueue({
   );
 }
 
+function GroupChatFilters({ filter, status }: { filter: string; status: string }) {
+  const commonFilters = groupFilterOptions.slice(0, 3);
+  const moreFilters = groupFilterOptions.slice(3);
+  const activeFilterLabel = groupFilterOptions.find(([value]) => value === filter)?.[1];
+  const linkFor = (nextFilter: string) =>
+    `/admin/follow-ups?mode=group&status=${status}&filter=${nextFilter}`;
+  const moreActive = moreFilters.some(([value]) => value === filter);
+  return (
+    <div className="follow-up-filter-shell mt-4">
+      <div className="follow-up-filter-nav" aria-label="Group chat filters">
+        {commonFilters.map(([value, label]) => (
+          <Link key={value} href={linkFor(value)} data-selected={filter === value}>
+            {label}
+          </Link>
+        ))}
+        <details open={moreActive} className="follow-up-more-filters">
+          <summary>More Filters{moreActive ? " · Active" : ""}</summary>
+          <div className="follow-up-more-filter-list">
+            {moreFilters.map(([value, label]) => (
+              <Link key={value} href={linkFor(value)} data-selected={filter === value}>
+                {label}
+              </Link>
+            ))}
+          </div>
+        </details>
+        {filter !== "ALL" ? (
+          <Link href={`/admin/follow-ups?mode=group&status=${status}`}>Clear Filters</Link>
+        ) : null}
+      </div>
+      {filter !== "ALL" ? (
+        <p className="follow-up-active-filter">
+          Active filter: <strong>{activeFilterLabel}</strong>
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function GroupChatCard({
   reminder,
   event,
@@ -659,7 +736,11 @@ function GroupChatCard({
     <article className={`follow-up-card ${overdue ? "follow-up-card-overdue" : ""}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <span className="follow-up-trigger-badge">{reminderLabel(reminder.reminder_type)}</span>
+          <span
+            className={`follow-up-trigger-badge follow-up-trigger-${triggerTone(reminder.reminder_type, reminder.reminder_type)}`}
+          >
+            {reminderLabel(reminder.reminder_type)}
+          </span>
           <h3 className="mt-2 text-xl font-semibold">{event?.name ?? "Community reminder"}</h3>
         </div>
         <span className={`follow-up-due ${overdue ? "follow-up-due-overdue" : ""}`}>
@@ -671,10 +752,17 @@ function GroupChatCard({
           ? `Reminder for ${event.name}.`
           : "Copyable community reminder; no external message is sent."}
       </p>
-      <form action={updateGroupChatReminderMessage} className="mt-4">
-        <label className="block text-sm font-semibold" htmlFor={`group-message-${reminder.id}`}>
-          Suggested message
-        </label>
+      <form action={updateGroupChatReminderMessage} className="follow-up-message-form mt-4">
+        <div className="follow-up-message-heading">
+          <label className="block text-sm font-semibold" htmlFor={`group-message-${reminder.id}`}>
+            Suggested message
+          </label>
+          {pending ? (
+            <GroupChatCopyButton
+              reminder={{ id: reminder.id, suggested_message: reminder.suggested_message }}
+            />
+          ) : null}
+        </div>
         <textarea
           id={`group-message-${reminder.id}`}
           name="suggestedMessage"
@@ -690,10 +778,7 @@ function GroupChatCard({
         ) : null}
       </form>
       {pending ? (
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <GroupChatCopyButton
-            reminder={{ id: reminder.id, suggested_message: reminder.suggested_message }}
-          />
+        <div className="follow-up-actions mt-4 flex flex-wrap items-center gap-2">
           <form action={snoozeGroupChatReminder} className="flex items-center gap-2">
             <input type="hidden" name="reminderId" value={reminder.id} />
             <select
