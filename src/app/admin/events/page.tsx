@@ -11,6 +11,7 @@ import { publishPhase7EventForm, unpublishPhase7EventForm } from "@/lib/services
 import { Button } from "@/components/ui/button";
 import { SegmentedNavigation } from "@/components/admin/segmented-navigation";
 import { ContextualBack } from "@/components/admin/contextual-back";
+import { ConfirmSubmit } from "@/components/admin/confirm-submit";
 import { AdminEventCard } from "@/components/admin/admin-event-card";
 import { AdminEventCardRail } from "@/components/admin/admin-event-card-rail";
 import { eventCardAsset } from "@/lib/config/admin-visual-assets";
@@ -388,9 +389,12 @@ export default async function EventsPage({
                         event.status !== "CANCELLED" &&
                         event.status !== "COMPLETED" ? (
                           <form action={cancelEventForm.bind(null, event.id)}>
-                            <Button type="submit" variant="destructive">
+                            <ConfirmSubmit
+                              message="Cancel this class permanently? It cannot be restored."
+                              variant="destructive"
+                            >
                               Cancel
-                            </Button>
+                            </ConfirmSubmit>
                           </form>
                         ) : null}
                       </>
