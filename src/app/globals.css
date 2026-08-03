@@ -719,9 +719,72 @@ body {
   overflow: auto;
   animation: admin-event-roster-in 180ms ease-out;
   transform: translate(-50%, -50%);
+  font-family: inherit;
   box-shadow:
     0 12px 0 rgba(10, 12, 15, 0.6),
     0 28px 60px rgba(0, 0, 0, 0.45);
+}
+.event-roster-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.625rem;
+}
+.event-roster-actions > form,
+.event-roster-actions > a {
+  display: flex;
+  flex: 1 1 8rem;
+}
+.event-roster-actions > form > button,
+.event-roster-actions > a {
+  min-height: 44px;
+  width: 100%;
+  justify-content: center;
+  padding: 0.7rem 0.9rem;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+  text-align: center;
+}
+.event-roster-check-in-button {
+  min-height: 40px;
+  padding: 0.6rem 0.9rem;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+}
+.event-roster-cancel-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.9rem;
+}
+.event-roster-cancel-form > button {
+  min-height: auto;
+  border: 0;
+  padding: 0.2rem 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--admin-text-muted);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+.event-roster-cancel-form > button:not(:disabled):hover {
+  background: transparent;
+  color: var(--danger);
+  box-shadow: none;
+  transform: none;
+}
+.event-roster-cancel-form > button:focus-visible {
+  outline-offset: 4px;
 }
 .event-roster-metrics {
   display: grid;
@@ -1224,6 +1287,18 @@ body {
   }
 }
 
+@media (max-width: 640px) {
+  .event-roster-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .event-roster-actions > form,
+  .event-roster-actions > a {
+    width: 100%;
+  }
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -1681,6 +1756,11 @@ textarea {
 }
 
 @media (max-width: 640px) {
+  .admin-shell {
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
   .event-hero-image {
     background-image: var(--event-image-mobile, var(--event-image, none)) !important;
   }

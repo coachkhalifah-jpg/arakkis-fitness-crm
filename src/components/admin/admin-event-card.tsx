@@ -29,6 +29,7 @@ export function AdminEventCard({
   canCheckIn,
   checkInAction,
   actions,
+  cancelAction,
 }: {
   event: {
     id: string;
@@ -48,6 +49,7 @@ export function AdminEventCard({
   canCheckIn: boolean;
   checkInAction: CheckInAction;
   actions: ReactNode;
+  cancelAction?: ReactNode;
 }) {
   const rail = useAdminEventCardRail();
   const [localOpen, setLocalOpen] = useState(false);
@@ -171,7 +173,7 @@ export function AdminEventCard({
                                   <input type="hidden" name="status" value="ATTENDED" />
                                   <button
                                     type="submit"
-                                    className="rounded-full bg-brand px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand/90 disabled:opacity-60"
+                                    className="event-roster-check-in-button rounded-full bg-brand text-white transition hover:bg-brand/90 disabled:opacity-60"
                                   >
                                     Check in
                                   </button>
@@ -199,12 +201,15 @@ export function AdminEventCard({
                     </p>
                   )}
                 </div>
-                <div className="mt-5 flex flex-wrap gap-2">
+                <div className="event-roster-actions mt-5">
                   <Link className="admin-primary-button" href={`/admin/events/${event.id}`}>
-                    Manage event
+                    Manage
                   </Link>
                   {actions}
                 </div>
+                {cancelAction ? (
+                  <div className="event-roster-cancel-row">{cancelAction}</div>
+                ) : null}
               </div>
             </>,
             document.body,

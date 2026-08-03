@@ -385,19 +385,24 @@ export default async function EventsPage({
                             <Button type="submit">Copy</Button>
                           </form>
                         ) : null}
-                        {admin.role === "SYSTEM_ADMIN" &&
-                        event.status !== "CANCELLED" &&
-                        event.status !== "COMPLETED" ? (
-                          <form action={cancelEventForm.bind(null, event.id)}>
-                            <ConfirmSubmit
-                              message="Cancel this class permanently? It cannot be restored."
-                              variant="destructive"
-                            >
-                              Cancel
-                            </ConfirmSubmit>
-                          </form>
-                        ) : null}
                       </>
+                    }
+                    cancelAction={
+                      admin.role === "SYSTEM_ADMIN" &&
+                      event.status !== "CANCELLED" &&
+                      event.status !== "COMPLETED" ? (
+                        <form
+                          className="event-roster-cancel-form"
+                          action={cancelEventForm.bind(null, event.id)}
+                        >
+                          <ConfirmSubmit
+                            message="Cancel this class permanently? It cannot be restored."
+                            variant="destructive"
+                          >
+                            Cancel
+                          </ConfirmSubmit>
+                        </form>
+                      ) : null
                     }
                   />
                 );

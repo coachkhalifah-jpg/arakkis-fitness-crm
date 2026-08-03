@@ -110,7 +110,6 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
           <div className="mt-8">
             <RegistrationForm
               events={registrationEvents.map((occurrence) => ({
-                id: occurrence.id,
                 name: occurrence.name,
                 starts_at: occurrence.starts_at,
                 ends_at: occurrence.ends_at,

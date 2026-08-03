@@ -57,3 +57,29 @@ gate remains authoritative; this local reset does not enable production registra
 
 Run `pnpm demo:reset` again to discard the synthetic local database and create a fresh demonstration
 state. Never run it against a hosted project.
+
+## Publish-readiness pilot checklist
+
+Use synthetic data only. Mark each item pass/fail and retain the route, role, and timestamp for any
+failure.
+
+- [ ] First-time participant: open Events, choose Book Class, submit required acknowledgments,
+  confirm partial-success results, Google Calendar, iCal, and optional remember-device prompt.
+- [ ] Returning participant: reopen Events, verify the remembered-participant convenience, use
+  `Not you?`, book another class, and confirm Manage My Bookings exposes only that participant's
+  registrations.
+- [ ] System Admin: sign in and verify Operational Workspace, Organizations, Venues, Events,
+  Participants, Follow-Ups, Invitations, publishing, public link, and QR link access.
+- [ ] Venue Admin: sign in and verify assigned-organization Events/rosters only; direct access to
+  another organization's event, Participants, and Follow-Ups is denied without data leakage.
+- [ ] Event publishing: create or use a synthetic event, publish it, open the public link, and
+  verify unpublish/pause/closed/full/cancelled states remain unavailable as appropriate.
+- [ ] Booking and confirmation: complete a booking, verify the scoped confirmation token, calendar
+  links, optional group-chat link only after success, and no raw internal IDs in page content.
+- [ ] Check-in and walk-in: open attendance, check in a registered participant, add an eligible
+  walk-in, verify capacity enforcement, finalize with confirmation, and verify no-shows/follow-up.
+- [ ] Cancellation: exercise the authorized cancellation/request flow, verify notification status,
+  permanent cancellation, and that restoration is unavailable in MVP; document any rescheduling
+  as a separate draft event.
+- [ ] Mobile layout: test `/events`, public registration, confirmation, admin Events, roster/check-in,
+  and event publishing at 390px wide with keyboard focus and no horizontal overflow.

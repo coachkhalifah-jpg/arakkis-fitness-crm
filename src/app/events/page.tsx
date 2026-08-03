@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { EventCarousel } from "@/components/events/event-carousel";
@@ -86,15 +87,15 @@ export default async function EventsPage() {
               Welcome back, {remembered.first_name} 👋
             </p>
             <p className="mt-2 text-slate-700">Your upcoming classes are ready.</p>
-            <a
+            <Link
               className="mt-4 inline-flex rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white"
               href="/manage-bookings"
             >
               Manage My Bookings
-            </a>
-            <a className="ml-3 text-sm font-semibold text-ink underline" href="/events">
+            </Link>
+            <Link className="ml-3 text-sm font-semibold text-ink underline" href="/events">
               Book Another Class
-            </a>
+            </Link>
           </div>
         ) : null}
         <Image
