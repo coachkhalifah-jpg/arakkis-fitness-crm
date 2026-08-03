@@ -30,10 +30,7 @@ export default async function AdminPage() {
         </div>
         <Alert className="mt-6">Choose an operational area to continue.</Alert>
         <nav className="mt-5 grid gap-3" aria-label="Operations">
-          <Link
-            className="rounded-2xl border border-slate-200 bg-white p-5 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:border-brand hover:shadow-soft"
-            href="/admin/events"
-          >
+          <Link className="admin-navigation-card" href="/admin/events">
             Events
           </Link>
           {admin.role === "SYSTEM_ADMIN" ? (
