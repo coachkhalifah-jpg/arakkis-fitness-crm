@@ -12,14 +12,14 @@ export default async function AdminPage() {
   const admin = await requireActiveAdmin();
   return (
     <section
-      className="admin-shell px-5 py-10 sm:px-8 sm:py-16"
+      className="admin-shell px-4 py-8 sm:px-5 sm:py-10"
       style={{
         backgroundImage: `linear-gradient(rgba(31,34,39,.92), rgba(31,34,39,.97)), url(${adminVisualAssets.pageBackgrounds.workspace})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
     >
-      <div className="relative mx-auto max-w-3xl pt-8">
+      <div className="relative mx-auto w-full max-w-[520px] pt-4 sm:pt-6">
         <ContextualBack />
         <div className="admin-page-header">
           <h1>Workspace</h1>
@@ -28,8 +28,8 @@ export default async function AdminPage() {
             {admin.role === "SYSTEM_ADMIN" ? "System administrator" : "Venue administrator"}
           </Badge>
         </div>
-        <Alert className="mt-8">Choose an operational area to continue.</Alert>
-        <nav className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Operations">
+        <Alert className="mt-6">Choose an operational area to continue.</Alert>
+        <nav className="mt-5 grid gap-3" aria-label="Operations">
           {admin.role === "SYSTEM_ADMIN" ? (
             <Link className="admin-navigation-card" href="/admin/organizations">
               Organizations
@@ -64,7 +64,7 @@ export default async function AdminPage() {
             Events
           </Link>
         </nav>
-        <Card className="mt-8 max-w-2xl space-y-4 p-6">
+        <Card className="mt-6 space-y-4 p-5">
           <div>
             <dt className="text-sm text-slate-500">Signed-in identity</dt>
             <dd className="font-medium">{admin.email}</dd>
@@ -80,7 +80,7 @@ export default async function AdminPage() {
             </div>
           ) : null}
         </Card>
-        <form className="mt-6" action={signOut}>
+        <form className="mt-5" action={signOut}>
           <Button type="submit">Sign out</Button>
         </form>
       </div>
