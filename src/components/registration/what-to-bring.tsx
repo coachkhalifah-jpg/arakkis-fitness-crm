@@ -48,7 +48,7 @@ export function WhatToBring({
           aria-hidden="true"
           className={`confirmation-what-to-bring-chevron${open ? " is-open" : ""}`}
         >
-          ›
+          ⋮
         </span>
       </button>
 

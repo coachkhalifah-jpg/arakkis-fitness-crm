@@ -782,10 +782,10 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  min-height: 4rem;
+  min-height: 3.25rem;
   border: 0;
   background: transparent;
-  padding: 0.75rem 1.25rem;
+  padding: 0.5rem 1rem;
   color: var(--confirmation-text);
   text-align: left;
 }
@@ -795,13 +795,10 @@ body {
 }
 .confirmation-what-to-bring-chevron {
   position: absolute;
-  right: 1.25rem;
-  font-size: 1.5rem;
+  right: 0.9rem;
+  font-size: 1.15rem;
+  font-weight: 700;
   line-height: 1;
-  transition: transform 180ms ease-out;
-}
-.confirmation-what-to-bring-chevron.is-open {
-  transform: rotate(90deg);
 }
 .confirmation-what-to-bring-content-wrap {
   display: grid;
