@@ -17,7 +17,7 @@ export default function HomePage() {
           </p>
           <div className="public-primary-stack mt-9">
             <Link
-              className="public-primary-control bg-white/[0.72] text-ink shadow-soft hover:bg-white/[0.85]"
+              className="public-primary-control bg-white/[0.72] text-ink shadow-soft hover:bg-white/[0.85] hover:text-brand"
               href="/events"
             >
               Explore upcoming events{" "}
