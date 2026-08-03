@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { requireSystemAdmin } from "@/lib/authorization/server";
 import { createClient } from "@/lib/db/server";
-import { FollowUpCopyButton } from "@/components/admin/follow-up-card";
+import { FollowUpCopyButton, GroupChatCopyButton } from "@/components/admin/follow-up-card";
 import {
   completeFollowUpTask,
   dismissFollowUpTask,
+  completeGroupChatReminder,
+  dismissGroupChatReminder,
+  snoozeGroupChatReminder,
+  updateGroupChatReminderMessage,
   snoozeFollowUpTask,
   updateFollowUpMessage,
 } from "@/lib/services/phase-6-actions";
@@ -19,6 +23,18 @@ const filterOptions = [
   ["MILESTONES", "Milestones"],
   ["CANCELLATIONS", "Cancellations"],
   ["ASSIGNED_TO_ME", "Assigned to Me"],
+] as const;
+
+const groupFilterOptions = [
+  ["ALL", "All"],
+  ["BEFORE_CLASS", "Before Class"],
+  ["AFTER_CLASS", "After Class"],
+  ["WELCOMES", "Welcomes"],
+  ["MILESTONES", "Milestones"],
+  ["CHALLENGES", "Challenges"],
+  ["TIPS", "Tips"],
+  ["POLLS", "Polls"],
+  ["LOGISTICS", "Logistics"],
 ] as const;
 
 function dayKey(value: string | Date, timezone = "UTC") {
@@ -50,6 +66,24 @@ function isMilestone(task: { reason: string; task_title: string | null }) {
   return /milestone|third|tenth/i.test(`${task.reason} ${task.task_title ?? ""}`);
 }
 
+function reminderLabel(type: string) {
+  return type
+    .toLowerCase()
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function reminderGroup(type: string) {
+  if (["CLASS_PREVIEW", "ATTENDANCE_CHECK_IN"].includes(type)) return "BEFORE_CLASS";
+  if (["POST_CLASS_REFLECTION", "WELCOME_FIRST_TIME"].includes(type)) return "AFTER_CLASS";
+  if (type.includes("MILESTONE")) return "MILESTONES";
+  if (type === "WEEKLY_CHALLENGE") return "CHALLENGES";
+  if (type === "WEEKLY_TIP") return "TIPS";
+  if (type === "COMMUNITY_POLL") return "POLLS";
+  return "LOGISTICS";
+}
+
 type EventRecord = {
   id: string;
   name: string;
@@ -62,10 +96,11 @@ type EventRecord = {
 export default async function FollowUpsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; filter?: string }>;
+  searchParams: Promise<{ status?: string; filter?: string; mode?: string }>;
 }) {
   const admin = await requireSystemAdmin("/admin/follow-ups");
   const params = await searchParams;
+  const mode = params.mode === "group" ? "group" : "individual";
   const status =
     params.status === "ALL"
       ? "ALL"
@@ -77,13 +112,25 @@ export default async function FollowUpsPage({
   const filter = filterOptions.some(([value]) => value === params.filter)
     ? params.filter!
     : "ALL_OPEN";
+  const groupFilter = groupFilterOptions.some(([value]) => value === params.filter)
+    ? params.filter!
+    : "ALL";
   const db = await createClient();
   const query = db.from("follow_up_tasks").select("*").order("due_at", { ascending: true });
   const { data: tasks } =
     status === "ALL" ? await query : await query.eq("status", status as never);
+  const reminderQuery = db
+    .from("group_chat_reminders")
+    .select("*")
+    .order("due_at", { ascending: true });
+  const { data: reminders } =
+    status === "ALL" ? await reminderQuery : await reminderQuery.eq("status", status as never);
   const participantIds = [...new Set((tasks ?? []).map((task) => task.participant_id))];
   const taskEventIds = [
     ...new Set((tasks ?? []).map((task) => task.event_id).filter(Boolean)),
+  ] as string[];
+  const reminderEventIds = [
+    ...new Set((reminders ?? []).map((reminder) => reminder.event_id).filter(Boolean)),
   ] as string[];
   const [{ data: participants }, { data: registrations }] = await Promise.all([
     participantIds.length
@@ -104,7 +151,7 @@ export default async function FollowUpsPage({
   const upcomingEventIds = [
     ...new Set((registrations ?? []).map((registration) => registration.event_id)),
   ];
-  const eventIds = [...new Set([...taskEventIds, ...upcomingEventIds])];
+  const eventIds = [...new Set([...taskEventIds, ...reminderEventIds, ...upcomingEventIds])];
   const [{ data: events }, { data: admins }] = await Promise.all([
     eventIds.length
       ? db.from("events").select("id,name,starts_at,ends_at,timezone,status").in("id", eventIds)
@@ -174,16 +221,50 @@ export default async function FollowUpsPage({
   ] as const;
   const linkFor = (nextFilter: string) => `/admin/follow-ups?status=${status}&filter=${nextFilter}`;
 
+  if (mode === "group") {
+    return (
+      <GroupChatQueue
+        status={status}
+        filter={groupFilter}
+        reminders={(reminders ?? []) as any[]}
+        eventById={eventById}
+      />
+    );
+  }
+
   return (
     <section className="admin-shell min-h-screen px-5 py-10 sm:px-8 sm:py-14">
       <div className="mx-auto max-w-5xl">
         <div className="admin-page-header">
-          <p className="admin-eyebrow">Engagement queue</p>
-          <h1>Follow-Ups</h1>
-          <p>
-            Keep the next conversation easy to find. Copying never sends or completes a message.
-          </p>
+          <p className="admin-eyebrow">Community engagement queue</p>
+          <h1>Community</h1>
+          <p>Welcome participants, strengthen retention, and keep the class connected.</p>
+          <div className="follow-up-summary" aria-label="Queue summary">
+            <span>
+              Needs Attention Today <strong>{needsAttention.length}</strong>
+            </span>
+            <span>
+              Follow Up This Week <strong>{thisWeek.length}</strong>
+            </span>
+            <span>
+              Community Posts{" "}
+              <strong>
+                {reminders?.filter((reminder) => reminder.status === "PENDING").length ?? 0}
+              </strong>
+            </span>
+            <span>
+              Completed <strong>{completedTasks.length}</strong>
+            </span>
+          </div>
         </div>
+        <nav className="follow-up-mode-nav mt-6" aria-label="Community queue mode">
+          <Link href="/admin/follow-ups?status=PENDING" data-selected>
+            Individual Follow-Ups
+          </Link>
+          <Link href="/admin/follow-ups?mode=group&status=PENDING" data-selected={false}>
+            Group Chat
+          </Link>
+        </nav>
         <nav className="follow-up-status-nav mt-6" aria-label="Follow-up status">
           <Link href="/admin/follow-ups?status=PENDING" data-selected={status === "PENDING"}>
             Open
@@ -406,6 +487,251 @@ function FollowUpCard({
       ) : (
         <p className="mt-4 text-sm text-slate-400">
           {task.completion_outcome ?? task.completion_notes ?? "Closed"}
+        </p>
+      )}
+    </article>
+  );
+}
+
+function GroupChatQueue({
+  status,
+  filter,
+  reminders,
+  eventById,
+}: {
+  status: string;
+  filter: string;
+  reminders: any[];
+  eventById: Map<string, EventRecord>;
+}) {
+  const visible = reminders.filter((reminder) => {
+    if (filter !== "ALL" && reminderGroup(reminder.reminder_type) !== filter) return false;
+    return true;
+  });
+  const open = visible.filter((reminder) => reminder.status === "PENDING");
+  const closed = visible.filter((reminder) => reminder.status !== "PENDING");
+  const now = new Date();
+  const needs = open.filter((reminder) => new Date(reminder.due_at) <= now);
+  const needsIds = new Set(needs.map((reminder) => reminder.id));
+  const community = open.filter((reminder) =>
+    ["WELCOME_FIRST_TIME", "THIRD_CLASS_MILESTONE", "TENTH_CLASS_MILESTONE"].includes(
+      reminder.reminder_type,
+    ),
+  );
+  const communityIds = new Set(community.map((reminder) => reminder.id));
+  const week = open.filter(
+    (reminder) => !needsIds.has(reminder.id) && !communityIds.has(reminder.id),
+  );
+  const sections = [
+    ["Needs Attention Today", needs],
+    ["Follow Up This Week", week],
+    ["Community Check-Ins", community],
+  ] as const;
+  const linkFor = (nextFilter: string) =>
+    `/admin/follow-ups?mode=group&status=${status}&filter=${nextFilter}`;
+  return (
+    <section className="admin-shell min-h-screen px-5 py-10 sm:px-8 sm:py-14">
+      <div className="mx-auto max-w-5xl">
+        <div className="admin-page-header">
+          <p className="admin-eyebrow">Community engagement queue</p>
+          <h1>Community</h1>
+          <p>Welcome participants, strengthen retention, and keep the class connected.</p>
+          <div className="follow-up-summary" aria-label="Queue summary">
+            <span>
+              Needs Attention Today <strong>{needs.length}</strong>
+            </span>
+            <span>
+              Follow Up This Week <strong>{week.length}</strong>
+            </span>
+            <span>
+              Community Posts <strong>{open.length}</strong>
+            </span>
+            <span>
+              Completed <strong>{closed.length}</strong>
+            </span>
+          </div>
+        </div>
+        <nav className="follow-up-mode-nav mt-6" aria-label="Community queue mode">
+          <Link href="/admin/follow-ups?status=PENDING" data-selected={false}>
+            Individual Follow-Ups
+          </Link>
+          <Link href="/admin/follow-ups?mode=group&status=PENDING" data-selected>
+            Group Chat
+          </Link>
+        </nav>
+        <nav className="follow-up-status-nav mt-5" aria-label="Group chat reminder status">
+          <Link
+            href="/admin/follow-ups?mode=group&status=PENDING"
+            data-selected={status === "PENDING"}
+          >
+            Open
+          </Link>
+          <Link
+            href="/admin/follow-ups?mode=group&status=COMPLETED"
+            data-selected={status === "COMPLETED"}
+          >
+            Completed
+          </Link>
+          <Link
+            href="/admin/follow-ups?mode=group&status=DISMISSED"
+            data-selected={status === "DISMISSED"}
+          >
+            Dismissed
+          </Link>
+          <Link href="/admin/follow-ups?mode=group&status=ALL" data-selected={status === "ALL"}>
+            All
+          </Link>
+        </nav>
+        {status !== "COMPLETED" && status !== "DISMISSED" ? (
+          <nav className="follow-up-filter-nav mt-4" aria-label="Group chat filters">
+            {groupFilterOptions.map(([value, label]) => (
+              <Link key={value} href={linkFor(value)} data-selected={filter === value}>
+                {label}
+              </Link>
+            ))}
+          </nav>
+        ) : null}
+        {sections.map(([heading, sectionReminders]) =>
+          sectionReminders.length ? (
+            <section
+              key={heading}
+              className="mt-8"
+              aria-labelledby={`group-${heading.replaceAll(" ", "-").toLowerCase()}`}
+            >
+              <div className="mb-3 flex items-baseline justify-between gap-3">
+                <h2
+                  id={`group-${heading.replaceAll(" ", "-").toLowerCase()}`}
+                  className="text-xl font-semibold"
+                >
+                  {heading}
+                </h2>
+                <span className="text-sm text-slate-400">{sectionReminders.length}</span>
+              </div>
+              <div className="grid gap-4 lg:grid-cols-2">
+                {sectionReminders.map((reminder) => (
+                  <GroupChatCard
+                    key={reminder.id}
+                    reminder={reminder}
+                    event={eventById.get(reminder.event_id ?? "")}
+                    now={now}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null,
+        )}
+        {closed.length ? (
+          <details className="mt-8 rounded-3xl border border-slate-200 bg-slate-100 p-5">
+            <summary className="cursor-pointer font-semibold">Completed · {closed.length}</summary>
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              {closed.map((reminder) => (
+                <GroupChatCard
+                  key={reminder.id}
+                  reminder={reminder}
+                  event={eventById.get(reminder.event_id ?? "")}
+                  now={now}
+                />
+              ))}
+            </div>
+          </details>
+        ) : null}
+        {!visible.length ? (
+          <p className="mt-10 text-slate-400">No reminders in this view.</p>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function GroupChatCard({
+  reminder,
+  event,
+  now,
+}: {
+  reminder: any;
+  event?: EventRecord;
+  now: Date;
+}) {
+  const pending = reminder.status === "PENDING";
+  const overdue = pending && new Date(reminder.due_at) < now;
+  const timezone = event?.timezone ?? "UTC";
+  return (
+    <article className={`follow-up-card ${overdue ? "follow-up-card-overdue" : ""}`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <span className="follow-up-trigger-badge">{reminderLabel(reminder.reminder_type)}</span>
+          <h3 className="mt-2 text-xl font-semibold">{event?.name ?? "Community reminder"}</h3>
+        </div>
+        <span className={`follow-up-due ${overdue ? "follow-up-due-overdue" : ""}`}>
+          {overdue ? "Overdue" : "Due"} · {formatDue(reminder.due_at, timezone)}
+        </span>
+      </div>
+      <p className="mt-3 text-sm text-slate-300">
+        {event
+          ? `Reminder for ${event.name}.`
+          : "Copyable community reminder; no external message is sent."}
+      </p>
+      <form action={updateGroupChatReminderMessage} className="mt-4">
+        <label className="block text-sm font-semibold" htmlFor={`group-message-${reminder.id}`}>
+          Suggested message
+        </label>
+        <textarea
+          id={`group-message-${reminder.id}`}
+          name="suggestedMessage"
+          defaultValue={reminder.suggested_message}
+          className="mt-2 min-h-24 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900"
+          disabled={!pending}
+        />
+        <input type="hidden" name="reminderId" value={reminder.id} />
+        {pending ? (
+          <Button type="submit" variant="secondary" className="mt-2">
+            Save message
+          </Button>
+        ) : null}
+      </form>
+      {pending ? (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <GroupChatCopyButton
+            reminder={{ id: reminder.id, suggested_message: reminder.suggested_message }}
+          />
+          <form action={snoozeGroupChatReminder} className="flex items-center gap-2">
+            <input type="hidden" name="reminderId" value={reminder.id} />
+            <select
+              name="dueAt"
+              aria-label={`Snooze ${reminderLabel(reminder.reminder_type)}`}
+              className="rounded-xl border border-slate-200 bg-slate-50 p-2 text-sm text-slate-900"
+            >
+              <option value={addDays(1)}>Tomorrow</option>
+              <option value={addDays(3)}>In 3 days</option>
+              <option value={addDays(7)}>Next week</option>
+            </select>
+            <Button type="submit" variant="tertiary">
+              Snooze
+            </Button>
+          </form>
+          <form action={completeGroupChatReminder}>
+            <input type="hidden" name="reminderId" value={reminder.id} />
+            <Button type="submit" variant="success">
+              Complete
+            </Button>
+          </form>
+          <form action={dismissGroupChatReminder} className="flex flex-wrap items-center gap-2">
+            <input type="hidden" name="reminderId" value={reminder.id} />
+            <input
+              name="reason"
+              required
+              placeholder="Dismissal reason"
+              aria-label={`Dismissal reason for ${reminderLabel(reminder.reminder_type)}`}
+              className="rounded-xl border border-slate-200 bg-slate-50 p-2 text-sm text-slate-900"
+            />
+            <Button type="submit" variant="secondary">
+              Dismiss
+            </Button>
+          </form>
+        </div>
+      ) : (
+        <p className="mt-4 text-sm text-slate-400">
+          {reminder.completion_notes ?? reminder.completion_outcome ?? "Closed"}
         </p>
       )}
     </article>
