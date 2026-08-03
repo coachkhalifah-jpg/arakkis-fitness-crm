@@ -174,7 +174,8 @@ test("System Admin completes the Phase 3 operational flow", async ({ page }) => 
   await page.goto("/admin/events?mode=create");
   await page.getByLabel("Name").fill(`Phase 3 Event ${suffix}`);
   await page.getByLabel("Organization").selectOption({ label: organizationName });
-  await page.getByLabel("Venue").selectOption({ label: `${venueName} (America/New_York)` });
+  const venueId = localQuery(`select id from public.venues where name=${sql(venueName)}`);
+  await page.getByLabel("Venue").selectOption({ value: venueId });
   await page.getByLabel("Capacity").fill("20");
   await page.getByLabel("Local start").fill("2099-06-15T10:00");
   await page.getByLabel("Local end").fill("2099-06-15T11:00");

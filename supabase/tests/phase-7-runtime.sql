@@ -63,6 +63,17 @@ begin
   end if;
 end $$;
 
+do $$
+begin
+  if pg_get_functiondef('public.manage_participant_booking(text,text,uuid,uuid)'::regprocedure)
+      like '%v_target_venue%' then
+    raise exception 'participant booking RPC still contains the removed unused variable';
+  end if;
+  if not has_function_privilege('service_role', 'public.manage_participant_booking(text,text,uuid,uuid)', 'EXECUTE') then
+    raise exception 'service role lost participant booking RPC execution privilege';
+  end if;
+end $$;
+
 select set_config('app.environment', 'production', true);
 do $$
 begin

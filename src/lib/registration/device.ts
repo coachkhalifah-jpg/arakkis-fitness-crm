@@ -42,7 +42,7 @@ export async function rememberParticipantFromConfirmation(confirmationToken: str
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    path: "/",
+    path: "/register",
     maxAge: cookieMaxAge,
   });
   return { firstName: result.first_name };
@@ -55,5 +55,5 @@ export async function forgetRememberedParticipant() {
     const db = createPrivilegedClient();
     await db.rpc("phase10_revoke_participant_device", { p_token: token } as never);
   }
-  jar.set(rememberedDeviceCookie, "", { httpOnly: true, expires: new Date(0), path: "/" });
+  jar.set(rememberedDeviceCookie, "", { httpOnly: true, expires: new Date(0), path: "/register" });
 }

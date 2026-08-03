@@ -220,6 +220,9 @@ export default async function ConfirmationPage({
                     key={event.event_id}
                     className="confirmation-calendar-row confirmation-calendar-session-card"
                   >
+                    <p className="confirmation-event-title text-center text-sm font-semibold text-[var(--confirmation-text)]">
+                      {bookingTitle(event.name).title}
+                    </p>
                     <p className="confirmation-calendar-date text-center text-sm text-[var(--confirmation-text)]">
                       {dateFormatter(event.timezone).format(new Date(event.starts_at))}
                     </p>

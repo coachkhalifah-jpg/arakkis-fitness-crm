@@ -107,6 +107,7 @@ test("copy evidence and completion preserve the task lifecycle", async ({ page }
     ),
   ).toBe(fixture.system.id);
   await page.goto("/admin/follow-ups?status=COMPLETED");
+  await page.getByText(/^Completed ·/).click();
   await expect(
     page.locator("article").filter({ hasText: `CRM Attended ${fixture.suffix}` }),
   ).toBeVisible();
@@ -116,7 +117,7 @@ test("dismissal requires a reason and direct task mutation is System Admin-only"
   page,
 }) => {
   await signInSystem(page, "/admin/follow-ups");
-  const task = page.locator("article").filter({ hasText: `CRM No Show ${fixture.suffix}` });
+  const task = page.locator("article:visible").filter({ hasText: `CRM No Show ${fixture.suffix}` });
   await expect(task).toBeVisible();
   await task.getByRole("button", { name: "Dismiss" }).click();
   expect(
@@ -132,6 +133,7 @@ test("dismissal requires a reason and direct task mutation is System Admin-only"
     )
     .toBe("DISMISSED");
   await page.goto("/admin/follow-ups?status=DISMISSED");
+  await page.getByText(/^Completed ·/).click();
   await expect(
     page.locator("article").filter({ hasText: `CRM No Show ${fixture.suffix}` }),
   ).toBeVisible();

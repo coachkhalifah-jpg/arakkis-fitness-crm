@@ -220,9 +220,10 @@ test("registers multiple dates, exports only successful events, and scopes the a
   await expect(page.getByText(/We’re looking forward to seeing you, José\./)).toBeVisible();
   await expect(page.getByRole("link", { name: "Google Calendar" })).toHaveCount(2);
   await expect(page.getByRole("link", { name: "iCal" })).toHaveCount(2);
-  await expect(page.getByText("What to bring")).toHaveCount(2);
-  await expect(page.getByText("Arrive early.")).toHaveCount(2);
-  await expect(page.getByText("Booked", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("What to bring")).toHaveCount(1);
+  await expect(page.getByText("Arrive early.")).toHaveCount(1);
+  await expect(page.getByText(fixture.eventNameA, { exact: true })).toBeVisible();
+  await expect(page.getByText(fixture.eventNameB, { exact: true })).toBeVisible();
   const token = new URL(page.url()).searchParams.get("token");
   expect(token).toMatch(/^[A-Za-z0-9_-]{40,60}$/);
   const ics = await page.request.get(

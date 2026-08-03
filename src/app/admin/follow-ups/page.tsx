@@ -191,8 +191,6 @@ export default async function FollowUpsPage({
     }
   }
   const nowKey = dayKey(now);
-  const weekLimit = new Date(now);
-  weekLimit.setDate(weekLimit.getDate() + 7);
   const visibleTasks = (tasks ?? []).filter((task) => {
     if (task.status !== "PENDING") return status === "ALL" || status !== "PENDING";
     const event = eventById.get(task.event_id ?? "");
@@ -221,13 +219,10 @@ export default async function FollowUpsPage({
   const needsIds = new Set(needsAttention.map((task) => task.id));
   const community = openTasks.filter((task) => isMilestone(task));
   const communityIds = new Set(community.map((task) => task.id));
-  const thisWeek = openTasks.filter((task) => {
-    const due = new Date(task.due_at);
-    return !needsIds.has(task.id) && !communityIds.has(task.id) && due <= weekLimit;
-  });
+  const thisWeek = openTasks.filter((task) => !needsIds.has(task.id) && !communityIds.has(task.id));
   const sections = [
     ["Needs Attention Today", needsAttention],
-    ["Follow Up This Week", thisWeek],
+    ["Follow Up Queue", thisWeek],
     ["Community Check-Ins", community],
   ] as const;
   const linkFor = (nextFilter: string) => `/admin/follow-ups?status=${status}&filter=${nextFilter}`;
