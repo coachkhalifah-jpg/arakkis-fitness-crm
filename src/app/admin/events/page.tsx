@@ -1,7 +1,12 @@
 import { requireActiveAdmin } from "@/lib/authorization/server";
 import Link from "next/link";
 import { createClient } from "@/lib/db/server";
-import { copyEventForm, createEventForm, cancelEventForm } from "@/lib/services/phase-3-actions";
+import {
+  copyEventForm,
+  createEventForm,
+  cancelEventForm,
+  markAttendanceSubmit,
+} from "@/lib/services/phase-3-actions";
 import { publishPhase7EventForm, unpublishPhase7EventForm } from "@/lib/services/phase-7-actions";
 import { Button } from "@/components/ui/button";
 import { SegmentedNavigation } from "@/components/admin/segmented-navigation";
@@ -28,7 +33,7 @@ export default async function EventsPage({
     db
       .from("events")
       .select(
-        "id,name,status,publication_status,public_slug,starts_at,ends_at,timezone,capacity,registration_deadline,host_organization_id,venue_id,event_series_id,event_series(public_slug)",
+        "id,name,status,publication_status,public_slug,starts_at,ends_at,timezone,capacity,registration_deadline,host_organization_id,venue_id,event_series_id,attendance_processing_state,event_series(public_slug)",
       )
       .order("starts_at", { ascending: false }),
   ]);
@@ -339,6 +344,12 @@ export default async function EventsPage({
                     count={count}
                     firstClassCount={firstClassCount}
                     people={people}
+                    canCheckIn={
+                      event.status !== "CANCELLED" &&
+                      (event.attendance_processing_state === "OPEN" ||
+                        event.attendance_processing_state === "REOPENED")
+                    }
+                    checkInAction={markAttendanceSubmit}
                     canViewPhone={admin.role === "SYSTEM_ADMIN" || admin.role === "HOST_ADMIN"}
                     actions={
                       <>

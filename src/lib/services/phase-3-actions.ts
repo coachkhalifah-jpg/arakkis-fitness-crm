@@ -22,6 +22,7 @@ import {
   createWalkInSubmit as phase5CreateWalkInSubmit,
   finalizeAttendanceSubmit as phase5FinalizeAttendanceSubmit,
   markAttendance as phase5MarkAttendance,
+  markAttendanceSubmit as phase5MarkAttendanceSubmit,
   openAttendanceSubmit as phase5OpenAttendanceSubmit,
   reopenAttendanceSubmit as phase5ReopenAttendanceSubmit,
 } from "@/lib/services/phase-5-actions";
@@ -746,6 +747,9 @@ export async function reopenAttendanceSubmit(form: FormData) {
 }
 export async function markAttendance(state: Phase3ActionState, form: FormData) {
   return phase5MarkAttendance(state, form);
+}
+export async function markAttendanceSubmit(form: FormData): Promise<void> {
+  await phase5MarkAttendanceSubmit(form);
 }
 export async function createWalkInSubmit(form: FormData) {
   return phase5CreateWalkInSubmit(form);

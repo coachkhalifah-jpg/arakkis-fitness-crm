@@ -14,6 +14,7 @@ type EventPerson = {
   attended: boolean;
   firstClass: boolean;
 };
+type CheckInAction = (formData: FormData) => Promise<void>;
 
 export function AdminEventCard({
   event,
@@ -25,6 +26,8 @@ export function AdminEventCard({
   firstClassCount,
   people,
   canViewPhone,
+  canCheckIn,
+  checkInAction,
   actions,
 }: {
   event: {
@@ -42,6 +45,8 @@ export function AdminEventCard({
   firstClassCount: number;
   people: EventPerson[];
   canViewPhone: boolean;
+  canCheckIn: boolean;
+  checkInAction: CheckInAction;
   actions: ReactNode;
 }) {
   const rail = useAdminEventCardRail();
@@ -157,7 +162,23 @@ export function AdminEventCard({
                               ) : null}
                             </td>
                             <td className="p-3">
-                              {person.attended ? "Checked in" : "Not checked in"}
+                              {person.attended ? (
+                                "Checked in"
+                              ) : canCheckIn ? (
+                                <form action={checkInAction}>
+                                  <input type="hidden" name="eventId" value={event.id} />
+                                  <input type="hidden" name="registrationId" value={person.id} />
+                                  <input type="hidden" name="status" value="ATTENDED" />
+                                  <button
+                                    type="submit"
+                                    className="rounded-full bg-brand px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand/90 disabled:opacity-60"
+                                  >
+                                    Check in
+                                  </button>
+                                </form>
+                              ) : (
+                                "Not checked in"
+                              )}
                             </td>
                             <td className="p-3 pr-0">
                               {canViewPhone && person.phone ? (
