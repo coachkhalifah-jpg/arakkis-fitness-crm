@@ -197,7 +197,7 @@ export default async function ConfirmationPage({
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Invite link <span aria-hidden="true">↗</span>
+                  Join class chat <span aria-hidden="true">↗</span>
                   <span className="sr-only"> (opens in a new tab)</span>
                 </a>
               </div>
