@@ -137,11 +137,11 @@ test.beforeAll(async () => {
     insert into public.acknowledgment_versions (id, type, version, exact_text, content_hash, effective_at, legal_status, created_by_admin_id) values
       (${sql(participationAckId)}, 'PARTICIPATION_RISK', ${acknowledgmentVersion}, 'Synthetic participation acknowledgment.', decode(repeat('a', 64), 'hex'), now(), 'PROVISIONAL', ${sql(systemId)}),
       (${sql(dataUseAckId)}, 'DATA_USE', ${acknowledgmentVersion}, 'Synthetic data-use acknowledgment.', decode(repeat('b', 64), 'hex'), now(), 'APPROVED', ${sql(systemId)});
-    insert into public.events (id, host_organization_id, venue_id, name, description, participant_instructions, starts_at, ends_at, timezone, capacity, registration_deadline, status, visibility, created_by_admin_id) values
-      (${sql(eventA)}, ${sql(organizationId)}, ${sql(venueId)}, ${sql(eventNameA)}, 'Bring a mat.', 'Arrive early.', '2099-08-01T14:00:00Z', '2099-08-01T15:00:00Z', 'America/New_York', 20, '2099-08-01T13:00:00Z', 'OPEN', 'PUBLIC', ${sql(systemId)}),
-      (${sql(eventB)}, ${sql(organizationId)}, ${sql(venueId)}, ${sql(eventNameB)}, 'Bring water.', 'Arrive early.', '2099-08-08T14:00:00Z', '2099-08-08T15:00:00Z', 'America/New_York', 20, '2099-08-08T13:00:00Z', 'OPEN', 'PUBLIC', ${sql(systemId)}),
-      (${sql(fullEvent)}, ${sql(organizationId)}, ${sql(venueId)}, 'Phase 4 Full ${suffix}', null, null, '2099-08-15T14:00:00Z', '2099-08-15T15:00:00Z', 'America/New_York', 1, '2099-08-15T13:00:00Z', 'OPEN', 'PUBLIC', ${sql(systemId)}),
-      (${sql(draftEvent)}, ${sql(organizationId)}, ${sql(venueId)}, 'Phase 4 Draft ${suffix}', null, null, '2099-08-22T14:00:00Z', '2099-08-22T15:00:00Z', 'America/New_York', 20, '2099-08-22T13:00:00Z', 'DRAFT', 'PUBLIC', ${sql(systemId)});
+    insert into public.events (id, host_organization_id, venue_id, name, description, participant_instructions, starts_at, ends_at, timezone, capacity, registration_deadline, status, visibility, publication_status, public_slug, created_by_admin_id) values
+      (${sql(eventA)}, ${sql(organizationId)}, ${sql(venueId)}, ${sql(eventNameA)}, 'Bring a mat.', 'Arrive early.', '2099-08-01T14:00:00Z', '2099-08-01T15:00:00Z', 'America/New_York', 20, '2099-08-01T13:00:00Z', 'OPEN', 'PUBLIC', 'PUBLISHED', ${sql(`phase-four-${suffix}-a`)}, ${sql(systemId)}),
+      (${sql(eventB)}, ${sql(organizationId)}, ${sql(venueId)}, ${sql(eventNameB)}, 'Bring water.', 'Arrive early.', '2099-08-08T14:00:00Z', '2099-08-08T15:00:00Z', 'America/New_York', 20, '2099-08-08T13:00:00Z', 'OPEN', 'PUBLIC', 'PUBLISHED', ${sql(`phase-four-${suffix}-b`)}, ${sql(systemId)}),
+      (${sql(fullEvent)}, ${sql(organizationId)}, ${sql(venueId)}, 'Phase 4 Full ${suffix}', null, null, '2099-08-15T14:00:00Z', '2099-08-15T15:00:00Z', 'America/New_York', 1, '2099-08-15T13:00:00Z', 'OPEN', 'PUBLIC', 'PUBLISHED', ${sql(`phase-four-${suffix}-full`)}, ${sql(systemId)}),
+      (${sql(draftEvent)}, ${sql(organizationId)}, ${sql(venueId)}, 'Phase 4 Draft ${suffix}', null, null, '2099-08-22T14:00:00Z', '2099-08-22T15:00:00Z', 'America/New_York', 20, '2099-08-22T13:00:00Z', 'DRAFT', 'PUBLIC', 'DRAFT', ${sql(`phase-four-${suffix}-draft`)}, ${sql(systemId)});
   `);
   fixture = {
     systemId,

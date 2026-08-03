@@ -68,11 +68,23 @@ async function authUser(email, password) {
 }
 
 localSql(`
+create temp table legal_documents_reset_backup as
+select * from public.acknowledgment_versions
+where id in (
+  '03500000-0000-0000-0000-000000000001'::uuid,
+  '03500000-0000-0000-0000-000000000002'::uuid,
+  '03500000-0000-0000-0000-000000000003'::uuid,
+  '03500000-0000-0000-0000-000000000004'::uuid,
+  '03500000-0000-0000-0000-000000000005'::uuid,
+  '03500000-0000-0000-0000-000000000006'::uuid,
+  '03500000-0000-0000-0000-000000000007'::uuid
+);
 do $$ declare statement text; begin
   select 'truncate table ' || string_agg(format('%I.%I', schemaname, tablename), ', ') || ' cascade'
     into statement from pg_tables where schemaname = 'public';
   execute statement;
 end $$;
+insert into public.acknowledgment_versions select * from legal_documents_reset_backup;
 delete from auth.users;
 `);
 
