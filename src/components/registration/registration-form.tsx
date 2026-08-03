@@ -226,7 +226,7 @@ export function RegistrationForm({
           </p>
         ) : null}
       </fieldset>
-      {rememberedFirstName && !showDetails ? (
+      {rememberedFirstName ? (
         <div className="rounded-2xl border border-brand/20 bg-brand/[0.06] p-5">
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-brand">
             Welcome back
@@ -240,169 +240,186 @@ export function RegistrationForm({
           </p>
           <button
             type="button"
-            className="mt-3 text-sm font-semibold text-brand underline"
+            aria-expanded={showDetails}
+            aria-controls="returning-participant-details"
+            className="mt-4 flex min-h-12 w-full items-center justify-between rounded-xl border border-brand/20 bg-white/70 px-4 text-left text-sm font-semibold text-ink transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
             onClick={() => {
-              setUseRemembered(false);
-              setShowDetails(true);
+              setUseRemembered(showDetails);
+              setShowDetails(!showDetails);
             }}
           >
-            Not you? Enter details instead
+            <span>
+              {showDetails ? "Use saved details" : "Edit details or use a different person"}
+            </span>
+            <span aria-hidden="true" className="ml-3 text-lg text-brand">
+              {showDetails ? "⌃" : "⌄"}
+            </span>
           </button>
           <ForgetDevice />
         </div>
       ) : null}
-      <div className={rememberedFirstName && !showDetails ? "hidden" : ""}>
-        <h2 className="text-center text-xl font-semibold tracking-tight">Your details</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          A phone number helps us keep your registration and event-day details together.
-        </p>
-      </div>
-      <fieldset disabled={Boolean(rememberedFirstName && !showDetails)} className="grid gap-4">
-        <label>
-          First name
-          <input
-            id="firstName"
-            name="firstName"
-            required
-            maxLength={100}
-            value={values.firstName}
-            onChange={(event) => updateValue("firstName", event.target.value)}
-            {...fieldProps("firstName")}
-            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand"
-          />
-          {errorFor("firstName") ? (
-            <p id="firstName-error" className="mt-1 text-sm text-red-700" role="alert">
-              {errorFor("firstName")}
-            </p>
-          ) : null}
-        </label>
-        <label>
-          Last name
-          <input
-            id="lastName"
-            name="lastName"
-            required
-            maxLength={100}
-            value={values.lastName}
-            onChange={(event) => updateValue("lastName", event.target.value)}
-            {...fieldProps("lastName")}
-            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand"
-          />
-          {errorFor("lastName") ? (
-            <p id="lastName-error" className="mt-1 text-sm text-red-700" role="alert">
-              {errorFor("lastName")}
-            </p>
-          ) : null}
-        </label>
-        <label>
-          Mobile phone
-          <input
-            id="phone"
-            name="phone"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            required
-            maxLength={40}
-            placeholder="+1 518-867-5309"
-            value={values.phone}
-            onChange={(event) => updateValue("phone", event.target.value)}
-            {...fieldProps("phone")}
-            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand"
-          />
-          {errorFor("phone") ? (
-            <p id="phone-error" className="mt-1 text-sm text-red-700" role="alert">
-              {errorFor("phone")}
-            </p>
-          ) : null}
-        </label>
-        <label>
-          Email (optional)
-          <input
-            id="email"
-            name="email"
-            type="email"
-            maxLength={254}
-            value={values.email}
-            onChange={(event) => updateValue("email", event.target.value)}
-            {...fieldProps("email")}
-            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand"
-          />
-          {errorFor("email") ? (
-            <p id="email-error" className="mt-1 text-sm text-red-700" role="alert">
-              {errorFor("email")}
-            </p>
-          ) : null}
-        </label>
-        <label>
-          How did you hear about us? — Optional
-          <select
-            id="referralSource"
-            name="referralSource"
-            value={values.referralSource}
-            onChange={(event) =>
-              setValues((current) => ({
-                ...current,
-                referralSource: event.target.value,
-                referralSourceOther:
-                  event.target.value === "OTHER" ? current.referralSourceOther : "",
-              }))
-            }
-            {...fieldProps("referralSource")}
-            className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-brand"
-          >
-            <option value="">Select an option</option>
-            {referralSourceOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          {errorFor("referralSource") ? (
-            <p id="referralSource-error" className="mt-1 text-sm text-red-700" role="alert">
-              {errorFor("referralSource")}
-            </p>
-          ) : null}
-        </label>
-        {values.referralSource === "OTHER" ? (
+      <div
+        id="returning-participant-details"
+        hidden={Boolean(rememberedFirstName && !showDetails)}
+        className="space-y-4"
+      >
+        <div>
+          <h2 className="text-center text-xl font-semibold tracking-tight">Your details</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            A phone number helps us keep your registration and event-day details together.
+          </p>
+        </div>
+        <fieldset disabled={Boolean(rememberedFirstName && !showDetails)} className="grid gap-4">
           <label>
-            Tell us a little more (optional)
+            First name
             <input
-              id="referralSourceOther"
-              name="referralSourceOther"
-              maxLength={200}
-              value={values.referralSourceOther}
-              onChange={(event) => updateValue("referralSourceOther", event.target.value)}
-              {...fieldProps("referralSourceOther")}
+              id="firstName"
+              name="firstName"
+              required
+              maxLength={100}
+              value={values.firstName}
+              onChange={(event) => updateValue("firstName", event.target.value)}
+              {...fieldProps("firstName")}
               className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand"
             />
-            {errorFor("referralSourceOther") ? (
-              <p id="referralSourceOther-error" className="mt-1 text-sm text-red-700" role="alert">
-                {errorFor("referralSourceOther")}
+            {errorFor("firstName") ? (
+              <p id="firstName-error" className="mt-1 text-sm text-red-700" role="alert">
+                {errorFor("firstName")}
               </p>
             ) : null}
           </label>
-        ) : null}
-      </fieldset>
-      <fieldset disabled={Boolean(rememberedFirstName && !showDetails)} className="space-y-4">
-        <label>
-          Fitness experience (optional)
-          <textarea
-            id="fitnessExperience"
-            name="fitnessExperience"
-            maxLength={1000}
-            value={values.fitnessExperience}
-            onChange={(event) => updateValue("fitnessExperience", event.target.value)}
-            {...fieldProps("fitnessExperience")}
-            className="mt-2 min-h-28 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 outline-none transition focus:border-brand"
-          />
-          {errorFor("fitnessExperience") ? (
-            <p id="fitnessExperience-error" className="mt-1 text-sm text-red-700" role="alert">
-              {errorFor("fitnessExperience")}
-            </p>
+          <label>
+            Last name
+            <input
+              id="lastName"
+              name="lastName"
+              required
+              maxLength={100}
+              value={values.lastName}
+              onChange={(event) => updateValue("lastName", event.target.value)}
+              {...fieldProps("lastName")}
+              className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand"
+            />
+            {errorFor("lastName") ? (
+              <p id="lastName-error" className="mt-1 text-sm text-red-700" role="alert">
+                {errorFor("lastName")}
+              </p>
+            ) : null}
+          </label>
+          <label>
+            Mobile phone
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              required
+              maxLength={40}
+              placeholder="+1 518-867-5309"
+              value={values.phone}
+              onChange={(event) => updateValue("phone", event.target.value)}
+              {...fieldProps("phone")}
+              className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand"
+            />
+            {errorFor("phone") ? (
+              <p id="phone-error" className="mt-1 text-sm text-red-700" role="alert">
+                {errorFor("phone")}
+              </p>
+            ) : null}
+          </label>
+          <label>
+            Email (optional)
+            <input
+              id="email"
+              name="email"
+              type="email"
+              maxLength={254}
+              value={values.email}
+              onChange={(event) => updateValue("email", event.target.value)}
+              {...fieldProps("email")}
+              className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand"
+            />
+            {errorFor("email") ? (
+              <p id="email-error" className="mt-1 text-sm text-red-700" role="alert">
+                {errorFor("email")}
+              </p>
+            ) : null}
+          </label>
+          <label>
+            How did you hear about us? — Optional
+            <select
+              id="referralSource"
+              name="referralSource"
+              value={values.referralSource}
+              onChange={(event) =>
+                setValues((current) => ({
+                  ...current,
+                  referralSource: event.target.value,
+                  referralSourceOther:
+                    event.target.value === "OTHER" ? current.referralSourceOther : "",
+                }))
+              }
+              {...fieldProps("referralSource")}
+              className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-brand"
+            >
+              <option value="">Select an option</option>
+              {referralSourceOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {errorFor("referralSource") ? (
+              <p id="referralSource-error" className="mt-1 text-sm text-red-700" role="alert">
+                {errorFor("referralSource")}
+              </p>
+            ) : null}
+          </label>
+          {values.referralSource === "OTHER" ? (
+            <label>
+              Tell us a little more (optional)
+              <input
+                id="referralSourceOther"
+                name="referralSourceOther"
+                maxLength={200}
+                value={values.referralSourceOther}
+                onChange={(event) => updateValue("referralSourceOther", event.target.value)}
+                {...fieldProps("referralSourceOther")}
+                className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none transition focus:border-brand"
+              />
+              {errorFor("referralSourceOther") ? (
+                <p
+                  id="referralSourceOther-error"
+                  className="mt-1 text-sm text-red-700"
+                  role="alert"
+                >
+                  {errorFor("referralSourceOther")}
+                </p>
+              ) : null}
+            </label>
           ) : null}
-        </label>
-      </fieldset>
+        </fieldset>
+        <fieldset disabled={Boolean(rememberedFirstName && !showDetails)} className="space-y-4">
+          <label>
+            Fitness experience (optional)
+            <textarea
+              id="fitnessExperience"
+              name="fitnessExperience"
+              maxLength={1000}
+              value={values.fitnessExperience}
+              onChange={(event) => updateValue("fitnessExperience", event.target.value)}
+              {...fieldProps("fitnessExperience")}
+              className="mt-2 min-h-28 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 outline-none transition focus:border-brand"
+            />
+            {errorFor("fitnessExperience") ? (
+              <p id="fitnessExperience-error" className="mt-1 text-sm text-red-700" role="alert">
+                {errorFor("fitnessExperience")}
+              </p>
+            ) : null}
+          </label>
+        </fieldset>
+      </div>
       <div className="space-y-4 rounded-2xl bg-sand/70 p-5">
         <label className="flex gap-3">
           <input
