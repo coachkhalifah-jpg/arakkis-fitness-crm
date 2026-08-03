@@ -76,6 +76,7 @@ export function RegistrationForm({
     referralSource: "",
     referralSourceOther: "",
   });
+  const [rememberDevice, setRememberDevice] = useState(false);
   const [acknowledgments, setAcknowledgments] = useState({
     participationAcknowledged: false,
     dataUseAcknowledged: false,
@@ -107,10 +108,11 @@ export function RegistrationForm({
     if (!state.selectedValues && !state.acknowledgments) return;
     const frame = window.requestAnimationFrame(() => {
       if (state.selectedValues) setSelected(state.selectedValues);
+      if (state.rememberDevice !== undefined) setRememberDevice(state.rememberDevice);
       if (state.acknowledgments) setAcknowledgments(state.acknowledgments);
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [state.acknowledgments, state.selectedValues]);
+  }, [state.acknowledgments, state.rememberDevice, state.selectedValues]);
   const fieldErrors = state.fieldErrors ?? {};
   const errorFor = (field: RegistrationField) => fieldErrors[field];
   const updateValue = (field: keyof typeof values, value: string) =>
@@ -468,6 +470,34 @@ export function RegistrationForm({
           </p>
         ) : null}
       </div>
+      {!rememberedFirstName ? (
+        <fieldset className="rounded-2xl border border-brand/20 bg-white/70 p-5">
+          <legend className="sr-only">Optional device recognition</legend>
+          <label className="flex min-h-12 items-start gap-3">
+            <input
+              id="rememberDevice"
+              name="rememberDevice"
+              type="checkbox"
+              aria-describedby="rememberDevice-description"
+              checked={rememberDevice}
+              onChange={(event) => setRememberDevice(event.target.checked)}
+              className="mt-1 h-5 w-5 shrink-0 accent-brand"
+            />
+            <span>
+              <span className="block font-semibold text-ink">
+                Make future bookings faster on this device
+              </span>
+              <span
+                id="rememberDevice-description"
+                className="mt-1 block text-sm leading-6 text-slate-600"
+              >
+                We’ll securely remember this device so you won’t need to enter your information
+                again. You can remove this at any time.
+              </span>
+            </span>
+          </label>
+        </fieldset>
+      ) : null}
       {state.error ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-red-800">
           <p role="alert" aria-live="assertive">

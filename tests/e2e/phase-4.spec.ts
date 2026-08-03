@@ -448,7 +448,6 @@ test("confirmation and ICS reject the complete malformed, expired, and cross-gro
   expect(validBody).not.toContain("Token Scope Alpha");
   expect(validBody).not.toContain("Token Scope Beta");
   expect(validBody).toContain("Google Calendar");
-  await expect(page.locator('input[name="confirmationToken"]')).toHaveValue(tokenA);
   const replay = await page.request.get(
     `/registration/confirmation?token=${encodeURIComponent(tokenA)}&registration_group_id=${randomUUID()}&registration_id=${randomUUID()}`,
   );

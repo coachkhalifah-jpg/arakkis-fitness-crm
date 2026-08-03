@@ -9,7 +9,7 @@ Priority values:
 
 ### Approved pilot UX extension — DEC-051
 
-Participants may optionally remember a browser after a successful booking. The remembered device is a convenience identifier only: it may prefill/streamline a booking, but the system revalidates the participant and all authoritative booking rules at submission. Required acknowledgments remain required for every booking. No participant account, device fingerprinting, SMS, or participant history access is introduced.
+Participants may optionally choose on the first-time booking form to remember a browser for faster future bookings. The token is created only after a successful booking and is a convenience identifier only: it may prefill/streamline a booking, but the system revalidates the participant and all authoritative booking rules at submission. The participant can remove it at any time. It is not used for advertising or device fingerprinting, does not grant administrator access or expose participant history, and does not create a participant account. Required acknowledgments remain required for every booking. No SMS is introduced.
 
 ### Approved pilot extensions — DEC-049 and DEC-050
 

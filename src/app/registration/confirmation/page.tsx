@@ -2,10 +2,8 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/db/server";
 import { googleCalendarUrl, type CalendarEvent } from "@/lib/registration/calendar";
-import { RememberDevice } from "@/components/registration/remember-device";
 import { WhatToBring } from "@/components/registration/what-to-bring";
 import { CopyDirections } from "@/components/registration/copy-directions";
-import { resolveRememberedParticipant } from "@/lib/registration/device";
 
 type ConfirmationEvent = CalendarEvent & {
   event_id: string;
@@ -116,7 +114,6 @@ export default async function ConfirmationPage({
     ).values(),
   );
   const firstName = result.participant_name.trim().split(/\s+/)[0] || "there";
-  const hasRememberedDevice = Boolean(await resolveRememberedParticipant());
   const toCalendarEvent = (event: ConfirmationEvent): CalendarEvent => ({
     eventId: event.event_id,
     name: event.name,
@@ -135,42 +132,32 @@ export default async function ConfirmationPage({
   return (
     <main className="confirmation-page mx-auto w-full max-w-[520px] px-4 py-6 sm:px-5 sm:py-10">
       <Card className="confirmation-surface overflow-hidden rounded-[30px] shadow-[0_18px_50px_rgba(15,23,42,0.10)]">
-        {hasRememberedDevice ? (
-          <div className="confirmation-compact-banner" role="status">
-            <span aria-hidden="true" className="text-lg font-bold text-emerald-700">
-              ✓
-            </span>
-            <span>Bookings saved on this device</span>
-          </div>
-        ) : (
-          <header className="confirmation-header px-6 pb-6 pt-7 text-center sm:px-8 sm:pt-8">
-            <div
-              className="confirmation-success-icon mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
-              aria-hidden="true"
+        <header className="confirmation-header px-6 pb-6 pt-7 text-center sm:px-8 sm:pt-8">
+          <div
+            className="confirmation-success-icon mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
+            aria-hidden="true"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="h-7 w-7"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
             >
-              <svg
-                viewBox="0 0 24 24"
-                className="h-7 w-7"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <path d="m5 12 4 4L19 6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <h1 className="confirmation-hero-title mt-5 text-sm uppercase text-brand">
-              You&apos;re in!
-            </h1>
-            <p className="confirmation-welcome mx-auto mt-3 max-w-sm text-base text-[var(--confirmation-muted)]">
-              We’re looking forward to seeing you, {firstName}.
-            </p>
-            {successful.length > 0 ? <RememberDevice confirmationToken={token} /> : null}
-            <p className="confirmation-metadata mt-4 text-xs text-[var(--confirmation-muted)]">
-              This confirmation link expires in 24 hours. Save this device to securely access your
-              upcoming classes later.
-            </p>
-          </header>
-        )}
+              <path d="m5 12 4 4L19 6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <h1 className="confirmation-hero-title mt-5 text-sm uppercase text-brand">
+            You&apos;re in!
+          </h1>
+          <p className="confirmation-welcome mx-auto mt-3 max-w-sm text-base text-[var(--confirmation-muted)]">
+            We’re looking forward to seeing you, {firstName}.
+          </p>
+          <p className="confirmation-metadata mt-4 text-xs text-[var(--confirmation-muted)]">
+            This confirmation link expires in 24 hours. Manage your upcoming classes from the link
+            below when available.
+          </p>
+        </header>
 
         <div className="space-y-5 px-6 py-6 sm:px-8">
           {instructions.length > 0 ? (
@@ -319,11 +306,9 @@ export default async function ConfirmationPage({
             </p>
           ) : null}
 
-          {hasRememberedDevice ? (
-            <p className="confirmation-metadata text-center text-xs text-[var(--confirmation-muted)]">
-              This confirmation link expires in 24 hours.
-            </p>
-          ) : null}
+          <p className="confirmation-metadata text-center text-xs text-[var(--confirmation-muted)]">
+            This confirmation link expires in 24 hours.
+          </p>
 
           <nav aria-label="After booking">
             <div className="flex justify-center">

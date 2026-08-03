@@ -6,7 +6,10 @@ import { createClient } from "@/lib/db/server";
 import { createPrivilegedClient } from "@/lib/db/privileged";
 import { isProductionRegistrationBlocked } from "@/lib/config/env";
 import { assertPublicSlug } from "@/lib/services/phase-7";
-import { resolveRememberedParticipant } from "@/lib/registration/device";
+import {
+  rememberParticipantFromConfirmation,
+  resolveRememberedParticipant,
+} from "@/lib/registration/device";
 import { ZodError } from "zod";
 import {
   normalizeEmail,
@@ -38,6 +41,7 @@ export type RegistrationActionState = {
     participationAcknowledged: boolean;
     dataUseAcknowledged: boolean;
   };
+  rememberDevice?: boolean;
 };
 export type RegistrationAction = (
   state: RegistrationActionState,
@@ -68,6 +72,7 @@ function preserveSubmittedState(
       participationAcknowledged: form.get("participationAcknowledged") === "on",
       dataUseAcknowledged: form.get("dataUseAcknowledged") === "on",
     },
+    rememberDevice: form.get("rememberDevice") === "on",
   };
 }
 
@@ -106,8 +111,12 @@ function emailValidationState(form: FormData): RegistrationActionState {
 
 async function executeRegistration(form: FormData, selectedEventIds: string[]) {
   let confirmationToken: string | undefined;
-  const remembered =
-    form.get("continueAsRemembered") === "true" ? await resolveRememberedParticipant() : null;
+  const rememberedParticipant = await resolveRememberedParticipant();
+  const remembered = form.get("continueAsRemembered") === "true" ? rememberedParticipant : null;
+  const shouldRememberDevice =
+    form.get("rememberDevice") === "on" &&
+    form.get("continueAsRemembered") !== "true" &&
+    !rememberedParticipant;
   const input = participantInputSchema.parse({
     firstName: remembered?.first_name ?? form.get("firstName"),
     lastName: remembered?.last_name ?? form.get("lastName"),
@@ -163,6 +172,7 @@ async function executeRegistration(form: FormData, selectedEventIds: string[]) {
   const result = data as { confirmation_token?: string };
   if (!result.confirmation_token) throw new Error("submission already received");
   confirmationToken = result.confirmation_token;
+  if (shouldRememberDevice) await rememberParticipantFromConfirmation(confirmationToken);
   return confirmationToken;
 }
 

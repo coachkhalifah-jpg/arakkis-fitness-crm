@@ -193,6 +193,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await page.locator('input[type="checkbox"]').nth(0).check();
     await page.getByLabel("Synthetic participation acknowledgment.").check();
     await page.getByLabel("Synthetic data-use acknowledgment.").check();
+    await page.getByLabel("Make future bookings faster on this device").check();
     await page.getByRole("button", { name: "Book Class" }).click();
 
     await expect(page).toHaveURL(new RegExp(`/register/${fixture.slug}$`));
@@ -204,6 +205,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await expect(page.getByLabel("Mobile phone")).toHaveValue("123");
     await expect(page.getByLabel("Email (optional)")).toHaveValue("test.booker@example.test");
     await expect(page.locator('input[type="checkbox"]').nth(0)).toBeChecked();
+    await expect(page.getByLabel("Make future bookings faster on this device")).toBeChecked();
     await expect(page.getByLabel("Mobile phone")).toBeFocused();
     expect(
       localSqlQuery(

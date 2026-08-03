@@ -162,8 +162,12 @@ test.describe("Phase 8 participant productization", () => {
     await page.getByRole("button", { name: "Close What to bring" }).click();
     await expect(page.locator(".confirmation-what-to-bring-content-wrap.is-open")).toHaveCount(0);
     await expect(page.getByRole("link", { name: /download all calendar files/i })).toBeVisible();
-    await page.getByRole("button", { name: "Not now" }).click();
     await expect(page.getByRole("button", { name: "Save" })).toHaveCount(0);
+    expect(
+      localSqlQuery(
+        "select count(*) from public.participant_remembered_devices d join public.participants p on p.id=d.participant_id where p.normalized_phone = '+15185550199'",
+      ),
+    ).toBe("0");
   });
 
   test("remembers, reuses, and forgets a participant browser token safely", async ({ page }) => {
@@ -174,12 +178,11 @@ test.describe("Phase 8 participant productization", () => {
     await page.getByLabel("Mobile phone").fill("+15185550198");
     await page.getByLabel("Synthetic participation acknowledgment.").check();
     await page.getByLabel("Synthetic data-use acknowledgment.").check();
+    await page.getByLabel("Make future bookings faster on this device").check();
     await page.getByRole("button", { name: /book class/i }).click();
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
-    await page.getByRole("button", { name: "Save" }).click();
-    await expect(
-      page.getByText(/this browser will be remembered|bookings saved on this device/i),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Save" })).toHaveCount(0);
+    await expect(page.getByText(/securely remember this device/i)).toHaveCount(0);
 
     const [cookie] = (await page.context().cookies()).filter(
       (item) => item.name === "fitness_remembered_device",
@@ -218,6 +221,7 @@ test.describe("Phase 8 participant productization", () => {
 
     await page.goto(`/register/${slug}`);
     await expect(page.getByText("Welcome back")).toBeVisible();
+    await expect(page.getByLabel("Make future bookings faster on this device")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Continue as Remembered" })).toBeVisible();
     await page.getByRole("checkbox", { name: new RegExp(displayEventName) }).check();
     await page.getByLabel("Synthetic participation acknowledgment.").check();
