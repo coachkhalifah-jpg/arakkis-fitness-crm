@@ -19,7 +19,12 @@ export function SegmentedNavigation({
   const action = searchParams.get("mode") === actionMode;
   const listHref = pathname;
   return (
-    <nav className="admin-segmented-nav" aria-label={`${listLabel} workspace modes`}>
+    <nav
+      className="admin-segmented-nav"
+      data-mode={action ? "action" : "list"}
+      aria-label={`${listLabel} workspace modes`}
+    >
+      <span className="admin-segmented-indicator" aria-hidden="true" />
       <Link href={listHref} aria-current={!action ? "page" : undefined} data-selected={!action}>
         {listLabel}
       </Link>
