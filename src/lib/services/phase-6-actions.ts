@@ -71,6 +71,23 @@ export async function dismissFollowUpTask(form: FormData) {
   }
 }
 
+export async function snoozeFollowUpTask(form: FormData) {
+  try {
+    await requireSystemAdmin("/admin/follow-ups");
+    const dueAt = value(form, "dueAt");
+    if (!dueAt || Number.isNaN(Date.parse(dueAt))) throw new Error("invalid snooze date");
+    const db = await createClient();
+    const { error } = await db.rpc("phase6_snooze_follow_up_task", {
+      p_task_id: value(form, "taskId"),
+      p_due_at: dueAt,
+    } as never);
+    if (error) throw new Error(error.message);
+    revalidatePath("/admin/follow-ups");
+  } catch (error) {
+    throw new Error(safeError(error));
+  }
+}
+
 export async function assignFollowUpTask(form: FormData) {
   try {
     await requireSystemAdmin("/admin/follow-ups");

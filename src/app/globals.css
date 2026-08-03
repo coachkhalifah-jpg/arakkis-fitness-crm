@@ -119,6 +119,64 @@ body {
   background: var(--admin-surface);
   box-shadow: 0 2px 8px rgba(32, 38, 36, 0.12);
 }
+.follow-up-status-nav,
+.follow-up-filter-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.follow-up-status-nav a,
+.follow-up-filter-nav a {
+  border: 1px solid var(--admin-border);
+  border-radius: 999px;
+  padding: 0.55rem 0.85rem;
+  color: var(--admin-text-muted);
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition:
+    background-color 160ms ease-out,
+    border-color 160ms ease-out,
+    color 160ms ease-out;
+}
+.follow-up-status-nav a:hover,
+.follow-up-filter-nav a:hover,
+.follow-up-status-nav a[data-selected="true"],
+.follow-up-filter-nav a[data-selected="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--admin-text);
+}
+.follow-up-card {
+  border: 1px solid var(--admin-border);
+  border-radius: 1.5rem;
+  background: var(--admin-surface);
+  padding: 1.25rem;
+  box-shadow: 0 8px 22px rgba(10, 12, 15, 0.16);
+}
+.follow-up-card-overdue {
+  border-color: var(--danger);
+}
+.follow-up-trigger-badge {
+  display: inline-flex;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--admin-border));
+  border-radius: 999px;
+  background: var(--accent-soft);
+  padding: 0.25rem 0.6rem;
+  color: var(--accent-hover);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.follow-up-due {
+  color: var(--admin-text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: right;
+}
+.follow-up-due-overdue {
+  color: var(--danger-hover);
+}
 .admin-contextual-back {
   position: absolute;
   left: 0;
