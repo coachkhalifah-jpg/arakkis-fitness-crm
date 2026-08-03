@@ -122,6 +122,7 @@ body {
 .follow-up-status-nav,
 .follow-up-filter-nav {
   display: flex;
+  align-items: flex-start;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
