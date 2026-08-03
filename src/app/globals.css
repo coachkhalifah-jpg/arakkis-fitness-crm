@@ -210,6 +210,35 @@ body {
 .follow-up-mode-nav[data-mode="group"] .follow-up-mode-indicator {
   transform: translateX(calc(100% + 0.25rem));
 }
+.follow-up-content {
+  will-change: transform, opacity;
+}
+.follow-up-page-shell[data-mode="individual"] .follow-up-content {
+  animation: follow-up-slide-in-from-left 220ms ease-out both;
+}
+.follow-up-page-shell[data-mode="group"] .follow-up-content {
+  animation: follow-up-slide-in-from-right 220ms ease-out both;
+}
+@keyframes follow-up-slide-in-from-left {
+  from {
+    opacity: 0.72;
+    transform: translateX(-0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes follow-up-slide-in-from-right {
+  from {
+    opacity: 0.72;
+    transform: translateX(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
 .follow-up-mode-nav a {
   position: relative;
   z-index: 1;
@@ -1620,6 +1649,7 @@ textarea {
 @media (prefers-reduced-motion: reduce) {
   .follow-up-mode-nav a,
   .follow-up-mode-indicator,
+  .follow-up-content,
   .follow-up-more-filters summary,
   .follow-up-trigger-badge,
   .copy-message-button {

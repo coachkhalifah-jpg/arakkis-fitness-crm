@@ -247,8 +247,11 @@ export default async function FollowUpsPage({
   }
 
   return (
-    <section className="follow-up-page-shell admin-shell min-h-screen px-3 py-8 sm:px-8 sm:py-14">
-      <div className="mx-auto max-w-5xl">
+    <section
+      className="follow-up-page-shell admin-shell min-h-screen px-3 py-8 sm:px-8 sm:py-14"
+      data-mode="individual"
+    >
+      <div className="follow-up-content mx-auto max-w-5xl">
         <div className="admin-page-header">
           <p className="admin-eyebrow">Community engagement queue</p>
           <h1>Community</h1>
@@ -580,8 +583,11 @@ function GroupChatQueue({
   const linkFor = (nextFilter: string) =>
     `/admin/follow-ups?mode=group&status=${status}&filter=${nextFilter}`;
   return (
-    <section className="follow-up-page-shell admin-shell min-h-screen px-3 py-8 sm:px-8 sm:py-14">
-      <div className="mx-auto max-w-5xl">
+    <section
+      className="follow-up-page-shell admin-shell min-h-screen px-3 py-8 sm:px-8 sm:py-14"
+      data-mode="group"
+    >
+      <div className="follow-up-content mx-auto max-w-5xl">
         <div className="admin-page-header">
           <p className="admin-eyebrow">Community engagement queue</p>
           <h1>Community</h1>
