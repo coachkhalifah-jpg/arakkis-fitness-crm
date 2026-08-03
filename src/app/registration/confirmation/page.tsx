@@ -243,6 +243,14 @@ export default async function ConfirmationPage({
                   </div>
                 ))}
               </div>
+              <div className="confirmation-download-action mt-4 flex justify-center">
+                <a
+                  className="confirmation-calendar-download-link"
+                  href={`/registration/confirmation/ics?token=${encodeURIComponent(token)}`}
+                >
+                  Download all calendar files
+                </a>
+              </div>
             </section>
           ) : null}
 
@@ -280,17 +288,6 @@ export default async function ConfirmationPage({
                 ))}
               </div>
             </section>
-          ) : null}
-
-          {successful.length > 0 ? (
-            <div className="confirmation-download-action flex justify-center">
-              <a
-                className="confirmation-pill-button confirmation-pill-button-secondary confirmation-download-button"
-                href={`/registration/confirmation/ics?token=${encodeURIComponent(token)}`}
-              >
-                Download all calendar files
-              </a>
-            </div>
           ) : null}
 
           {events.some((event) => !event.success) ? (

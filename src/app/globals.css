@@ -857,8 +857,23 @@ body {
 .confirmation-download-action {
   padding-top: 0.5rem;
 }
-.confirmation-download-button {
+.confirmation-calendar-download-link {
+  color: var(--confirmation-muted);
+  font-size: 0.875rem;
   font-weight: 400;
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+  transition:
+    color 160ms ease-out,
+    transform 160ms ease-out;
+}
+.confirmation-calendar-download-link:hover {
+  color: var(--confirmation-text);
+  transform: translateY(-1px);
+}
+.confirmation-calendar-download-link:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
 }
 .confirmation-calendar-row {
   padding-bottom: 0.1rem;
