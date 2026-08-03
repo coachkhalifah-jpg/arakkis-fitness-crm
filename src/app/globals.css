@@ -184,6 +184,7 @@ body {
   color: var(--admin-text);
 }
 .follow-up-mode-nav {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.25rem;
@@ -192,7 +193,25 @@ body {
   background: var(--admin-surface-muted);
   padding: 0.25rem;
 }
+.follow-up-mode-indicator {
+  position: absolute;
+  top: 0.25rem;
+  bottom: 0.25rem;
+  left: 0.25rem;
+  width: calc(50% - 0.375rem);
+  border: 1px solid var(--admin-border);
+  border-radius: 0.75rem;
+  background: var(--admin-surface);
+  box-shadow: 0 2px 8px rgba(10, 12, 15, 0.18);
+  pointer-events: none;
+  transition: transform 220ms ease-out;
+}
+.follow-up-mode-nav[data-mode="group"] .follow-up-mode-indicator {
+  transform: translateX(calc(100% + 0.25rem));
+}
 .follow-up-mode-nav a {
+  position: relative;
+  z-index: 1;
   border-radius: 0.75rem;
   padding: 0.75rem 1rem;
   color: var(--admin-text-muted);
@@ -204,7 +223,6 @@ body {
     color 160ms ease-out;
 }
 .follow-up-mode-nav a[data-selected="true"] {
-  background: var(--admin-surface);
   color: var(--admin-text);
 }
 .follow-up-summary {
@@ -1600,6 +1618,7 @@ textarea {
 
 @media (prefers-reduced-motion: reduce) {
   .follow-up-mode-nav a,
+  .follow-up-mode-indicator,
   .follow-up-more-filters summary,
   .follow-up-trigger-badge,
   .copy-message-button {

@@ -271,7 +271,12 @@ export default async function FollowUpsPage({
             </span>
           </div>
         </div>
-        <nav className="follow-up-mode-nav mt-6" aria-label="Community queue mode">
+        <nav
+          className="follow-up-mode-nav mt-6"
+          data-mode="individual"
+          aria-label="Community queue mode"
+        >
+          <span className="follow-up-mode-indicator" aria-hidden="true" />
           <Link href="/admin/follow-ups?status=PENDING" data-selected>
             Touch Base
           </Link>
@@ -596,7 +601,12 @@ function GroupChatQueue({
             </span>
           </div>
         </div>
-        <nav className="follow-up-mode-nav mt-6" aria-label="Community queue mode">
+        <nav
+          className="follow-up-mode-nav mt-6"
+          data-mode="group"
+          aria-label="Community queue mode"
+        >
+          <span className="follow-up-mode-indicator" aria-hidden="true" />
           <Link href="/admin/follow-ups?status=PENDING" data-selected={false}>
             Touch Base
           </Link>
