@@ -71,6 +71,17 @@ function serviceClient() {
   });
 }
 
+async function acceptRequiredLegal(page: import("@playwright/test").Page) {
+  for (const label of [
+    /Participation Agreement.*Version 1\.0\.0/,
+    /Assumption of Risk.*Version 1\.0\.0/,
+    /Cancellation.*Policy.*Version 1\.0\.0/,
+    /Terms of Use.*Version 1\.0\.0/,
+    /Privacy Policy.*Version 1\.0\.0/,
+  ])
+    await page.getByLabel(label).check();
+}
+
 async function systemFixture(capacity = 20) {
   const service = serviceClient();
   const suffix = randomUUID().slice(0, 8);
@@ -173,9 +184,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await page.getByLabel("First name").fill("Slug");
     await page.getByLabel("Last name").fill("Participant");
     await page.getByLabel("Mobile phone").fill("+15185550123");
-    await page.locator('input[type="checkbox"]').nth(0).check();
-    await page.locator('input[type="checkbox"]').nth(1).check();
-    await page.locator('input[type="checkbox"]').nth(2).check();
+    await acceptRequiredLegal(page);
     await page.getByRole("button", { name: "Book Class" }).click();
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
     await expect(page.getByText("Phase 7 Browser Event")).toBeVisible();
@@ -191,8 +200,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await page.getByLabel("Mobile phone").fill("123");
     await page.getByLabel("Email (optional)").fill("test.booker@example.test");
     await page.locator('input[type="checkbox"]').nth(0).check();
-    await page.getByLabel("Synthetic participation acknowledgment.").check();
-    await page.getByLabel("Synthetic data-use acknowledgment.").check();
+    await acceptRequiredLegal(page);
     await page.getByLabel("Make future bookings faster on this device").check();
     await page.getByRole("button", { name: "Book Class" }).click();
 
@@ -238,9 +246,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await page.getByLabel("First name").fill("Published");
     await page.getByLabel("Last name").fill("Participant");
     await page.getByLabel("Mobile phone").fill("+15185550124");
-    await page.locator('input[type="checkbox"]').nth(0).check();
-    await page.locator('input[type="checkbox"]').nth(1).check();
-    await page.locator('input[type="checkbox"]').nth(2).check();
+    await acceptRequiredLegal(page);
     await page.getByRole("button", { name: "Book Class" }).click();
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
     const stored = localSqlQuery(
@@ -261,9 +267,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await page.getByLabel("First name").fill("Paused");
     await page.getByLabel("Last name").fill("Participant");
     await page.getByLabel("Mobile phone").fill("+15185550125");
-    await page.locator('input[type="checkbox"]').nth(0).check();
-    await page.locator('input[type="checkbox"]').nth(1).check();
-    await page.locator('input[type="checkbox"]').nth(2).check();
+    await acceptRequiredLegal(page);
     await page.getByRole("button", { name: "Book Class" }).click();
     await expect(page.locator('p[role="alert"]')).toContainText(
       /could not be completed|unavailable|no longer available/i,
@@ -303,9 +307,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await page.getByLabel("First name").fill("Tampered");
     await page.getByLabel("Last name").fill("Slug");
     await page.getByLabel("Mobile phone").fill("+15185550126");
-    await page.locator('input[type="checkbox"]').nth(0).check();
-    await page.locator('input[type="checkbox"]').nth(1).check();
-    await page.locator('input[type="checkbox"]').nth(2).check();
+    await acceptRequiredLegal(page);
     await page.getByRole("button", { name: "Book Class" }).click();
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
     expect(
@@ -343,9 +345,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await page.getByLabel("First name").fill("Late");
     await page.getByLabel("Last name").fill("Participant");
     await page.getByLabel("Mobile phone").fill("+15185550128");
-    await page.locator('input[type="checkbox"]').nth(0).check();
-    await page.locator('input[type="checkbox"]').nth(1).check();
-    await page.locator('input[type="checkbox"]').nth(2).check();
+    await acceptRequiredLegal(page);
     await page.getByRole("button", { name: "Book Class" }).click();
     await expect(page.locator('p[role="alert"]')).toContainText(/no longer available/i);
     expect(

@@ -11,6 +11,7 @@ import {
 } from "@/lib/registration/actions";
 import { participantDisplayName } from "@/lib/registration/display";
 import { referralSourceOptions } from "@/lib/registration/referral";
+import type { LegalDocument } from "@/lib/legal/documents";
 
 type Event = {
   id?: string;
@@ -46,6 +47,8 @@ export function RegistrationForm({
   publicSlug,
   seriesMode = false,
   rememberedFirstName = null,
+  legalDocuments = [],
+  termsAccepted = false,
 }: {
   events: Event[];
   participation: Acknowledgment;
@@ -54,6 +57,8 @@ export function RegistrationForm({
   publicSlug?: string;
   seriesMode?: boolean;
   rememberedFirstName?: string | null;
+  legalDocuments?: LegalDocument[];
+  termsAccepted?: boolean;
 }) {
   const [state, action, pending] = useActionState<RegistrationActionState, FormData>(
     publicSlug ? submitSlugRegistration : submitRegistration,
@@ -77,6 +82,7 @@ export function RegistrationForm({
     referralSourceOther: "",
   });
   const [rememberDevice, setRememberDevice] = useState(false);
+  const [legalDocumentIds, setLegalDocumentIds] = useState<string[]>([]);
   const [acknowledgments, setAcknowledgments] = useState({
     participationAcknowledged: false,
     dataUseAcknowledged: false,
@@ -109,10 +115,11 @@ export function RegistrationForm({
     const frame = window.requestAnimationFrame(() => {
       if (state.selectedValues) setSelected(state.selectedValues);
       if (state.rememberDevice !== undefined) setRememberDevice(state.rememberDevice);
+      if (state.legalDocumentIds) setLegalDocumentIds(state.legalDocumentIds);
       if (state.acknowledgments) setAcknowledgments(state.acknowledgments);
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [state.acknowledgments, state.rememberDevice, state.selectedValues]);
+  }, [state.acknowledgments, state.legalDocumentIds, state.rememberDevice, state.selectedValues]);
   const fieldErrors = state.fieldErrors ?? {};
   const errorFor = (field: RegistrationField) => fieldErrors[field];
   const updateValue = (field: keyof typeof values, value: string) =>
@@ -121,6 +128,17 @@ export function RegistrationForm({
     "aria-invalid": Boolean(errorFor(field)),
     "aria-describedby": errorFor(field) ? `${field}-error` : undefined,
   });
+  const legalDocument = (type: string) => legalDocuments.find((document) => document.type === type);
+  const participationDocument = legalDocument("PARTICIPATION_RISK");
+  const liabilityDocument = legalDocument("LIABILITY_WAIVER");
+  const cancellationDocument = legalDocument("CANCELLATION_POLICY");
+  const termsDocument = legalDocument("TERMS_OF_USE");
+  const privacyDocument = legalDocument("PRIVACY_POLICY");
+  const mediaDocument = legalDocument("MEDIA_CONSENT");
+  const toggleLegalDocument = (id: string, checked: boolean) =>
+    setLegalDocumentIds((current) =>
+      checked ? [...new Set([...current, id])] : current.filter((value) => value !== id),
+    );
   if (!participation || !dataUse)
     return (
       <p className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-900">
@@ -134,6 +152,9 @@ export function RegistrationForm({
       <input type="hidden" name="participationVersionId" value={participation.id} />
       <input type="hidden" name="dataUseVersionId" value={dataUse.id} />
       <input type="hidden" name="phoneCountry" value="US" />
+      {legalDocumentIds.includes(participationDocument?.versionId ?? "") ? (
+        <input type="hidden" name="participationAcknowledged" value="on" />
+      ) : null}
       {publicSlug ? <input type="hidden" name="registrationSlug" value={publicSlug} /> : null}
       {seriesMode ? <input type="hidden" name="seriesMode" value="true" /> : null}
       <fieldset className="registration-date-selection">
@@ -422,31 +443,86 @@ export function RegistrationForm({
           </label>
         </fieldset>
       </div>
-      <div className="space-y-4 rounded-2xl bg-sand/70 p-5">
-        <label className="flex gap-3">
-          <input
-            id="participationAcknowledged"
-            name="participationAcknowledged"
-            type="checkbox"
-            required
-            checked={acknowledgments.participationAcknowledged}
-            onChange={(event) =>
-              setAcknowledgments((current) => ({
-                ...current,
-                participationAcknowledged: event.target.checked,
-              }))
-            }
-            {...fieldProps("participationAcknowledged")}
-            className="mt-1 h-5 w-5 accent-brand"
-          />
-          <span>{participation.text}</span>
-        </label>
-        {errorFor("participationAcknowledged") ? (
-          <p id="participationAcknowledged-error" className="text-sm text-red-700" role="alert">
-            {errorFor("participationAcknowledged")}
-          </p>
+      <div className="space-y-5 rounded-2xl bg-sand/70 p-5">
+        <p className="text-sm font-semibold uppercase tracking-[0.14em] text-brand">
+          Review before booking
+        </p>
+        {[
+          {
+            document: participationDocument,
+            id: "participationAcknowledged",
+            name: "legalDocumentIds",
+            required: true,
+          },
+          {
+            document: liabilityDocument,
+            id: "liabilityAcknowledged",
+            name: "legalDocumentIds",
+            required: true,
+          },
+          {
+            document: cancellationDocument,
+            id: "cancellationAcknowledged",
+            name: "legalDocumentIds",
+            required: true,
+          },
+        ].map(({ document, id, name, required }) =>
+          document ? (
+            <label key={document.type} className="flex gap-3">
+              <input
+                id={id}
+                name={name}
+                value={document.versionId}
+                type="checkbox"
+                required={required}
+                checked={legalDocumentIds.includes(document.versionId)}
+                onChange={(event) => toggleLegalDocument(document.versionId, event.target.checked)}
+                className="mt-1 h-5 w-5 shrink-0 accent-brand"
+              />
+              <span>
+                I agree to the{" "}
+                <a
+                  className="font-semibold underline"
+                  href={`/legal/${document.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {document.title}
+                </a>{" "}
+                (Version {document.version}).
+              </span>
+            </label>
+          ) : null,
+        )}
+        {termsDocument && !termsAccepted ? (
+          <label className="flex gap-3">
+            <input
+              id="termsAcknowledged"
+              name="legalDocumentIds"
+              value={termsDocument.versionId}
+              type="checkbox"
+              required
+              checked={legalDocumentIds.includes(termsDocument.versionId)}
+              onChange={(event) =>
+                toggleLegalDocument(termsDocument.versionId, event.target.checked)
+              }
+              className="mt-1 h-5 w-5 shrink-0 accent-brand"
+            />
+            <span>
+              I accept the{" "}
+              <a
+                className="font-semibold underline"
+                href={`/legal/${termsDocument.slug}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {termsDocument.title}
+              </a>{" "}
+              (Version {termsDocument.version}).
+            </span>
+          </label>
         ) : null}
-        <label className="flex gap-3">
+        <label className="flex gap-3 border-t border-sand-foreground/20 pt-4">
           <input
             id="dataUseAcknowledged"
             name="dataUseAcknowledged"
@@ -460,14 +536,47 @@ export function RegistrationForm({
               }))
             }
             {...fieldProps("dataUseAcknowledged")}
-            className="mt-1 h-5 w-5 accent-brand"
+            className="mt-1 h-5 w-5 shrink-0 accent-brand"
           />
-          <span>{dataUse.text}</span>
+          <span>
+            I acknowledge the{" "}
+            <a
+              className="font-semibold underline"
+              href={`/legal/${privacyDocument?.slug ?? "privacy"}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Privacy Policy
+            </a>{" "}
+            (Version {privacyDocument?.version ?? "1.0.0"}).
+          </span>
         </label>
-        {errorFor("dataUseAcknowledged") ? (
-          <p id="dataUseAcknowledged-error" className="text-sm text-red-700" role="alert">
-            {errorFor("dataUseAcknowledged")}
-          </p>
+        {mediaDocument ? (
+          <label className="flex gap-3 border-t border-sand-foreground/20 pt-4">
+            <input
+              id="mediaConsent"
+              name="legalDocumentIds"
+              value={mediaDocument.versionId}
+              type="checkbox"
+              checked={legalDocumentIds.includes(mediaDocument.versionId)}
+              onChange={(event) =>
+                toggleLegalDocument(mediaDocument.versionId, event.target.checked)
+              }
+              className="mt-1 h-5 w-5 shrink-0 accent-brand"
+            />
+            <span>
+              Optional: grant{" "}
+              <a
+                className="font-semibold underline"
+                href={`/legal/${mediaDocument.slug}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Photo &amp; Video Consent
+              </a>{" "}
+              (Version {mediaDocument.version}).
+            </span>
+          </label>
         ) : null}
       </div>
       {!rememberedFirstName ? (

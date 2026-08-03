@@ -12,6 +12,7 @@ const publicSchema = z.object({
 const serverSchema = publicSchema.extend({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   APP_ENV: z.enum(appEnvironments),
+  LEGAL_READINESS: z.enum(["PROVISIONAL", "APPROVED"]).default("PROVISIONAL"),
   APP_BASE_URL: z.string().url().optional(),
 });
 
@@ -40,6 +41,7 @@ export function getServerEnv() {
     ...getPublicEnv(),
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     APP_ENV: process.env.APP_ENV,
+    LEGAL_READINESS: process.env.LEGAL_READINESS,
     APP_BASE_URL: process.env.APP_BASE_URL,
   });
   const canonicalUrl = env.APP_BASE_URL || env.NEXT_PUBLIC_APP_URL;
@@ -55,6 +57,5 @@ export function assertRuntimeEnvironment(): void {
 
 /** Production registration remains blocked until the database/legal process is approved. */
 export function isProductionRegistrationBlocked() {
-  const env = process.env.APP_ENV;
-  return env === "production";
+  return process.env.APP_ENV === "production" && process.env.LEGAL_READINESS !== "APPROVED";
 }

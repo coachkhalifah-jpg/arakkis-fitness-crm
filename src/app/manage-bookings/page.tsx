@@ -101,6 +101,12 @@ export default async function ManageBookingsPage() {
       <Link className="mt-7 inline-block font-semibold text-brand underline" href="/events">
         Book another class
       </Link>
+      <Link
+        className="ml-5 inline-block font-semibold text-brand underline"
+        href="/legal/cancellation"
+      >
+        Cancellation &amp; Refund Policy
+      </Link>
     </main>
   );
 }

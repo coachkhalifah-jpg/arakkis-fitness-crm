@@ -31,7 +31,7 @@ within the existing event/registration model:
   introduce participant uploads, automated messaging, participant accounts, or group creation.
 
 These extensions do not authorize production registration while the
-Participation acknowledgment remains provisional.
+The pilot legal baseline is owner-approved for application readiness; no attorney or legal-counsel approval is claimed. Production activation remains separately gated.
 
 ### Approved design-assets extension — DEC-053
 

@@ -83,7 +83,7 @@ begin
   if has_table_privilege('anon', 'public.participants', 'SELECT') then raise exception 'anon participant privilege leaked'; end if;
   if has_table_privilege('anon', 'public.registrations', 'INSERT') then raise exception 'anon registration insert privilege leaked'; end if;
   if not has_table_privilege('anon', 'public.public_event_schedule', 'SELECT') then raise exception 'anon public schedule privilege missing'; end if;
-  if not has_function_privilege('anon', 'public.register_selected_events(text,text,text,text,text,text,text,uuid,text,text,uuid[],uuid,uuid,timestamptz,timestamptz,inet,text,text)', 'EXECUTE') then raise exception 'anon RPC privilege missing'; end if;
+  if not has_function_privilege('anon', 'public.register_selected_events_with_legal(text,text,text,text,text,text,text,text,uuid[],uuid,uuid,timestamptz,timestamptz,inet,text,text,text,text,uuid[])', 'EXECUTE') then raise exception 'anon legal RPC privilege missing'; end if;
   if has_function_privilege('anon', 'public.has_event_access(uuid)', 'EXECUTE') then raise exception 'anon helper privilege leaked'; end if;
 end;
 $$;
@@ -121,12 +121,13 @@ do $$
 declare
   response jsonb;
 begin
-  response := public.register_selected_events_with_referral(
+  response := public.register_selected_events_with_legal(
     'Existing', 'Affiliated', '+15550000006', '+15550000006', 'US', null, null, null,
     array['40000000-0000-0000-0000-000000000002'::uuid],
     '60000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002',
     now(), now(), '127.0.0.1', 'phase-1-referral-runtime', 'runtime-referral',
-    'OTHER', 'Partner recommendation'
+    'OTHER', 'Partner recommendation',
+    array['03500000-0000-0000-0000-000000000001'::uuid,'03500000-0000-0000-0000-000000000002'::uuid,'03500000-0000-0000-0000-000000000003'::uuid,'03500000-0000-0000-0000-000000000004'::uuid,'03500000-0000-0000-0000-000000000005'::uuid]
   );
   perform set_config('app.referral_group_id', response->>'registration_group_id', true);
 end;
@@ -161,15 +162,15 @@ do $$
 declare
   response jsonb;
 begin
-  response := public.register_selected_events('RPC', 'Participant', '+15550000003', '+15550000003', 'US', null, null, '20000000-0000-0000-0000-000000000001', null, null, array['40000000-0000-0000-0000-000000000003'::uuid], '60000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002', now(), now(), '127.0.0.1', 'phase-1-runtime', 'runtime-replay');
+  response := public.register_selected_events_with_legal('RPC', 'Participant', '+15550000003', '+15550000003', 'US', null, null, null, array['40000000-0000-0000-0000-000000000003'::uuid], '60000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002', now(), now(), '127.0.0.1', 'phase-1-runtime', 'runtime-replay', null, null, array['03500000-0000-0000-0000-000000000001'::uuid,'03500000-0000-0000-0000-000000000002'::uuid,'03500000-0000-0000-0000-000000000003'::uuid,'03500000-0000-0000-0000-000000000004'::uuid,'03500000-0000-0000-0000-000000000005'::uuid]);
   if coalesce((response->'results'->0->>'success')::boolean, false) is distinct from true then raise exception 'valid RPC registration failed: %', response; end if;
   if response->>'confirmation_token' is null then raise exception 'valid RPC did not return confirmation token'; end if;
-  response := public.register_selected_events('RPC', 'Participant', '+15550000003', '+15550000003', 'US', null, null, '20000000-0000-0000-0000-000000000001', null, null, array['40000000-0000-0000-0000-000000000003'::uuid], '60000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002', now(), now(), '127.0.0.1', 'phase-1-runtime', 'runtime-replay');
+  response := public.register_selected_events_with_legal('RPC', 'Participant', '+15550000003', '+15550000003', 'US', null, null, null, array['40000000-0000-0000-0000-000000000003'::uuid], '60000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002', now(), now(), '127.0.0.1', 'phase-1-runtime', 'runtime-replay', null, null, array['03500000-0000-0000-0000-000000000001'::uuid,'03500000-0000-0000-0000-000000000002'::uuid,'03500000-0000-0000-0000-000000000003'::uuid,'03500000-0000-0000-0000-000000000004'::uuid,'03500000-0000-0000-0000-000000000005'::uuid]);
   if response->>'confirmation_token' is not null then raise exception 'RPC replay issued a new token'; end if;
   if (response->'results'->0->>'success')::boolean is distinct from true then raise exception 'RPC replay did not return the original result'; end if;
-  response := public.register_selected_events('RPC', 'Participant', '+15550000003', '+15550000003', 'US', null, null, '20000000-0000-0000-0000-000000000001', null, null, array['40000000-0000-0000-0000-000000000003'::uuid], '60000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002', now(), now(), '127.0.0.1', 'phase-1-runtime', 'runtime-duplicate');
+  response := public.register_selected_events_with_legal('RPC', 'Participant', '+15550000003', '+15550000003', 'US', null, null, null, array['40000000-0000-0000-0000-000000000003'::uuid], '60000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002', now(), now(), '127.0.0.1', 'phase-1-runtime', 'runtime-duplicate', null, null, array['03500000-0000-0000-0000-000000000001'::uuid,'03500000-0000-0000-0000-000000000002'::uuid,'03500000-0000-0000-0000-000000000003'::uuid,'03500000-0000-0000-0000-000000000004'::uuid,'03500000-0000-0000-0000-000000000005'::uuid]);
   if response->'results'->0->>'reason' <> 'ALREADY_REGISTERED' then raise exception 'duplicate RPC was not rejected: %', response; end if;
-  response := public.register_selected_events('Partial', 'Participant', '+15550000004', '+15550000004', 'US', null, null, '20000000-0000-0000-0000-000000000001', null, null, array['40000000-0000-0000-0000-000000000003'::uuid, '40000000-0000-0000-0000-000000000004'::uuid], '60000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002', now(), now(), '127.0.0.1', 'phase-1-runtime', 'runtime-partial');
+  response := public.register_selected_events_with_legal('Partial', 'Participant', '+15550000004', '+15550000004', 'US', null, null, null, array['40000000-0000-0000-0000-000000000003'::uuid, '40000000-0000-0000-0000-000000000004'::uuid], '60000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002', now(), now(), '127.0.0.1', 'phase-1-runtime', 'runtime-partial', null, null, array['03500000-0000-0000-0000-000000000001'::uuid,'03500000-0000-0000-0000-000000000002'::uuid,'03500000-0000-0000-0000-000000000003'::uuid,'03500000-0000-0000-0000-000000000004'::uuid,'03500000-0000-0000-0000-000000000005'::uuid]);
   if (response->'results'->0->>'success')::boolean is distinct from true or response->'results'->1->>'reason' <> 'FULL' then raise exception 'partial RPC result incorrect: %', response; end if;
 exception when others then
   if sqlerrm like 'invalid Participation%' then return; end if;
@@ -180,7 +181,7 @@ $$;
 do $$
 begin
   begin
-    perform public.register_selected_events('Bad', 'Acknowledgment', '+15550000005', '+15550000005', 'US', null, null, null, null, null, array['40000000-0000-0000-0000-000000000003'::uuid], gen_random_uuid(), '60000000-0000-0000-0000-000000000002', now(), now(), '127.0.0.1', 'phase-1-runtime', 'runtime-invalid-ack');
+    perform public.register_selected_events_with_legal('Bad', 'Acknowledgment', '+15550000005', '+15550000005', 'US', null, null, null, array['40000000-0000-0000-0000-000000000003'::uuid], gen_random_uuid(), '60000000-0000-0000-0000-000000000002', now(), now(), '127.0.0.1', 'phase-1-runtime', 'runtime-invalid-ack', null, null, array['03500000-0000-0000-0000-000000000001'::uuid,'03500000-0000-0000-0000-000000000002'::uuid,'03500000-0000-0000-0000-000000000003'::uuid,'03500000-0000-0000-0000-000000000004'::uuid,'03500000-0000-0000-0000-000000000005'::uuid]);
     raise exception 'invalid acknowledgment was accepted';
   exception when others then
     if sqlerrm not like 'invalid Participation%' then raise; end if;

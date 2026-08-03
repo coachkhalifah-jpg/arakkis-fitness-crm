@@ -2,9 +2,11 @@ import { RegistrationForm } from "@/components/registration/registration-form";
 import { EventHero } from "@/components/registration/event-hero";
 import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/db/server";
+import { createPrivilegedClient } from "@/lib/db/privileged";
 import { isProductionRegistrationBlocked } from "@/lib/config/env";
 import { resolveRememberedParticipant } from "@/lib/registration/device";
 import { designAssetPublicUrl } from "@/lib/config/design-assets";
+import { legalDocuments } from "@/lib/legal/documents";
 
 export default async function PublicEventPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -16,6 +18,7 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
   const registrationConfig = (config ?? {}) as {
     participation: { id: string; text: string } | null;
     data_use: { id: string; text: string } | null;
+    legal_documents: unknown[];
     organizations: Array<{ id: string; name: string }>;
   };
   const event = data as {
@@ -60,6 +63,20 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
     );
   const legallyBlocked = isProductionRegistrationBlocked();
   const remembered = await resolveRememberedParticipant();
+  let termsAccepted = false;
+  if (remembered) {
+    const privileged = createPrivilegedClient();
+    const { data: accepted } = await privileged
+      .from("registration_legal_acceptances")
+      .select("id")
+      .eq("participant_id", remembered.participant_id)
+      .eq(
+        "acknowledgment_version_id",
+        legalDocuments.find((document) => document.type === "TERMS_OF_USE")?.versionId ?? "",
+      )
+      .maybeSingle();
+    termsAccepted = Boolean(accepted);
+  }
   const { data: eventAssets } = await db
     .from("design_assets")
     .select("asset_type,storage_path,focal_position")
@@ -131,6 +148,8 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
               publicSlug={slug}
               seriesMode={Boolean(event.series_slug)}
               rememberedFirstName={remembered?.first_name ?? null}
+              legalDocuments={registrationConfig.legal_documents as never}
+              termsAccepted={termsAccepted}
             />
           </div>
         ) : (

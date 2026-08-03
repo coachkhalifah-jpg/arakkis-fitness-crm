@@ -32,6 +32,9 @@ export default async function ManageBookingPage({
       <Link className="text-sm font-semibold text-brand underline" href="/manage-bookings">
         Back to bookings
       </Link>
+      <Link className="ml-5 text-sm font-semibold text-brand underline" href="/legal/cancellation">
+        Cancellation &amp; Refund Policy
+      </Link>
       <Card className="mt-5 p-6">
         <h1 className="text-2xl font-semibold">{booking.name}</h1>
         <p className="mt-3">

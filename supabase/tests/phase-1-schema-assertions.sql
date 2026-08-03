@@ -43,7 +43,7 @@ begin
     raise exception 'schema assertion failed: registration referral fields are missing';
   end if;
   if not exists (
-    select 1 from pg_proc where pronamespace = 'public'::regnamespace and proname = 'register_selected_events_with_referral'
+    select 1 from pg_proc where pronamespace = 'public'::regnamespace and proname = 'register_selected_events_with_referral_internal'
   ) then
     raise exception 'schema assertion failed: referral registration RPC is missing';
   end if;
@@ -84,19 +84,26 @@ begin
   if has_function_privilege('anon', 'public.is_active_system_admin()', 'EXECUTE') then
     raise exception 'security assertion failed: anon can execute privileged helper';
   end if;
-  if not has_function_privilege(
+  if has_function_privilege(
     'anon',
     'public.register_selected_events(text,text,text,text,text,text,text,uuid,text,text,uuid[],uuid,uuid,timestamptz,timestamptz,inet,text,text)',
     'EXECUTE'
   ) then
-    raise exception 'security assertion failed: anon cannot execute registration RPC';
+    raise exception 'security assertion failed: legacy anon registration RPC remains';
   end if;
   if not has_function_privilege(
     'anon',
-    'public.register_selected_events_with_referral(text,text,text,text,text,text,text,text,uuid[],uuid,uuid,timestamptz,timestamptz,inet,text,text,text,text)',
+    'public.register_selected_events_with_legal(text,text,text,text,text,text,text,text,uuid[],uuid,uuid,timestamptz,timestamptz,inet,text,text,text,text,uuid[])',
     'EXECUTE'
   ) then
-    raise exception 'security assertion failed: anon cannot execute referral registration RPC';
+    raise exception 'security assertion failed: anon cannot execute legal registration RPC';
+  end if;
+  if has_function_privilege(
+    'anon',
+    'public.register_selected_events_with_referral_internal(text,text,text,text,text,text,text,text,uuid[],uuid,uuid,timestamptz,timestamptz,inet,text,text,text,text)',
+    'EXECUTE'
+  ) then
+    raise exception 'security assertion failed: internal registration RPC leaked';
   end if;
 end;
 $$;

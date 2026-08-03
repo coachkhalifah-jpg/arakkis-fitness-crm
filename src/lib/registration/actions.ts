@@ -42,6 +42,7 @@ export type RegistrationActionState = {
     dataUseAcknowledged: boolean;
   };
   rememberDevice?: boolean;
+  legalDocumentIds?: string[];
 };
 export type RegistrationAction = (
   state: RegistrationActionState,
@@ -73,6 +74,7 @@ function preserveSubmittedState(
       dataUseAcknowledged: form.get("dataUseAcknowledged") === "on",
     },
     rememberDevice: form.get("rememberDevice") === "on",
+    legalDocumentIds: [...new Set(form.getAll("legalDocumentIds").map(String))],
   };
 }
 
@@ -147,7 +149,8 @@ async function executeRegistration(form: FormData, selectedEventIds: string[]) {
     (process.env.NODE_ENV === "development" ? "127.0.0.1" : null);
   if (!userAgent || !ipAddress) throw new Error("registration evidence unavailable");
   const db = await createClient();
-  const { data, error } = await db.rpc("register_selected_events_with_referral", {
+  const legalDocumentIds = [...new Set(form.getAll("legalDocumentIds").map(String))];
+  const { data, error } = await db.rpc("register_selected_events_with_legal", {
     p_first_name: input.firstName.trim(),
     p_last_name: input.lastName.trim(),
     p_display_phone: input.phone.trim(),
@@ -167,6 +170,7 @@ async function executeRegistration(form: FormData, selectedEventIds: string[]) {
     p_referral_source: input.referralSource || null,
     p_referral_source_other_text:
       input.referralSource === "OTHER" ? input.referralSourceOther || null : null,
+    p_legal_document_version_ids: legalDocumentIds,
   } as never);
   if (error || !data) throw new Error("registration unavailable");
   const result = data as { confirmation_token?: string };

@@ -15,6 +15,17 @@ function sql(value: string) {
   return `'${value.replaceAll("'", "''")}'`;
 }
 
+async function acceptRequiredLegal(page: import("@playwright/test").Page) {
+  for (const label of [
+    /Participation Agreement.*Version 1\.0\.0/,
+    /Assumption of Risk.*Version 1\.0\.0/,
+    /Cancellation.*Policy.*Version 1\.0\.0/,
+    /Terms of Use.*Version 1\.0\.0/,
+    /Privacy Policy.*Version 1\.0\.0/,
+  ])
+    await page.getByLabel(label).check();
+}
+
 function localSql(statement: string) {
   const container = execFileSync(
     "docker",
@@ -145,8 +156,7 @@ test.describe("Phase 8 participant productization", () => {
     await page.getByLabel("First name").fill("Keyboard");
     await page.getByLabel("Last name").fill("Participant");
     await page.getByLabel("Mobile phone").fill("+15185550199");
-    await page.getByLabel("Synthetic participation acknowledgment.").check();
-    await page.getByLabel("Synthetic data-use acknowledgment.").check();
+    await acceptRequiredLegal(page);
     await page.getByRole("button", { name: /book class/i }).press("Enter");
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
     await expect(page.getByRole("heading", { name: "You're in!" })).toBeVisible();
@@ -176,8 +186,7 @@ test.describe("Phase 8 participant productization", () => {
     await page.getByLabel("First name").fill("Remembered");
     await page.getByLabel("Last name").fill("Participant");
     await page.getByLabel("Mobile phone").fill("+15185550198");
-    await page.getByLabel("Synthetic participation acknowledgment.").check();
-    await page.getByLabel("Synthetic data-use acknowledgment.").check();
+    await acceptRequiredLegal(page);
     await page.getByLabel("Make future bookings faster on this device").check();
     await page.getByRole("button", { name: /book class/i }).click();
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
@@ -224,8 +233,7 @@ test.describe("Phase 8 participant productization", () => {
     await expect(page.getByLabel("Make future bookings faster on this device")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Continue as Remembered" })).toBeVisible();
     await page.getByRole("checkbox", { name: new RegExp(displayEventName) }).check();
-    await page.getByLabel("Synthetic participation acknowledgment.").check();
-    await page.getByLabel("Synthetic data-use acknowledgment.").check();
+    await acceptRequiredLegal(page);
     await page.getByRole("button", { name: /continue as remembered/i }).click();
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
 

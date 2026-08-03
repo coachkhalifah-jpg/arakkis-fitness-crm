@@ -316,6 +316,11 @@ export default async function ConfirmationPage({
                 Browse more classes
               </Link>
             </div>
+            <div className="mt-3 flex justify-center">
+              <Link className="confirmation-browse-link" href="/legal/cancellation">
+                Cancellation &amp; Refund Policy
+              </Link>
+            </div>
           </nav>
         </div>
       </Card>

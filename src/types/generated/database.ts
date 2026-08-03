@@ -499,8 +499,6 @@ export type Database = {
           event_id: string;
           affiliation_organization_id_at_registration: string | null;
           affiliation_other_text_at_registration: string | null;
-          referral_source: Database["public"]["Enums"]["registration_referral_source"] | null;
-          referral_source_other_text: string | null;
           registration_status: Database["public"]["Enums"]["registration_status"];
           registration_outcome: Database["public"]["Enums"]["registration_outcome"];
           registered_at: string;
@@ -523,8 +521,6 @@ export type Database = {
           event_id: string;
           affiliation_organization_id_at_registration?: string;
           affiliation_other_text_at_registration?: string;
-          referral_source?: Database["public"]["Enums"]["registration_referral_source"];
-          referral_source_other_text?: string;
           registration_status?: Database["public"]["Enums"]["registration_status"];
           registration_outcome?: Database["public"]["Enums"]["registration_outcome"];
           registered_at?: string;
@@ -547,8 +543,6 @@ export type Database = {
           event_id: string;
           affiliation_organization_id_at_registration?: string;
           affiliation_other_text_at_registration?: string;
-          referral_source?: Database["public"]["Enums"]["registration_referral_source"];
-          referral_source_other_text?: string;
           registration_status?: Database["public"]["Enums"]["registration_status"];
           registration_outcome?: Database["public"]["Enums"]["registration_outcome"];
           registered_at?: string;
@@ -1367,6 +1361,171 @@ export type Database = {
         };
         Relationships: [];
       };
+      participant_booking_management_tokens: {
+        Row: {
+          id: string;
+          participant_id: string;
+          token_hash: string;
+          email: string;
+          issued_at: string;
+          expires_at: string;
+          consumed_at: string | null;
+          revoked_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          participant_id: string;
+          token_hash: string;
+          email: string;
+          issued_at?: string;
+          expires_at: string;
+          consumed_at?: string;
+          revoked_at?: string;
+        };
+        Update: {
+          id?: string;
+          participant_id: string;
+          token_hash: string;
+          email: string;
+          issued_at?: string;
+          expires_at: string;
+          consumed_at?: string;
+          revoked_at?: string;
+        };
+        Relationships: [];
+      };
+      participant_booking_audits: {
+        Row: {
+          id: string;
+          participant_id: string;
+          registration_id: string;
+          action: string;
+          source_event_id: string;
+          target_event_id: string | null;
+          old_venue_id: string | null;
+          new_venue_id: string | null;
+          result: string;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          participant_id: string;
+          registration_id: string;
+          action: string;
+          source_event_id: string;
+          target_event_id?: string;
+          old_venue_id?: string;
+          new_venue_id?: string;
+          result: string;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          participant_id: string;
+          registration_id: string;
+          action: string;
+          source_event_id: string;
+          target_event_id?: string;
+          old_venue_id?: string;
+          new_venue_id?: string;
+          result: string;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      group_chat_reminders: {
+        Row: {
+          id: string;
+          organization_id: string;
+          event_id: string | null;
+          reminder_type: Database["public"]["Enums"]["group_chat_reminder_type"];
+          trigger_key: string;
+          due_at: string;
+          status: Database["public"]["Enums"]["follow_up_status"];
+          suggested_message: string;
+          copied_at: string | null;
+          copied_by_admin_id: string | null;
+          completion_notes: string | null;
+          completed_at: string | null;
+          completed_by_admin_id: string | null;
+          completion_outcome: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          event_id?: string;
+          reminder_type: Database["public"]["Enums"]["group_chat_reminder_type"];
+          trigger_key: string;
+          due_at: string;
+          status?: Database["public"]["Enums"]["follow_up_status"];
+          suggested_message: string;
+          copied_at?: string;
+          copied_by_admin_id?: string;
+          completion_notes?: string;
+          completed_at?: string;
+          completed_by_admin_id?: string;
+          completion_outcome?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id: string;
+          event_id?: string;
+          reminder_type: Database["public"]["Enums"]["group_chat_reminder_type"];
+          trigger_key: string;
+          due_at: string;
+          status?: Database["public"]["Enums"]["follow_up_status"];
+          suggested_message: string;
+          copied_at?: string;
+          copied_by_admin_id?: string;
+          completion_notes?: string;
+          completed_at?: string;
+          completed_by_admin_id?: string;
+          completion_outcome?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      registration_legal_acceptances: {
+        Row: {
+          id: string;
+          participant_id: string;
+          registration_group_id: string;
+          acknowledgment_version_id: string;
+          accepted_at: string;
+          acceptance_method: string;
+          ip_address: string;
+          user_agent: string;
+        };
+        Insert: {
+          id?: string;
+          participant_id: string;
+          registration_group_id: string;
+          acknowledgment_version_id: string;
+          accepted_at?: string;
+          acceptance_method: string;
+          ip_address: string;
+          user_agent: string;
+        };
+        Update: {
+          id?: string;
+          participant_id: string;
+          registration_group_id: string;
+          acknowledgment_version_id: string;
+          accepted_at?: string;
+          acceptance_method: string;
+          ip_address: string;
+          user_agent: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       public_event_schedule: { Row: Record<string, unknown>; Relationships: [] };
@@ -1399,7 +1558,9 @@ export type Database = {
       cancellation_request_status: "PENDING" | "APPROVED" | "REJECTED" | "WITHDRAWN";
       cancellation_type: "PERMANENT" | "RESCHEDULING_PLANNED" | "REPLACEMENT_DATE_TO_BE_ANNOUNCED";
       cancellation_template_type:
-        "PERMANENT_CANCELLATION" | "REPLACEMENT_DATE_PENDING" | "REPLACEMENT_EVENT_AVAILABLE";
+        | "PERMANENT_CANCELLATION"
+        | "REPLACEMENT_DATE_PENDING"
+        | "REPLACEMENT_EVENT_AVAILABLE";
       template_status: "DRAFT" | "PUBLISHED" | "RETIRED";
       acknowledgment_type: "PARTICIPATION_RISK" | "DATA_USE" | "WHATSAPP_DISCLOSURE";
       legal_status: "DRAFT" | "PROVISIONAL" | "APPROVED" | "RETIRED" | "REVOKED";
@@ -1425,6 +1586,18 @@ export type Database = {
         | "VENUE_ANNOUNCEMENT"
         | "PREVIOUS_CLASS"
         | "OTHER";
+      group_chat_reminder_type:
+        | "CLASS_PREVIEW"
+        | "ATTENDANCE_CHECK_IN"
+        | "POST_CLASS_REFLECTION"
+        | "WELCOME_FIRST_TIME"
+        | "THIRD_CLASS_MILESTONE"
+        | "TENTH_CLASS_MILESTONE"
+        | "WEEKLY_CHALLENGE"
+        | "WEEKLY_TIP"
+        | "COMMUNITY_POLL"
+        | "INACTIVE_GROUP"
+        | "ORGANIZER_CANCELLATION";
     };
     CompositeTypes: {};
   };

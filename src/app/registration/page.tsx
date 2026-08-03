@@ -14,6 +14,7 @@ export default async function RegistrationPage() {
   const registrationConfig = (config ?? {}) as {
     participation: { id: string; text: string } | null;
     data_use: { id: string; text: string } | null;
+    legal_documents: unknown[];
     organizations: Array<{ id: string; name: string }>;
   };
   return (
@@ -27,7 +28,7 @@ export default async function RegistrationPage() {
       </div>
       {isProductionRegistrationBlocked() ? (
         <Card className="border-amber-300 bg-amber-50 p-6" role="status">
-          Registration is unavailable while the Participation acknowledgment remains provisional. No
+          Registration is unavailable while required pilot legal readiness is pending. No
           participant information can be submitted.
         </Card>
       ) : events && events.length > 0 ? (
@@ -36,6 +37,7 @@ export default async function RegistrationPage() {
           participation={registrationConfig.participation}
           dataUse={registrationConfig.data_use}
           idempotencyKey={crypto.randomUUID()}
+          legalDocuments={registrationConfig.legal_documents as never}
         />
       ) : (
         <EmptyState

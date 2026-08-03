@@ -15,6 +15,17 @@ function sql(value: string) {
   return `'${value.replaceAll("'", "''")}'`;
 }
 
+async function acceptRequiredLegal(page: Page) {
+  for (const label of [
+    /Participation Agreement.*Version 1\.0\.0/,
+    /Assumption of Risk.*Version 1\.0\.0/,
+    /Cancellation.*Policy.*Version 1\.0\.0/,
+    /Terms of Use.*Version 1\.0\.0/,
+    /Privacy Policy.*Version 1\.0\.0/,
+  ])
+    await page.getByLabel(label).check();
+}
+
 function localSql(statement: string) {
   const container = execFileSync(
     "docker",
@@ -158,7 +169,7 @@ function publicRegistrationClient() {
 
 async function submitPublicRegistration(eventId: string, firstName: string, lastName: string) {
   const client = publicRegistrationClient();
-  return client.rpc("register_selected_events", {
+  return client.rpc("register_selected_events_with_legal", {
     p_first_name: firstName,
     p_last_name: lastName,
     p_display_phone: `+1 (518) 555-${Math.floor(1000 + Math.random() * 8999)}`,
@@ -166,8 +177,6 @@ async function submitPublicRegistration(eventId: string, firstName: string, last
     p_phone_country: "US",
     p_email: `${firstName.toLowerCase().replaceAll(" ", "-")}@example.test`,
     p_normalized_email: `${firstName.toLowerCase().replaceAll(" ", "-")}@example.test`,
-    p_primary_affiliation_organization_id: null,
-    p_affiliation_other_text: null,
     p_fitness_experience: null,
     p_event_ids: [eventId],
     p_participation_acknowledgment_version_id: fixture.participationAckId,
@@ -177,6 +186,13 @@ async function submitPublicRegistration(eventId: string, firstName: string, last
     p_ip_address: "127.0.0.1",
     p_user_agent: "phase-4-concurrency-test",
     p_idempotency_key: randomUUID(),
+    p_legal_document_version_ids: [
+      "03500000-0000-0000-0000-000000000001",
+      "03500000-0000-0000-0000-000000000002",
+      "03500000-0000-0000-0000-000000000003",
+      "03500000-0000-0000-0000-000000000004",
+      "03500000-0000-0000-0000-000000000005",
+    ],
   } as never);
 }
 
@@ -199,8 +215,7 @@ async function fillRegistration(
   await page.getByLabel("Last name").fill(lastName);
   await page.getByLabel("Mobile phone").fill(phone);
   await page.getByLabel("Email (optional)").fill(email);
-  await page.getByLabel("Participation acknowledgment.").check();
-  await page.getByLabel("Synthetic data-use acknowledgment.").check();
+  await acceptRequiredLegal(page);
   await page.getByRole("button", { name: "Book Class" }).click();
 }
 

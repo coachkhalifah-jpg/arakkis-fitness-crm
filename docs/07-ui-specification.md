@@ -343,7 +343,7 @@ System Admins create Host Admin invitations with required email and read-only or
 
 ### Environment and legal warning
 
-Local is labeled development and may use synthetic registration. Staging is labeled non-production. Production registration remains unavailable while the Participation acknowledgment is PROVISIONAL; the warning is not presented as legal approval and remains enforced beyond the UI.
+Local is labeled development and may use synthetic registration. Staging is labeled non-production. Production registration remains unavailable until the owner-approved pilot legal baseline is activated through both application and database readiness settings; the warning is not presented as attorney or legal-counsel approval and remains enforced beyond the UI.
 # DEC-051 participant booking direction
 
 The public experience uses a horizontal snap-scrolling class carousel, a focused class environment after selection, date-grouped time choices, a persistent selected-class summary, and participant-facing `Book Class` copy. Navigation remains accessible and browser history remains normal. Reduced motion removes non-essential transitions.
