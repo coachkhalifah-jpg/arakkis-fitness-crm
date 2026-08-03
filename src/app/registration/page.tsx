@@ -4,6 +4,7 @@ import { createClient } from "@/lib/db/server";
 import { isProductionRegistrationBlocked } from "@/lib/config/env";
 import { SectionHeader } from "@/components/ui/section-header";
 import { EmptyState } from "@/components/ui/empty-state";
+import { legalDocuments } from "@/lib/legal/documents";
 
 export default async function RegistrationPage() {
   const db = await createClient();
@@ -37,7 +38,7 @@ export default async function RegistrationPage() {
           participation={registrationConfig.participation}
           dataUse={registrationConfig.data_use}
           idempotencyKey={crypto.randomUUID()}
-          legalDocuments={registrationConfig.legal_documents as never}
+          legalDocuments={legalDocuments}
         />
       ) : (
         <EmptyState

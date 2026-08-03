@@ -148,7 +148,7 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
               publicSlug={slug}
               seriesMode={Boolean(event.series_slug)}
               rememberedFirstName={remembered?.first_name ?? null}
-              legalDocuments={registrationConfig.legal_documents as never}
+              legalDocuments={legalDocuments}
               termsAccepted={termsAccepted}
             />
           </div>

@@ -681,20 +681,8 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await page.getByLabel("First name").fill("Keyboard");
     await page.getByLabel("Last name").fill("Participant");
     await page.getByLabel("Mobile phone").fill("+15185550129");
-    for (const checkbox of [
-      page.locator('input[name="publicSlug"]'),
-      page.locator('input[name="participationAcknowledged"]'),
-      page.locator('input[name="dataUseAcknowledged"]'),
-    ]) {
-      await checkbox.check();
-    }
-    for (const checkbox of [
-      page.locator('input[name="publicSlug"]'),
-      page.locator('input[name="participationAcknowledged"]'),
-      page.locator('input[name="dataUseAcknowledged"]'),
-    ]) {
-      await expect(checkbox).toBeChecked();
-    }
+    await acceptRequiredLegal(page);
+    await page.getByLabel(/Privacy Policy.*Version 1\.0\.0/).check();
     await page.getByRole("button", { name: "Book Class" }).click();
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
 
