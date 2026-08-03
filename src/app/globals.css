@@ -210,53 +210,33 @@ body {
 .follow-up-mode-nav[data-mode="group"] .follow-up-mode-indicator {
   transform: translateX(calc(100% + 0.25rem));
 }
-@supports (view-transition-name: root) {
-  ::view-transition-group(root),
-  ::view-transition-image-pair(root),
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation-duration: 220ms;
-    animation-timing-function: ease-out;
+.follow-up-content {
+  will-change: transform, opacity;
+}
+.follow-up-page-shell[data-mode="individual"] .follow-up-content {
+  animation: follow-up-slide-in-from-left 220ms ease-out both;
+}
+.follow-up-page-shell[data-mode="group"] .follow-up-content {
+  animation: follow-up-slide-in-from-right 220ms ease-out both;
+}
+@keyframes follow-up-slide-in-from-left {
+  from {
+    opacity: 0.72;
+    transform: translateX(-0.75rem);
   }
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    mix-blend-mode: normal;
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
-  html[data-page-transition="to-group"]::view-transition-old(root) {
-    animation-name: community-page-exit-left;
+}
+@keyframes follow-up-slide-in-from-right {
+  from {
+    opacity: 0.72;
+    transform: translateX(0.75rem);
   }
-  html[data-page-transition="to-group"]::view-transition-new(root) {
-    animation-name: community-page-enter-right;
-  }
-  html[data-page-transition="to-individual"]::view-transition-old(root) {
-    animation-name: community-page-exit-right;
-  }
-  html[data-page-transition="to-individual"]::view-transition-new(root) {
-    animation-name: community-page-enter-left;
-  }
-  @keyframes community-page-exit-left {
-    to {
-      opacity: 0;
-      transform: translateX(-100%);
-    }
-  }
-  @keyframes community-page-enter-right {
-    from {
-      opacity: 0;
-      transform: translateX(100%);
-    }
-  }
-  @keyframes community-page-exit-right {
-    to {
-      opacity: 0;
-      transform: translateX(100%);
-    }
-  }
-  @keyframes community-page-enter-left {
-    from {
-      opacity: 0;
-      transform: translateX(-100%);
-    }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 .follow-up-mode-nav a {
@@ -1667,14 +1647,9 @@ textarea {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(root),
-  ::view-transition-image-pair(root),
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none !important;
-  }
   .follow-up-mode-nav a,
   .follow-up-mode-indicator,
+  .follow-up-content,
   .follow-up-more-filters summary,
   .follow-up-trigger-badge,
   .copy-message-button {
