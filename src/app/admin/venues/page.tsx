@@ -13,15 +13,23 @@ export default async function VenuesPage({
 }) {
   const admin = await requireActiveAdmin();
   const db = await createClient();
-  const { data: organizations } = await db
+  const organizationsQuery = db
     .from("organizations")
     .select("id,name")
     .eq("active_status", "ACTIVE")
     .order("name");
-  const { data: venues } = await db
+  const { data: organizations } =
+    admin.role === "SYSTEM_ADMIN"
+      ? await organizationsQuery
+      : await organizationsQuery.in("id", admin.organizationIds);
+  const venuesQuery = db
     .from("venues")
     .select("id,name,timezone,active_status,organization_id")
     .order("name");
+  const { data: venues } =
+    admin.role === "SYSTEM_ADMIN"
+      ? await venuesQuery
+      : await venuesQuery.in("organization_id", admin.organizationIds);
   const visibleVenues =
     admin.role === "SYSTEM_ADMIN"
       ? venues
@@ -42,7 +50,8 @@ export default async function VenuesPage({
             actionHref="/admin/venues?mode=create"
           />
         </div>
-        {admin.role === "SYSTEM_ADMIN" && mode === "create" ? (
+        {mode === "create" &&
+        (admin.role === "SYSTEM_ADMIN" || admin.organizationIds.length === 1) ? (
           <form
             action={createVenueForm}
             className="admin-surface mt-8 grid gap-3 rounded-3xl p-6 sm:grid-cols-2"
@@ -54,14 +63,20 @@ export default async function VenuesPage({
             </label>
             <label>
               Organization
-              <select name="organizationId" required className="mt-1 w-full rounded border p-2">
-                <option value="">Select organization</option>
-                {(organizations ?? []).map((org) => (
-                  <option key={org.id} value={org.id}>
-                    {org.name}
-                  </option>
-                ))}
-              </select>
+              {admin.role === "SYSTEM_ADMIN" ? (
+                <select name="organizationId" required className="mt-1 w-full rounded border p-2">
+                  <option value="">Select organization</option>
+                  {(organizations ?? []).map((org) => (
+                    <option key={org.id} value={org.id}>
+                      {org.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <span className="mt-1 block rounded border border-slate-200 bg-slate-50 p-2 text-sm">
+                  {organizations?.[0]?.name ?? "Your assigned organization"}
+                </span>
+              )}
             </label>
             <label>
               Street
@@ -90,6 +105,11 @@ export default async function VenuesPage({
             </label>
             <Button type="submit">Create venue</Button>
           </form>
+        ) : mode === "create" ? (
+          <p className="mt-8 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">
+            Venue creation is available when your Host Admin account has exactly one active
+            organization assignment.
+          </p>
         ) : null}
         {mode === "list" ? (
           <div className="mt-8 grid gap-4 md:grid-cols-2">

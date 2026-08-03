@@ -279,10 +279,21 @@ export async function createVenue(
   form: FormData,
 ): Promise<Phase3ActionState> {
   try {
-    const admin = await requireSystemAdmin();
+    const admin = await requireActiveAdmin();
+    const assignedOrganizationId =
+      admin.role === "HOST_ADMIN"
+        ? admin.organizationIds.length === 1
+          ? admin.organizationIds[0]
+          : null
+        : value(form, "organizationId");
+    if (!assignedOrganizationId)
+      throw new Phase3Error(
+        "invalid",
+        "Your account must have exactly one active organization assignment to create a venue.",
+      );
     const input = venueSchema.parse({
       name: value(form, "name"),
-      organizationId: value(form, "organizationId"),
+      organizationId: assignedOrganizationId,
       street: value(form, "street"),
       city: value(form, "city"),
       state: value(form, "state"),
