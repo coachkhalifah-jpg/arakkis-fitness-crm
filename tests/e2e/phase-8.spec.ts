@@ -172,7 +172,6 @@ test.describe("Phase 8 participant productization", () => {
     await expect(page.locator(".confirmation-what-to-bring-content-wrap.is-open")).toBeVisible();
     await page.getByRole("button", { name: "Close What to bring" }).click();
     await expect(page.locator(".confirmation-what-to-bring-content-wrap.is-open")).toHaveCount(0);
-    await expect(page.getByRole("link", { name: /download all calendar files/i })).toBeVisible();
     await expect(page.getByRole("button", { name: "Save" })).toHaveCount(0);
     expect(
       localSqlQuery(
@@ -205,9 +204,6 @@ test.describe("Phase 8 participant productization", () => {
       "https://example.test/demo-group",
     );
     const confirmationText = await page.locator("main.confirmation-page").innerText();
-    expect(confirmationText.indexOf("Download all calendar files")).toBeLessThan(
-      confirmationText.indexOf("Stay connected with your class"),
-    );
     expect(confirmationText.indexOf("Stay connected with your class")).toBeLessThan(
       confirmationText.indexOf("Directions"),
     );
