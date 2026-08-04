@@ -197,6 +197,13 @@ test.describe("Phase 8 participant productization", () => {
     await page.getByRole("button", { name: /book class/i }).click();
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
     await expect(page.getByRole("heading", { name: "You're in!" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Stay connected with your class" }),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: /Join class chat/ })).toHaveAttribute(
+      "href",
+      "https://example.test/demo-group",
+    );
   });
 
   test("remembers, reuses, and forgets a participant browser token safely", async ({ page }) => {
