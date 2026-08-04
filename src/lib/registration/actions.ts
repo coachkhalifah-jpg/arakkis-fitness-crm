@@ -213,7 +213,6 @@ export async function submitSlugRegistration(
     const slug = assertPublicSlug(
       String(form.get("registrationSlug") ?? form.get("publicSlug") ?? ""),
     );
-    const privileged = createPrivilegedClient();
     const seriesMode = form.get("seriesMode") === "true";
     const selectedStarts = [...new Set(form.getAll("selectedOccurrenceStartsAt").map(String))];
     if (seriesMode && !selectedStarts.length) {
@@ -224,25 +223,18 @@ export async function submitSlugRegistration(
       });
     }
     if (selectedStarts.length) {
-      const { data: series, error: seriesError } = await privileged
-        .from("event_series")
-        .select("id,selection_window_days")
-        .eq("public_slug", slug)
-        .maybeSingle();
-      if (seriesError || !series) return { error: "This recurring event is unavailable." };
-      const { data: occurrences, error: occurrenceError } = await privileged
-        .from("events")
-        .select("id,starts_at")
-        .eq("event_series_id", series.id)
-        .eq("status", "OPEN");
-      if (occurrenceError) return { error: "This recurring event is unavailable." };
-      const now = Date.now();
-      const cutoff = now + series.selection_window_days * 24 * 60 * 60 * 1000;
-      const selected = (occurrences ?? [])
-        .filter((occurrence) => {
-          const time = new Date(occurrence.starts_at).getTime();
-          return selectedStarts.includes(occurrence.starts_at) && time > now && time <= cutoff;
-        })
+      const db = await createClient();
+      const { data: event, error: eventError } = await db.rpc("get_public_event_by_slug", {
+        p_slug: slug,
+      });
+      const recurringEvent = event as {
+        series_slug?: string | null;
+        occurrences?: Array<{ id: string; starts_at: string }>;
+      } | null;
+      if (eventError || !recurringEvent?.series_slug)
+        return { error: "This recurring event is unavailable." };
+      const selected = (recurringEvent.occurrences ?? [])
+        .filter((occurrence) => selectedStarts.includes(occurrence.starts_at))
         .map((occurrence) => occurrence.id);
       if (selected.length !== selectedStarts.length)
         return preserveSubmittedState(form, {
@@ -254,6 +246,7 @@ export async function submitSlugRegistration(
         });
       confirmationToken = await executeRegistration(form, selected);
     } else {
+      const privileged = createPrivilegedClient();
       const { data: eventId, error: eventError } = await privileged.rpc("phase7_event_id_by_slug", {
         p_slug: slug,
       });

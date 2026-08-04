@@ -1,5 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
@@ -178,6 +179,24 @@ test.describe("Phase 8 participant productization", () => {
         "select count(*) from public.participant_remembered_devices d join public.participants p on p.id=d.participant_id where p.normalized_phone = '+15185550199'",
       ),
     ).toBe("0");
+  });
+
+  test("submits a recurring public booking through the canonical series slug", async ({ page }) => {
+    const routeText = readFileSync(".demo-routes.local.md", "utf8");
+    const recurringSlug = routeText.match(/register\/(demo-recurring-[a-z0-9]+)/)?.[1];
+    if (!recurringSlug) throw new Error("The demo recurring route was not generated");
+
+    await page.goto(`/register/${recurringSlug}`);
+    const occurrenceChoices = page.locator('input[name="selectedOccurrenceStartsAt"]');
+    await expect(occurrenceChoices).toHaveCount(2);
+    await occurrenceChoices.first().check();
+    await page.getByLabel("First name").fill("Recurring");
+    await page.getByLabel("Last name").fill("Regression");
+    await page.getByLabel("Mobile phone").fill(`+151855${Date.now().toString().slice(-5)}`);
+    await acceptRequiredLegal(page);
+    await page.getByRole("button", { name: /book class/i }).click();
+    await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
+    await expect(page.getByRole("heading", { name: "You're in!" })).toBeVisible();
   });
 
   test("remembers, reuses, and forgets a participant browser token safely", async ({ page }) => {
