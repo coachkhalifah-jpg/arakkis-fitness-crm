@@ -123,6 +123,24 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
         focalPosition={desktopAsset?.focal_position ?? mobileAsset?.focal_position ?? "center"}
       />
       <div className="public-registration-content px-4 pt-8 sm:px-5 sm:pt-10">
+        {event.participant_instructions ? (
+          <section
+            className="public-class-details text-left"
+            aria-labelledby="what-to-bring-heading"
+          >
+            <div className="mt-6">
+              <h2
+                id="what-to-bring-heading"
+                className="text-sm font-semibold uppercase tracking-[0.14em] text-brand-dark"
+              >
+                What to bring
+              </h2>
+              <p className="mt-2 whitespace-pre-wrap leading-7 text-slate-600">
+                {event.participant_instructions}
+              </p>
+            </div>
+          </section>
+        ) : null}
         {available ? (
           <div className="mt-8">
             <RegistrationForm

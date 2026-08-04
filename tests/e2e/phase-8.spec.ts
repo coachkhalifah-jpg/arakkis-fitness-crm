@@ -146,6 +146,8 @@ test.describe("Phase 8 participant productization", () => {
     await expect(page.getByLabel("Primary affiliation")).toHaveCount(0);
     await expect(page.getByLabel("How did you hear about us? — Optional")).toBeVisible();
     await expect(page.getByText("Save your spot")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "What to bring" })).toBeVisible();
+    await expect(page.getByText("Bring water.", { exact: true })).toBeVisible();
     await expect(page.getByText("Class details")).toHaveCount(0);
     await expect(page.getByText("Location")).toHaveCount(0);
     await expect(page.locator(".event-hero-status")).toHaveText("open");

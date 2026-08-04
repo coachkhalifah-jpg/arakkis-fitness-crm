@@ -183,7 +183,7 @@ const profileRows = accounts
   })
   .join(",\n");
 const event = (eventId, name, days, status, slug, extras = {}) =>
-  `(${sql(eventId)}, ${sql(extras.org ?? orgA)}, ${sql(extras.venue ?? venueA)}, ${sql(name)}, ${sql(extras.description ?? "Synthetic pilot fixture for owner testing.")}, ${sql(iso(days))}, ${sql(iso(days, 19))}, 'America/New_York', ${extras.capacity ?? 20}, ${sql(iso(days, 17))}, ${sql(status)}, ${sql(extras.visibility ?? "PUBLIC")}, ${sql(extras.publication ?? (status === "OPEN" ? "PUBLISHED" : "UNPUBLISHED"))}, ${slug ? sql(slug) : "null"}, ${extras.communicationUrl ? sql(extras.communicationUrl) : "null"}, ${extras.communicationLabel ? sql(extras.communicationLabel) : "null"}, ${sql(authAccounts.systemAdmin.id)}, ${extras.eventSeries ? sql(extras.eventSeries) : "null"}, ${extras.occurrence ?? "null"})`;
+  `(${sql(eventId)}, ${sql(extras.org ?? orgA)}, ${sql(extras.venue ?? venueA)}, ${sql(name)}, ${sql(extras.description ?? "Synthetic pilot fixture for owner testing.")}, ${sql(extras.instructions ?? "Bring water and arrive 10 minutes early.")}, ${sql(iso(days))}, ${sql(iso(days, 19))}, 'America/New_York', ${extras.capacity ?? 20}, ${sql(iso(days, 17))}, ${sql(status)}, ${sql(extras.visibility ?? "PUBLIC")}, ${sql(extras.publication ?? (status === "OPEN" ? "PUBLISHED" : "UNPUBLISHED"))}, ${slug ? sql(slug) : "null"}, ${extras.communicationUrl ? sql(extras.communicationUrl) : "null"}, ${extras.communicationLabel ? sql(extras.communicationLabel) : "null"}, ${sql(authAccounts.systemAdmin.id)}, ${extras.eventSeries ? sql(extras.eventSeries) : "null"}, ${extras.occurrence ?? "null"})`;
 
 const statement = `
 insert into public.admin_profiles (id, display_name, email, role, status) values
@@ -206,7 +206,7 @@ insert into public.acknowledgment_versions (id, type, version, exact_text, conte
   (${sql(ackWhatsApp)}, 'WHATSAPP_DISCLOSURE', 9000, 'Synthetic WhatsApp disclosure for local testing only.', decode(repeat('cc', 32), 'hex'), now(), 'APPROVED', ${sql(authAccounts.systemAdmin.id)});
 insert into public.event_series (id, frequency, interval_count, ends_on, selection_window_days, public_slug, created_by_admin_id)
 values (${sql(series)}, 'WEEKLY', 1, ${sql(dateOnly(14))}, 14, ${sql(`demo-recurring-${suffix}`)}, ${sql(authAccounts.systemAdmin.id)});
-insert into public.events (id, host_organization_id, venue_id, name, description, starts_at, ends_at, timezone, capacity, registration_deadline, status, visibility, publication_status, public_slug, communication_url, communication_label, created_by_admin_id, event_series_id, series_occurrence_number)
+insert into public.events (id, host_organization_id, venue_id, name, description, participant_instructions, starts_at, ends_at, timezone, capacity, registration_deadline, status, visibility, publication_status, public_slug, communication_url, communication_label, created_by_admin_id, event_series_id, series_occurrence_number)
 values
   ${event(recurringEvents[0], "Demo Weekly Flow — This Week", 2, "OPEN", null, { eventSeries: series, communicationUrl: "https://example.test/demo-group", communicationLabel: "Open the demo group" })},
   ${event(recurringEvents[1], "Demo Weekly Flow — Next Week", 9, "OPEN", null, { eventSeries: series })},
