@@ -230,7 +230,7 @@ test.describe("Phase 8 participant productization", () => {
     expect(cookie).toBeTruthy();
     expect(cookie.httpOnly).toBe(true);
     expect(cookie.sameSite).toBe("Lax");
-    expect(cookie.path).toBe("/register");
+    expect(cookie.path).toBe("/");
     expect(cookie.value).not.toContain("/");
     expect(cookie.value).not.toContain("?");
     expect(page.url()).not.toContain(cookie.value);
@@ -259,6 +259,11 @@ test.describe("Phase 8 participant productization", () => {
       `update public.registrations set registration_status = 'CANCELLED', registration_outcome = 'PARTICIPANT_CANCELLED', cancelled_at = now() where participant_id = '${rememberedParticipantId}' and event_id = '${eventId}';`,
     );
 
+    await page.goto(`/register/${slug}`);
+    await expect(page.getByText("Welcome back")).toBeVisible();
+    await page.goto("/manage-bookings");
+    await expect(page.getByRole("heading", { name: "Manage My Bookings" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: eventName, exact: true })).toBeVisible();
     await page.goto(`/register/${slug}`);
     await expect(page.getByText("Welcome back")).toBeVisible();
     await expect(page.getByLabel("Make future bookings faster on this device")).toHaveCount(0);

@@ -1272,4 +1272,4 @@ immutability. Operational controls, secret handling, headers, logging, recovery,
 response are documented in `docs/29`.
 # DEC-051 security note
 
-Remembered-device tokens are high-entropy opaque values, SHA-256 hashed in the database, scoped to `/register`, HttpOnly, SameSite=Lax, Secure in hosted production, and bounded to 180 days. Revocation removes the cookie and marks the server record revoked. Possession never grants access to profile history, administration, or unrelated organization data. SMS/phone OTP is not implemented.
+Remembered-device tokens are high-entropy opaque values, SHA-256 hashed in the database, held in an app-scoped HttpOnly cookie, SameSite=Lax, Secure in hosted production, and bounded to 180 days. Revocation removes the cookie and marks the server record revoked. Possession never grants access to administration or unrelated organization data; upcoming-booking management remains participant-scoped. SMS/phone OTP is not implemented.

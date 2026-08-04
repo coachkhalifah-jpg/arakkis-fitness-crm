@@ -42,7 +42,7 @@ export async function rememberParticipantFromConfirmation(confirmationToken: str
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    path: "/register",
+    path: "/",
     maxAge: cookieMaxAge,
   });
   return { firstName: result.first_name };
@@ -55,5 +55,8 @@ export async function forgetRememberedParticipant() {
     const db = createPrivilegedClient();
     await db.rpc("phase10_revoke_participant_device", { p_token: token } as never);
   }
-  jar.set(rememberedDeviceCookie, "", { httpOnly: true, expires: new Date(0), path: "/register" });
+  const expiredCookie = { httpOnly: true, expires: new Date(0), path: "/" };
+  jar.set(rememberedDeviceCookie, "", expiredCookie);
+  // Clear the pre-manage-bookings path as well for devices created before this cookie was app-scoped.
+  jar.set(rememberedDeviceCookie, "", { ...expiredCookie, path: "/register" });
 }
