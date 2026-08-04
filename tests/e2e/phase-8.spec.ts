@@ -204,6 +204,13 @@ test.describe("Phase 8 participant productization", () => {
       "href",
       "https://example.test/demo-group",
     );
+    const confirmationText = await page.locator("main.confirmation-page").innerText();
+    expect(confirmationText.indexOf("Download all calendar files")).toBeLessThan(
+      confirmationText.indexOf("Stay connected with your class"),
+    );
+    expect(confirmationText.indexOf("Stay connected with your class")).toBeLessThan(
+      confirmationText.indexOf("Directions"),
+    );
   });
 
   test("remembers, reuses, and forgets a participant browser token safely", async ({ page }) => {

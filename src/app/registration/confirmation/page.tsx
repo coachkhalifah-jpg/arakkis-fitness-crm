@@ -166,31 +166,6 @@ export default async function ConfirmationPage({
             </section>
           ) : null}
 
-          {communicationEvent?.communication_url ? (
-            <section className="confirmation-section" aria-labelledby="stay-connected-heading">
-              <h2
-                id="stay-connected-heading"
-                className="confirmation-section-title text-center text-base"
-              >
-                Stay connected with your class
-              </h2>
-              <p className="confirmation-body mt-1 text-center text-sm text-[var(--confirmation-muted)]">
-                Join the group for welcome notes and class updates.
-              </p>
-              <div className="mt-3 flex justify-center">
-                <a
-                  className="confirmation-pill-button confirmation-pill-button-primary"
-                  href={communicationEvent.communication_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Join class chat <span aria-hidden="true">↗</span>
-                  <span className="sr-only"> (opens in a new tab)</span>
-                </a>
-              </div>
-            </section>
-          ) : null}
-
           {successful.length > 0 ? (
             <section className="confirmation-section" aria-labelledby="calendar-heading">
               <h2
@@ -239,6 +214,31 @@ export default async function ConfirmationPage({
                   href={`/registration/confirmation/ics?token=${encodeURIComponent(token)}`}
                 >
                   Download all calendar files
+                </a>
+              </div>
+            </section>
+          ) : null}
+
+          {communicationEvent?.communication_url ? (
+            <section className="confirmation-section" aria-labelledby="stay-connected-heading">
+              <h2
+                id="stay-connected-heading"
+                className="confirmation-section-title text-center text-base"
+              >
+                Stay connected with your class
+              </h2>
+              <p className="confirmation-body mt-1 text-center text-sm text-[var(--confirmation-muted)]">
+                Join the group for welcome notes and class updates.
+              </p>
+              <div className="mt-3 flex justify-center">
+                <a
+                  className="confirmation-pill-button confirmation-pill-button-primary"
+                  href={communicationEvent.communication_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Join class chat <span aria-hidden="true">↗</span>
+                  <span className="sr-only"> (opens in a new tab)</span>
                 </a>
               </div>
             </section>
