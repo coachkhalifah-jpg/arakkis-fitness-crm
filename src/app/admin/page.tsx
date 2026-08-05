@@ -41,11 +41,17 @@ export default async function AdminPage() {
               Follow-Ups
             </Link>
           ) : null}
-          {admin.role === "SYSTEM_ADMIN" ? (
-            <Link className="admin-navigation-card" href="/admin/organizations">
+          <div className="admin-navigation-card">
+            <Link
+              className="block"
+              href={admin.role === "SYSTEM_ADMIN" ? "/admin/organizations" : "/admin/venues"}
+            >
               Organizations
             </Link>
-          ) : null}
+            <Link className="mt-2 block text-sm font-semibold text-brand" href="/admin/venues">
+              Venues
+            </Link>
+          </div>
           {admin.role === "SYSTEM_ADMIN" ? (
             <>
               <Link className="admin-navigation-card" href="/admin/invitations">
@@ -59,9 +65,6 @@ export default async function AdminPage() {
               </Link>
             </>
           ) : null}
-          <Link className="admin-navigation-card" href="/admin/venues">
-            Venues
-          </Link>
         </nav>
         <Card className="mt-6 space-y-4 p-5">
           <div>

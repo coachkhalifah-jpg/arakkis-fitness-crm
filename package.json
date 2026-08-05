@@ -21,6 +21,7 @@
     "db:status": "supabase status",
     "db:reset": "supabase stop --no-backup && supabase start",
     "fixtures:reset": "node scripts/fixtures-reset.mjs",
+    "fixtures:verify": "node scripts/verify-demo-fixtures.mjs",
     "demo:reset": "node scripts/demo-reset.mjs",
     "secret-scan": "bash scripts/secret-scan.sh",
     "format": "prettier --write .",

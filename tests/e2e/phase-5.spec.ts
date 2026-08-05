@@ -53,7 +53,8 @@ test("registered check-in persists, is idempotent, and records actor/time/audit 
   await page.getByRole("button", { name: "Start check-in" }).click();
   const row = page.getByRole("row").filter({ hasText: participant.firstName });
   await expect(row.getByText("NOT_RECORDED")).toBeVisible();
-  await row.getByRole("button", { name: "Mark attended" }).click();
+  await row.getByRole("button", { name: "Check in" }).click();
+  await page.getByRole("button", { name: "Save Attendance Changes" }).click();
   await expect(row.getByText("ATTENDED", { exact: true })).toBeVisible();
   await page.reload();
   await expect(
@@ -93,7 +94,14 @@ test("registered check-in persists, is idempotent, and records actor/time/audit 
     ),
   ).toBe("t");
 
-  await row.getByRole("button", { name: "Mark attended" }).click();
+  await row.getByRole("button", { name: "Checked in" }).click();
+  await page.reload();
+  await expect(
+    page
+      .getByRole("row")
+      .filter({ hasText: participant.firstName })
+      .getByText("ATTENDED", { exact: true }),
+  ).toBeVisible();
   expect(
     localQuery(
       `select count(*) from public.attendance where registration_id=${JSON.stringify(participant.registrationId)}`,
@@ -214,6 +222,44 @@ test("walk-in reuses exact matches, creates new records transactionally, and pre
       `select count(distinct p.id) from public.participants p join public.registrations r on r.participant_id=p.id where r.event_id=${JSON.stringify(event.id)} and p.normalized_email='match@example.test'`,
     ),
   ).toBe("2");
+});
+
+test("browser walk-in creates one participant, registration, attendance, and visible roster row", async ({
+  page,
+}) => {
+  const event = createEvent(fixture, { state: "OPEN", capacity: 10 });
+  await openEventInBrowser(page, event.id);
+  const phoneSuffix = String(
+    1000 + (Number.parseInt(fixture.suffix.slice(-4), 16) % 8999),
+  ).padStart(4, "0");
+  const normalizedPhone = `+1518867${phoneSuffix}`;
+
+  await page.getByLabel("First name").fill("Browser");
+  await page.getByLabel("Last name").fill(`Walkin ${fixture.suffix}`);
+  await page.getByLabel("Phone").fill(`+1 518-867-${phoneSuffix}`);
+  await page.getByLabel("Email").fill(`browser-walkin-${fixture.suffix}@example.test`);
+  await page.getByRole("button", { name: "Add Walk-In & Check In" }).click();
+
+  await expect(page.getByRole("status")).toContainText("Walk-in checked in.");
+  await page.reload();
+  const row = page.getByRole("row").filter({ hasText: "Browser Walkin" });
+  await expect(row).toContainText("ATTENDED");
+
+  expect(
+    localQuery(
+      `select count(*) from public.participants where normalized_phone=${JSON.stringify(normalizedPhone)}`,
+    ),
+  ).toBe("1");
+  expect(
+    localQuery(
+      `select count(*) from public.registrations r join public.participants p on p.id=r.participant_id where r.event_id=${JSON.stringify(event.id)} and p.normalized_phone=${JSON.stringify(normalizedPhone)} and r.registration_status='REGISTERED' and r.registration_outcome='ACTIVE'`,
+    ),
+  ).toBe("1");
+  expect(
+    localQuery(
+      `select count(*) from public.attendance a join public.registrations r on r.id=a.registration_id join public.participants p on p.id=r.participant_id where r.event_id=${JSON.stringify(event.id)} and p.normalized_phone=${JSON.stringify(normalizedPhone)} and a.status='ATTENDED'`,
+    ),
+  ).toBe("1");
 });
 
 test("full-event walk-in fails safely and three final-spot competitions never exceed capacity", async () => {
@@ -347,7 +393,20 @@ test("finalization converts only eligible unmarked registrations, is idempotent,
     p_status: "ATTENDED",
     p_reason: "Host post-finalization attempt",
   });
-  expect(hostCorrection.error?.message).toMatch(/finalized/i);
+  expect(hostCorrection.error).toBeNull();
+  expect(
+    localQuery(
+      `select status from public.attendance where registration_id=${JSON.stringify(unchecked.registrationId)}`,
+    ),
+  ).toBe("ATTENDED");
+  expect(
+    localQuery(
+      `select count(*) from public.audit_events where entity_id=(select id from public.attendance where registration_id=${JSON.stringify(unchecked.registrationId)}) and actor_admin_id=${JSON.stringify(fixture.hostA.id)} and reason='Host post-finalization attempt'`,
+    ),
+  ).toBe("1");
+  await openEventInBrowser(page, event.id, fixture.hostA);
+  await expect(page.getByText(/Authorized Host Admins may correct individual results/)).toBeVisible();
+  await expect(page.getByLabel("Correction reason")).toHaveCount(1);
   await host.rpc("phase5_finalize_attendance", { p_event_id: event.id });
   expect(
     localQuery(
@@ -402,7 +461,7 @@ test("finalization converts only eligible unmarked registrations, is idempotent,
   await openEventInBrowser(page, event.id, fixture.hostA);
   await expect(page.getByText(/REOPENED/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Reopen" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Mark attended" })).toHaveCount(2);
+  await expect(page.getByRole("button", { name: "Checked in" })).toHaveCount(2);
 });
 
 test("direct RPC authorization and organization isolation deny every unauthorized Phase 5 mutation", async () => {

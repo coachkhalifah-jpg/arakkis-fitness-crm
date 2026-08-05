@@ -134,7 +134,6 @@ export function RegistrationForm({
   const cancellationDocument = legalDocument("CANCELLATION_POLICY");
   const termsDocument = legalDocument("TERMS_OF_USE");
   const privacyDocument = legalDocument("PRIVACY_POLICY");
-  const mediaDocument = legalDocument("MEDIA_CONSENT");
   const toggleLegalDocument = (id: string, checked: boolean) =>
     setLegalDocumentIds((current) =>
       checked ? [...new Set([...current, id])] : current.filter((value) => value !== id),
@@ -551,33 +550,6 @@ export function RegistrationForm({
             (Version {privacyDocument?.version ?? "1.0.0"}).
           </span>
         </label>
-        {mediaDocument ? (
-          <label className="flex gap-3 border-t border-sand-foreground/20 pt-4">
-            <input
-              id="mediaConsent"
-              name="legalDocumentIds"
-              value={mediaDocument.versionId}
-              type="checkbox"
-              checked={legalDocumentIds.includes(mediaDocument.versionId)}
-              onChange={(event) =>
-                toggleLegalDocument(mediaDocument.versionId, event.target.checked)
-              }
-              className="mt-1 h-5 w-5 shrink-0 accent-brand"
-            />
-            <span>
-              Optional: grant{" "}
-              <a
-                className="font-semibold underline"
-                href={`/legal/${mediaDocument.slug}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Photo &amp; Video Consent
-              </a>{" "}
-              (Version {mediaDocument.version}).
-            </span>
-          </label>
-        ) : null}
       </div>
       {!rememberedFirstName ? (
         <fieldset className="rounded-2xl border border-brand/20 bg-white/70 p-5">

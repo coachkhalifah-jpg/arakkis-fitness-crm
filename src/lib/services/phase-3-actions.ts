@@ -27,7 +27,12 @@ import {
   reopenAttendanceSubmit as phase5ReopenAttendanceSubmit,
 } from "@/lib/services/phase-5-actions";
 
-export type Phase3ActionState = { error?: string; success?: string };
+export type Phase3ActionState = {
+  error?: string;
+  errorAction?: string;
+  errorCode?: string;
+  success?: string;
+};
 const message = (error: unknown) =>
   error instanceof Phase3Error || error instanceof Error
     ? error.message
@@ -355,11 +360,21 @@ export async function archiveVenue(id: string): Promise<Phase3ActionState> {
 
 export async function updateVenue(form: FormData): Promise<Phase3ActionState> {
   try {
-    const admin = await requireSystemAdmin();
+    const admin = await requireActiveAdmin();
     const id = value(form, "id");
+    const db = await createClient();
+    const { data: old } = await db.from("venues").select("*").eq("id", id).single();
+    if (!old) throw new Phase3Error("not_found", "Venue not found.");
+    if (
+      admin.role !== "SYSTEM_ADMIN" &&
+      !admin.organizationIds.includes(old.organization_id ?? "")
+    ) {
+      throw new Phase3Error("forbidden", "You cannot edit this venue.");
+    }
     const input = venueSchema.parse({
       name: value(form, "name"),
-      organizationId: value(form, "organizationId"),
+      organizationId:
+        admin.role === "SYSTEM_ADMIN" ? value(form, "organizationId") : old.organization_id,
       street: value(form, "street"),
       city: value(form, "city"),
       state: value(form, "state"),
@@ -368,9 +383,6 @@ export async function updateVenue(form: FormData): Promise<Phase3ActionState> {
     });
     if (!isTimezone(input.timezone))
       throw new Phase3Error("invalid", "Choose a valid IANA timezone.");
-    const db = await createClient();
-    const { data: old } = await db.from("venues").select("*").eq("id", id).single();
-    if (!old) throw new Phase3Error("not_found", "Venue not found.");
     const { data: org } = await db
       .from("organizations")
       .select("id")

@@ -59,9 +59,10 @@ export function WalkInForm({
       </label>
       <SubmitButton>Add Walk-In &amp; Check In</SubmitButton>
       {state.error ? (
-        <p role="alert" className="sm:col-span-2 text-sm text-red-700">
-          {state.error}
-        </p>
+        <div role="alert" className="sm:col-span-2 text-sm text-red-700">
+          <p>{state.error}</p>
+          {state.errorAction ? <p className="mt-1 font-medium">Next: {state.errorAction}</p> : null}
+        </div>
       ) : null}
       {state.success ? (
         <p role="status" className="sm:col-span-2 text-sm text-emerald-700">

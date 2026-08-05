@@ -43,7 +43,8 @@ pnpm dev:stack        # local Supabase then Next.js
 pnpm db:start         # start local Supabase/Docker stack
 pnpm db:status        # show local services and keys; do not paste secrets
 pnpm db:reset         # recreate local database and apply migrations
-pnpm fixtures:reset   # verify synthetic fixture workflow; refuses production
+pnpm fixtures:reset   # reset and verify local synthetic fixtures; refuses production/hosted Supabase
+pnpm fixtures:verify  # verify fixture counts and local-only Auth identities
 pnpm demo:reset       # reset local Supabase and create synthetic pilot fixtures
 pnpm test:demo-auth   # reset local fixtures and run the focused demo-role browser smoke test
 pnpm test             # Vitest + component tests
@@ -69,6 +70,13 @@ pnpm db:stop          # stop local stack
 ignored `.demo-credentials.local` file. It also writes a generated route index to
 `.demo-routes.local.md`. Both files are replaced on every reset and must never be staged or used
 outside local development. See `docs/27-local-development.md` for the complete local workflow.
+
+The fixture catalog includes System Admin, Organization A and B Host Admins, a non-admin regression
+user, and an inactive-admin regression user. Participant fixtures are synthetic records (participants
+do not authenticate in the MVP): New, Returning, Existing Registered, Walk-in, and Capacity/Duplicate.
+It also includes two active organizations with two venues each, published/open, full, cancelled,
+unpublished, multi-date, existing-registration, and finalized-attendance events. Local email remains
+inside Supabase's Mailpit inbox at `http://127.0.0.1:54324`.
 
 ## Phase 0 scope
 

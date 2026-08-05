@@ -9,6 +9,10 @@ import { Alert } from "@/components/ui/alert";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { WalkInForm } from "@/components/admin/walk-in-form";
 import { CopyLinkButton } from "@/components/admin/copy-link-button";
+import {
+  RegistrationRoster,
+  type RegistrationRosterRow,
+} from "@/components/admin/registration-roster";
 import { ContextualBack } from "@/components/admin/contextual-back";
 import {
   RosterStatusCarousel,
@@ -19,7 +23,6 @@ import {
   copyEventForm,
   createWalkInSubmit,
   finalizeAttendanceSubmit,
-  markAttendance,
   openAttendanceSubmit,
   publishEventForm,
   reopenAttendanceSubmit,
@@ -157,6 +160,24 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
       phone: participant?.display_phone ?? null,
       registrationStatus: registration.registration_status,
       attendanceStatus: attendanceByRegistration.get(registration.id)?.status ?? "NOT_RECORDED",
+      firstClass: Boolean(participant && !firstClassParticipantIds.has(participant.id)),
+    };
+  });
+  const rosterRows: RegistrationRosterRow[] = (registrations ?? []).map((registration) => {
+    const participant = participantById.get(registration.participant_id);
+    return {
+      id: registration.id,
+      participantName: participant
+        ? `${participant.first_name} ${participant.last_name}`
+        : "Participant unavailable",
+      phone: participant?.display_phone ?? "",
+      email: participant?.email ?? "",
+      registrationStatus: registration.registration_status,
+      attendanceStatus: attendanceByRegistration.get(registration.id)?.status ?? "NOT_RECORDED",
+      registeredAt: new Intl.DateTimeFormat("en-US", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(new Date(registration.registered_at)),
       firstClass: Boolean(participant && !firstClassParticipantIds.has(participant.id)),
     };
   });
@@ -313,7 +334,8 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
             </div>
             {event.attendance_processing_state === "FINALIZED" ? (
               <Alert className="mt-4">
-                Attendance is finalized. Only System Admins may correct individual results.
+                Attendance is finalized. Authorized Host Admins may correct individual results for
+                this event with a reason. Only System Admins may reopen the entire event.
               </Alert>
             ) : null}
           </div>
@@ -540,101 +562,17 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
             }{" "}
             active registrations · Host-scoped operational view
           </p>
-          <div className="mt-4 overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="p-2">Participant</th>
-                  <th className="p-2">Phone</th>
-                  <th className="p-2">Email</th>
-                  <th className="p-2">Status</th>
-                  <th className="p-2">Attendance</th>
-                  <th className="p-2">Action</th>
-                  <th className="p-2">Registered</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(registrations ?? []).map((registration) => {
-                  const participant = participantById.get(registration.participant_id);
-                  return (
-                    <tr key={registration.id} className="border-b last:border-0">
-                      <td className="p-2">
-                        <span className="inline-flex items-center gap-2">
-                          {participant
-                            ? `${participant.first_name} ${participant.last_name}`
-                            : "Participant unavailable"}
-                          {participant && !firstClassParticipantIds.has(participant.id) ? (
-                            <span
-                              className="rounded-full bg-coral/10 px-2 py-1 text-xs font-bold text-coral"
-                              aria-label="First Class"
-                            >
-                              First Class
-                            </span>
-                          ) : null}
-                        </span>
-                      </td>
-                      <td className="p-2">{participant?.display_phone ?? "—"}</td>
-                      <td className="p-2">{participant?.email ?? "—"}</td>
-                      <td className="p-2">{registration.registration_status}</td>
-                      <td className="p-2">
-                        {attendanceByRegistration.get(registration.id)?.status ?? "NOT_RECORDED"}
-                      </td>
-                      <td className="p-2">
-                        {event.status === "CANCELLED" ||
-                        registration.registration_status === "CANCELLED" ? (
-                          "—"
-                        ) : event.attendance_processing_state === "OPEN" ||
-                          event.attendance_processing_state === "REOPENED" ? (
-                          <ActionForm action={markAttendance} submitLabel="Mark attended">
-                            <input type="hidden" name="eventId" value={id} />
-                            <input type="hidden" name="registrationId" value={registration.id} />
-                            <input type="hidden" name="status" value="ATTENDED" />
-                          </ActionForm>
-                        ) : event.attendance_processing_state === "FINALIZED" &&
-                          admin.role === "SYSTEM_ADMIN" ? (
-                          <ActionForm action={markAttendance} submitLabel="Save correction">
-                            <input type="hidden" name="eventId" value={id} />
-                            <input type="hidden" name="registrationId" value={registration.id} />
-                            <label className="block text-xs">
-                              Result
-                              <select
-                                name="status"
-                                defaultValue={
-                                  attendanceByRegistration.get(registration.id)?.status ?? "NO_SHOW"
-                                }
-                                className="mt-1 rounded border p-1"
-                              >
-                                <option value="ATTENDED">ATTENDED</option>
-                                <option value="NO_SHOW">NO_SHOW</option>
-                                <option value="EXCUSED">EXCUSED</option>
-                                <option value="NOT_RECORDED">NOT_RECORDED</option>
-                              </select>
-                            </label>
-                            <label className="block text-xs">
-                              Reason
-                              <input
-                                name="reason"
-                                required
-                                className="mt-1 w-full rounded border p-1"
-                              />
-                            </label>
-                          </ActionForm>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td className="p-2">
-                        {new Intl.DateTimeFormat("en-US", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        }).format(new Date(registration.registered_at))}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <RegistrationRoster
+            eventId={id}
+            rows={rosterRows}
+            canEdit={
+              event.status !== "CANCELLED" &&
+              (event.attendance_processing_state === "OPEN" ||
+                event.attendance_processing_state === "REOPENED" ||
+                event.attendance_processing_state === "FINALIZED")
+            }
+            requiresReason={event.attendance_processing_state === "FINALIZED"}
+          />
         </div>
         {admin.role === "SYSTEM_ADMIN" ? (
           <div className="mt-6 flex flex-wrap gap-3">

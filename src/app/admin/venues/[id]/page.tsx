@@ -34,7 +34,8 @@ export default async function VenueDetailPage({ params }: { params: Promise<{ id
             {venue.timezone} · {venue.active_status}
           </p>
         </div>
-        {admin.role === "SYSTEM_ADMIN" ? (
+        {admin.role === "SYSTEM_ADMIN" ||
+        admin.organizationIds.includes(venue.organization_id ?? "") ? (
           <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
             <h2 className="text-lg font-semibold">Edit venue</h2>
             <ActionForm action={updateVenueState} submitLabel="Save venue">
@@ -48,20 +49,24 @@ export default async function VenueDetailPage({ params }: { params: Promise<{ id
                   className="mt-1 w-full rounded border p-2"
                 />
               </label>
-              <label>
-                Organization
-                <select
-                  name="organizationId"
-                  defaultValue={venue.organization_id ?? ""}
-                  className="mt-1 w-full rounded border p-2"
-                >
-                  {(organizations ?? []).map((org) => (
-                    <option key={org.id} value={org.id}>
-                      {org.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {admin.role === "SYSTEM_ADMIN" ? (
+                <label>
+                  Organization
+                  <select
+                    name="organizationId"
+                    defaultValue={venue.organization_id ?? ""}
+                    className="mt-1 w-full rounded border p-2"
+                  >
+                    {(organizations ?? []).map((org) => (
+                      <option key={org.id} value={org.id}>
+                        {org.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <input type="hidden" name="organizationId" value={venue.organization_id ?? ""} />
+              )}
               <label>
                 Street
                 <input

@@ -27,6 +27,14 @@ const statusOutput = execFileSync("supabase", ["status", "-o", "env"], {
 const values = Object.fromEntries(
   [...statusOutput.matchAll(/^([A-Z0-9_]+)="(.*)"$/gm)].map((match) => [match[1], match[2]]),
 );
+if (values.API_URL !== "http://127.0.0.1:54321") {
+  throw new Error(
+    "Refusing fixture reset: Supabase is not the expected local API at 127.0.0.1:54321.",
+  );
+}
+if (!values.SERVICE_ROLE_KEY) {
+  throw new Error("Refusing fixture reset: local Supabase service key is unavailable.");
+}
 const service = createClient(values.API_URL, values.SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
@@ -136,9 +144,15 @@ const orgA = id();
 const orgB = id();
 const orgInactive = id();
 const venueA = id();
+const venueA2 = id();
 const venueB = id();
+const venueB2 = id();
 const venueInactive = id();
+const participantNew = id();
 const participantReturning = id();
+const participantExisting = id();
+const participantWalkIn = id();
+const participantCapacity = id();
 const participantFirst = id();
 const participantOtherOrg = id();
 const ackParticipation = id();
@@ -198,7 +212,9 @@ insert into public.admin_organization_assignments (admin_profile_id, organizatio
   (${sql(authAccounts.inactiveAdmin.id)}, ${sql(orgA)}, ${sql(authAccounts.systemAdmin.id)});
 insert into public.venues (id, organization_id, name, street, city, state, postal_code, timezone, active_status) values
   (${sql(venueA)}, ${sql(orgA)}, 'Demo Garden Studio', '1 Test Street', 'Albany', 'NY', '12207', 'America/New_York', 'ACTIVE'),
+  (${sql(venueA2)}, ${sql(orgA)}, 'Demo Loft Studio', '4 Test Street', 'Albany', 'NY', '12207', 'America/New_York', 'ACTIVE'),
   (${sql(venueB)}, ${sql(orgB)}, 'Demo River Room', '2 Test Street', 'Buffalo', 'NY', '14201', 'America/New_York', 'ACTIVE'),
+  (${sql(venueB2)}, ${sql(orgB)}, 'Demo Harbor Hall', '5 Test Street', 'Buffalo', 'NY', '14201', 'America/New_York', 'ACTIVE'),
   (${sql(venueInactive)}, ${sql(orgInactive)}, 'Inactive Demo Venue', '3 Test Street', 'Rochester', 'NY', '14604', 'America/New_York', 'INACTIVE');
 insert into public.acknowledgment_versions (id, type, version, exact_text, content_hash, effective_at, legal_status, created_by_admin_id) values
   (${sql(ackParticipation)}, 'PARTICIPATION_RISK', 9000, 'Synthetic participation acknowledgment for local testing only.', decode(repeat('aa', 32), 'hex'), now(), 'PROVISIONAL', ${sql(authAccounts.systemAdmin.id)}),
@@ -226,18 +242,26 @@ update public.events set registration_opens_at = ${sql(iso(1))} where id = ${sql
 update public.events set registration_paused_at = now() where id = ${sql(eventIds.paused)};
 insert into public.participants (id, first_name, last_name, normalized_first_name, normalized_last_name, display_phone, normalized_phone, phone_country, email, primary_affiliation_organization_id)
 values
-  (${sql(participantReturning)}, 'Taylor', 'Returning', 'taylor', 'returning', '+15550001001', '+15550001001', 'US', 'taylor-${suffix}@example.test', ${sql(orgA)}),
+  (${sql(participantNew)}, 'Alex', 'New', 'alex', 'new', '+15550001000', '+15550001000', 'US', 'alex-${suffix}@example.test', ${sql(orgA)}),
+  (${sql(participantReturning)}, 'Taylor', 'Returning', 'taylor', 'returning', '+15188675309', '+15188675309', 'US', 'taylor-${suffix}@example.test', ${sql(orgA)}),
+  (${sql(participantExisting)}, 'Morgan', 'Registered', 'morgan', 'registered', '+15550001004', '+15550001004', 'US', 'morgan-${suffix}@example.test', ${sql(orgB)}),
+  (${sql(participantWalkIn)}, 'Riley', 'Walkin', 'riley', 'walkin', '+15550001005', '+15550001005', 'US', 'riley-${suffix}@example.test', ${sql(orgB)}),
+  (${sql(participantCapacity)}, 'Jamie', 'Capacity', 'jamie', 'capacity', '+15550001006', '+15550001006', 'US', 'jamie-${suffix}@example.test', ${sql(orgA)}),
   (${sql(participantFirst)}, 'Jordan', 'Firsttime', 'jordan', 'firsttime', '+15550001002', '+15550001002', 'US', 'jordan-${suffix}@example.test', ${sql(orgA)}),
   (${sql(participantOtherOrg)}, 'Casey', 'Crossvenue', 'casey', 'crossvenue', '+15550001003', '+15550001003', 'US', 'casey-${suffix}@example.test', ${sql(orgA)});
 insert into public.registration_groups (id, participant_id, submission_source, participation_acknowledgment_version_id, participation_acknowledged_at, data_use_acknowledgment_version_id, data_use_acknowledged_at, created_by_admin_id)
 values
+  (${sql(id())}, ${sql(participantExisting)}, 'SYSTEM_ADMIN', ${sql(ackParticipation)}, now(), ${sql(ackDataUse)}, now(), ${sql(authAccounts.systemAdmin.id)}),
+  (${sql(id())}, ${sql(participantCapacity)}, 'SYSTEM_ADMIN', ${sql(ackParticipation)}, now(), ${sql(ackDataUse)}, now(), ${sql(authAccounts.systemAdmin.id)}),
   (${sql(groupReturning)}, ${sql(participantReturning)}, 'SYSTEM_ADMIN', ${sql(ackParticipation)}, now(), ${sql(ackDataUse)}, now(), ${sql(authAccounts.systemAdmin.id)}),
   (${sql(groupFirst)}, ${sql(participantFirst)}, 'SYSTEM_ADMIN', ${sql(ackParticipation)}, now(), ${sql(ackDataUse)}, now(), ${sql(authAccounts.systemAdmin.id)}),
   (${sql(groupNoShow)}, ${sql(participantOtherOrg)}, 'SYSTEM_ADMIN', ${sql(ackParticipation)}, now(), ${sql(ackDataUse)}, now(), ${sql(authAccounts.systemAdmin.id)});
 insert into public.registrations (id, registration_group_id, participant_id, event_id, affiliation_organization_id_at_registration, registration_status, registration_outcome, created_by_admin_id, whatsapp_opt_in, whatsapp_opt_in_at, whatsapp_disclosure_version_id, whatsapp_invitation_status)
 values
+  (${sql(id())}, (select id from public.registration_groups where participant_id = ${sql(participantExisting)}), ${sql(participantExisting)}, ${sql(eventIds.open)}, ${sql(orgB)}, 'REGISTERED', 'ACTIVE', ${sql(authAccounts.systemAdmin.id)}, false, null, null, 'NOT_APPLICABLE'),
+  (${sql(id())}, (select id from public.registration_groups where participant_id = ${sql(participantCapacity)}), ${sql(participantCapacity)}, ${sql(eventIds.full)}, ${sql(orgA)}, 'REGISTERED', 'ACTIVE', ${sql(authAccounts.systemAdmin.id)}, false, null, null, 'NOT_APPLICABLE'),
   (${sql(regReturning)}, ${sql(groupReturning)}, ${sql(participantReturning)}, ${sql(eventIds.open)}, ${sql(orgA)}, 'REGISTERED', 'ACTIVE', ${sql(authAccounts.systemAdmin.id)}, true, now(), ${sql(ackWhatsApp)}, 'PENDING'),
-  (${sql(regFirst)}, ${sql(groupFirst)}, ${sql(participantFirst)}, ${sql(eventIds.full)}, ${sql(orgA)}, 'REGISTERED', 'ACTIVE', ${sql(authAccounts.systemAdmin.id)}, false, null, null, 'NOT_APPLICABLE'),
+  (${sql(regFirst)}, ${sql(groupFirst)}, ${sql(participantFirst)}, ${sql(eventIds.noCommunication)}, ${sql(orgA)}, 'REGISTERED', 'ACTIVE', ${sql(authAccounts.systemAdmin.id)}, false, null, null, 'NOT_APPLICABLE'),
   (${sql(regNoShow)}, ${sql(groupNoShow)}, ${sql(participantOtherOrg)}, ${sql(eventIds.completed)}, ${sql(orgA)}, 'REGISTERED', 'ACTIVE', ${sql(authAccounts.systemAdmin.id)}, false, null, null, 'NOT_APPLICABLE');
 update public.events set attendance_processing_state = 'FINALIZED' where id = ${sql(eventIds.completed)};
 update public.events set attendance_processing_state = 'OPEN' where id = ${sql(eventIds.open)};

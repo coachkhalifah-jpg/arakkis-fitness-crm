@@ -6,19 +6,13 @@ import { createClient } from "@/lib/db/server";
 import { requireActiveAdmin } from "@/lib/authorization/server";
 import { normalizeEmail, normalizeName, normalizePhone } from "@/lib/registration/normalization";
 import type { Phase3ActionState } from "@/lib/services/phase-3-actions";
+import { mapAttendanceError } from "@/lib/services/attendance-errors";
 
 const value = (form: FormData, key: string) => String(form.get(key) ?? "").trim();
-const errorMessage = (error: unknown) => {
-  const message = error instanceof Error ? error.message : "";
-  if (/capacity/i.test(message))
-    return "Capacity reached. A System Admin may use an explicit override.";
-  if (/finalized/i.test(message)) return "Attendance is finalized.";
-  if (/unauthorized|forbidden|unavailable/i.test(message))
-    return "This attendance action is not authorized.";
-  if (/reason is required|correction reason/i.test(message))
-    return "A reason is required for this correction.";
-  if (/open/i.test(message)) return "Open check-in before recording attendance.";
-  return "The attendance action could not be completed.";
+
+const errorState = (error: unknown) => {
+  const mapped = mapAttendanceError(error);
+  return { error: mapped.message, errorAction: mapped.nextAction, errorCode: mapped.code };
 };
 
 async function invoke(form: FormData, rpc: string, args: Record<string, unknown>, success: string) {
@@ -43,7 +37,7 @@ export async function openAttendance(
       "Check-in is open.",
     );
   } catch (error) {
-    return { error: errorMessage(error) };
+    return errorState(error);
   }
 }
 
@@ -59,7 +53,7 @@ export async function finalizeAttendance(
       "Attendance finalized.",
     );
   } catch (error) {
-    return { error: errorMessage(error) };
+    return errorState(error);
   }
 }
 
@@ -75,7 +69,7 @@ export async function reopenAttendance(
       "Attendance reopened for correction.",
     );
   } catch (error) {
-    return { error: errorMessage(error) };
+    return errorState(error);
   }
 }
 
@@ -98,7 +92,7 @@ export async function markAttendance(
       "Attendance updated.",
     );
   } catch (error) {
-    return { error: errorMessage(error) };
+    return errorState(error);
   }
 }
 
@@ -113,6 +107,12 @@ export async function createWalkIn(
     const email = normalizeEmail(value(form, "email"));
     const requestHeaders = await headers();
     const db = await createClient();
+    const [{ data: participationVersion }, { data: dataUseVersion }] = await Promise.all([
+      db.rpc("phase5_current_acknowledgment_version", { p_type: "PARTICIPATION_RISK" } as never),
+      db.rpc("phase5_current_acknowledgment_version", { p_type: "DATA_USE" } as never),
+    ]);
+    if (!participationVersion || !dataUseVersion)
+      throw new Error("required acknowledgment unavailable");
     const { data, error } = await db.rpc("phase5_create_walk_in", {
       p_event_id: eventId,
       p_first_name: value(form, "firstName"),
@@ -124,18 +124,53 @@ export async function createWalkIn(
       p_normalized_email: email,
       p_affiliation_organization_id: value(form, "affiliation") || null,
       p_affiliation_other_text: value(form, "affiliationOther") || null,
-      p_participation_acknowledgment_version_id: value(form, "participationVersionId"),
-      p_data_use_acknowledgment_version_id: value(form, "dataUseVersionId"),
+      p_participation_acknowledgment_version_id: participationVersion,
+      p_data_use_acknowledgment_version_id: dataUseVersion,
       p_ip_address: requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1",
       p_user_agent: requestHeaders.get("user-agent")?.slice(0, 500) || "local-admin",
       p_over_capacity_reason:
         admin.role === "SYSTEM_ADMIN" ? value(form, "overrideReason") || null : null,
     } as never);
-    if (error || !data) throw new Error(error?.message || "walk-in failed");
+    if (error) throw error;
+    if (!data) throw new Error("walk-in failed");
     revalidatePath(`/admin/events/${eventId}`);
     return { success: "Walk-in checked in." };
   } catch (error) {
-    return { error: errorMessage(error) };
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[attendance] walk-in action failed", {
+        code: typeof error === "object" && error !== null && "code" in error ? error.code : null,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+    return errorState(error);
+  }
+}
+
+export async function saveAttendanceChanges(
+  _state: Phase3ActionState,
+  form: FormData,
+): Promise<Phase3ActionState> {
+  const eventId = value(form, "eventId");
+  try {
+    await requireActiveAdmin(`/admin/events/${eventId}`);
+    const rawChanges = value(form, "changes");
+    const changes = JSON.parse(rawChanges) as unknown;
+    if (
+      !Array.isArray(changes) ||
+      changes.some((change) => typeof change !== "object" || change === null)
+    ) {
+      return { error: "Attendance changes are invalid." };
+    }
+    const db = await createClient();
+    const { error } = await db.rpc("phase5_save_attendance_changes", {
+      p_event_id: eventId,
+      p_changes: changes,
+    } as never);
+    if (error) throw error;
+    revalidatePath(`/admin/events/${eventId}`);
+    return { success: "Attendance changes saved." };
+  } catch (error) {
+    return errorState(error);
   }
 }
 
