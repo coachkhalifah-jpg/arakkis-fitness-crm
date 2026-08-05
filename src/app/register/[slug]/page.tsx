@@ -15,6 +15,11 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
     db.rpc("get_public_event_by_slug", { p_slug: slug }),
     db.rpc("get_public_registration_config"),
   ]);
+  const { data: publicEventIdentity } = await db
+    .from("public_event_schedule")
+    .select("id")
+    .eq("public_slug", slug.toLowerCase())
+    .maybeSingle();
   const registrationConfig = (config ?? {}) as {
     participation: { id: string; text: string } | null;
     data_use: { id: string; text: string } | null;
@@ -80,7 +85,7 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
   const { data: eventAssets } = await db
     .from("design_assets")
     .select("asset_type,storage_path,focal_position")
-    .eq("event_id", event.id)
+    .eq("event_id", publicEventIdentity?.id ?? "00000000-0000-0000-0000-000000000000")
     .eq("active", true);
   const desktopAsset = eventAssets?.find((asset) => asset.asset_type === "EVENT_IMAGE_DESKTOP");
   const mobileAsset = eventAssets?.find((asset) => asset.asset_type === "EVENT_IMAGE_MOBILE");

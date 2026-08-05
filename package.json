@@ -22,6 +22,7 @@
     "db:reset": "supabase stop --no-backup && supabase start",
     "fixtures:reset": "node scripts/fixtures-reset.mjs",
     "fixtures:verify": "node scripts/verify-demo-fixtures.mjs",
+    "audit:event-images": "node scripts/audit-event-image-storage.mjs",
     "demo:reset": "node scripts/demo-reset.mjs",
     "secret-scan": "bash scripts/secret-scan.sh",
     "format": "prettier --write .",

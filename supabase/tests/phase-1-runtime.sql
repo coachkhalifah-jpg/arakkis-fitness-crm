@@ -10,13 +10,15 @@ insert into auth.users (id, aud, role, email, email_confirmed_at, created_at, up
 values
   ('10000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'system@example.test', now(), now(), now()),
   ('10000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'host-a@example.test', now(), now(), now()),
-  ('10000000-0000-0000-0000-000000000003', 'authenticated', 'authenticated', 'host-b@example.test', now(), now(), now());
+  ('10000000-0000-0000-0000-000000000003', 'authenticated', 'authenticated', 'host-b@example.test', now(), now(), now()),
+  ('10000000-0000-0000-0000-000000000004', 'authenticated', 'authenticated', 'system-2@example.test', now(), now(), now());
 
 insert into public.admin_profiles (id, display_name, email, role, status)
 values
   ('10000000-0000-0000-0000-000000000001', 'Runtime System Admin', 'system@example.test', 'SYSTEM_ADMIN', 'ACTIVE'),
   ('10000000-0000-0000-0000-000000000002', 'Runtime Host Admin A', 'host-a@example.test', 'HOST_ADMIN', 'PENDING'),
-  ('10000000-0000-0000-0000-000000000003', 'Runtime Host Admin B', 'host-b@example.test', 'HOST_ADMIN', 'PENDING');
+  ('10000000-0000-0000-0000-000000000003', 'Runtime Host Admin B', 'host-b@example.test', 'HOST_ADMIN', 'PENDING'),
+  ('10000000-0000-0000-0000-000000000004', 'Runtime Second System Admin', 'system-2@example.test', 'SYSTEM_ADMIN', 'ACTIVE');
 
 insert into public.organizations (id, name)
 values
@@ -188,6 +190,342 @@ begin
   end;
 end;
 $$;
+
+-- J5-16 Event creation RPC: direct authenticated calls, replay, authorization,
+-- relationship, and asset-reference tampering checks.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
+do $$
+declare
+  response jsonb;
+begin
+  response := public.phase3_create_event_bundle(
+    '41000000-0000-0000-0000-000000000001'::uuid,
+    '10000000-0000-0000-0000-000000000001'::uuid,
+    null,
+    null,
+    jsonb_build_array(jsonb_build_object(
+      'id', '41000000-0000-0000-0000-000000000002',
+      'series_occurrence_number', null,
+      'starts_at', now() + interval '12 days',
+      'ends_at', now() + interval '12 days 1 hour',
+      'registration_deadline', now() + interval '11 days'
+    )),
+    jsonb_build_object(
+      'host_organization_id', '20000000-0000-0000-0000-000000000001',
+      'venue_id', '30000000-0000-0000-0000-000000000001',
+      'name', 'Runtime RPC Created Event',
+      'timezone', 'America/New_York',
+      'capacity', 10,
+      'visibility', 'PUBLIC',
+      'occurrence_count', 1
+    ),
+    '[]'::jsonb,
+    'EVENT_CREATED',
+    jsonb_build_object(
+      'name', 'Runtime RPC Created Event',
+      'host_organization_id', '20000000-0000-0000-0000-000000000001',
+      'venue_id', '30000000-0000-0000-0000-000000000001',
+      'timezone', 'America/New_York',
+      'occurrence_count', 1
+    )
+  );
+  if coalesce((response->>'idempotent')::boolean, true) then raise exception 'first RPC call was idempotent'; end if;
+  if (select count(*) from public.events where id = '41000000-0000-0000-0000-000000000002') <> 1 then raise exception 'direct RPC event was not persisted'; end if;
+
+  response := public.phase3_create_event_bundle(
+    '41000000-0000-0000-0000-000000000001'::uuid,
+    '10000000-0000-0000-0000-000000000001'::uuid,
+    null, null,
+    jsonb_build_array(jsonb_build_object('id', '41000000-0000-0000-0000-000000000003', 'series_occurrence_number', null, 'starts_at', now() + interval '12 days', 'ends_at', now() + interval '12 days 1 hour', 'registration_deadline', now() + interval '11 days')),
+    jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Runtime RPC Created Event', 'timezone', 'America/New_York', 'capacity', 10, 'visibility', 'PUBLIC', 'occurrence_count', 1),
+    '[]'::jsonb, 'EVENT_CREATED',
+    jsonb_build_object('name', 'Runtime RPC Created Event', 'host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'timezone', 'America/New_York', 'occurrence_count', 1)
+  );
+  if not coalesce((response->>'idempotent')::boolean, false) then raise exception 'same-request replay was not idempotent'; end if;
+  if (select count(*) from public.events where name = 'Runtime RPC Created Event') <> 1 then raise exception 'same-request replay created a duplicate event'; end if;
+
+  -- Every material logical-input mismatch must reject the same request id.
+  create or replace function pg_temp.assert_j5_replay_rejected(
+    p_actor uuid, p_defaults jsonb, p_rows jsonb, p_assets jsonb, p_action text, p_audit jsonb
+  ) returns void language plpgsql as $fn$
+  begin
+    perform public.phase3_create_event_bundle(
+      '41000000-0000-0000-0000-000000000001'::uuid, p_actor, null, null,
+      p_rows, p_defaults, p_assets, p_action, p_audit
+    );
+    raise exception 'mismatched replay was accepted';
+  exception when others then
+    if sqlerrm = 'mismatched replay was accepted' then raise; end if;
+  end;
+  $fn$;
+
+  perform pg_temp.assert_j5_replay_rejected(
+    '10000000-0000-0000-0000-000000000001'::uuid,
+    jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Changed Organization', 'timezone', 'America/New_York', 'capacity', 10, 'visibility', 'PUBLIC'),
+    jsonb_build_array(jsonb_build_object('id', '41000000-0000-0000-0000-000000000005', 'series_occurrence_number', null, 'starts_at', now() + interval '12 days', 'ends_at', now() + interval '12 days 1 hour', 'registration_deadline', now() + interval '11 days')),
+    '[]'::jsonb, 'EVENT_CREATED', jsonb_build_object('name', 'Changed Organization', 'host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'timezone', 'America/New_York', 'occurrence_count', 1)
+  );
+  perform pg_temp.assert_j5_replay_rejected(
+    '10000000-0000-0000-0000-000000000001'::uuid,
+    jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000002', 'venue_id', '30000000-0000-0000-0000-000000000002', 'name', 'Runtime RPC Created Event', 'timezone', 'America/New_York', 'capacity', 10, 'visibility', 'PUBLIC'),
+    jsonb_build_array(jsonb_build_object('id', '41000000-0000-0000-0000-000000000006', 'series_occurrence_number', null, 'starts_at', now() + interval '12 days', 'ends_at', now() + interval '12 days 1 hour', 'registration_deadline', now() + interval '11 days')),
+    '[]'::jsonb, 'EVENT_CREATED', jsonb_build_object('name', 'Runtime RPC Created Event', 'host_organization_id', '20000000-0000-0000-0000-000000000002', 'venue_id', '30000000-0000-0000-0000-000000000002', 'timezone', 'America/New_York', 'occurrence_count', 1)
+  );
+  perform pg_temp.assert_j5_replay_rejected(
+    '10000000-0000-0000-0000-000000000001'::uuid,
+    jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Runtime RPC Created Event', 'timezone', 'UTC', 'capacity', 10, 'visibility', 'PUBLIC'),
+    jsonb_build_array(jsonb_build_object('id', '41000000-0000-0000-0000-000000000007', 'series_occurrence_number', null, 'starts_at', now() + interval '12 days', 'ends_at', now() + interval '12 days 1 hour', 'registration_deadline', now() + interval '11 days')),
+    '[]'::jsonb, 'EVENT_CREATED', jsonb_build_object('name', 'Runtime RPC Created Event', 'host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'timezone', 'UTC', 'occurrence_count', 1)
+  );
+  perform pg_temp.assert_j5_replay_rejected(
+    '10000000-0000-0000-0000-000000000001'::uuid,
+    jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Runtime RPC Created Event', 'timezone', 'America/New_York', 'capacity', 10, 'visibility', 'PUBLIC'),
+    jsonb_build_array(jsonb_build_object('id', '41000000-0000-0000-0000-000000000008', 'series_occurrence_number', null, 'starts_at', now() + interval '13 days', 'ends_at', now() + interval '13 days 1 hour', 'registration_deadline', now() + interval '12 days')),
+    '[]'::jsonb, 'EVENT_CREATED', jsonb_build_object('name', 'Runtime RPC Created Event', 'host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'timezone', 'America/New_York', 'occurrence_count', 1)
+  );
+  perform set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
+  perform pg_temp.assert_j5_replay_rejected(
+    '10000000-0000-0000-0000-000000000001'::uuid,
+    jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Runtime RPC Created Event', 'timezone', 'America/New_York', 'capacity', 10, 'visibility', 'PUBLIC'),
+    jsonb_build_array(jsonb_build_object('id', '41000000-0000-0000-0000-000000000009', 'series_occurrence_number', null, 'starts_at', now() + interval '12 days', 'ends_at', now() + interval '12 days 1 hour', 'registration_deadline', now() + interval '11 days')),
+    '[]'::jsonb, 'EVENT_SERIES_CREATED', jsonb_build_object('name', 'Runtime RPC Created Event', 'host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'timezone', 'America/New_York', 'occurrence_count', 1)
+  );
+  perform set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000004', true);
+  perform pg_temp.assert_j5_replay_rejected(
+    '10000000-0000-0000-0000-000000000004'::uuid,
+    jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Runtime RPC Created Event', 'timezone', 'America/New_York', 'capacity', 10, 'visibility', 'PUBLIC'),
+    jsonb_build_array(jsonb_build_object('id', '41000000-0000-0000-0000-000000000010', 'series_occurrence_number', null, 'starts_at', now() + interval '12 days', 'ends_at', now() + interval '12 days 1 hour', 'registration_deadline', now() + interval '11 days')),
+    '[]'::jsonb, 'EVENT_CREATED', jsonb_build_object('name', 'Runtime RPC Created Event', 'host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'timezone', 'America/New_York', 'occurrence_count', 1)
+  );
+
+  perform set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
+  perform pg_temp.assert_j5_replay_rejected(
+    '10000000-0000-0000-0000-000000000001'::uuid,
+    jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Runtime RPC Created Event', 'timezone', 'America/New_York', 'capacity', 10, 'visibility', 'PUBLIC'),
+    jsonb_build_array(jsonb_build_object('id', '41000000-0000-0000-0000-000000000011', 'series_occurrence_number', null, 'starts_at', now() + interval '12 days', 'ends_at', now() + interval '12 days 1 hour', 'registration_deadline', now() + interval '11 days')),
+    jsonb_build_array(jsonb_build_object('event_id', '41000000-0000-0000-0000-000000000011', 'storage_path', 'event_image_staging/41000000-0000-0000-0000-000000000001/replay.jpg', 'original_filename', 'replay.jpg', 'mime_type', 'image/jpeg', 'byte_size', 10, 'alt_text', 'Replay image')),
+    'EVENT_CREATED', jsonb_build_object('name', 'Runtime RPC Created Event', 'host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'timezone', 'America/New_York', 'occurrence_count', 1)
+  );
+
+  begin
+    perform public.phase3_create_event_bundle(
+      '41000000-0000-0000-0000-000000000002'::uuid,
+      '10000000-0000-0000-0000-000000000001'::uuid,
+      null, null,
+      jsonb_build_array(jsonb_build_object('id', '41000000-0000-0000-0000-000000000004', 'series_occurrence_number', null, 'starts_at', now() + interval '12 days', 'ends_at', now() + interval '12 days 1 hour', 'registration_deadline', now() + interval '11 days')),
+      jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Tampered Asset Event', 'timezone', 'America/New_York', 'capacity', 10, 'visibility', 'PUBLIC', 'occurrence_count', 1),
+      jsonb_build_array(jsonb_build_object('event_id', '40000000-0000-0000-0000-000000000001', 'storage_path', 'event_image_staging/41000000-0000-0000-0000-000000000002/foreign/file.jpg', 'original_filename', 'file.jpg', 'mime_type', 'image/jpeg', 'byte_size', 10, 'alt_text', 'tampered')),
+      'EVENT_CREATED',
+      jsonb_build_object('name', 'Tampered Asset Event', 'host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'timezone', 'America/New_York', 'occurrence_count', 1)
+    );
+    raise exception 'unrelated asset event id was accepted';
+  exception when others then
+    if sqlerrm not like '%unrelated event%' then raise; end if;
+  end;
+
+end;
+$$;
+
+-- Image-backed logical replay: regenerated staging paths and Event UUIDs are
+-- transport details; the server-computed content digest is the stable identity.
+do $$
+declare
+  first_response jsonb;
+  replay_response jsonb;
+begin
+  first_response := public.phase3_create_event_bundle(
+    '42000000-0000-0000-0000-000000000001'::uuid,
+    '10000000-0000-0000-0000-000000000001'::uuid,
+    null, null,
+    jsonb_build_array(jsonb_build_object('id', '42000000-0000-0000-0000-000000000002', 'series_occurrence_number', null, 'starts_at', now() + interval '15 days', 'ends_at', now() + interval '15 days 1 hour', 'registration_deadline', now() + interval '14 days')),
+    jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Runtime Image Replay Event', 'timezone', 'America/New_York', 'capacity', 10, 'visibility', 'PUBLIC'),
+    jsonb_build_array(jsonb_build_object('event_id', '42000000-0000-0000-0000-000000000002', 'storage_path', 'event_image_staging/42000000-0000-0000-0000-000000000001/attempt-a.jpg', 'original_filename', 'image.jpg', 'mime_type', 'image/jpeg', 'byte_size', 5, 'content_sha256', '6105d6cc76af400325e94d588ce511be5bfdbb73b437dc51eca43917d7a43e3d', 'alt_text', 'Runtime Image Replay Event image')),
+    'EVENT_CREATED', jsonb_build_object('name', 'Runtime Image Replay Event', 'host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'timezone', 'America/New_York', 'occurrence_count', 1)
+  );
+  if coalesce((first_response->>'idempotent')::boolean, true) then raise exception 'first image RPC call was idempotent'; end if;
+
+  replay_response := public.phase3_create_event_bundle(
+    '42000000-0000-0000-0000-000000000001'::uuid,
+    '10000000-0000-0000-0000-000000000001'::uuid,
+    null, null,
+    jsonb_build_array(jsonb_build_object('id', '42000000-0000-0000-0000-000000000003', 'series_occurrence_number', null, 'starts_at', now() + interval '15 days', 'ends_at', now() + interval '15 days 1 hour', 'registration_deadline', now() + interval '14 days')),
+    jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Runtime Image Replay Event', 'timezone', 'America/New_York', 'capacity', 10, 'visibility', 'PUBLIC'),
+    jsonb_build_array(jsonb_build_object('event_id', '42000000-0000-0000-0000-000000000003', 'storage_path', 'event_image_staging/42000000-0000-0000-0000-000000000001/attempt-b.jpg', 'original_filename', 'image.jpg', 'mime_type', 'image/jpeg', 'byte_size', 5, 'content_sha256', '6105d6cc76af400325e94d588ce511be5bfdbb73b437dc51eca43917d7a43e3d', 'alt_text', 'Runtime Image Replay Event image')),
+    'EVENT_CREATED', jsonb_build_object('name', 'Runtime Image Replay Event', 'host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'timezone', 'America/New_York', 'occurrence_count', 1)
+  );
+  if not coalesce((replay_response->>'idempotent')::boolean, false) then raise exception 'image replay was not idempotent'; end if;
+  if replay_response->'event_ids'->>0 <> first_response->'event_ids'->>0 then raise exception 'image replay returned a different Event'; end if;
+  if (select count(*) from public.events where name = 'Runtime Image Replay Event') <> 1 then raise exception 'image replay created duplicate Events'; end if;
+  if (select count(*) from public.design_assets where event_id = (first_response->'event_ids'->>0)::uuid) <> 1 then raise exception 'image replay created duplicate assets'; end if;
+
+  begin
+    perform public.phase3_create_event_bundle(
+      '42000000-0000-0000-0000-000000000001'::uuid, '10000000-0000-0000-0000-000000000001'::uuid, null, null,
+      jsonb_build_array(jsonb_build_object('id', '42000000-0000-0000-0000-000000000004', 'series_occurrence_number', null, 'starts_at', now() + interval '15 days', 'ends_at', now() + interval '15 days 1 hour', 'registration_deadline', now() + interval '14 days')),
+      jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Runtime Image Replay Event', 'timezone', 'America/New_York', 'capacity', 10, 'visibility', 'PUBLIC'),
+      jsonb_build_array(jsonb_build_object('event_id', '42000000-0000-0000-0000-000000000004', 'storage_path', 'event_image_staging/42000000-0000-0000-0000-000000000001/attempt-c.jpg', 'original_filename', 'image.jpg', 'mime_type', 'image/jpeg', 'byte_size', 7, 'content_sha256', 'd67e2e944994496c8d8ec76eed0cf9f09679448d584b532bebf941852a37f5ed', 'alt_text', 'Runtime Image Replay Event image')),
+      'EVENT_CREATED', jsonb_build_object('name', 'Runtime Image Replay Event', 'host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'timezone', 'America/New_York', 'occurrence_count', 1)
+    );
+    raise exception 'different image replay was accepted';
+  exception when others then
+    if sqlerrm = 'different image replay was accepted' then raise; end if;
+  end;
+
+  begin
+    perform public.phase3_create_event_bundle(
+      '42000000-0000-0000-0000-000000000001'::uuid, '10000000-0000-0000-0000-000000000001'::uuid, null, null,
+      jsonb_build_array(jsonb_build_object('id', '42000000-0000-0000-0000-000000000005', 'series_occurrence_number', null, 'starts_at', now() + interval '15 days', 'ends_at', now() + interval '15 days 1 hour', 'registration_deadline', now() + interval '14 days')),
+      jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Runtime Image Replay Event', 'timezone', 'America/New_York', 'capacity', 10, 'visibility', 'PUBLIC'),
+      '[]'::jsonb, 'EVENT_CREATED', jsonb_build_object('name', 'Runtime Image Replay Event', 'host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'timezone', 'America/New_York', 'occurrence_count', 1)
+    );
+    raise exception 'image/no-image replay was accepted';
+  exception when others then
+    if sqlerrm = 'image/no-image replay was accepted' then raise; end if;
+  end;
+end;
+$$;
+
+-- Recurring image replay: occurrence sequence, not generated UUID/path, is the
+-- stable asset key. Exercise regenerated IDs/paths and reversed input order.
+do $$
+declare
+  first_response jsonb;
+  replay_response jsonb;
+  occurrence_one uuid;
+  occurrence_two uuid;
+  replay_one uuid;
+  replay_two uuid;
+  attempt integer;
+begin
+  first_response := public.phase3_create_event_bundle(
+    '43000000-0000-0000-0000-000000000001'::uuid,
+    '10000000-0000-0000-0000-000000000001'::uuid,
+    '43000000-0000-0000-0000-000000000002'::uuid,
+    '2099-08-27'::date,
+    jsonb_build_array(
+      jsonb_build_object('id', '43000000-0000-0000-0000-000000000003', 'series_occurrence_number', 1, 'starts_at', '2099-08-20 14:00:00+00'::timestamptz, 'ends_at', '2099-08-20 15:00:00+00'::timestamptz, 'registration_deadline', '2099-08-20 13:00:00+00'::timestamptz),
+      jsonb_build_object('id', '43000000-0000-0000-0000-000000000004', 'series_occurrence_number', 2, 'starts_at', '2099-08-27 14:00:00+00'::timestamptz, 'ends_at', '2099-08-27 15:00:00+00'::timestamptz, 'registration_deadline', '2099-08-27 13:00:00+00'::timestamptz)
+    ),
+    jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Runtime Recurring Image Replay', 'timezone', 'America/New_York', 'capacity', 10, 'visibility', 'PUBLIC'),
+    jsonb_build_array(
+      jsonb_build_object('event_id', '43000000-0000-0000-0000-000000000003', 'storage_path', 'event_image_staging/43000000-0000-0000-0000-000000000001/first-a.jpg', 'original_filename', 'a.jpg', 'mime_type', 'image/jpeg', 'byte_size', 7, 'content_sha256', '84127d9feb9345703f2ea1ce0c14f6dfb935b8b04816230d160f03922c94ff31', 'alt_text', 'first image'),
+      jsonb_build_object('event_id', '43000000-0000-0000-0000-000000000004', 'storage_path', 'event_image_staging/43000000-0000-0000-0000-000000000001/first-b.jpg', 'original_filename', 'b.jpg', 'mime_type', 'image/jpeg', 'byte_size', 7, 'content_sha256', '657f504b469e7f2a0d8ce3cd481194445f99ee57b40fc9d7fe28d8ecad1fc09b', 'alt_text', 'second image')
+    ),
+    'EVENT_SERIES_CREATED', jsonb_build_object('name', 'Runtime Recurring Image Replay', 'host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'timezone', 'America/New_York', 'frequency', 'WEEKLY', 'ends_on', '2099-08-27', 'occurrence_count', 2)
+  );
+  if coalesce((first_response->>'idempotent')::boolean, true) then raise exception 'first recurring image call was idempotent'; end if;
+
+  replay_response := public.phase3_create_event_bundle(
+    '43000000-0000-0000-0000-000000000001'::uuid,
+    '10000000-0000-0000-0000-000000000001'::uuid,
+    '43000000-0000-0000-0000-000000000005'::uuid,
+    '2099-08-27'::date,
+    jsonb_build_array(
+      jsonb_build_object('id', '43000000-0000-0000-0000-000000000007', 'series_occurrence_number', 2, 'starts_at', '2099-08-27 14:00:00+00'::timestamptz, 'ends_at', '2099-08-27 15:00:00+00'::timestamptz, 'registration_deadline', '2099-08-27 13:00:00+00'::timestamptz),
+      jsonb_build_object('id', '43000000-0000-0000-0000-000000000006', 'series_occurrence_number', 1, 'starts_at', '2099-08-20 14:00:00+00'::timestamptz, 'ends_at', '2099-08-20 15:00:00+00'::timestamptz, 'registration_deadline', '2099-08-20 13:00:00+00'::timestamptz)
+    ),
+    jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Runtime Recurring Image Replay', 'timezone', 'America/New_York', 'capacity', 10, 'visibility', 'PUBLIC'),
+    jsonb_build_array(
+      jsonb_build_object('event_id', '43000000-0000-0000-0000-000000000007', 'storage_path', 'event_image_staging/43000000-0000-0000-0000-000000000001/retry-b.jpg', 'original_filename', 'b.jpg', 'mime_type', 'image/jpeg', 'byte_size', 7, 'content_sha256', '657f504b469e7f2a0d8ce3cd481194445f99ee57b40fc9d7fe28d8ecad1fc09b', 'alt_text', 'second image'),
+      jsonb_build_object('event_id', '43000000-0000-0000-0000-000000000006', 'storage_path', 'event_image_staging/43000000-0000-0000-0000-000000000001/retry-a.jpg', 'original_filename', 'a.jpg', 'mime_type', 'image/jpeg', 'byte_size', 7, 'content_sha256', '84127d9feb9345703f2ea1ce0c14f6dfb935b8b04816230d160f03922c94ff31', 'alt_text', 'first image')
+    ),
+    'EVENT_SERIES_CREATED', jsonb_build_object('name', 'Runtime Recurring Image Replay', 'host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'timezone', 'America/New_York', 'frequency', 'WEEKLY', 'ends_on', '2099-08-27', 'occurrence_count', 2)
+  );
+  if not coalesce((replay_response->>'idempotent')::boolean, false) then raise exception 'recurring image replay was not idempotent'; end if;
+  if replay_response->'event_ids' <> first_response->'event_ids' then raise exception 'recurring image replay returned different Events'; end if;
+  if (select count(*) from public.events where name = 'Runtime Recurring Image Replay') <> 2 then raise exception 'recurring image replay created duplicate Events'; end if;
+  if (select count(*) from public.design_assets where event_id in (select (value)::uuid from jsonb_array_elements_text(first_response->'event_ids') value)) <> 2 then raise exception 'recurring image replay created duplicate assets'; end if;
+
+  begin
+    occurrence_one := gen_random_uuid();
+    occurrence_two := gen_random_uuid();
+    perform public.phase3_create_event_bundle(
+      '43000000-0000-0000-0000-000000000001'::uuid, '10000000-0000-0000-0000-000000000001'::uuid, gen_random_uuid(), '2099-08-27'::date,
+      jsonb_build_array(jsonb_build_object('id', occurrence_one, 'series_occurrence_number', 1, 'starts_at', '2099-08-20 14:00:00+00'::timestamptz, 'ends_at', '2099-08-20 15:00:00+00'::timestamptz, 'registration_deadline', '2099-08-20 13:00:00+00'::timestamptz), jsonb_build_object('id', occurrence_two, 'series_occurrence_number', 2, 'starts_at', '2099-08-27 14:00:00+00'::timestamptz, 'ends_at', '2099-08-27 15:00:00+00'::timestamptz, 'registration_deadline', '2099-08-27 13:00:00+00'::timestamptz)),
+      jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Runtime Recurring Image Replay', 'timezone', 'America/New_York', 'capacity', 10, 'visibility', 'PUBLIC'),
+      jsonb_build_array(
+        jsonb_build_object('event_id', occurrence_one, 'storage_path', 'event_image_staging/43000000-0000-0000-0000-000000000001/swapped-a.jpg', 'original_filename', 'a.jpg', 'mime_type', 'image/jpeg', 'byte_size', 7, 'content_sha256', '657f504b469e7f2a0d8ce3cd481194445f99ee57b40fc9d7fe28d8ecad1fc09b', 'alt_text', 'first image'),
+        jsonb_build_object('event_id', occurrence_two, 'storage_path', 'event_image_staging/43000000-0000-0000-0000-000000000001/swapped-b.jpg', 'original_filename', 'b.jpg', 'mime_type', 'image/jpeg', 'byte_size', 7, 'content_sha256', '84127d9feb9345703f2ea1ce0c14f6dfb935b8b04816230d160f03922c94ff31', 'alt_text', 'second image')
+      ),
+      'EVENT_SERIES_CREATED', jsonb_build_object('name', 'Runtime Recurring Image Replay', 'host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'timezone', 'America/New_York', 'frequency', 'WEEKLY', 'ends_on', '2099-08-27', 'occurrence_count', 2)
+    );
+    raise exception 'wrong occurrence image linkage was accepted';
+  exception when others then
+    if sqlerrm = 'wrong occurrence image linkage was accepted' then raise; end if;
+  end;
+
+  for attempt in 1..30 loop
+    occurrence_one := gen_random_uuid(); occurrence_two := gen_random_uuid();
+    replay_one := gen_random_uuid(); replay_two := gen_random_uuid();
+    replay_response := public.phase3_create_event_bundle(
+      '43000000-0000-0000-0000-000000000001'::uuid, '10000000-0000-0000-0000-000000000001'::uuid,
+      gen_random_uuid(), '2099-08-27'::date,
+      jsonb_build_array(
+        jsonb_build_object('id', replay_two, 'series_occurrence_number', 2, 'starts_at', '2099-08-27 14:00:00+00'::timestamptz, 'ends_at', '2099-08-27 15:00:00+00'::timestamptz, 'registration_deadline', '2099-08-27 13:00:00+00'::timestamptz),
+        jsonb_build_object('id', replay_one, 'series_occurrence_number', 1, 'starts_at', '2099-08-20 14:00:00+00'::timestamptz, 'ends_at', '2099-08-20 15:00:00+00'::timestamptz, 'registration_deadline', '2099-08-20 13:00:00+00'::timestamptz)
+      ),
+      jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Runtime Recurring Image Replay', 'timezone', 'America/New_York', 'capacity', 10, 'visibility', 'PUBLIC'),
+      jsonb_build_array(
+        jsonb_build_object('event_id', replay_two, 'storage_path', format('event_image_staging/43000000-0000-0000-0000-000000000001/loop-%s-b.jpg', attempt), 'original_filename', 'b.jpg', 'mime_type', 'image/jpeg', 'byte_size', 7, 'content_sha256', '657f504b469e7f2a0d8ce3cd481194445f99ee57b40fc9d7fe28d8ecad1fc09b', 'alt_text', 'second image'),
+        jsonb_build_object('event_id', replay_one, 'storage_path', format('event_image_staging/43000000-0000-0000-0000-000000000001/loop-%s-a.jpg', attempt), 'original_filename', 'a.jpg', 'mime_type', 'image/jpeg', 'byte_size', 7, 'content_sha256', '84127d9feb9345703f2ea1ce0c14f6dfb935b8b04816230d160f03922c94ff31', 'alt_text', 'first image')
+      ),
+      'EVENT_SERIES_CREATED', jsonb_build_object('name', 'Runtime Recurring Image Replay', 'host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'timezone', 'America/New_York', 'frequency', 'WEEKLY', 'ends_on', '2099-08-27', 'occurrence_count', 2)
+    );
+    if not coalesce((replay_response->>'idempotent')::boolean, false) then raise exception 'recurring stability replay % was not idempotent', attempt; end if;
+  end loop;
+
+  begin
+    perform public.phase3_create_event_bundle(
+      '43000000-0000-0000-0000-000000000001'::uuid, '10000000-0000-0000-0000-000000000001'::uuid, gen_random_uuid(), '2099-08-27'::date,
+      jsonb_build_array(jsonb_build_object('id', gen_random_uuid(), 'series_occurrence_number', 1, 'starts_at', '2099-08-20 14:00:00+00'::timestamptz, 'ends_at', '2099-08-20 15:00:00+00'::timestamptz, 'registration_deadline', '2099-08-20 13:00:00+00'::timestamptz), jsonb_build_object('id', gen_random_uuid(), 'series_occurrence_number', 2, 'starts_at', '2099-08-27 14:00:00+00'::timestamptz, 'ends_at', '2099-08-27 15:00:00+00'::timestamptz, 'registration_deadline', '2099-08-27 13:00:00+00'::timestamptz)),
+      jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Runtime Recurring Image Replay', 'timezone', 'America/New_York', 'capacity', 10, 'visibility', 'PUBLIC'),
+      '[]'::jsonb, 'EVENT_SERIES_CREATED', jsonb_build_object('name', 'Runtime Recurring Image Replay', 'host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'timezone', 'America/New_York', 'frequency', 'WEEKLY', 'ends_on', '2099-08-27', 'occurrence_count', 2)
+    );
+    raise exception 'recurring image/no-image replay was accepted';
+  exception when others then
+    if sqlerrm = 'recurring image/no-image replay was accepted' then raise; end if;
+  end;
+end;
+$$;
+
+-- Inactive venues are rejected independently of UI filtering.
+do $$
+begin
+  update public.venues set active_status = 'INACTIVE'
+  where id = '30000000-0000-0000-0000-000000000001';
+  begin
+    perform public.phase3_create_event_bundle(
+      '44000000-0000-0000-0000-000000000001'::uuid, '10000000-0000-0000-0000-000000000001'::uuid, null, null,
+      jsonb_build_array(jsonb_build_object('id', '44000000-0000-0000-0000-000000000002', 'series_occurrence_number', null, 'starts_at', now() + interval '20 days', 'ends_at', now() + interval '20 days 1 hour', 'registration_deadline', now() + interval '19 days')),
+      jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Runtime Inactive Venue Event', 'timezone', 'America/New_York', 'capacity', 10, 'visibility', 'PUBLIC'),
+      '[]'::jsonb, 'EVENT_CREATED', jsonb_build_object('name', 'Runtime Inactive Venue Event', 'host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'timezone', 'America/New_York', 'occurrence_count', 1)
+    );
+    raise exception 'inactive venue was accepted';
+  exception when others then
+    if sqlerrm = 'inactive venue was accepted' then raise; end if;
+  end;
+  update public.venues set active_status = 'ACTIVE'
+  where id = '30000000-0000-0000-0000-000000000001';
+end;
+$$;
+
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000002', true);
+do $$
+begin
+  begin
+    perform public.phase3_create_event_bundle(
+      '41000000-0000-0000-0000-000000000003'::uuid,
+      '10000000-0000-0000-0000-000000000002'::uuid,
+      null, null, '[]'::jsonb, '{}'::jsonb, '[]'::jsonb, 'EVENT_CREATED', '{}'::jsonb
+    );
+    raise exception 'Host Admin was allowed to create an event through RPC';
+  exception when insufficient_privilege then null;
+  end;
+end;
+$$;
+
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 
 -- Host Admin A is isolated to Organization A; Host Admin B receives the inverse view.
 set role authenticated;

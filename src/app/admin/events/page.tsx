@@ -3,7 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/db/server";
 import {
   copyEventForm,
-  createEventForm,
+  createEvent,
   cancelEventForm,
   markAttendanceSubmit,
 } from "@/lib/services/phase-3-actions";
@@ -16,6 +16,9 @@ import { AdminEventCard } from "@/components/admin/admin-event-card";
 import { AdminEventCardRail } from "@/components/admin/admin-event-card-rail";
 import { eventCardAsset } from "@/lib/config/admin-visual-assets";
 import { designAssetPublicUrl } from "@/lib/config/design-assets";
+import { ActionForm } from "@/components/admin/action-form";
+import { randomUUID } from "node:crypto";
+import { OrganizationVenueFields, EventTimingFields } from "@/components/admin/event-form-fields";
 
 export default async function EventsPage({
   searchParams,
@@ -36,7 +39,7 @@ export default async function EventsPage({
       .select(
         "id,name,status,publication_status,public_slug,starts_at,ends_at,timezone,capacity,registration_deadline,host_organization_id,venue_id,event_series_id,attendance_processing_state,event_series(public_slug)",
       )
-      .order("starts_at", { ascending: false }),
+    .order("starts_at", { ascending: true }),
   ]);
   const visibleEvents =
     admin.role === "SYSTEM_ADMIN"
@@ -44,6 +47,15 @@ export default async function EventsPage({
       : (events ?? []).filter((event) =>
           admin.organizationIds.includes(event.host_organization_id),
         );
+  visibleEvents?.sort((a, b) => {
+    // Server-rendered ordering intentionally uses the current instant so future events lead.
+    // eslint-disable-next-line react-hooks/purity
+    const now = Date.now();
+    const aFuture = Date.parse(a.starts_at) >= now;
+    const bFuture = Date.parse(b.starts_at) >= now;
+    if (aFuture !== bFuture) return aFuture ? -1 : 1;
+    return Date.parse(a.starts_at) - Date.parse(b.starts_at);
+  });
   const mode = (await searchParams).mode === "create" ? "create" : "list";
   const { data: registrationRows } = await db
     .from("registrations")
@@ -145,37 +157,18 @@ export default async function EventsPage({
           />
         </div>
         {admin.role === "SYSTEM_ADMIN" && mode === "create" ? (
-          <form
-            action={createEventForm}
+          <ActionForm
+            action={createEvent}
+            submitOptions={[{ label: "Create Draft", value: "draft" }, { label: "Publish Event", value: "publish" }]}
             className="admin-surface mt-8 grid gap-5 rounded-3xl p-6 sm:grid-cols-2 sm:p-8"
           >
+            <input type="hidden" name="creationRequestId" value={randomUUID()} />
             <h2 className="admin-eyebrow sm:col-span-2">Create draft event</h2>
             <label>
               Name
               <input name="name" required className="mt-1 w-full rounded border p-2" />
             </label>
-            <label>
-              Organization
-              <select name="hostOrganizationId" required className="mt-1 w-full rounded border p-2">
-                <option value="">Select organization</option>
-                {(organizations ?? []).map((org) => (
-                  <option key={org.id} value={org.id}>
-                    {org.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Venue
-              <select name="venueId" required className="mt-1 w-full rounded border p-2">
-                <option value="">Select venue</option>
-                {(venues ?? []).map((venue) => (
-                  <option key={venue.id} value={venue.id}>
-                    {venue.name} ({venue.timezone})
-                  </option>
-                ))}
-              </select>
-            </label>
+            <OrganizationVenueFields organizations={organizations ?? []} venues={venues ?? []} />
             <label>
               Capacity
               <input
@@ -187,33 +180,7 @@ export default async function EventsPage({
                 className="mt-1 w-full rounded border p-2"
               />
             </label>
-            <label>
-              Local start
-              <input
-                name="startLocal"
-                type="datetime-local"
-                required
-                className="mt-1 w-full rounded border p-2"
-              />
-            </label>
-            <label>
-              Local end
-              <input
-                name="endLocal"
-                type="datetime-local"
-                required
-                className="mt-1 w-full rounded border p-2"
-              />
-            </label>
-            <label>
-              Registration deadline
-              <input
-                name="registrationDeadlineLocal"
-                type="datetime-local"
-                required
-                className="mt-1 w-full rounded border p-2"
-              />
-            </label>
+            <EventTimingFields />
             <fieldset className="rounded-lg border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
               <legend className="px-1 text-sm font-semibold text-ink">Repeat</legend>
               <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
@@ -303,8 +270,7 @@ export default async function EventsPage({
                 className="mt-1 w-full rounded border p-2"
               />
             </label>
-            <Button type="submit">Create draft</Button>
-          </form>
+          </ActionForm>
         ) : null}
         {mode === "list" ? (
           <AdminEventCardRail>

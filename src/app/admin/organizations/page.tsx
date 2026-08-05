@@ -1,4 +1,4 @@
-import { requireActiveAdmin } from "@/lib/authorization/server";
+import { requireSystemAdmin } from "@/lib/authorization/server";
 import Link from "next/link";
 import { createClient } from "@/lib/db/server";
 import { archiveOrganizationForm, createOrganizationForm } from "@/lib/services/phase-3-actions";
@@ -11,7 +11,7 @@ export default async function OrganizationsPage({
 }: {
   searchParams: Promise<{ mode?: string }>;
 }) {
-  const admin = await requireActiveAdmin();
+  const admin = await requireSystemAdmin();
   const db = await createClient();
   const { data: organizations } = await db
     .from("organizations")

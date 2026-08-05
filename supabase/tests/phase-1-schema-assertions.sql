@@ -30,6 +30,14 @@ begin
   if not exists (select 1 from pg_proc where pronamespace = 'public'::regnamespace and proname = 'register_selected_events') then
     raise exception 'schema assertion failed: anonymous registration RPC is missing';
   end if;
+  if not exists (
+    select 1 from pg_proc
+    where pronamespace = 'public'::regnamespace
+      and proname = 'phase3_create_event_bundle'
+      and proargtypes = '2950 2950 2950 1082 3802 3802 3802 25 3802'::oidvector
+  ) then
+    raise exception 'schema assertion failed: hardened event creation RPC is missing';
+  end if;
   if not exists (select 1 from pg_views where schemaname = 'public' and viewname = 'public_event_schedule') then
     raise exception 'schema assertion failed: public event schedule projection is missing';
   end if;

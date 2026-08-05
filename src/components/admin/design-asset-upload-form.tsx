@@ -9,13 +9,28 @@ import { SubmitButton } from "@/components/admin/submit-button";
 
 const initialState: DesignAssetActionState = {};
 
-export function DesignAssetUploadForm({ events }: { events: Array<{ id: string; name: string }> }) {
+export function DesignAssetUploadForm({
+  events,
+  eventOnly = false,
+  eventId,
+  defaultAltText = "Event image",
+  intentToken,
+}: {
+  events: Array<{ id: string; name: string }>;
+  eventOnly?: boolean;
+  eventId?: string;
+  defaultAltText?: string;
+  intentToken?: string;
+}) {
   const [state, action] = useActionState(uploadDesignAsset, initialState);
   return (
     <form
       action={action}
       className="grid gap-4 rounded-3xl border border-admin-border bg-admin-surface-muted p-5 sm:grid-cols-2"
     >
+      {eventOnly ? <input type="hidden" name="eventId" value={eventId ?? ""} /> : null}
+      {eventOnly ? <input type="hidden" name="operation" value="EVENT_IMAGE_REPLACEMENT" /> : null}
+      {eventOnly ? <input type="hidden" name="eventImageIntent" value={intentToken ?? ""} /> : null}
       <label>
         Asset type
         <select
@@ -23,19 +38,17 @@ export function DesignAssetUploadForm({ events }: { events: Array<{ id: string; 
           defaultValue="PUBLIC_BACKGROUND_DESKTOP"
           className="mt-1 w-full rounded-xl border border-admin-border bg-white p-3"
         >
-          <option value="PUBLIC_BACKGROUND_DESKTOP">Public background · desktop</option>
-          <option value="PUBLIC_BACKGROUND_MOBILE">Public background · mobile</option>
-          <option value="EVENT_IMAGE_DESKTOP">Event image · desktop</option>
-          <option value="EVENT_IMAGE_MOBILE">Event image · mobile</option>
-          <option value="CATEGORY_IMAGE">Category fallback</option>
+          {eventOnly ? <option value="EVENT_IMAGE_DESKTOP">Event image</option> : null}
+          {!eventOnly ? <><option value="PUBLIC_BACKGROUND_DESKTOP">Public background · desktop</option><option value="PUBLIC_BACKGROUND_MOBILE">Public background · mobile</option><option value="EVENT_IMAGE_DESKTOP">Event image · desktop</option><option value="EVENT_IMAGE_MOBILE">Event image · mobile</option><option value="CATEGORY_IMAGE">Category fallback</option></> : null}
         </select>
       </label>
-      <label>
+      {!eventOnly ? <label>
         Event (event image only)
         <select
           name="eventId"
           defaultValue=""
           className="mt-1 w-full rounded-xl border border-admin-border bg-white p-3"
+          disabled={eventOnly}
         >
           <option value="">Not event-specific</option>
           {events.map((event) => (
@@ -44,8 +57,8 @@ export function DesignAssetUploadForm({ events }: { events: Array<{ id: string; 
             </option>
           ))}
         </select>
-      </label>
-      <label>
+      </label> : null}
+      {!eventOnly ? <label>
         Category (category fallback only)
         <select
           name="categoryKey"
@@ -59,7 +72,7 @@ export function DesignAssetUploadForm({ events }: { events: Array<{ id: string; 
           <option value="community-fitness">Community fitness</option>
           <option value="default">Default</option>
         </select>
-      </label>
+      </label> : null}
       <label>
         Focal position
         <select
@@ -80,6 +93,7 @@ export function DesignAssetUploadForm({ events }: { events: Array<{ id: string; 
           name="altText"
           required
           maxLength={240}
+          defaultValue={defaultAltText}
           placeholder="Describe the image for participants"
           className="mt-1 w-full rounded-xl border border-admin-border bg-white p-3"
         />

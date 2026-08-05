@@ -209,7 +209,7 @@ test("System Admin completes the Phase 3 operational flow", async ({ page }) => 
   await expect(page.getByRole("button", { name: "Cancel event" })).toHaveCount(0);
 });
 
-test("Host Admin is scoped to assigned organization and cannot mutate Phase 3 records", async ({
+test("Host Admin is denied organization management and scoped to assigned venue management", async ({
   page,
 }) => {
   const supabase = createClient(env("NEXT_PUBLIC_SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), {
@@ -239,15 +239,22 @@ test("Host Admin is scoped to assigned organization and cannot mutate Phase 3 re
 
   await signIn(page, host.email, host.password);
   await page.goto("/admin/organizations");
-  await expect(page.getByText(`Synthetic Organization A ${suffix}`)).toBeVisible();
-  await expect(page.getByText(`Synthetic Organization B ${suffix}`)).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /archive/i })).toHaveCount(0);
+  await expect(page.getByText(/access denied/i)).toBeVisible();
   await page.goto(`/admin/organizations/${organizationA}`);
+  await expect(page.getByText(/access denied/i)).toBeVisible();
+
+  await page.goto("/admin/venues");
   await expect(page.getByText(`Synthetic Venue A ${suffix}`)).toBeVisible();
-  await expect(page.getByText(`Synthetic Event A ${suffix}`)).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: /save|archive|create|cancel|copy|publish/i }),
-  ).toHaveCount(0);
+  await expect(page.getByText(`Synthetic Venue B ${suffix}`)).toHaveCount(0);
+  await page.goto(`/admin/venues/${venueA}`);
+  await expect(page.getByRole("heading", { name: `Synthetic Venue A ${suffix}` })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Save venue" })).toBeVisible();
+  await page.getByLabel("City").fill("Assigned Host City");
+  await page.getByRole("button", { name: "Save venue" }).click();
+  await page.waitForTimeout(500);
+  expect(localQuery(`select city from public.venues where id=${sql(venueA)}`)).toBe(
+    "Assigned Host City",
+  );
 
   for (const path of [
     `/admin/organizations/${organizationB}`,
@@ -282,6 +289,16 @@ test("Host Admin is scoped to assigned organization and cannot mutate Phase 3 re
   expect(mutationError).toBeTruthy();
   expect(localQuery(`select name from public.organizations where id=${sql(organizationB)}`)).toBe(
     `Synthetic Organization B ${suffix}`,
+  );
+  const { error: venueMutationError } = await hostClient
+    .from("venues")
+    .update({ name: "Tampered Venue" })
+    .eq("id", venueB)
+    .select("id")
+    .single();
+  expect(venueMutationError).toBeTruthy();
+  expect(localQuery(`select name from public.venues where id=${sql(venueB)}`)).toBe(
+    `Synthetic Venue B ${suffix}`,
   );
 });
 
@@ -363,7 +380,10 @@ test("System Admin venue timezone edit persists without rescheduling event UTC i
   await page.goto(`/admin/venues/${venueA}`);
   await page.getByLabel("IANA timezone").fill("America/Chicago");
   await page.getByRole("button", { name: "Save venue" }).click();
-  await expect(page.getByText("Venue updated.")).toBeVisible();
+  await page.waitForTimeout(500);
+  expect(localQuery(`select timezone from public.venues where id=${sql(venueA)}`)).toBe(
+    "America/Chicago",
+  );
   await page.reload();
   await expect(page.getByText(/America\/Chicago/)).toBeVisible();
   const after = localQuery(

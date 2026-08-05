@@ -14,6 +14,8 @@ import {
   type RegistrationRosterRow,
 } from "@/components/admin/registration-roster";
 import { ContextualBack } from "@/components/admin/contextual-back";
+import { OrganizationVenueFields, EventTimingFields } from "@/components/admin/event-form-fields";
+import { DesignAssetUploadForm } from "@/components/admin/design-asset-upload-form";
 import {
   RosterStatusCarousel,
   type RosterPreviewPerson,
@@ -37,6 +39,8 @@ import {
   setPhase7SlugForm,
   unpublishPhase7EventForm,
 } from "@/lib/services/phase-7-actions";
+import { designAssetPublicUrl } from "@/lib/config/design-assets";
+import { createEventImageIntent, EVENT_IMAGE_ASSET_TYPE } from "@/lib/services/event-image-intent";
 
 function localValue(value: string, timezone: string) {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -83,6 +87,13 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
       .eq("active_status", "ACTIVE")
       .order("name"),
   ]);
+  const { data: eventImage } = await db
+    .from("design_assets")
+    .select("id,storage_path,alt_text")
+    .eq("event_id", id)
+    .eq("asset_type", "EVENT_IMAGE_DESKTOP")
+    .eq("active", true)
+    .maybeSingle();
   const { data: registrations } = await db
     .from("registrations")
     .select(
@@ -405,34 +416,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                   className="mt-1 w-full rounded border p-2"
                 />
               </label>
-              <label>
-                Organization
-                <select
-                  name="hostOrganizationId"
-                  defaultValue={event.host_organization_id}
-                  className="mt-1 w-full rounded border p-2"
-                >
-                  {(organizations ?? []).map((org) => (
-                    <option key={org.id} value={org.id}>
-                      {org.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Venue
-                <select
-                  name="venueId"
-                  defaultValue={event.venue_id}
-                  className="mt-1 w-full rounded border p-2"
-                >
-                  {(venues ?? []).map((venue) => (
-                    <option key={venue.id} value={venue.id}>
-                      {venue.name} ({venue.timezone})
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <OrganizationVenueFields organizations={organizations ?? []} venues={venues ?? []} organizationId={event.host_organization_id} venueId={event.venue_id} />
               <label>
                 Capacity
                 <input
@@ -444,36 +428,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                   className="mt-1 w-full rounded border p-2"
                 />
               </label>
-              <label>
-                Local start
-                <input
-                  name="startLocal"
-                  type="datetime-local"
-                  required
-                  defaultValue={localValue(event.starts_at, event.timezone)}
-                  className="mt-1 w-full rounded border p-2"
-                />
-              </label>
-              <label>
-                Local end
-                <input
-                  name="endLocal"
-                  type="datetime-local"
-                  required
-                  defaultValue={localValue(event.ends_at, event.timezone)}
-                  className="mt-1 w-full rounded border p-2"
-                />
-              </label>
-              <label>
-                Registration deadline
-                <input
-                  name="registrationDeadlineLocal"
-                  type="datetime-local"
-                  required
-                  defaultValue={localValue(event.registration_deadline, event.timezone)}
-                  className="mt-1 w-full rounded border p-2"
-                />
-              </label>
+              <EventTimingFields startValue={localValue(event.starts_at, event.timezone)} endValue={localValue(event.ends_at, event.timezone)} deadlineValue={localValue(event.registration_deadline, event.timezone)} />
               <label>
                 Visibility
                 <select
@@ -552,6 +507,17 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
             </dl>
           )}
         </div>
+        {admin.role === "SYSTEM_ADMIN" && canEdit ? (
+          <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
+            <h2 className="text-lg font-semibold">Event image</h2>
+            {eventImage ? (
+              <img src={designAssetPublicUrl(eventImage.storage_path)} alt={eventImage.alt_text} className="mt-4 aspect-video w-full rounded-xl object-cover" />
+            ) : (
+              <p className="mt-3 rounded border border-dashed p-4 text-sm text-slate-600">No image associated with this event.</p>
+            )}
+            <DesignAssetUploadForm events={[{ id, name: event.name }]} eventOnly eventId={id} intentToken={createEventImageIntent(id, admin.userId, EVENT_IMAGE_ASSET_TYPE)} defaultAltText={`${event.name} event image`} />
+          </div>
+        ) : null}
         <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
           <h2 className="text-lg font-semibold">Registration roster</h2>
           <p className="mt-1 text-sm text-slate-600">

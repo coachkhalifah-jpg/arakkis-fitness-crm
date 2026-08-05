@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { Button } from "@/components/ui/button";
 import { FloatingBackButton } from "@/components/registration/floating-back-button";
 import { RosterStatusCarousel } from "@/components/admin/roster-status-carousel";
+import { DesignAssetUploadForm } from "@/components/admin/design-asset-upload-form";
 
 describe("Button", () => {
   it("renders an accessible button", () => {
@@ -26,6 +27,23 @@ describe("Button", () => {
 });
 
 describe("presentation controls", () => {
+  it("submits the managed event id for event-only image uploads", () => {
+    render(
+      <DesignAssetUploadForm
+        events={[{ id: "event-a", name: "Event A" }]}
+        eventOnly
+        eventId="event-a"
+        intentToken="intent-a"
+      />,
+    );
+    expect(document.querySelector('input[name="eventId"]')).toHaveValue("event-a");
+    expect(document.querySelector('input[name="eventImageIntent"]')).toHaveValue("intent-a");
+    expect(document.querySelector('input[name="operation"]')).toHaveValue("EVENT_IMAGE_REPLACEMENT");
+    expect(screen.getByRole("combobox", { name: "Asset type" })).toHaveValue(
+      "EVENT_IMAGE_DESKTOP",
+    );
+  });
+
   it("labels the icon-only public back control", () => {
     render(<FloatingBackButton />);
     expect(screen.getByRole("link", { name: "Back to events" })).toHaveAttribute("href", "/events");

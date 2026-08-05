@@ -1,11 +1,16 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { requireActiveAdmin, requireSystemAdmin } from "@/lib/authorization/server";
 import { createClient } from "@/lib/db/server";
 import { createPrivilegedClient } from "@/lib/db/privileged";
+import {
+  clearCommittedCleanupCandidates,
+  runPostCommitRefresh,
+} from "@/lib/services/event-creation-lifecycle";
 import {
   audit,
   eventSchema,
@@ -26,12 +31,18 @@ import {
   openAttendanceSubmit as phase5OpenAttendanceSubmit,
   reopenAttendanceSubmit as phase5ReopenAttendanceSubmit,
 } from "@/lib/services/phase-5-actions";
+import { cleanupStoragePaths } from "@/lib/services/storage-cleanup";
+import { normalizePublicSlug } from "@/lib/services/phase-7";
 
 export type Phase3ActionState = {
   error?: string;
   errorAction?: string;
   errorCode?: string;
   success?: string;
+  createdEventId?: string;
+  createdName?: string;
+  createdStatus?: "Draft" | "Published";
+  publicUrl?: string;
 };
 const message = (error: unknown) =>
   error instanceof Phase3Error || error instanceof Error
@@ -107,64 +118,79 @@ function eventImageExtension(file: File) {
   return ".jpg";
 }
 
-async function saveEventImages(
-  db: Awaited<ReturnType<typeof createClient>>,
-  adminId: string,
+async function removeEventImagePaths(paths: string[], requestId: string, operation: string) {
+  const requestPrefix = `event_image_staging/${requestId}/`;
+  const scopedPaths = paths.filter((path) => path.startsWith(requestPrefix));
+  if (scopedPaths.length !== paths.length) {
+    console.error("[event-image-cleanup] refused out-of-request cleanup candidate", {
+      requestId,
+      operation,
+      paths: paths.filter((path) => !path.startsWith(requestPrefix)),
+    });
+  }
+  if (!scopedPaths.length) return { ok: true, attempts: 0, unresolvedPaths: [] };
+  const storage = createPrivilegedClient();
+  const result = await cleanupStoragePaths(
+    scopedPaths,
+    async (candidatePaths) => {
+      const { error } = await storage.storage.from("design-assets").remove(candidatePaths);
+      return {
+        error: error ? { message: error.message, statusCode: error.statusCode } : null,
+      };
+    },
+    2,
+  );
+  if (!result.ok) {
+    console.error("[event-image-cleanup] unresolved staged objects", {
+      requestId,
+      operation,
+      attempts: result.attempts,
+      paths: result.unresolvedPaths,
+      error: result.lastError?.message,
+    });
+  }
+  return result;
+}
+
+async function uploadEventImages(
+  requestId: string,
   eventIds: string[],
   eventName: string,
   file: File | null,
 ) {
-  if (!file || !eventIds.length) return;
+  if (!file || !eventIds.length) return { paths: [], assets: [] };
   const storage = createPrivilegedClient();
   const uploadedPaths: string[] = [];
+  const assets: Array<Record<string, string | number>> = [];
+  const fileBytes = Buffer.from(await file.arrayBuffer());
+  const contentSha256 = createHash("sha256").update(fileBytes).digest("hex");
   try {
     for (const eventId of eventIds) {
-      const path = `event_image_desktop/${eventId}/${randomUUID()}${eventImageExtension(file)}`;
+      const path = `event_image_staging/${requestId}/${eventId}/${randomUUID()}${eventImageExtension(file)}`;
       const { error: uploadError } = await storage.storage
         .from("design-assets")
-        .upload(path, await file.arrayBuffer(), {
+        .upload(path, fileBytes, {
           contentType: file.type,
           cacheControl: "31536000",
           upsert: false,
         });
       if (uploadError) throw new Phase3Error("conflict", "The event image could not be uploaded.");
       uploadedPaths.push(path);
-      const { data: asset, error: insertError } = await db
-        .from("design_assets")
-        .insert({
-          asset_type: "EVENT_IMAGE_DESKTOP",
-          event_id: eventId,
-          storage_path: path,
-          original_filename: file.name.slice(0, 255),
-          mime_type: file.type,
-          byte_size: file.size,
-          alt_text: `${eventName} event image`,
-          focal_position: "center",
-          created_by_admin_id: adminId,
-        })
-        .select("id")
-        .single();
-      if (insertError || !asset)
-        throw new Phase3Error("conflict", "The event image metadata could not be saved.");
-      const { error: auditError } = await db.from("audit_events").insert({
-        actor_admin_id: adminId,
-        action: "DESIGN_ASSET_UPLOADED",
-        entity_type: "DESIGN_ASSET",
-        entity_id: asset.id,
-        new_values: {
-          asset_type: "EVENT_IMAGE_DESKTOP",
-          event_id: eventId,
-          mime_type: file.type,
-          byte_size: file.size,
-        },
+      assets.push({
+        event_id: eventId,
+        storage_path: path,
+        original_filename: file.name.slice(0, 255) || "event-image",
+        mime_type: file.type,
+        byte_size: file.size,
+        content_sha256: contentSha256,
+        alt_text: `${eventName} event image`,
       });
-      if (auditError)
-        throw new Phase3Error("conflict", "The event image change could not be recorded.");
     }
   } catch (error) {
-    if (uploadedPaths.length) await storage.storage.from("design-assets").remove(uploadedPaths);
+    await removeEventImagePaths(uploadedPaths, requestId, "staged-upload-failure");
     throw error;
   }
+  return { paths: uploadedPaths, assets };
 }
 
 export async function createOrganization(
@@ -329,7 +355,7 @@ export async function createVenue(
       .select("id")
       .single();
     if (error || !data) throw new Phase3Error("conflict", "Venue could not be created.");
-    await audit(admin.userId, "VENUE_CREATED", "VENUE", data.id, input);
+    await audit(admin.userId, "VENUE_CREATED", "VENUE", data.id, input, undefined, admin.role === "HOST_ADMIN");
     revalidatePath("/admin/venues");
     revalidatePath("/admin/events");
     return { success: "Venue created." };
@@ -403,7 +429,7 @@ export async function updateVenue(form: FormData): Promise<Phase3ActionState> {
       })
       .eq("id", id);
     if (error) throw new Phase3Error("conflict", "Venue could not be updated.");
-    await audit(admin.userId, "VENUE_UPDATED", "VENUE", id, input, old);
+    await audit(admin.userId, "VENUE_UPDATED", "VENUE", id, input, old, admin.role === "HOST_ADMIN");
     revalidatePath("/admin/venues");
     revalidatePath("/admin/events");
     return { success: "Venue updated." };
@@ -425,6 +451,7 @@ export async function createEvent(
   _state: Phase3ActionState,
   form: FormData,
 ): Promise<Phase3ActionState> {
+  let uploadedPaths: string[] = [];
   try {
     const admin = await requireSystemAdmin();
     const input = eventSchema.parse({
@@ -457,92 +484,117 @@ export async function createEvent(
     if (!venue || venue.organization_id !== input.hostOrganizationId)
       throw new Phase3Error("invalid", "Choose a venue belonging to the selected organization.");
     const times = parseEventTimes(input, venue.timezone);
-    if (recurrence.enabled) {
-      const occurrences = buildWeeklyOccurrences(input, venue.timezone, recurrence.endsOn!);
-      const { data: series, error: seriesError } = await db
-        .from("event_series")
-        .insert({
-          frequency: "WEEKLY",
-          interval_count: 1,
-          ends_on: recurrence.endsOn!,
-          selection_window_days: 14,
-          created_by_admin_id: admin.userId,
-        })
-        .select("id")
-        .single();
-      if (seriesError || !series)
-        throw new Phase3Error("conflict", "Recurring series could not be created.");
-      const { data: created, error } = await db
-        .from("events")
-        .insert(
-          occurrences.map((occurrence) => ({
-            event_series_id: series.id,
-            series_occurrence_number: occurrence.occurrence,
-            host_organization_id: input.hostOrganizationId,
-            venue_id: input.venueId,
-            name: input.name,
-            description: input.description || null,
-            participant_instructions: input.participantInstructions || null,
-            starts_at: occurrence.startsAt,
-            ends_at: occurrence.endsAt,
-            timezone: venue.timezone,
-            registration_deadline: occurrence.registrationDeadline,
-            capacity: input.capacity,
-            visibility: input.visibility,
-            communication_url: communication.url,
-            communication_label: communication.label,
-            created_by_admin_id: admin.userId,
-          })),
-        )
-        .select("id");
-      if (error || !created?.length)
-        throw new Phase3Error("conflict", "Recurring events could not be created.");
-      await saveEventImages(
-        db,
-        admin.userId,
-        created.map((event) => event.id),
-        input.name,
-        imageFile,
+    const occurrences = recurrence.enabled
+      ? buildWeeklyOccurrences(input, venue.timezone, recurrence.endsOn!)
+      : [{ ...times, localDate: input.startLocal.slice(0, 10), occurrence: 1 }];
+    const eventIds = occurrences.map(() => randomUUID());
+    const seriesId = recurrence.enabled ? randomUUID() : null;
+    const requestId = value(form, "creationRequestId") || randomUUID();
+    const uploaded = await uploadEventImages(requestId, eventIds, input.name, imageFile);
+    uploadedPaths = uploaded.paths;
+    const { data: bundle, error: bundleError } = (await db.rpc(
+      "phase3_create_event_bundle" as never,
+      {
+        p_request_id: requestId,
+        p_actor_admin_id: admin.userId,
+        p_series_id: seriesId,
+        p_series_ends_on: recurrence.endsOn ?? null,
+        p_event_rows: occurrences.map((occurrence, index) => ({
+          id: eventIds[index],
+          series_occurrence_number: recurrence.enabled ? occurrence.occurrence : null,
+          starts_at: occurrence.startsAt,
+          ends_at: occurrence.endsAt,
+          registration_deadline: occurrence.registrationDeadline,
+        })),
+        p_defaults: {
+          host_organization_id: input.hostOrganizationId,
+          venue_id: input.venueId,
+          name: input.name,
+          description: input.description || null,
+          participant_instructions: input.participantInstructions || null,
+          timezone: venue.timezone,
+          capacity: input.capacity,
+          visibility: input.visibility,
+          communication_url: communication.url,
+          communication_label: communication.label,
+        },
+        p_assets: uploaded.assets,
+        p_audit_action: recurrence.enabled ? "EVENT_SERIES_CREATED" : "EVENT_CREATED",
+        p_audit_values: {
+          name: input.name,
+          host_organization_id: input.hostOrganizationId,
+          venue_id: input.venueId,
+          timezone: venue.timezone,
+          frequency: recurrence.enabled ? "WEEKLY" : null,
+          ends_on: recurrence.endsOn ?? null,
+          occurrence_count: occurrences.length,
+        },
+      } as never,
+    )) as {
+      data: { event_ids?: string[]; idempotent?: boolean } | null;
+      error: { message?: string; code?: string } | null;
+    };
+    if (bundleError || !bundle?.event_ids?.length) {
+      await removeEventImagePaths(uploadedPaths, requestId, "database-bundle-failure");
+      uploadedPaths = [];
+      throw new Phase3Error(
+        "conflict",
+        recurrence.enabled
+          ? "Recurring events could not be created."
+          : "Event could not be created.",
       );
-      await audit(admin.userId, "EVENT_SERIES_CREATED", "EVENT_SERIES", series.id, {
-        ...input,
-        frequency: "WEEKLY",
-        endsOn: recurrence.endsOn,
-        occurrenceCount: occurrences.length,
-      });
-      revalidatePath("/admin/events");
-      return { success: `Recurring series created with ${created.length} weekly dates.` };
     }
-    const { data, error } = await db
-      .from("events")
-      .insert({
-        host_organization_id: input.hostOrganizationId,
-        venue_id: input.venueId,
-        name: input.name,
-        description: input.description || null,
-        participant_instructions: input.participantInstructions || null,
-        starts_at: times.startsAt,
-        ends_at: times.endsAt,
-        timezone: venue.timezone,
-        registration_deadline: times.registrationDeadline,
-        capacity: input.capacity,
-        visibility: input.visibility,
-        communication_url: communication.url,
-        communication_label: communication.label,
-        created_by_admin_id: admin.userId,
-      })
-      .select("id")
-      .single();
-    if (error || !data) throw new Phase3Error("conflict", "Event could not be created.");
-    await saveEventImages(db, admin.userId, [data.id], input.name, imageFile);
-    await audit(admin.userId, "EVENT_CREATED", "EVENT", data.id, {
-      ...input,
-      ...times,
-      timezone: venue.timezone,
-    });
-    revalidatePath("/admin/events");
-    return { success: "Draft event created." };
+    if (bundle.idempotent) {
+      await removeEventImagePaths(uploadedPaths, requestId, "idempotent-replay");
+    }
+    // The RPC commit is authoritative. Never let a later cache/UI failure delete
+    // storage objects that are now attached to the committed event(s).
+    clearCommittedCleanupCandidates(uploadedPaths);
+    let createdStatus: "Draft" | "Published" = "Draft";
+    let publicUrl: string | undefined;
+    let publicationNotice = "";
+    if (value(form, "intent") === "publish") {
+      const { phase7EventUrl, publishPhase7Event } = await import("@/lib/services/phase-7-actions");
+      const publication = await publishPhase7Event(bundle.event_ids[0]);
+      if (publication.error) {
+        publicationNotice = ` Draft created, but publishing failed: ${publication.error}`;
+      } else {
+        createdStatus = "Published";
+        publicUrl = await phase7EventUrl(normalizePublicSlug(input.name));
+      }
+    }
+    const refresh = runPostCommitRefresh(() => revalidatePath("/admin/events"));
+    if (!refresh.ok) {
+      console.error("[event-create] committed event refresh failed", {
+        requestId,
+        eventIds: bundle.event_ids,
+        error: refresh.error,
+      });
+    }
+    return {
+      success: !refresh.ok
+        ? recurrence.enabled
+          ? `Recurring series created with ${bundle.event_ids.length} weekly dates.${publicationNotice}`
+          : `${createdStatus === "Published" ? "Published event" : "Draft event"} created.${publicationNotice}`
+        : recurrence.enabled
+          ? `Recurring series created with ${bundle.event_ids.length} weekly dates.`
+          : `${createdStatus === "Published" ? "Published event" : "Draft event"} created.${publicationNotice}`,
+      createdEventId: bundle.event_ids[0],
+      createdName: input.name,
+      createdStatus,
+      publicUrl,
+    };
   } catch (error) {
+    const requestId = value(form, "creationRequestId") || "missing-request-id";
+    if (uploadedPaths.length) {
+      await removeEventImagePaths(uploadedPaths, requestId, "unexpected-event-create-failure");
+    }
+    if (error instanceof z.ZodError) {
+      const issue = error.issues[0];
+      const field = issue?.path.length ? `${issue.path.join(".")}: ` : "";
+      return { error: `${field}${issue?.message ?? "Check the event details."}` };
+    }
+    console.error("[event-create] request failed", error);
     return { error: message(error) };
   }
 }

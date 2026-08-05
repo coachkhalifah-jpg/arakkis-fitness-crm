@@ -113,7 +113,7 @@ export default async function VenueDetailPage({ params }: { params: Promise<{ id
                 />
               </label>
             </ActionForm>
-            {venue.active_status !== "ARCHIVED" ? (
+            {admin.role === "SYSTEM_ADMIN" && venue.active_status !== "ARCHIVED" ? (
               <form
                 action={async () => {
                   "use server";

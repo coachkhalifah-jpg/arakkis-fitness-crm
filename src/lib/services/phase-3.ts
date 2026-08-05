@@ -3,6 +3,7 @@ import "server-only";
 import { z } from "zod";
 import type { AdminContext } from "@/lib/authorization/server";
 import { createClient } from "@/lib/db/server";
+import { createPrivilegedClient } from "@/lib/db/privileged";
 
 export const organizationSchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -211,8 +212,9 @@ export async function audit(
   entityId: string,
   newValues?: object,
   oldValues?: object,
+  privileged = false,
 ) {
-  const supabase = await createClient();
+  const supabase = privileged ? createPrivilegedClient() : await createClient();
   const { error } = await supabase.from("audit_events").insert({
     actor_admin_id: actorId,
     action,

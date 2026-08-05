@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireOrganizationAccess } from "@/lib/authorization/server";
+import { requireSystemAdmin } from "@/lib/authorization/server";
 import { createClient } from "@/lib/db/server";
 import { ActionForm } from "@/components/admin/action-form";
 import { ConfirmSubmit } from "@/components/admin/confirm-submit";
@@ -12,7 +12,7 @@ export default async function OrganizationDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const admin = await requireOrganizationAccess(id, `/admin/organizations/${id}`);
+  const admin = await requireSystemAdmin(`/admin/organizations/${id}`);
   const db = await createClient();
   const [{ data: organization }, { data: venues }, { data: events }] = await Promise.all([
     db.from("organizations").select("*").eq("id", id).single(),

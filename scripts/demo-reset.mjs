@@ -65,6 +65,20 @@ function localSql(statement) {
   );
 }
 
+function localQuery(statement) {
+  const container = execFileSync(
+    "docker",
+    ["ps", "--filter", "name=supabase_db_", "--format", "{{.Names}}"],
+    { encoding: "utf8" },
+  ).trim();
+  if (!container) throw new Error("Local Supabase database container is not running.");
+  return execFileSync(
+    "docker",
+    ["exec", "-i", container, "psql", "-At", "-U", "postgres", "-d", "postgres", "-c", statement],
+    { encoding: "utf8" },
+  ).trim();
+}
+
 async function authUser(email, password) {
   const { data, error } = await service.auth.admin.createUser({
     email,
@@ -73,6 +87,16 @@ async function authUser(email, password) {
   });
   if (error || !data.user) throw error ?? new Error(`Could not create ${email}`);
   return data.user.id;
+}
+
+const existingDesignAssetPaths = localQuery(
+  "select name from storage.objects where bucket_id = 'design-assets'",
+)
+  .split("\n")
+  .filter(Boolean);
+if (existingDesignAssetPaths.length) {
+  const { error } = await service.storage.from("design-assets").remove(existingDesignAssetPaths);
+  if (error) throw new Error(`Could not clear local design assets before fixture reset: ${error.message}`);
 }
 
 localSql(`
