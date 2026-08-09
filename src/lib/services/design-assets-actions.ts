@@ -91,7 +91,9 @@ export async function uploadDesignAsset(
           input.assetType,
         ))
     ) {
-      return { error: "This Event image form is invalid or expired. Refresh the Event and try again." };
+      return {
+        error: "This Event image form is invalid or expired. Refresh the Event and try again.",
+      };
     }
     const db = await createClient();
     const storage = createPrivilegedClient();
@@ -155,12 +157,22 @@ export async function uploadDesignAsset(
       retirePrevious: async () => {
         const { error } = await db
           .from("design_assets")
-          .update({ active: false, retired_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-          .match({ asset_type: input.assetType, ...(eventId ? { event_id: eventId } : {}), ...(categoryKey ? { category_key: categoryKey } : {}) })
+          .update({
+            active: false,
+            retired_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .match({
+            asset_type: input.assetType,
+            ...(eventId ? { event_id: eventId } : {}),
+            ...(categoryKey ? { category_key: categoryKey } : {}),
+          })
           .eq("active", true)
           .neq("id", asset.id);
         previousRetired = Boolean(previousAssetId);
-        return { error: error ? { message: "The previous image could not be retired safely." } : null };
+        return {
+          error: error ? { message: "The previous image could not be retired safely." } : null,
+        };
       },
       activateNew: async () => {
         const { error } = await db
@@ -168,26 +180,51 @@ export async function uploadDesignAsset(
           .update({ active: true, updated_at: new Date().toISOString() })
           .eq("id", asset.id)
           .eq("active", false);
-        return { error: error ? { message: "The new image could not be activated safely." } : null };
+        return {
+          error: error ? { message: "The new image could not be activated safely." } : null,
+        };
       },
       restorePrevious: async () => {
         if (!previousAssetId || !previousRetired) return;
-        await db.from("design_assets").update({ active: true, retired_at: null, updated_at: new Date().toISOString() }).eq("id", previousAssetId);
+        await db
+          .from("design_assets")
+          .update({ active: true, retired_at: null, updated_at: new Date().toISOString() })
+          .eq("id", previousAssetId);
       },
       deactivateNew: async () => {
-        await db.from("design_assets").update({ active: false, retired_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", asset.id);
+        await db
+          .from("design_assets")
+          .update({
+            active: false,
+            retired_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", asset.id);
       },
-      cleanupNew: async () => cleanupStoragePaths([uploadedPath!], async (paths) => {
-        const { error } = await storage.storage.from("design-assets").remove(paths);
-        return { error: error ? { message: error.message, statusCode: error.statusCode } : null };
-      }),
-      cleanupPrevious: async () => {
-        if (!previousStoragePath) return { ok: true, attempts: 0, unresolvedPaths: [] };
-        const cleanup = await cleanupStoragePaths([previousStoragePath], async (paths) => {
+      cleanupNew: async () =>
+        cleanupStoragePaths([uploadedPath!], async (paths) => {
           const { error } = await storage.storage.from("design-assets").remove(paths);
           return { error: error ? { message: error.message, statusCode: error.statusCode } : null };
-        }, 2);
-        if (!cleanup.ok) console.error("[design-asset-cleanup] unresolved retired Event image", { eventId, path: previousStoragePath, attempts: cleanup.attempts, error: cleanup.lastError?.message });
+        }),
+      cleanupPrevious: async () => {
+        if (!previousStoragePath) return { ok: true, attempts: 0, unresolvedPaths: [] };
+        const cleanup = await cleanupStoragePaths(
+          [previousStoragePath],
+          async (paths) => {
+            const { error } = await storage.storage.from("design-assets").remove(paths);
+            return {
+              error: error ? { message: error.message, statusCode: error.statusCode } : null,
+            };
+          },
+          2,
+        );
+        if (!cleanup.ok)
+          console.error("[design-asset-cleanup] unresolved retired Event image", {
+            eventId,
+            path: previousStoragePath,
+            attempts: cleanup.attempts,
+            error: cleanup.lastError?.message,
+          });
         return cleanup;
       },
       refresh: () => {
@@ -225,7 +262,11 @@ export async function uploadDesignAsset(
         .then((db) =>
           db
             .from("design_assets")
-            .update({ active: false, retired_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+            .update({
+              active: false,
+              retired_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
             .eq("id", insertedAssetId),
         )
         .catch(() => undefined);

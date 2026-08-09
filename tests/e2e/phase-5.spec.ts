@@ -405,7 +405,9 @@ test("finalization converts only eligible unmarked registrations, is idempotent,
     ),
   ).toBe("1");
   await openEventInBrowser(page, event.id, fixture.hostA);
-  await expect(page.getByText(/Authorized Host Admins may correct individual results/)).toBeVisible();
+  await expect(
+    page.getByText(/Authorized Host Admins may correct individual results/),
+  ).toBeVisible();
   await expect(page.getByLabel("Correction reason")).toHaveCount(1);
   await host.rpc("phase5_finalize_attendance", { p_event_id: event.id });
   expect(

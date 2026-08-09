@@ -65,7 +65,8 @@ const cutoff = Date.now() - minAgeHours * 60 * 60 * 1000;
 function classify(object) {
   if (object.design_asset_id) return "referenced through supported model";
   if (new Date(object.created_at).getTime() > cutoff) return "ambiguous—manual review required";
-  if (object.name.startsWith("event_image_staging/")) return "confirmed orphan from failed or duplicate operation";
+  if (object.name.startsWith("event_image_staging/"))
+    return "confirmed orphan from failed or duplicate operation";
   if (object.name.startsWith("event_image_desktop/")) return "obsolete legacy object";
   return "ambiguous—manual review required";
 }
@@ -77,14 +78,31 @@ const inventory = objects.map((object) => ({
   classification: classify(object),
 }));
 const counts = Object.groupBy(inventory, (item) => item.classification);
-console.log(JSON.stringify({ mode: deleteConfirmed ? "delete-confirmed" : "dry-run", minAgeHours, total: inventory.length, counts: Object.fromEntries(Object.entries(counts).map(([key, value]) => [key, value.length])), objects: inventory }, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      mode: deleteConfirmed ? "delete-confirmed" : "dry-run",
+      minAgeHours,
+      total: inventory.length,
+      counts: Object.fromEntries(Object.entries(counts).map(([key, value]) => [key, value.length])),
+      objects: inventory,
+    },
+    null,
+    2,
+  ),
+);
 
 if (!deleteConfirmed) process.exit(0);
-const storage = createClient(apiUrl, env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
-const candidates = inventory.filter((item) =>
-  ["confirmed orphan from failed or duplicate operation", "obsolete legacy object"].includes(item.classification) &&
-  !item.design_asset_id &&
-  new Date(item.created_at).getTime() <= cutoff,
+const storage = createClient(apiUrl, env.SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false },
+});
+const candidates = inventory.filter(
+  (item) =>
+    ["confirmed orphan from failed or duplicate operation", "obsolete legacy object"].includes(
+      item.classification,
+    ) &&
+    !item.design_asset_id &&
+    new Date(item.created_at).getTime() <= cutoff,
 );
 let deleted = 0;
 for (const candidate of candidates) {
@@ -92,4 +110,6 @@ for (const candidate of candidates) {
   if (error) console.error(`cleanup failed for ${candidate.name}: ${error.message}`);
   else deleted += 1;
 }
-console.error(`Deleted ${deleted} confirmed local orphan candidates; retained ${inventory.length - deleted} objects.`);
+console.error(
+  `Deleted ${deleted} confirmed local orphan candidates; retained ${inventory.length - deleted} objects.`,
+);

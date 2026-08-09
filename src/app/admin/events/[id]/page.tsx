@@ -416,7 +416,12 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                   className="mt-1 w-full rounded border p-2"
                 />
               </label>
-              <OrganizationVenueFields organizations={organizations ?? []} venues={venues ?? []} organizationId={event.host_organization_id} venueId={event.venue_id} />
+              <OrganizationVenueFields
+                organizations={organizations ?? []}
+                venues={venues ?? []}
+                organizationId={event.host_organization_id}
+                venueId={event.venue_id}
+              />
               <label>
                 Capacity
                 <input
@@ -428,7 +433,11 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                   className="mt-1 w-full rounded border p-2"
                 />
               </label>
-              <EventTimingFields startValue={localValue(event.starts_at, event.timezone)} endValue={localValue(event.ends_at, event.timezone)} deadlineValue={localValue(event.registration_deadline, event.timezone)} />
+              <EventTimingFields
+                startValue={localValue(event.starts_at, event.timezone)}
+                endValue={localValue(event.ends_at, event.timezone)}
+                deadlineValue={localValue(event.registration_deadline, event.timezone)}
+              />
               <label>
                 Visibility
                 <select
@@ -511,11 +520,23 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
             <h2 className="text-lg font-semibold">Event image</h2>
             {eventImage ? (
-              <img src={designAssetPublicUrl(eventImage.storage_path)} alt={eventImage.alt_text} className="mt-4 aspect-video w-full rounded-xl object-cover" />
+              <img
+                src={designAssetPublicUrl(eventImage.storage_path)}
+                alt={eventImage.alt_text}
+                className="mt-4 aspect-video w-full rounded-xl object-cover"
+              />
             ) : (
-              <p className="mt-3 rounded border border-dashed p-4 text-sm text-slate-600">No image associated with this event.</p>
+              <p className="mt-3 rounded border border-dashed p-4 text-sm text-slate-600">
+                No image associated with this event.
+              </p>
             )}
-            <DesignAssetUploadForm events={[{ id, name: event.name }]} eventOnly eventId={id} intentToken={createEventImageIntent(id, admin.userId, EVENT_IMAGE_ASSET_TYPE)} defaultAltText={`${event.name} event image`} />
+            <DesignAssetUploadForm
+              events={[{ id, name: event.name }]}
+              eventOnly
+              eventId={id}
+              intentToken={createEventImageIntent(id, admin.userId, EVENT_IMAGE_ASSET_TYPE)}
+              defaultAltText={`${event.name} event image`}
+            />
           </div>
         ) : null}
         <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6">

@@ -59,7 +59,8 @@ async function cleanupTestRunObjects() {
   const remaining = localQuery(
     `select count(*) from storage.objects o where o.bucket_id='design-assets' and o.created_at >= ${sql(testRunStartedAt)} and not exists (select 1 from public.design_assets da where da.storage_path=o.name)`,
   );
-  if (remaining !== "0") throw new Error(`J5 test cleanup left ${remaining} unreferenced object(s)`);
+  if (remaining !== "0")
+    throw new Error(`J5 test cleanup left ${remaining} unreferenced object(s)`);
 }
 
 test.afterEach(cleanupTestRunObjects);
@@ -102,7 +103,9 @@ test("J5 recurring creation is atomic, audited, and rejects cross-organization v
   const previousStoragePath = localQuery(
     `select da.storage_path from public.design_assets da join public.events e on e.id=da.event_id where e.name=${sql(imageName)} and da.active limit 1`,
   );
-  await detailPage.locator('input[name="file"]').setInputFiles("public/admin-assets/event-cards/default.jpg");
+  await detailPage
+    .locator('input[name="file"]')
+    .setInputFiles("public/admin-assets/event-cards/default.jpg");
   await detailPage.getByRole("button", { name: "Upload and activate" }).click();
   await expect(detailPage.getByRole("status")).toContainText("uploaded and activated");
   await detailPage.reload();
@@ -144,7 +147,9 @@ test("J5 recurring creation is atomic, audited, and rejects cross-organization v
     buffer: Buffer.from("not an image"),
   });
   await detailPage.getByRole("button", { name: "Upload and activate" }).click();
-  await expect(detailPage.getByText("Use a JPEG, PNG, WebP, or SVG image.", { exact: true })).toBeVisible();
+  await expect(
+    detailPage.getByText("Use a JPEG, PNG, WebP, or SVG image.", { exact: true }),
+  ).toBeVisible();
   expect(
     localQuery(
       `select count(*) from public.design_assets where event_id in (select id from public.events where name=${sql(imageName)}) and asset_type='EVENT_IMAGE_DESKTOP' and active`,

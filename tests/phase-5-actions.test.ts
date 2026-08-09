@@ -19,7 +19,10 @@ describe("attendance error mapping", () => {
       "UNAUTHORIZED",
     );
     expect(mapAttendanceError({ code: "XX000", message: "database secret details" })).toEqual(
-      expect.objectContaining({ code: "WALK_IN_FAILED", message: "The attendance action could not be saved." }),
+      expect.objectContaining({
+        code: "WALK_IN_FAILED",
+        message: "The attendance action could not be saved.",
+      }),
     );
   });
 });

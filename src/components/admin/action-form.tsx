@@ -68,11 +68,21 @@ export function ActionForm({
           {state.success}
           {state.createdEventId ? (
             <>
-              <span className="mt-2 block font-medium">{state.createdStatus ?? "Draft"} created: {state.createdName ?? "Event"}.</span>
+              <span className="mt-2 block font-medium">
+                {state.createdStatus ?? "Draft"} created: {state.createdName ?? "Event"}.
+              </span>
               <span className="mt-2 flex flex-wrap gap-3">
-                <Link className="underline" href={`/admin/events/${state.createdEventId}`}>Open the created event</Link>
-                {state.publicUrl ? <a className="underline" href={state.publicUrl}>Public registration page</a> : null}
-                <Link className="underline" href="/admin/events">Back to Events</Link>
+                <Link className="underline" href={`/admin/events/${state.createdEventId}`}>
+                  Open the created event
+                </Link>
+                {state.publicUrl ? (
+                  <a className="underline" href={state.publicUrl}>
+                    Public registration page
+                  </a>
+                ) : null}
+                <Link className="underline" href="/admin/events">
+                  Back to Events
+                </Link>
               </span>
             </>
           ) : null}

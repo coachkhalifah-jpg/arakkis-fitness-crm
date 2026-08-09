@@ -39,7 +39,7 @@ export default async function EventsPage({
       .select(
         "id,name,status,publication_status,public_slug,starts_at,ends_at,timezone,capacity,registration_deadline,host_organization_id,venue_id,event_series_id,attendance_processing_state,event_series(public_slug)",
       )
-    .order("starts_at", { ascending: true }),
+      .order("starts_at", { ascending: true }),
   ]);
   const visibleEvents =
     admin.role === "SYSTEM_ADMIN"
@@ -159,7 +159,10 @@ export default async function EventsPage({
         {admin.role === "SYSTEM_ADMIN" && mode === "create" ? (
           <ActionForm
             action={createEvent}
-            submitOptions={[{ label: "Create Draft", value: "draft" }, { label: "Publish Event", value: "publish" }]}
+            submitOptions={[
+              { label: "Create Draft", value: "draft" },
+              { label: "Publish Event", value: "publish" },
+            ]}
             className="admin-surface mt-8 grid gap-5 rounded-3xl p-6 sm:grid-cols-2 sm:p-8"
           >
             <input type="hidden" name="creationRequestId" value={randomUUID()} />

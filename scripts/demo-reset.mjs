@@ -96,7 +96,8 @@ const existingDesignAssetPaths = localQuery(
   .filter(Boolean);
 if (existingDesignAssetPaths.length) {
   const { error } = await service.storage.from("design-assets").remove(existingDesignAssetPaths);
-  if (error) throw new Error(`Could not clear local design assets before fixture reset: ${error.message}`);
+  if (error)
+    throw new Error(`Could not clear local design assets before fixture reset: ${error.message}`);
 }
 
 localSql(`

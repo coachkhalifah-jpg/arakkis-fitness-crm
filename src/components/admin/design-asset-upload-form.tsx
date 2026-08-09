@@ -39,40 +39,52 @@ export function DesignAssetUploadForm({
           className="mt-1 w-full rounded-xl border border-admin-border bg-white p-3"
         >
           {eventOnly ? <option value="EVENT_IMAGE_DESKTOP">Event image</option> : null}
-          {!eventOnly ? <><option value="PUBLIC_BACKGROUND_DESKTOP">Public background · desktop</option><option value="PUBLIC_BACKGROUND_MOBILE">Public background · mobile</option><option value="EVENT_IMAGE_DESKTOP">Event image · desktop</option><option value="EVENT_IMAGE_MOBILE">Event image · mobile</option><option value="CATEGORY_IMAGE">Category fallback</option></> : null}
+          {!eventOnly ? (
+            <>
+              <option value="PUBLIC_BACKGROUND_DESKTOP">Public background · desktop</option>
+              <option value="PUBLIC_BACKGROUND_MOBILE">Public background · mobile</option>
+              <option value="EVENT_IMAGE_DESKTOP">Event image · desktop</option>
+              <option value="EVENT_IMAGE_MOBILE">Event image · mobile</option>
+              <option value="CATEGORY_IMAGE">Category fallback</option>
+            </>
+          ) : null}
         </select>
       </label>
-      {!eventOnly ? <label>
-        Event (event image only)
-        <select
-          name="eventId"
-          defaultValue=""
-          className="mt-1 w-full rounded-xl border border-admin-border bg-white p-3"
-          disabled={eventOnly}
-        >
-          <option value="">Not event-specific</option>
-          {events.map((event) => (
-            <option key={event.id} value={event.id}>
-              {event.name}
-            </option>
-          ))}
-        </select>
-      </label> : null}
-      {!eventOnly ? <label>
-        Category (category fallback only)
-        <select
-          name="categoryKey"
-          defaultValue=""
-          className="mt-1 w-full rounded-xl border border-admin-border bg-white p-3"
-        >
-          <option value="">Choose a category</option>
-          <option value="boxing">Boxing</option>
-          <option value="strength">Strength</option>
-          <option value="yoga">Yoga</option>
-          <option value="community-fitness">Community fitness</option>
-          <option value="default">Default</option>
-        </select>
-      </label> : null}
+      {!eventOnly ? (
+        <label>
+          Event (event image only)
+          <select
+            name="eventId"
+            defaultValue=""
+            className="mt-1 w-full rounded-xl border border-admin-border bg-white p-3"
+            disabled={eventOnly}
+          >
+            <option value="">Not event-specific</option>
+            {events.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+      {!eventOnly ? (
+        <label>
+          Category (category fallback only)
+          <select
+            name="categoryKey"
+            defaultValue=""
+            className="mt-1 w-full rounded-xl border border-admin-border bg-white p-3"
+          >
+            <option value="">Choose a category</option>
+            <option value="boxing">Boxing</option>
+            <option value="strength">Strength</option>
+            <option value="yoga">Yoga</option>
+            <option value="community-fitness">Community fitness</option>
+            <option value="default">Default</option>
+          </select>
+        </label>
+      ) : null}
       <label>
         Focal position
         <select

@@ -355,7 +355,15 @@ export async function createVenue(
       .select("id")
       .single();
     if (error || !data) throw new Phase3Error("conflict", "Venue could not be created.");
-    await audit(admin.userId, "VENUE_CREATED", "VENUE", data.id, input, undefined, admin.role === "HOST_ADMIN");
+    await audit(
+      admin.userId,
+      "VENUE_CREATED",
+      "VENUE",
+      data.id,
+      input,
+      undefined,
+      admin.role === "HOST_ADMIN",
+    );
     revalidatePath("/admin/venues");
     revalidatePath("/admin/events");
     return { success: "Venue created." };
@@ -429,7 +437,15 @@ export async function updateVenue(form: FormData): Promise<Phase3ActionState> {
       })
       .eq("id", id);
     if (error) throw new Phase3Error("conflict", "Venue could not be updated.");
-    await audit(admin.userId, "VENUE_UPDATED", "VENUE", id, input, old, admin.role === "HOST_ADMIN");
+    await audit(
+      admin.userId,
+      "VENUE_UPDATED",
+      "VENUE",
+      id,
+      input,
+      old,
+      admin.role === "HOST_ADMIN",
+    );
     revalidatePath("/admin/venues");
     revalidatePath("/admin/events");
     return { success: "Venue updated." };
