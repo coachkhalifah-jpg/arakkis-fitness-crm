@@ -9,10 +9,6 @@ export function EventHero({
   eventName,
   host,
   venue,
-  date,
-  time,
-  availability,
-  availableSessionCount,
   imageUrl,
   mobileImageUrl,
   focalPosition = "center",
@@ -20,10 +16,6 @@ export function EventHero({
   eventName: string;
   host: string;
   venue: string;
-  date: string;
-  time: string;
-  availability: string;
-  availableSessionCount: number;
   imageUrl?: string;
   mobileImageUrl?: string;
   focalPosition?: string;
@@ -116,16 +108,7 @@ export function EventHero({
         <div className="event-hero-identity mx-auto max-w-[92%] text-center text-white">
           <p className="event-hero-host">{displayHost}</p>
           <h1 className="event-hero-title">{displayEventName}</h1>
-          <p className="event-hero-date">{date}</p>
-          <p className="event-hero-time">{time}</p>
           <p className="event-hero-venue">{displayVenue}</p>
-          <span className="event-hero-status">
-            {availability === "LEGALLY_BLOCKED"
-              ? "Registration: LEGALLY BLOCKED"
-              : availableSessionCount > 1
-                ? `${availableSessionCount} class times available`
-                : availability.toLowerCase()}
-          </span>
         </div>
       </div>
     </div>

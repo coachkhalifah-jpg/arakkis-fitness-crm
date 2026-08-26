@@ -6,14 +6,36 @@ export function EmptyState({
   description,
   href,
   action,
+  variant,
 }: {
-  title: string;
+  title?: string;
   description: string;
   href?: string;
   action?: string;
+  variant?: "default" | "public-events";
 }) {
+  if (variant === "public-events") {
+    return (
+      <Card className="empty-state-card empty-state-public-events">
+        <p className="empty-state-public-events-kicker">Arakkis events / no access required</p>
+        <h2>
+          <span>No</span>
+          <span>events</span>
+          <em>available</em>
+          <em>yet.</em>
+        </h2>
+        <p className="empty-state-public-events-description">{description}</p>
+        {href && action ? (
+          <Link className="empty-state-public-events-action" href={href}>
+            {action} <span aria-hidden="true">↗</span>
+          </Link>
+        ) : null}
+      </Card>
+    );
+  }
+
   return (
-    <Card className="border-dashed bg-[var(--surface-elevated)] px-6 py-12 text-center">
+    <Card className="empty-state-card border-dashed bg-[var(--surface-elevated)] px-6 py-12 text-center">
       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent-soft)] text-2xl text-brand">
         ✦
       </div>

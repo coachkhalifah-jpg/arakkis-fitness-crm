@@ -1,8 +1,10 @@
 import { requireSystemAdmin } from "@/lib/authorization/server";
 import { createClient } from "@/lib/db/server";
+import { signOut } from "@/lib/auth/session-actions";
+import { AdminWorkspaceMenu } from "@/components/admin/admin-workspace-menu";
+import { getAdminWorkspaceMenuItems } from "@/components/admin/admin-workspace-menu-items";
 import { InvitationManager } from "@/components/admin/invitation-manager";
 import { SegmentedNavigation } from "@/components/admin/segmented-navigation";
-import { ContextualBack } from "@/components/admin/contextual-back";
 
 export default async function InvitationsPage({
   searchParams,
@@ -36,25 +38,44 @@ export default async function InvitationsPage({
   }));
   const mode = (await searchParams).mode === "invite" ? "invite" : "list";
   return (
-    <section className="admin-shell px-5 py-10 sm:px-8 sm:py-14">
-      <div className="relative mx-auto max-w-3xl pt-8">
-        <ContextualBack />
-        <div className="admin-page-header">
-          <h1>Invitations</h1>
-          <p>Invite scoped administrators without exposing raw tokens.</p>
+    <>
+      <AdminWorkspaceMenu
+        roleLabel="System Admin"
+        scopeLabel="All organizations"
+        signOutAction={signOut}
+        items={getAdminWorkspaceMenuItems()}
+      />
+      <main className="page ops-page ops-invitations-page">
+        <div className="ops-invitations-content">
+          <header className="ops-invitations-head">
+            <p className="ops-kicker orange">05 / Scoped access</p>
+            <h1>
+              <span>Invite</span>
+              <span>The</span>
+              <em>Right</em>
+              <em>People.</em>
+            </h1>
+            <p className="ops-invitations-intro">
+              Provide scoped Admin access without exposing raw invitation tokens. Every invitation
+              is tied to an Organization and expires on its schedule.
+            </p>
+          </header>
           <SegmentedNavigation
             listLabel="Invitations"
             actionLabel="Invite"
             actionHref="/admin/invitations?mode=invite"
             actionMode="invite"
+            listMeta={String(safeInvitations.length)}
+            actionIcon="+"
+            className="ops-invitations-mode-nav"
+          />
+          <InvitationManager
+            organizations={organizations ?? []}
+            invitations={safeInvitations}
+            mode={mode}
           />
         </div>
-        <InvitationManager
-          organizations={organizations ?? []}
-          invitations={safeInvitations}
-          mode={mode}
-        />
-      </div>
-    </section>
+      </main>
+    </>
   );
 }

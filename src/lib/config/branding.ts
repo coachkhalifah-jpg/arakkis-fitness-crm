@@ -1,9 +1,9 @@
 import "server-only";
 
 export const publicBrand = {
-  organizationName: "Fitness Event CRM",
+  organizationName: "Arakkis",
   tagline: "Small groups. Good energy. Come as you are.",
-  logoPath: "/brand/logo-mark.svg",
+  logoPath: "/brand/arakkis-logo-balanced.png",
   desktopBackgroundPath: "/brand/event-hub-background.svg",
   mobileBackgroundPath: "/brand/event-hub-background-mobile.svg",
   desktopFocalPosition: "center center",

@@ -6,13 +6,15 @@ import { useRef } from "react";
 type EventCard = {
   id: string;
   name: string;
-  date: string;
+  date: { weekday: string; day: string; month: string };
   time: string;
-  venue: string;
+  organizationName?: string;
+  venueName?: string;
   spots: number;
   href: string;
   availability: string;
   imageUrl?: string;
+  titleColor?: string;
 };
 
 const art = [
@@ -33,55 +35,69 @@ export function EventCarousel({ events }: { events: EventCard[] }) {
     <div className="relative mt-10">
       <div
         ref={track}
-        className="event-carousel -mx-5 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-6 sm:-mx-8 sm:px-8"
+        className="event-card-carousel flex gap-5 overflow-x-auto pb-6"
         aria-label="Upcoming classes"
       >
         {events.map((event, index) => (
-          <article
+          <Link
             key={event.id}
-            className="public-event-card w-[min(82vw,25rem)] shrink-0 snap-start overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--surface)] shadow-[0_10px_0_rgba(10,12,15,0.55)]"
+            href={event.href}
+            className="event-card-shell event-card-public-link"
           >
-            <div
-              className={`relative flex aspect-[1.18] items-end overflow-hidden bg-gradient-to-br ${art[index % art.length]} bg-cover bg-center p-6`}
+            <span
+              className={`event-card-media relative block bg-gradient-to-br ${art[index % art.length]}`}
               style={event.imageUrl ? { backgroundImage: `url(${event.imageUrl})` } : undefined}
             >
-              <div className="absolute -right-10 -top-12 h-44 w-44 rounded-full border-[22px] border-white/25" />
-              <div className="absolute bottom-8 left-8 h-20 w-20 rotate-12 rounded-3xl bg-white/20 backdrop-blur-sm" />
-              <p className="relative max-w-[13ch] text-3xl font-black leading-[0.92] tracking-[-0.05em] text-white">
-                Move with your people.
-              </p>
-            </div>
-            <div className="p-5">
-              <h2 className="min-h-[3.5rem] text-xl font-bold leading-tight tracking-[-0.025em]">
+              <span className="absolute left-4 top-4 rounded-full bg-black/35 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[.16em] text-white backdrop-blur-sm">
+                {event.spots > 0
+                  ? "OPEN"
+                  : event.availability === "LEGALLY_BLOCKED"
+                    ? "BOOKING PAUSED"
+                    : "FULL"}
+              </span>
+              <span
+                className="event-card-title-overlay"
+                style={{ color: event.titleColor ?? "#FFFFFF" }}
+              >
                 {event.name}
-              </h2>
-              <p className="mt-3 text-sm font-semibold text-[var(--accent-hover)]">
-                {event.date} · {event.time}
-              </p>
-              <p className="mt-1 truncate text-sm text-[var(--foreground-muted)]">{event.venue}</p>
-              <div className="mt-5 flex items-center justify-between gap-3">
-                <span
-                  className={`text-sm font-semibold ${event.spots > 0 ? "text-[var(--accent-hover)]" : "text-[var(--foreground-muted)]"}`}
-                >
-                  {event.spots > 0
-                    ? `${event.spots} spots left`
-                    : event.availability === "LEGALLY_BLOCKED"
-                      ? "Booking paused"
-                      : "Full"}
+              </span>
+            </span>
+            <span className="event-card-caption block text-left">
+              <span className="event-card-date-time-row mt-2 flex items-center justify-between gap-2">
+                <span className="event-card-date-block block text-left">
+                  <span className="block text-[0.65rem] font-bold uppercase tracking-[0.14em] text-slate-600">
+                    {event.date.weekday}
+                  </span>
+                  <span className="my-0.5 block text-2xl font-bold tracking-tight text-ink">
+                    {event.date.day}
+                  </span>
+                  <span className="block text-[0.65rem] font-bold uppercase tracking-[0.14em] text-slate-600">
+                    {event.date.month}
+                  </span>
                 </span>
-                <Link
-                  className="ui-button ui-button-primary min-h-11 rounded-xl px-4 py-3"
-                  href={event.href}
-                >
-                  {event.spots > 0 ? "View class" : "View details"}
-                </Link>
-              </div>
-            </div>
-          </article>
+                <span className="event-card-time text-right text-2xl font-bold tracking-tight text-ink">
+                  {event.time}
+                </span>
+              </span>
+              {event.organizationName ? (
+                <span className="mt-2 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-600">
+                  {event.organizationName}
+                </span>
+              ) : null}
+              {event.venueName ? (
+                <span className="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-600">
+                  {event.venueName}
+                </span>
+              ) : null}
+              <span className="mt-2 block text-xs font-semibold text-brand">
+                {event.spots > 0 ? "spots available" : "full"}
+              </span>
+            </span>
+          </Link>
         ))}
       </div>
       {events.length > 1 ? (
-        <div className="mt-1 flex justify-end gap-2">
+        <div className="event-card-carousel-controls" aria-label="Event carousel controls">
           <button
             type="button"
             onClick={() => move(-1)}

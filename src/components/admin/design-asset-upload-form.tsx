@@ -26,17 +26,21 @@ export function DesignAssetUploadForm({
   return (
     <form
       action={action}
-      className="grid gap-4 rounded-3xl border border-admin-border bg-admin-surface-muted p-5 sm:grid-cols-2"
+      className={
+        eventOnly
+          ? "admin-event-image-upload-form grid gap-4 sm:grid-cols-2"
+          : "design-assets-upload-form"
+      }
     >
       {eventOnly ? <input type="hidden" name="eventId" value={eventId ?? ""} /> : null}
       {eventOnly ? <input type="hidden" name="operation" value="EVENT_IMAGE_REPLACEMENT" /> : null}
       {eventOnly ? <input type="hidden" name="eventImageIntent" value={intentToken ?? ""} /> : null}
-      <label>
+      <label className="design-assets-field">
         Asset type
         <select
           name="assetType"
           defaultValue="PUBLIC_BACKGROUND_DESKTOP"
-          className="mt-1 w-full rounded-xl border border-admin-border bg-white p-3"
+          className="design-assets-control"
         >
           {eventOnly ? <option value="EVENT_IMAGE_DESKTOP">Event image</option> : null}
           {!eventOnly ? (
@@ -51,12 +55,12 @@ export function DesignAssetUploadForm({
         </select>
       </label>
       {!eventOnly ? (
-        <label>
+        <label className="design-assets-field">
           Event (event image only)
           <select
             name="eventId"
             defaultValue=""
-            className="mt-1 w-full rounded-xl border border-admin-border bg-white p-3"
+            className="design-assets-control"
             disabled={eventOnly}
           >
             <option value="">Not event-specific</option>
@@ -69,13 +73,9 @@ export function DesignAssetUploadForm({
         </label>
       ) : null}
       {!eventOnly ? (
-        <label>
+        <label className="design-assets-field">
           Category (category fallback only)
-          <select
-            name="categoryKey"
-            defaultValue=""
-            className="mt-1 w-full rounded-xl border border-admin-border bg-white p-3"
-          >
+          <select name="categoryKey" defaultValue="" className="design-assets-control">
             <option value="">Choose a category</option>
             <option value="boxing">Boxing</option>
             <option value="strength">Strength</option>
@@ -85,13 +85,9 @@ export function DesignAssetUploadForm({
           </select>
         </label>
       ) : null}
-      <label>
+      <label className="design-assets-field">
         Focal position
-        <select
-          name="focalPosition"
-          defaultValue="center"
-          className="mt-1 w-full rounded-xl border border-admin-border bg-white p-3"
-        >
+        <select name="focalPosition" defaultValue="center" className="design-assets-control">
           <option value="top">Top</option>
           <option value="center">Center</option>
           <option value="bottom">Bottom</option>
@@ -99,7 +95,7 @@ export function DesignAssetUploadForm({
           <option value="right">Right</option>
         </select>
       </label>
-      <label className="sm:col-span-2">
+      <label className="design-assets-field sm:col-span-2">
         Alt text
         <input
           name="altText"
@@ -107,32 +103,35 @@ export function DesignAssetUploadForm({
           maxLength={240}
           defaultValue={defaultAltText}
           placeholder="Describe the image for participants"
-          className="mt-1 w-full rounded-xl border border-admin-border bg-white p-3"
+          className="design-assets-control"
         />
       </label>
-      <label className="sm:col-span-2">
+      <label className="design-assets-field sm:col-span-2">
         Image file
         <input
           name="file"
           type="file"
           required
           accept="image/jpeg,image/png,image/webp,image/svg+xml"
-          className="mt-1 block w-full rounded-xl border border-dashed border-admin-border bg-white p-3"
+          className="design-assets-file-control"
         />
-        <span className="mt-1 block text-xs text-admin-text-muted">
-          JPEG, PNG, WebP, or SVG · 5 MiB maximum
-        </span>
+        <span className="design-assets-help">JPEG, PNG, WebP, or SVG · 5 MiB maximum</span>
       </label>
       <div className="sm:col-span-2">
-        <SubmitButton>Upload and activate</SubmitButton>
+        <SubmitButton className="design-assets-primary-button">
+          UPLOAD AND ACTIVATE{" "}
+          <span className="arakkis-arrow-icon" aria-hidden="true">
+            ↗
+          </span>
+        </SubmitButton>
       </div>
       {state.error ? (
-        <p role="alert" className="sm:col-span-2 text-sm text-admin-danger">
+        <p role="alert" className="design-assets-form-message design-assets-form-error">
           {state.error}
         </p>
       ) : null}
       {state.success ? (
-        <p role="status" className="sm:col-span-2 text-sm text-admin-success">
+        <p role="status" className="design-assets-form-message design-assets-form-success">
           {state.success}
         </p>
       ) : null}

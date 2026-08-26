@@ -8,6 +8,7 @@ export type AttendanceErrorCode =
   | "SESSION_EXPIRED"
   | "ATTENDANCE_NOT_OPEN"
   | "WALK_IN_FAILED"
+  | "ROSTER_REMOVAL_FAILED"
   | "UNEXPECTED";
 
 export type AttendanceError = {
@@ -61,6 +62,12 @@ export function mapAttendanceError(error: unknown): AttendanceError {
       code: "ATTENDANCE_FINALIZED",
       message: "Attendance is finalized.",
       nextAction: "Enter a correction reason if you are authorized to correct this event.",
+    };
+  if (/registration already removed/i.test(message))
+    return {
+      code: "ROSTER_REMOVAL_FAILED",
+      message: "This participant is no longer on the active roster.",
+      nextAction: "Refresh the roster before trying again.",
     };
   if (code === "42501" || /unauthorized|forbidden|unavailable/i.test(message))
     return {

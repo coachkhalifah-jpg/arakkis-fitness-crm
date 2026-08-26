@@ -23,7 +23,7 @@ environment separation, backup capability review, secure initial System Admin pr
 rollback target, and the legal gate still blocked. Apply migrations after a confirmed backup and
 never use `supabase db reset` against production. Production registration is not enabled by deploy.
 
-Vercel uses standard Next.js detection, pnpm lockfile detection, `pnpm build`, and Node 22.x. No
+Vercel uses standard Next.js detection, pnpm lockfile detection, `pnpm build`, and Node 22.22.1. No
 custom `vercel.json` is needed. Review logs without exposing environment values. Re-deploy after
 environment changes; remove developer access during offboarding.
 

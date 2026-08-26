@@ -186,6 +186,27 @@ export async function reopenAttendanceSubmit(form: FormData): Promise<void> {
 export async function markAttendanceSubmit(form: FormData): Promise<void> {
   await markAttendance({}, form);
 }
+export async function removeRegistrationFromRoster(
+  _state: Phase3ActionState,
+  form: FormData,
+): Promise<Phase3ActionState> {
+  const eventId = value(form, "eventId");
+  try {
+    await requireActiveAdmin(`/admin/events/${eventId}`);
+    const registrationId = value(form, "registrationId");
+    if (!registrationId) return { error: "A registration is required." };
+    const db = await createClient();
+    const { error } = await db.rpc("phase5_remove_registration_from_roster", {
+      p_registration_id: registrationId,
+    } as never);
+    if (error) throw error;
+    revalidatePath("/admin/events");
+    revalidatePath(`/admin/events/${eventId}`);
+    return { success: "Registration removed from roster." };
+  } catch (error) {
+    return errorState(error);
+  }
+}
 export async function createWalkInSubmit(form: FormData): Promise<void> {
   await createWalkIn({}, form);
 }

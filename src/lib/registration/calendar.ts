@@ -52,7 +52,7 @@ export function icsContent(events: CalendarEvent[]) {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Fitness Event CRM//Registration//EN",
+    "PRODID:-//Arakkis//Registration//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
   ];

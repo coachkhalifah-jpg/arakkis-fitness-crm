@@ -81,9 +81,12 @@ test("J5 recurring creation is atomic, audited, and rejects cross-organization v
   await page.goto("/admin/events?mode=create");
   await page.getByLabel("Name").fill(imageName);
   await page.getByLabel("Organization").selectOption({ label: "Demo Organization A" });
-  await page.getByLabel("Venue").selectOption({ label: "Demo Garden Studio (America/New_York)" });
-  await page.getByLabel("Local start").fill("2099-08-10T10:00");
-  await page.getByLabel("Local end").fill("2099-08-10T11:00");
+  await page
+    .locator('select[name="venueId"]')
+    .selectOption({ label: "Demo Garden Studio (America/New_York)" });
+  await page.getByLabel("Event date").fill("2099-08-10");
+  await page.locator('input[name="scheduleStartTime"]').fill("10:00");
+  await page.locator('input[name="scheduleEndTime"]').fill("11:00");
   await page.getByLabel("Registration deadline").fill("2099-08-10T09:00");
   await page
     .locator('input[name="eventImage"]')
@@ -97,9 +100,9 @@ test("J5 recurring creation is atomic, audited, and rejects cross-organization v
   expect(createdEventHref).toMatch(/^\/admin\/events\/[0-9a-f-]+$/);
   const detailPage = await page.context().newPage();
   await detailPage.goto(createdEventHref!);
-  await expect(detailPage.getByText(imageName, { exact: true })).toBeVisible();
+  await expect(detailPage.locator("h1", { hasText: imageName })).toBeVisible();
   await detailPage.reload();
-  await expect(detailPage.getByText(imageName, { exact: true })).toBeVisible();
+  await expect(detailPage.locator("h1", { hasText: imageName })).toBeVisible();
   const previousStoragePath = localQuery(
     `select da.storage_path from public.design_assets da join public.events e on e.id=da.event_id where e.name=${sql(imageName)} and da.active limit 1`,
   );
@@ -187,9 +190,12 @@ test("J5 recurring creation is atomic, audited, and rejects cross-organization v
   await page.goto("/admin/events?mode=create");
   await page.getByLabel("Name").fill(invalidImageName);
   await page.getByLabel("Organization").selectOption({ label: "Demo Organization A" });
-  await page.getByLabel("Venue").selectOption({ label: "Demo Garden Studio (America/New_York)" });
-  await page.getByLabel("Local start").fill("2099-08-11T10:00");
-  await page.getByLabel("Local end").fill("2099-08-11T11:00");
+  await page
+    .locator('select[name="venueId"]')
+    .selectOption({ label: "Demo Garden Studio (America/New_York)" });
+  await page.getByLabel("Event date").fill("2099-08-11");
+  await page.locator('input[name="scheduleStartTime"]').fill("10:00");
+  await page.locator('input[name="scheduleEndTime"]').fill("11:00");
   await page.getByLabel("Registration deadline").fill("2099-08-11T09:00");
   await page.locator('input[name="eventImage"]').setInputFiles({
     name: "not-an-image.jpg",
@@ -208,9 +214,12 @@ test("J5 recurring creation is atomic, audited, and rejects cross-organization v
   await page.goto("/admin/events?mode=create");
   await page.getByLabel("Name").fill(name);
   await page.getByLabel("Organization").selectOption({ label: "Demo Organization A" });
-  await page.getByLabel("Venue").selectOption({ label: "Demo Garden Studio (America/New_York)" });
-  await page.getByLabel("Local start").fill("2099-08-20T10:00");
-  await page.getByLabel("Local end").fill("2099-08-20T11:00");
+  await page
+    .locator('select[name="venueId"]')
+    .selectOption({ label: "Demo Garden Studio (America/New_York)" });
+  await page.getByLabel("Event date").fill("2099-08-20");
+  await page.locator('input[name="scheduleStartTime"]').fill("10:00");
+  await page.locator('input[name="scheduleEndTime"]').fill("11:00");
   await page.getByLabel("Registration deadline").fill("2099-08-20T09:00");
   await page.getByRole("checkbox", { name: "Make this event recurring" }).check();
   await page.getByLabel("Ends").fill("2099-09-03");
@@ -258,15 +267,16 @@ test("J5 recurring creation is atomic, audited, and rejects cross-organization v
   const crossOrganizationVenueId = localQuery(
     "select id from public.venues where name='Demo Harbor Hall' limit 1",
   );
-  await page.getByLabel("Venue").evaluate((select, venueId) => {
+  await page.locator('select[name="venueId"]').evaluate((select, venueId) => {
     const tampered = document.createElement("option");
     tampered.textContent = "Tampered cross-organization venue";
     tampered.value = venueId;
     (select as HTMLSelectElement).append(tampered);
     (select as HTMLSelectElement).value = tampered.value;
   }, crossOrganizationVenueId);
-  await page.getByLabel("Local start").fill("2099-09-10T10:00");
-  await page.getByLabel("Local end").fill("2099-09-10T11:00");
+  await page.getByLabel("Event date").fill("2099-09-10");
+  await page.locator('input[name="scheduleStartTime"]').fill("10:00");
+  await page.locator('input[name="scheduleEndTime"]').fill("11:00");
   await page.getByLabel("Registration deadline").fill("2099-09-10T09:00");
   await page.getByRole("checkbox", { name: "Make this event recurring" }).uncheck();
   await page.getByRole("button", { name: "Create draft" }).click();
@@ -289,9 +299,12 @@ test("J5 enforces the 5 MiB image boundary through the application", async ({ pa
   await page.goto("/admin/events?mode=create");
   await page.getByLabel("Name").fill(nearLimitName);
   await page.getByLabel("Organization").selectOption({ label: "Demo Organization A" });
-  await page.getByLabel("Venue").selectOption({ label: "Demo Garden Studio (America/New_York)" });
-  await page.getByLabel("Local start").fill("2099-08-12T10:00");
-  await page.getByLabel("Local end").fill("2099-08-12T11:00");
+  await page
+    .locator('select[name="venueId"]')
+    .selectOption({ label: "Demo Garden Studio (America/New_York)" });
+  await page.getByLabel("Event date").fill("2099-08-12");
+  await page.locator('input[name="scheduleStartTime"]').fill("10:00");
+  await page.locator('input[name="scheduleEndTime"]').fill("11:00");
   await page.getByLabel("Registration deadline").fill("2099-08-12T09:00");
   await page.locator('input[name="eventImage"]').setInputFiles({
     name: "near-limit.jpg",
@@ -313,9 +326,12 @@ test("J5 enforces the 5 MiB image boundary through the application", async ({ pa
   await page.goto("/admin/events?mode=create");
   await page.getByLabel("Name").fill(oversizedName);
   await page.getByLabel("Organization").selectOption({ label: "Demo Organization A" });
-  await page.getByLabel("Venue").selectOption({ label: "Demo Garden Studio (America/New_York)" });
-  await page.getByLabel("Local start").fill("2099-08-13T10:00");
-  await page.getByLabel("Local end").fill("2099-08-13T11:00");
+  await page
+    .locator('select[name="venueId"]')
+    .selectOption({ label: "Demo Garden Studio (America/New_York)" });
+  await page.getByLabel("Event date").fill("2099-08-13");
+  await page.locator('input[name="scheduleStartTime"]').fill("10:00");
+  await page.locator('input[name="scheduleEndTime"]').fill("11:00");
   await page.getByLabel("Registration deadline").fill("2099-08-13T09:00");
   const oversizedRequestId = await page.locator('input[name="creationRequestId"]').inputValue();
   await page.locator('input[name="eventImage"]').setInputFiles({

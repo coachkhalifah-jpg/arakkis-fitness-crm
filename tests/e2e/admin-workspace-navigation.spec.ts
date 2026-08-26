@@ -24,6 +24,7 @@ test.describe("Admin Workspace navigation", () => {
   }) => {
     await signIn(page, credentials("System Admin"));
 
+    await page.getByRole("button", { name: "Open operations menu" }).click();
     const organizations = page.getByRole("link", { name: "Organizations" });
     const venues = page.getByRole("link", { name: "Venues" });
     await expect(organizations).toHaveAttribute("href", "/admin/organizations");
@@ -35,14 +36,27 @@ test.describe("Admin Workspace navigation", () => {
     await expect(page).toHaveURL(/\/admin\/organizations$/);
 
     await page.goto("/admin");
+    await page.getByRole("button", { name: "Open operations menu" }).click();
     await venues.focus();
     await expect(venues).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/admin\/venues$/);
+
+    await page.goto("/admin");
+    await page.getByRole("button", { name: "Open operations menu" }).click();
+    await expect(page.getByText("System Admin", { exact: true })).toBeVisible();
+    await expect(page.getByText("All organizations", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Close", exact: true }).click();
+    await page.getByRole("button", { name: "Open Calendar options" }).click();
+    await expect(page.getByRole("link", { name: "Download this week (.ics)" })).toHaveAttribute(
+      "href",
+      "/admin/calendar/this-week.ics",
+    );
   });
 
   test("Host Admin sees Venues but no new Organizations destination", async ({ page }) => {
     await signIn(page, credentials("Organization A Host Admin"));
+    await page.getByRole("button", { name: "Open operations menu" }).click();
     await expect(page.getByRole("link", { name: "Venues" })).toHaveAttribute(
       "href",
       "/admin/venues",

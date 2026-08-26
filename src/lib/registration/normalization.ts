@@ -13,14 +13,18 @@ export const participantInputSchema = z
       .regex(/^[A-Za-z]{2,3}$/, "Choose a phone country."),
     email: z.string().trim().max(254).optional().or(z.literal("")),
     fitnessExperience: z.string().trim().max(1000).optional(),
+    goals: z
+      .string()
+      .trim()
+      .max(500, "Goals must be 500 characters or fewer.")
+      .refine((value) => !/<[^>]*>/u.test(value), "Goals must be plain text.")
+      .optional()
+      .or(z.literal("")),
     referralSource: z.enum(referralSourceValues).optional().or(z.literal("")),
     referralSourceOther: z.string().trim().max(200).optional(),
     eventIds: z.array(z.string().uuid()).min(1, "Select at least one date.").max(50),
-    participationAcknowledged: z.literal("on", {
-      errorMap: () => ({ message: "Accept the participation acknowledgment." }),
-    }),
-    dataUseAcknowledged: z.literal("on", {
-      errorMap: () => ({ message: "Accept the data-use acknowledgment." }),
+    legalPackageAcknowledged: z.literal("on", {
+      errorMap: () => ({ message: "Accept the Eoke LLC Participation Liability Waiver." }),
     }),
   })
   .superRefine((value, context) => {

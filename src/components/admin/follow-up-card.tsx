@@ -6,6 +6,28 @@ import { recordFollowUpCopy, recordGroupChatReminderCopy } from "@/lib/services/
 
 type Props = { task: { id: string; suggested_message: string | null } };
 
+export function CopyPhoneButton({ phone }: { phone: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    await navigator.clipboard.writeText(phone);
+    setCopied(true);
+  }
+
+  return (
+    <button
+      type="button"
+      className="copy-message-button ops-community-send-message-button"
+      aria-label={copied ? "Phone number copied" : "Send message by copying phone number"}
+      title={copied ? "Phone number copied" : "Send message"}
+      onClick={copy}
+    >
+      {copied ? <Check aria-hidden="true" size={18} /> : null}
+      <span className="copy-message-button-label">{copied ? "COPIED" : "SEND MESSAGE"}</span>
+    </button>
+  );
+}
+
 export function FollowUpCopyButton({ task }: Props) {
   const [copied, setCopied] = useState(false);
   async function copy() {
@@ -17,12 +39,12 @@ export function FollowUpCopyButton({ task }: Props) {
     <button
       type="button"
       className="copy-message-button"
-      aria-label={copied ? "Copied" : "Copy message"}
-      title={copied ? "Copied" : "Copy message"}
+      aria-label={copied ? "Copied" : "Copy note"}
+      title={copied ? "Copied" : "Copy note"}
       onClick={copy}
     >
       {copied ? <Check aria-hidden="true" size={18} /> : <Copy aria-hidden="true" size={18} />}
-      <span className="sr-only">{copied ? "Copied" : "Copy message"}</span>
+      <span className="copy-message-button-label">{copied ? "COPIED" : "COPY NOTE"}</span>
     </button>
   );
 }
@@ -42,12 +64,12 @@ export function GroupChatCopyButton({
     <button
       type="button"
       className="copy-message-button"
-      aria-label={copied ? "Copied" : "Copy message"}
-      title={copied ? "Copied" : "Copy message"}
+      aria-label={copied ? "Copied" : "Copy note"}
+      title={copied ? "Copied" : "Copy note"}
       onClick={copy}
     >
       {copied ? <Check aria-hidden="true" size={18} /> : <Copy aria-hidden="true" size={18} />}
-      <span className="sr-only">{copied ? "Copied" : "Copy message"}</span>
+      <span className="copy-message-button-label">{copied ? "COPIED" : "COPY NOTE"}</span>
     </button>
   );
 }

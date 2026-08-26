@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { createHostInvitation, regenerateInvitation, revokeInvitation } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/button";
+import { ProgressiveDisclosureSection } from "@/components/admin/progressive-disclosure-section";
 
 type Invitation = {
   id: string;
@@ -14,6 +15,26 @@ type Invitation = {
   accepted_at: string | null;
   organizationNames: string[];
 };
+
+const statusGroups = [
+  { key: "PENDING", label: "Pending", tone: "pending" },
+  { key: "EXPIRED", label: "Expired", tone: "expired" },
+  { key: "REVOKED", label: "Revoked", tone: "revoked" },
+  { key: "ACCEPTED", label: "Accepted", tone: "accepted" },
+  { key: "REPLACED", label: "Replaced", tone: "replaced" },
+] as const;
+
+function invitationRole(role: string) {
+  return role.replaceAll("_", " ");
+}
+
+function recordLabel(count: number) {
+  return `${count} ${count === 1 ? "record" : "records"}`;
+}
+
+function invitationSummary(count: number, status: string) {
+  return `${count} ${status.toLowerCase()} invitation${count === 1 ? "" : "s"}`;
+}
 
 export function InvitationManager({
   organizations,
@@ -53,16 +74,25 @@ export function InvitationManager({
             const form = new FormData(event.currentTarget);
             run(() => createHostInvitation(form));
           }}
-          className="admin-surface mt-8 grid gap-3 rounded-3xl p-6 sm:grid-cols-2"
+          className="ops-invitation-form"
         >
-          <h2 className="sm:col-span-2 text-lg font-semibold">Create Host Admin invitation</h2>
+          <p className="ops-kicker orange">New invitation</p>
+          <h2>Configure access.</h2>
+          <p className="ops-invitation-form-intro">
+            Host Admin access is scoped to one Organization.
+          </p>
+          <div className="ops-invitation-form-rule" />
           <label>
-            Email
-            <input name="email" type="email" required className="mt-1 w-full rounded border p-2" />
+            Recipient email
+            <input name="email" type="email" required placeholder="host@example.com" />
           </label>
           <label>
-            Organization
-            <select name="organizationIds" required className="mt-1 w-full rounded border p-2">
+            Role
+            <input value="Host Admin" readOnly aria-readonly="true" />
+          </label>
+          <label>
+            Organization scope
+            <select name="organizationIds" required>
               <option value="">Select organization</option>
               {organizations.map((org) => (
                 <option key={org.id} value={org.id}>
@@ -71,26 +101,30 @@ export function InvitationManager({
               ))}
             </select>
           </label>
-          <p className="sm:col-span-2 text-sm text-slate-600">
+          <label>
+            Expiration
+            <input value="72 hours" readOnly aria-readonly="true" />
+          </label>
+          <div className="ops-invitation-form-rule" />
+          <p className="ops-invitation-form-note">
             Invitations expire after 72 hours. No email is sent automatically.
           </p>
-          <Button type="submit" disabled={pending}>
-            {pending ? "Creating…" : "Create invitation"}
+          <Button type="submit" disabled={pending} className="ops-invitation-submit">
+            {pending ? (
+              "Creating…"
+            ) : (
+              <>
+                Send invitation <span aria-hidden="true">↗</span>
+              </>
+            )}
           </Button>
         </form>
       ) : null}
       {oneTimeUrl ? (
-        <div className="mt-4 rounded-lg border border-green-300 bg-green-50 p-4" role="status">
-          <p className="font-medium">
-            Copy this invitation link now. It will not be displayed after leaving this page.
-          </p>
-          <div className="mt-2 flex gap-2">
-            <input
-              aria-label="New invitation link"
-              readOnly
-              value={oneTimeUrl}
-              className="min-w-0 flex-1 rounded border p-2 text-sm"
-            />
+        <div className="ops-invitation-result" role="status">
+          <p>Copy this invitation link now. It will not be displayed after leaving this page.</p>
+          <div>
+            <input aria-label="New invitation link" readOnly value={oneTimeUrl} />
             <Button
               type="button"
               onClick={() => {
@@ -106,7 +140,7 @@ export function InvitationManager({
       {message ? (
         <p
           className={
-            message.kind === "error" ? "mt-4 text-sm text-red-700" : "mt-4 text-sm text-green-700"
+            message.kind === "error" ? "ops-invitation-message is-error" : "ops-invitation-message"
           }
           role={message.kind}
         >
@@ -114,46 +148,69 @@ export function InvitationManager({
         </p>
       ) : null}
       {mode === "list" ? (
-        <div className="mt-8 space-y-3">
-          <h2 className="text-lg font-semibold">Invitation history</h2>
-          {invitations.map((invitation) => (
-            <article key={invitation.id} className="admin-surface rounded-3xl p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h3 className="font-medium">{invitation.invited_email}</h3>
-                  <p className="text-sm text-slate-600">
-                    {invitation.role} ·{" "}
-                    {invitation.organizationNames.join(", ") || "No active assignment"}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    {invitation.status} · expires{" "}
-                    {new Date(invitation.token_expires_at).toLocaleString()}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  {invitation.status === "PENDING" ? (
-                    <>
-                      <Button
-                        type="button"
-                        disabled={pending}
-                        onClick={() => run(() => regenerateInvitation(invitation.id))}
-                      >
-                        Regenerate
-                      </Button>
-                      <Button
-                        type="button"
-                        disabled={pending}
-                        variant="destructive"
-                        onClick={() => run(() => revokeInvitation(invitation.id))}
-                      >
-                        Revoke
-                      </Button>
-                    </>
-                  ) : null}
-                </div>
-              </div>
-            </article>
-          ))}
+        <div className="ops-invitation-history">
+          <div className="ops-invitation-history-head">
+            <h2>Invitation history</h2>
+            <span>
+              {recordLabel(invitations.length)} ·{" "}
+              {invitations.filter((item) => item.status === "PENDING").length} active
+            </span>
+          </div>
+          <div className="admin-create-event-page ops-invitation-accordion-shell">
+            {statusGroups.map((group, index) => {
+              const groupInvitations = invitations.filter(
+                (invitation) => invitation.status === group.key,
+              );
+              if (!groupInvitations.length) return null;
+              return (
+                <ProgressiveDisclosureSection
+                  className={`ops-invitation-group is-${group.tone}`}
+                  id={`invitation-status-${group.key.toLowerCase()}`}
+                  number={String(index + 1).padStart(2, "0")}
+                  title={`${group.label} · ${recordLabel(groupInvitations.length)}`}
+                  defaultOpen={false}
+                  key={group.key}
+                >
+                  {groupInvitations.map((invitation) => (
+                    <article key={invitation.id} className="ops-invitation-record">
+                      <p className="ops-invitation-record-role">
+                        {invitationRole(invitation.role)}
+                      </p>
+                      <h4>{invitation.invited_email}</h4>
+                      <p className="ops-invitation-record-organization">
+                        {invitation.organizationNames.join(", ") || "No active assignment"}
+                      </p>
+                      <p className="ops-invitation-record-status">{group.label}</p>
+                      <p className="ops-invitation-record-meta">
+                        Expires {new Date(invitation.token_expires_at).toLocaleString()}
+                        <br />
+                        Issued {new Date(invitation.issued_at).toLocaleString()}
+                      </p>
+                      {invitation.status === "PENDING" ? (
+                        <div className="ops-invitation-record-actions">
+                          <Button
+                            type="button"
+                            disabled={pending}
+                            onClick={() => run(() => regenerateInvitation(invitation.id))}
+                          >
+                            Regenerate
+                          </Button>
+                          <Button
+                            type="button"
+                            disabled={pending}
+                            variant="destructive"
+                            onClick={() => run(() => revokeInvitation(invitation.id))}
+                          >
+                            Revoke
+                          </Button>
+                        </div>
+                      ) : null}
+                    </article>
+                  ))}
+                </ProgressiveDisclosureSection>
+              );
+            })}
+          </div>
         </div>
       ) : null}
     </>

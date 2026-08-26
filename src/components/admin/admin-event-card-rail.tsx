@@ -9,8 +9,14 @@ type AdminEventCardRailContextValue = {
 
 const AdminEventCardRailContext = createContext<AdminEventCardRailContextValue | null>(null);
 
-export function AdminEventCardRail({ children }: { children: ReactNode }) {
-  const [activeEventId, setActiveEventId] = useState<string | null>(null);
+export function AdminEventCardRail({
+  children,
+  initialEventId = null,
+}: {
+  children: ReactNode;
+  initialEventId?: string | null;
+}) {
+  const [activeEventId, setActiveEventId] = useState<string | null>(initialEventId);
   return (
     <AdminEventCardRailContext.Provider value={{ activeEventId, setActiveEventId }}>
       {children}

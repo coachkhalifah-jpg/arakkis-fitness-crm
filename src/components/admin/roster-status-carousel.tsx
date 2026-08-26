@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import { attendancePresentation } from "@/lib/services/attendance-presentation";
 
 export type RosterPreviewPerson = {
   id: string;
@@ -9,6 +10,7 @@ export type RosterPreviewPerson = {
   phone: string | null;
   registrationStatus: string;
   attendanceStatus: string;
+  attendanceState?: string;
   firstClass: boolean;
 };
 
@@ -122,7 +124,14 @@ export function RosterStatusCarousel({ people }: { people: RosterPreviewPerson[]
                           <span className="first-class-badge ml-2">First Class</span>
                         ) : null}
                       </td>
-                      <td className="p-3">{person.attendanceStatus.replaceAll("_", " ")}</td>
+                      <td className="p-3">
+                        {
+                          attendancePresentation(
+                            person.attendanceStatus,
+                            person.attendanceState ?? "OPEN",
+                          ).label
+                        }
+                      </td>
                       <td className="p-3 pr-0">{person.phone ?? "—"}</td>
                     </tr>
                   ))}

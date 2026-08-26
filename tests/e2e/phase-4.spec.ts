@@ -16,14 +16,7 @@ function sql(value: string) {
 }
 
 async function acceptRequiredLegal(page: Page) {
-  for (const label of [
-    /Participation Agreement.*Version 1\.0\.0/,
-    /Assumption of Risk.*Version 1\.0\.0/,
-    /Cancellation.*Policy.*Version 1\.0\.0/,
-    /Terms of Use.*Version 1\.0\.0/,
-    /Privacy Policy.*Version 1\.0\.0/,
-  ])
-    await page.getByLabel(label).check();
+  await page.getByLabel("I agree to the Terms & Conditions").check();
 }
 
 function localSql(statement: string) {
@@ -214,7 +207,8 @@ async function fillRegistration(
   await page.getByLabel("First name").fill(firstName);
   await page.getByLabel("Last name").fill(lastName);
   await page.getByLabel("Mobile phone").fill(phone);
-  await page.getByLabel("Email (optional)").fill(email);
+  await page.getByRole("button", { name: /Tell us a little more/ }).click();
+  await page.getByLabel("Email").fill(email);
   await acceptRequiredLegal(page);
   await page.getByRole("button", { name: "Book Class" }).click();
 }

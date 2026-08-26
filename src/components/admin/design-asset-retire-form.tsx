@@ -9,9 +9,9 @@ import {
 export function DesignAssetRetireForm({ id }: { id: string }) {
   const [state, action] = useActionState<DesignAssetActionState, FormData>(retireDesignAsset, {});
   return (
-    <form action={action}>
+    <form action={action} className="design-assets-retire-form">
       <input type="hidden" name="id" value={id} />
-      <button type="submit" className="admin-secondary-button text-admin-danger">
+      <button type="submit" className="design-assets-retire-button">
         Retire
       </button>
       {state.error ? (

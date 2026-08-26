@@ -1,0 +1,2628 @@
+/* Canonical Admin workspace/menu presentation derived from Northstar.
+   Production auth, routes, scope, and data remain in the page/component layer. */
+
+.ops-template-menu {
+  position: static;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.ops-template-nav,
+.ops-template-overlay-nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  display: flex;
+  gap: 1em;
+  padding: 1em;
+}
+
+.ops-template-nav {
+  z-index: 31;
+  pointer-events: all;
+}
+.ops-template-nav-brand,
+.ops-template-overlay-brand {
+  flex: 2;
+  overflow: hidden;
+}
+.ops-template-nav-items {
+  display: flex;
+  flex: 1;
+  gap: 1em;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+.ops-template-menu-trigger,
+.ops-template-role,
+.ops-template-nav form,
+.ops-template-overlay-close {
+  flex: 1;
+  overflow: hidden;
+}
+.ops-template-menu-trigger {
+  flex: 0 0 auto;
+  text-align: right;
+}
+.ops-template-nav a,
+.ops-template-overlay a,
+.ops-template-nav button,
+.ops-template-overlay button {
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+.ops-template-nav button,
+.ops-template-overlay button {
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+.ops-template-nav-brand a,
+.ops-template-overlay-brand a {
+  color: #fff;
+  font-weight: 700;
+}
+.ops-template-role {
+  color: var(--energy);
+  font-size: 0.66rem;
+  text-align: right;
+}
+.ops-template-overlay {
+  position: fixed;
+  z-index: 32;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+  clip-path: polygon(0% 100%, 100% 100%, 100% 100%, 0% 100%);
+  will-change: clip-path;
+  pointer-events: none;
+}
+.ops-template-overlay-nav {
+  z-index: 1;
+}
+.ops-template-menu-items {
+  padding: 25vh 1em 1em;
+}
+.ops-template-menu-items a {
+  --ops-menu-item-size: 3rem;
+  display: block;
+  width: max-content;
+  max-width: calc(100vw - 2em);
+  color: var(--ink);
+  font-family: var(--font-display), Arial, Helvetica, sans-serif;
+  font-size: var(--ops-menu-item-size);
+  font-weight: 800;
+  line-height: 0.88;
+  letter-spacing: -0.06em;
+  text-transform: uppercase;
+  white-space: normal;
+  scale: 1;
+  transition:
+    color 180ms ease-out,
+    scale 180ms ease-out;
+}
+.ops-template-menu-items a:hover,
+.ops-template-menu-items a:focus-visible {
+  color: var(--energy);
+}
+.ops-template-menu-items a.is-active {
+  color: var(--ink);
+  font-size: calc(var(--ops-menu-item-size) + 0.2rem);
+  scale: 1.04;
+  transform-origin: left center;
+}
+.ops-template-menu-footer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 1em;
+  width: 100%;
+  padding: 1em;
+  color: var(--ink-soft);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+}
+.ops-template-menu-footer-col:first-child {
+  flex: 2;
+}
+.ops-template-menu-footer-col {
+  flex: 1;
+}
+.ops-template-menu-footer-action {
+  display: flex;
+  justify-content: flex-end;
+}
+.ops-template-menu-footer-action form {
+  margin: 0;
+}
+.ops-template-menu-footer-action .ops-template-signout {
+  min-height: 44px;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-transform: uppercase;
+}
+.ops-template-menu-footer-action .ops-template-signout:hover,
+.ops-template-menu-footer-action .ops-template-signout:focus-visible {
+  color: var(--energy);
+}
+.ops-template-revealer {
+  overflow: hidden;
+}
+.ops-template-revealer a,
+.ops-template-revealer button,
+.ops-template-revealer span {
+  display: block;
+  transform: translateY(100%);
+}
+.ops-template-nav .ops-template-revealer a,
+.ops-template-nav .ops-template-revealer button {
+  transform: none;
+}
+.ops-template-overlay a:focus-visible,
+.ops-template-overlay button:focus-visible {
+  outline: 2px solid var(--energy);
+  outline-offset: 4px;
+}
+
+.ops-admin-page {
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: 11vh 1em 1em;
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font-display), Arial, Helvetica, sans-serif;
+}
+.ops-admin-content {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+.ops-admin-page .ops-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2em;
+}
+.ops-admin-page .ops-head h1 {
+  max-width: 12ch;
+  margin-top: 10vh;
+  color: var(--ink);
+  font-family: var(--font-display), Arial, Helvetica, sans-serif;
+  font-size: clamp(4rem, 9vw, 9rem);
+  font-weight: 800;
+  line-height: 0.75;
+  letter-spacing: -0.09em;
+  text-transform: uppercase;
+}
+.ops-admin-page .ops-head h1 em {
+  color: var(--energy);
+  font-style: normal;
+}
+.ops-admin-page .ops-head > div:first-child > .ops-kicker {
+  color: var(--energy);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.ops-admin-page .ops-context {
+  max-width: 260px;
+  line-height: 1.2;
+}
+.ops-admin-page .ops-context strong {
+  display: block;
+  margin-top: 0.5em;
+  font-size: 1.35rem;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+}
+.ops-admin-page .ops-priority {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 2em;
+  margin-top: 10vh;
+}
+.ops-admin-page .ops-priority-card {
+  position: relative;
+  display: flex;
+  min-height: 360px;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  background-position: center;
+  background-size: cover;
+  padding: 1.2em;
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 180ms ease-out;
+}
+.ops-admin-page .ops-priority-card-hit-area {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  color: inherit;
+  text-decoration: none;
+}
+.ops-admin-page .ops-priority-card-hit-area:focus-visible {
+  outline: 2px solid var(--energy);
+  outline-offset: -4px;
+}
+.ops-admin-page .ops-priority-main {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+.ops-admin-page .ops-priority-main > .ops-kicker {
+  margin: 0;
+  color: var(--energy);
+  font-size: 0.7rem;
+}
+.ops-admin-page .ops-priority-card:hover {
+  transform: translateY(-2px);
+}
+.ops-admin-page .ops-priority-card:focus-visible {
+  outline: 2px solid var(--energy);
+  outline-offset: 4px;
+}
+.ops-admin-page .ops-priority-card-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.ops-admin-page .ops-priority-card-heading {
+  max-width: 100%;
+}
+.ops-admin-page .ops-priority-card-heading .ops-kicker {
+  color: var(--energy);
+  font-size: 0.58rem;
+}
+.ops-admin-page .ops-priority-status {
+  color: #c7f36b;
+  font-size: 0.7rem;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+.ops-admin-page .ops-priority-card-content h2 {
+  max-width: 680px;
+  color: var(--ink);
+  font-family: var(--font-display), Arial, Helvetica, sans-serif;
+  font-size: clamp(3rem, 7vw, 7rem);
+  font-weight: 800;
+  line-height: 0.78;
+  letter-spacing: -0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 22px rgb(0 0 0 / 0.55);
+  overflow-wrap: anywhere;
+}
+.ops-admin-page .ops-priority-card-content .button,
+.ops-admin-page .ops-priority-manage-link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  align-self: flex-start;
+  justify-content: center;
+  border: 1px solid var(--energy);
+  border-radius: 0;
+  padding: 0.75rem 1.1rem;
+  background: var(--energy);
+  color: #17191c;
+  gap: 0.5rem;
+  font-family:
+    "SF Pro Display",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+  transition:
+    background-color 180ms ease-out,
+    color 180ms ease-out;
+}
+.ops-admin-page .ops-action-arrow {
+  display: inline-block;
+  font-family:
+    "SF Pro Display",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0;
+}
+.ops-admin-page .ops-priority-card-content .button > span:last-child {
+  display: inline-block;
+  transition: transform 180ms ease-out;
+}
+.ops-admin-page .ops-priority-card:hover .button > span:last-child,
+.ops-admin-page .ops-priority-card:focus-visible .button > span:last-child,
+.ops-admin-page .ops-priority-card:hover .ops-priority-manage-link > span:last-child,
+.ops-admin-page .ops-priority-card:focus-within .ops-priority-manage-link > span:last-child {
+  transform: translateX(4px);
+}
+.ops-admin-page .ops-priority-card:hover .button,
+.ops-admin-page .ops-priority-card:focus-visible .button,
+.ops-admin-page .ops-priority-card:hover .ops-priority-manage-link,
+.ops-admin-page .ops-priority-card:focus-within .ops-priority-manage-link {
+  background: transparent;
+  color: var(--energy);
+}
+.ops-admin-page .ops-summary {
+  display: grid;
+  gap: 1em;
+  align-content: end;
+}
+.ops-admin-page .ops-summary-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1em;
+  border-top: 1px solid var(--line);
+  padding-top: 0.7em;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+.ops-admin-page .ops-summary-row strong {
+  text-align: right;
+}
+.ops-admin-page .ops-summary-row strong.ops-status {
+  color: #c7f36b;
+}
+.ops-admin-page .ops-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.ops-admin-page .ops-section {
+  margin-top: 14vh;
+}
+.ops-admin-page .ops-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line-strong);
+  padding-bottom: 0.75rem;
+}
+.ops-admin-page .ops-section-head .ops-kicker,
+.ops-admin-page .ops-section-head .text-link {
+  min-width: 0;
+  font-family: inherit;
+  font-size: 0.7rem;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.ops-admin-page .ops-section-head .ops-kicker {
+  max-width: 16ch;
+}
+.ops-admin-page .ops-section-head .text-link {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.ops-admin-page .ops-event-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ops-admin-page .ops-event-list > li {
+  margin: 0;
+  padding: 0;
+}
+.ops-admin-page .ops-event-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1.35fr) minmax(0, 1fr) 88px 44px;
+  gap: 0.8rem;
+  align-items: center;
+  min-height: 44px;
+  width: 100%;
+  min-width: 0;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--ink);
+  color: var(--ink);
+  transition: color 180ms ease-out;
+}
+.ops-admin-page .ops-event-row:hover,
+.ops-admin-page .ops-event-row:focus-within {
+  background: transparent;
+}
+.ops-admin-page .ops-event-row > span,
+.ops-admin-page .ops-event-row .ops-event-details,
+.ops-admin-page .ops-event-row .ops-event-org,
+.ops-admin-page .ops-event-row .ops-event-capacity {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ops-event-date {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ops-event-details {
+  display: grid;
+  min-width: 0;
+  gap: 0.35rem;
+}
+.ops-event-row h2 {
+  min-width: 0;
+  margin: 0;
+  color: var(--ink);
+  font-family:
+    "SF Pro Display",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ops-event-row .ops-meta,
+.ops-event-row .ops-event-org {
+  min-width: 0;
+  color: var(--ink-soft);
+  font-size: 0.64rem;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+.ops-event-row .ops-event-time {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ops-event-row .ops-event-org {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.ops-event-row .ops-event-capacity {
+  color: var(--success);
+  font-size: 0.62rem;
+  line-height: 1.2;
+  text-align: right;
+  text-transform: uppercase;
+}
+.ops-admin-page .ops-event-row .ops-event-arrow {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  font-size: 0.9rem;
+  transition:
+    color 180ms ease-out,
+    transform 180ms ease-out;
+}
+.ops-admin-page .ops-event-row:focus-visible {
+  outline: 2px solid var(--energy);
+  outline-offset: 3px;
+}
+.ops-admin-page .ops-event-row:hover .ops-event-arrow,
+.ops-admin-page .ops-event-row:focus-visible .ops-event-arrow {
+  color: var(--energy);
+  transform: translate(2px, -2px);
+}
+.ops-admin-page .ops-empty {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+.ops-admin-page .ops-empty strong {
+  color: var(--ink);
+  font-family: var(--font-display), Arial, Helvetica, sans-serif;
+  font-size: 2rem;
+  text-transform: uppercase;
+}
+.ops-admin-page .ops-empty p:not(.ops-kicker) {
+  color: var(--ink-soft);
+}
+.ops-admin-page .ops-admin-destinations {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.6rem 1rem;
+}
+.ops-admin-page .ops-admin-destinations a {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  padding: 0.8rem 0;
+  color: var(--ink);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+.ops-admin-page .ops-admin-destinations a span {
+  color: var(--accent);
+}
+.ops-admin-page .ops-admin-destinations a:hover {
+  color: var(--energy);
+}
+@media (max-width: 900px) {
+  .ops-admin-page {
+    padding: 13vh 1em 1em;
+  }
+  .ops-admin-page .ops-head,
+  .ops-admin-page .ops-priority {
+    display: block;
+  }
+  .ops-admin-page .ops-head h1 {
+    max-width: 100%;
+    margin-top: 7vh;
+    font-size: clamp(2.8rem, 11vw, 4.4rem);
+    line-height: 0.86;
+    overflow-wrap: anywhere;
+  }
+  .ops-admin-page .ops-head h1 em {
+    overflow-wrap: anywhere;
+  }
+  .ops-admin-page .ops-context {
+    margin-top: 2em;
+  }
+  .ops-admin-page .ops-priority {
+    margin-top: 7vh;
+  }
+  .ops-admin-page .ops-priority-card {
+    min-height: 430px;
+    padding: 1rem;
+  }
+  .ops-admin-page .ops-priority-card-content {
+    min-height: 0;
+  }
+  .ops-admin-page .ops-priority-card-content h2 {
+    max-width: 100%;
+    font-size: clamp(2.8rem, 12vw, 4.4rem);
+    line-height: 0.82;
+  }
+  .ops-admin-page .ops-summary {
+    margin-top: 3em;
+  }
+  .ops-admin-page .ops-section {
+    margin-top: 4rem;
+  }
+  .ops-admin-page .ops-event-row {
+    grid-template-columns: 64px minmax(0, 1fr) 44px;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "date details arrow"
+      "capacity org arrow";
+    gap: 0.55rem 0.7rem;
+    align-items: start;
+  }
+  .ops-admin-page .ops-event-row .ops-event-date {
+    grid-area: date;
+  }
+  .ops-admin-page .ops-event-row .ops-event-details {
+    grid-area: details;
+  }
+  .ops-admin-page .ops-event-row .ops-event-org {
+    grid-area: org;
+  }
+  .ops-admin-page .ops-event-row .ops-event-capacity {
+    grid-area: capacity;
+    text-align: left;
+  }
+  .ops-admin-page .ops-event-row .ops-event-arrow {
+    grid-area: arrow;
+    justify-self: end;
+  }
+  .ops-admin-page .ops-event-row h2 {
+    font-size: 1.2rem;
+    line-height: 1.05;
+  }
+  .ops-admin-page .ops-event-row:hover {
+    background: transparent;
+  }
+  .ops-template-nav-items {
+    justify-content: flex-end;
+  }
+  .ops-template-menu-items {
+    padding-top: 25vh;
+  }
+  .ops-template-menu-items a {
+    --ops-menu-item-size: clamp(2.5rem, 12vw, 3rem);
+    max-width: calc(100vw - 2em);
+    font-size: var(--ops-menu-item-size);
+    line-height: 0.9;
+    letter-spacing: -0.055em;
+  }
+  .ops-template-menu-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ops-template-menu-items a {
+    transition: none;
+  }
+  .ops-priority-card,
+  .ops-priority-card-content .button,
+  .ops-event-row,
+  .ops-event-row .ops-event-arrow {
+    transition: none;
+  }
+}
+
+/* Northstar-inspired Venues workspace, backed by Arakkis authorization and data. */
+.ops-venue-page {
+  --admin-events-header-font:
+    "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  min-width: 0;
+  min-height: 100vh;
+  max-width: 1280px;
+  margin: 0 auto;
+  overflow-x: hidden;
+  background: #101315;
+  color: #f7f5f0;
+  padding: 11vh clamp(1rem, 4vw, 4rem) 4rem;
+}
+.ops-venue-page .ops-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  align-items: end;
+}
+.ops-venue-page .ops-kicker,
+.ops-venue-page .ops-label,
+.ops-venue-page .ops-meta {
+  color: #aeb3bb;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+}
+.ops-venue-page .ops-kicker.orange,
+.ops-venue-page .ops-org-detail-head .ops-kicker,
+.ops-venue-page .ops-venue-page-head .ops-kicker {
+  color: #ff7a3d;
+}
+.ops-venue-page .ops-head h1 {
+  margin-top: 10vh;
+  color: #f7f5f0;
+  font-size: clamp(4rem, 9vw, 9rem);
+  line-height: 0.75;
+  letter-spacing: -0.09em;
+  text-transform: uppercase;
+}
+.ops-venue-page .ops-context {
+  max-width: 260px;
+  color: #aeb3bb;
+  line-height: 1.2;
+}
+.ops-venue-page .ops-context strong {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 1.35rem;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+}
+.ops-venue-page .ops-org-layout,
+.ops-venue-page .admin-venue-create-layout {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.7fr) 1.5fr;
+  gap: 3rem;
+}
+.ops-venue-page .ops-org-index {
+  align-self: start;
+  min-width: 0;
+}
+.ops-venue-page .ops-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+}
+.ops-venue-page .ops-org-list-item {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 1rem;
+  box-sizing: border-box;
+  padding: 1rem 0;
+  text-align: left;
+  text-decoration: none;
+}
+.ops-venue-page .ops-org-list-item > span:first-child {
+  min-width: 0;
+}
+.ops-venue-page .ops-org-list-item strong,
+.ops-venue-page .ops-org-list-item small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.ops-venue-page .ops-org-list-item strong {
+  font-size: 1.25rem;
+  letter-spacing: -0.05em;
+}
+.ops-venue-page .ops-org-list-item small {
+  max-width: 220px;
+  margin-top: 0.35rem;
+  font-size: 0.65rem;
+  line-height: 1.2;
+}
+.ops-venue-page .ops-org-count {
+  flex: 0 0 auto;
+  font-size: 0.6rem;
+  line-height: 1.4;
+  text-align: right;
+  text-transform: uppercase;
+}
+.ops-venue-page .ops-org-detail {
+  min-width: 0;
+}
+.ops-venue-page .ops-org-detail-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+  padding-bottom: 1.5rem;
+}
+.ops-venue-page .ops-org-detail-head h2 {
+  margin-top: 0.3rem;
+  font-size: clamp(3rem, 6vw, 6rem);
+  line-height: 0.8;
+  letter-spacing: -0.08em;
+  text-transform: uppercase;
+}
+.ops-venue-page .ops-org-detail-head p:last-child {
+  max-width: 360px;
+  margin-top: 1rem;
+  line-height: 1.2;
+}
+.ops-venue-page .ops-org-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin: 2rem 0 5rem;
+}
+.ops-venue-page .ops-org-stats > div {
+  display: grid;
+  min-width: 0;
+  gap: 0.35rem;
+  padding-top: 0.7rem;
+}
+.ops-venue-page .ops-org-stats strong {
+  overflow-wrap: anywhere;
+  font-size: 2.2rem;
+  letter-spacing: -0.07em;
+}
+.ops-venue-page .ops-venue-head {
+  gap: 1rem;
+}
+.ops-venue-page .text-button {
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  padding: 0.65rem 0;
+  color: #ff7a3d;
+  font: inherit;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+}
+.ops-venue-page .ops-venue-page-head {
+  align-items: end;
+  min-width: 0;
+}
+.ops-venue-page .ops-venue-page-head h1 {
+  color: #f7f5f0;
+  font-family: var(--admin-events-header-font);
+  font-weight: 900;
+}
+.ops-venue-page .ops-venue-page-head h1 em {
+  color: #ff7a3d;
+}
+.ops-venue-page .ops-context strong {
+  color: #f7f5f0;
+}
+.ops-venue-page .admin-venue-toggle-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+.ops-venue-page .admin-venue-mode {
+  margin: 0 auto;
+}
+.ops-venue-page .ops-org-layout,
+.ops-venue-page .admin-venue-create-layout {
+  margin-top: 11vh;
+}
+.ops-venue-page .ops-section-head {
+  border-color: #f7f5f0;
+}
+.ops-venue-page .ops-org-list-item {
+  border-color: #f7f5f0;
+  color: #f7f5f0;
+  transition:
+    background-color 160ms ease-out,
+    color 160ms ease-out;
+}
+.ops-venue-page .ops-org-list-item:hover,
+.ops-venue-page .ops-org-list-item:focus-visible,
+.ops-venue-page .ops-org-list-item.is-selected {
+  padding-left: 0.7rem;
+  background: #2c3137;
+  color: #f7f5f0;
+  outline-offset: 3px;
+}
+.ops-venue-page .ops-org-list-item small,
+.ops-venue-page .ops-org-count,
+.ops-venue-page .ops-org-detail-head p:last-child,
+.ops-venue-page .ops-org-stats small,
+.ops-venue-page .ops-venue-row span {
+  color: #aeb3bb;
+}
+.ops-venue-page .ops-org-detail-head {
+  border-color: #f7f5f0;
+}
+.ops-venue-page .ops-org-detail-head h2 {
+  color: #f7f5f0;
+  font-family: var(--admin-events-header-font);
+  font-weight: 900;
+}
+.ops-venue-page .ops-status {
+  color: #c7f36b;
+}
+.ops-venue-page .ops-org-stats > div {
+  border-color: #f7f5f0;
+}
+.ops-venue-page .ops-org-stats strong {
+  color: #f7f5f0;
+}
+.ops-venue-page .ops-venue-list {
+  border-color: #f7f5f0;
+}
+.ops-venue-page .ops-venue-row {
+  grid-template-columns: minmax(0, 1.6fr) minmax(70px, 0.5fr) minmax(80px, 0.6fr) 44px auto;
+  min-width: 0;
+  border-color: #f7f5f0;
+  color: #f7f5f0;
+  transition: background-color 160ms ease-out;
+}
+.ops-venue-page .ops-venue-row:hover,
+.ops-venue-page .ops-venue-row:focus-within {
+  background: #22262b;
+}
+.ops-venue-page .ops-venue-identity {
+  display: grid;
+  min-width: 0;
+  gap: 0.3rem;
+  color: #f7f5f0;
+  text-decoration: none;
+}
+.ops-venue-page .ops-venue-identity strong,
+.ops-venue-page .ops-venue-row > div strong {
+  overflow-wrap: anywhere;
+}
+.ops-venue-page .ops-venue-identity strong,
+.ops-venue-page .ops-venue-row > div strong {
+  font-family: var(--admin-events-header-font);
+  font-weight: 900;
+}
+.ops-venue-page .ops-venue-identity:hover strong,
+.ops-venue-page .ops-venue-identity:focus-visible strong {
+  color: #ff7a3d;
+}
+.ops-venue-page .ops-venue-row > div {
+  min-width: 0;
+}
+.ops-venue-page .ops-venue-arrow {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  color: #f7f5f0;
+  font-size: 1.2rem;
+  text-decoration: none;
+}
+.ops-venue-page .ops-venue-arrow:hover,
+.ops-venue-page .ops-venue-arrow:focus-visible {
+  color: #ff7a3d;
+}
+.ops-venue-page .ops-venue-actions {
+  position: relative;
+}
+.ops-venue-page .ops-venue-actions summary {
+  min-height: 44px;
+  cursor: pointer;
+  color: #aeb3bb;
+  font-size: 0.62rem;
+  list-style: none;
+  text-transform: uppercase;
+}
+.ops-venue-page .ops-venue-actions summary::-webkit-details-marker {
+  display: none;
+}
+.ops-venue-page .ops-venue-actions form {
+  position: absolute;
+  right: 0;
+  z-index: 2;
+  min-width: 9rem;
+  margin-top: 0.25rem;
+  border: 1px solid #59616b;
+  background: #2c3137;
+  padding: 0.35rem;
+}
+.ops-venue-page .ops-venue-actions button {
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  padding: 0.65rem 0.8rem;
+  color: #ffb18e;
+  font: inherit;
+  text-transform: uppercase;
+}
+.ops-venue-page .ops-venue-actions button:hover,
+.ops-venue-page .ops-venue-actions button:focus-visible {
+  background: #ff7a3d;
+  color: #17191c;
+}
+.ops-venue-page .ops-empty,
+.ops-venue-page .admin-venue-form-shell {
+  min-width: 0;
+  border-color: #41474e;
+  background: #22262b;
+  color: #f7f5f0;
+}
+.ops-venue-page .ops-empty .text-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+@media (max-width: 900px) {
+  .ops-venue-page {
+    padding-top: 16vh;
+  }
+  .ops-venue-page .ops-venue-page-head {
+    display: block;
+  }
+  .ops-venue-page .ops-context {
+    margin-top: 2rem;
+  }
+  .ops-venue-page .admin-venue-toggle-row {
+    margin-top: 2rem;
+  }
+  .ops-venue-page .ops-org-layout,
+  .ops-venue-page .admin-venue-create-layout {
+    display: block;
+    margin-top: 8vh;
+  }
+  .ops-venue-page .ops-org-detail,
+  .ops-venue-page .admin-venue-form-shell {
+    margin-top: 4rem;
+  }
+  .ops-venue-page .ops-org-stats {
+    gap: 0.6rem;
+    margin-bottom: 4rem;
+  }
+  .ops-venue-page .ops-org-stats strong {
+    font-size: 1.7rem;
+  }
+  .ops-venue-page .ops-venue-row {
+    grid-template-columns: minmax(0, 1fr) 72px 44px;
+    gap: 0.6rem;
+    align-items: start;
+  }
+  .ops-venue-page .ops-venue-identity {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+  .ops-venue-page .ops-venue-row > div:nth-child(2) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .ops-venue-page .ops-venue-row > div:nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .ops-venue-page .ops-venue-arrow {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
+  .ops-venue-page .ops-venue-actions {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+  .ops-venue-page .ops-venue-actions form {
+    right: auto;
+    left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ops-venue-page .ops-org-list-item,
+  .ops-venue-page .ops-venue-row {
+    transition: none;
+  }
+}
+
+/* Combined Organizations & Venues workspace: Northstar contexts on real Arakkis data. */
+.admin-organization-venue-contexts {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 3rem;
+  border-bottom: 1px solid var(--line-strong);
+}
+.admin-organization-venue-contexts a {
+  min-height: 44px;
+  border-bottom: 2px solid transparent;
+  padding: 0.7rem 0;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.admin-organization-venue-contexts a[data-selected="true"] {
+  border-color: var(--energy);
+  color: var(--ink);
+}
+.admin-organization-venue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+}
+.admin-organization-venue-actions .button,
+.admin-public-venue-actions button {
+  min-height: 44px;
+  border-radius: 0;
+}
+.admin-public-venue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+  border-top: 1px solid var(--line-strong);
+  padding-top: 1rem;
+}
+.admin-public-venue-actions form {
+  margin: 0;
+}
+.admin-public-venue-actions button {
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  padding: 0.65rem 0.8rem;
+  color: var(--energy);
+  font: inherit;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+}
+.admin-public-venue-actions button:hover,
+.admin-public-venue-actions button:focus-visible {
+  border-color: var(--energy);
+  background: var(--energy);
+  color: var(--page);
+}
+.admin-public-venue-edit {
+  margin-top: 2rem;
+  border-top: 1px solid var(--line-strong);
+  padding-top: 1rem;
+}
+.admin-public-venue-events {
+  margin-top: 2rem;
+}
+@media (max-width: 900px) {
+  .admin-organization-venue-contexts {
+    margin-top: 2rem;
+  }
+  .admin-organization-venue-actions {
+    justify-content: flex-start;
+  }
+  .admin-organization-venue-actions .button {
+    width: 100%;
+  }
+  .admin-public-venue-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .admin-public-venue-actions form,
+  .admin-public-venue-actions button {
+    width: 100%;
+  }
+}
+
+/* Organizations workspace: Northstar master-detail presentation on Arakkis data/actions. */
+.admin-organizations-page {
+  width: 100%;
+  max-width: 1280px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 11vh 1rem 3rem;
+  background: var(--page);
+  color: var(--ink);
+}
+.admin-organizations-page .admin-organizations-head {
+  align-items: end;
+}
+.admin-organizations-mode-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+.admin-organizations-page .admin-segmented-nav {
+  margin-inline: 0;
+}
+.admin-organizations-layout {
+  margin-top: 9vh;
+}
+.admin-organization-edit-link {
+  color: #ff7a3d;
+  text-transform: uppercase;
+}
+.admin-organizations-rare-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+  border-top: 1px solid #59616b;
+  padding-top: 1rem;
+}
+.admin-organizations-rare-actions form {
+  margin: 0;
+}
+.admin-organizations-rare-actions button {
+  min-height: 44px;
+  border: 1px solid #59616b;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.65rem 0.8rem;
+  color: #ffb18e;
+  font: inherit;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+}
+.admin-organizations-rare-actions button:hover {
+  border-color: #59616b;
+  background: transparent;
+  color: #17191c;
+}
+.admin-organizations-rare-actions button:focus-visible {
+  border-color: #ff7a3d;
+  background: #ff7a3d;
+  color: #17191c;
+}
+.admin-organization-create-form {
+  display: grid;
+  max-width: 544px;
+  margin: 4rem auto 0;
+  gap: 1.6rem;
+  border: 2px solid #b7b5ae;
+  background: #1b1e22;
+  padding: 2.35rem 2.4rem 2.5rem;
+}
+.admin-organization-create-overlay {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  overflow-y: auto;
+  place-items: center;
+  background: rgb(8 10 12 / 0.78);
+  padding: 2rem;
+}
+.admin-organization-create-dialog-form {
+  width: min(100%, 544px);
+  margin: 0;
+}
+.admin-organization-create-dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #f7f5f0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.admin-organization-create-dialog-heading button {
+  border: 0;
+  background: transparent;
+  color: #f7f5f0;
+  cursor: pointer;
+  font-size: 2rem;
+  line-height: 1;
+}
+.admin-organization-create-dialog-heading button:hover,
+.admin-organization-create-dialog-heading button:focus-visible {
+  color: #ff7a3d;
+}
+.admin-organization-create-form label {
+  display: grid;
+  gap: 0.35rem;
+  color: #8f8c84;
+  font-size: 1.15rem;
+  line-height: 1.2;
+}
+.admin-organization-create-form input {
+  min-width: 0;
+  min-height: 58px;
+  border: 2px solid #59616b;
+  border-radius: 0;
+  background: #17191c;
+  padding: 0.75rem 1rem;
+  color: #f7f5f0;
+  font: inherit;
+  font-size: 1.1rem;
+}
+.admin-organization-create-form input::placeholder {
+  color: #9aa19c;
+  opacity: 1;
+}
+.admin-organization-create-form input:focus {
+  outline: 4px solid #ff7a3d;
+  outline-offset: 6px;
+}
+.admin-action-form-buttons {
+  display: grid;
+  justify-items: start;
+  gap: 1.15rem;
+  margin-top: 2.25rem;
+}
+.admin-organization-create-form .admin-action-form-buttons > button {
+  min-width: 348px;
+  min-height: 84px;
+  border-radius: 0;
+  background: #ff7a3d;
+  color: #17191c;
+  font-size: 1.35rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.admin-action-form-cancel {
+  display: inline-flex;
+  min-width: 173px;
+  min-height: 84px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #59616b;
+  padding: 0.75rem 1rem;
+  color: #f7f5f0;
+  font-size: 1.35rem;
+  font-weight: 900;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.admin-action-form-cancel:hover,
+.admin-action-form-cancel:focus-visible {
+  border-color: #ff7a3d;
+  background: #ff7a3d;
+  color: #17191c;
+}
+.admin-organization-create-shell .admin-events-filter-clear:hover,
+.admin-organization-create-shell .admin-events-filter-clear:focus-visible,
+.admin-organization-create-shell .admin-events-filter-clear:active {
+  border-color: #ff7a3d;
+  background: #ff7a3d;
+  color: #101315;
+}
+.admin-organization-create-shell .admin-events-filter-apply:hover,
+.admin-organization-create-shell .admin-events-filter-apply:focus-visible,
+.admin-organization-create-shell .admin-events-filter-apply:active {
+  border-color: #ff7a3d;
+}
+@media (max-width: 600px) {
+  .admin-organization-create-overlay {
+    align-items: start;
+    padding: 1rem;
+  }
+  .admin-organization-create-form {
+    margin: 2.5rem 0 0;
+    padding: 1.75rem 1.4rem 1.9rem;
+  }
+  .admin-organization-create-form .admin-action-form-buttons > button,
+  .admin-action-form-cancel {
+    min-width: 0;
+    width: 100%;
+  }
+}
+.admin-org-no-results {
+  border-bottom: 1px solid #f7f5f0;
+  padding: 1rem 0;
+  color: #aeb3bb;
+  font-size: 0.72rem;
+}
+@media (max-width: 900px) {
+  .admin-organizations-page {
+    padding-top: 16vh;
+  }
+  .admin-organizations-page .admin-organizations-head {
+    display: block;
+  }
+  .admin-organizations-page .ops-context {
+    margin-top: 2rem;
+  }
+  .admin-organizations-mode-row {
+    justify-content: flex-start;
+    margin-top: 2rem;
+  }
+}
+
+.ops-venue-detail-layout {
+  display: grid;
+  min-width: 0;
+  gap: 3rem;
+  margin-top: 11vh;
+}
+.ops-venue-detail-page .ops-org-detail-head h2 {
+  max-width: 48rem;
+  overflow-wrap: anywhere;
+}
+.ops-venue-edit-panel,
+.ops-venue-events-panel {
+  min-width: 0;
+  border-top: 1px solid #59616b;
+  padding-top: 1rem;
+}
+.ops-venue-edit-panel h2 {
+  margin: 0.4rem 0 1.5rem;
+  color: #f7f5f0;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  letter-spacing: -0.06em;
+  text-transform: uppercase;
+}
+.ops-venue-detail-page .admin-create-event-form,
+.ops-venue-detail-page .admin-create-event-form label {
+  color: #aeb3bb;
+}
+.ops-venue-detail-page .admin-create-event-form input,
+.ops-venue-detail-page .admin-create-event-form select {
+  min-height: 44px;
+  border-color: #59616b;
+  border-radius: 0;
+  background: #2c3137;
+  color: #f7f5f0;
+}
+.ops-venue-detail-page .ops-venue-archive-form {
+  margin-top: 1.5rem;
+  border-top: 1px solid #59616b;
+  padding-top: 1rem;
+}
+.ops-venue-related-list {
+  display: grid;
+  min-width: 0;
+  border-top: 1px solid #59616b;
+}
+.ops-venue-related-list a {
+  display: grid;
+  min-width: 0;
+  gap: 0.3rem;
+  border-bottom: 1px solid #59616b;
+  padding: 1rem 0;
+  color: #f7f5f0;
+  text-decoration: none;
+}
+.ops-venue-related-list a:hover strong,
+.ops-venue-related-list a:focus-visible strong {
+  color: #ff7a3d;
+}
+.ops-venue-related-list strong,
+.ops-venue-related-list span {
+  overflow-wrap: anywhere;
+}
+.ops-venue-related-list span {
+  color: #aeb3bb;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .ops-venue-detail-layout {
+    gap: 2.5rem;
+    margin-top: 8vh;
+  }
+  .ops-venue-detail-page .ops-org-detail-head {
+    display: block;
+  }
+  .ops-venue-detail-page .ops-org-detail-head > .ops-status {
+    display: inline-block;
+    margin-top: 1rem;
+  }
+}
+
+/* Venue detail rules are intentionally explicit: the generic Admin section
+   borders are scoped to .ops-admin-page, while this shell uses .ops-venue-page. */
+.ops-venue-page .ops-section-head {
+  border-bottom: 1px solid #f7f5f0;
+}
+.ops-venue-page .ops-org-index .ops-section-head {
+  border-top: 1px solid #f7f5f0;
+}
+.ops-venue-page .ops-org-list-item {
+  border-bottom: 1px solid #f7f5f0;
+}
+.ops-venue-page .ops-org-detail-head {
+  border-bottom: 1px solid #f7f5f0;
+}
+.ops-venue-page .ops-org-stats > div {
+  border-top: 1px solid #f7f5f0;
+}
+.ops-venue-page .ops-venue-list {
+  border-top: 1px solid #f7f5f0;
+}
+.ops-venue-page .ops-venue-row {
+  border-bottom: 1px solid #f7f5f0;
+}
+
+.ops-organization-detail-page .ops-organization-detail-content {
+  min-width: 0;
+  margin-top: 9vh;
+}
+.ops-organization-detail-page .ops-org-detail-head {
+  border-bottom: 1px solid #f7f5f0;
+  padding-bottom: 1.5rem;
+}
+.ops-organization-detail-page .ops-org-detail-head h2 {
+  max-width: 48rem;
+  overflow-wrap: anywhere;
+  color: #f7f5f0;
+  font-family: var(--font-display), Arial, Helvetica, sans-serif;
+  font-size: clamp(3rem, 6vw, 6rem);
+  font-weight: 900;
+  line-height: 0.8;
+  letter-spacing: -0.08em;
+  text-transform: uppercase;
+}
+.ops-organization-detail-page .ops-org-detail-head p:last-child {
+  max-width: 42rem;
+  overflow-wrap: anywhere;
+  margin-top: 1rem;
+  color: #aeb3bb;
+}
+.ops-organization-detail-page .ops-org-stats > div {
+  border-top: 1px solid #f7f5f0;
+}
+.ops-organization-detail-grid {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 3rem;
+}
+.ops-organization-panel {
+  min-width: 0;
+}
+.ops-organization-panel > .ops-section-head {
+  border-top: 1px solid #f7f5f0;
+  border-bottom: 1px solid #f7f5f0;
+  padding: 0.8rem 0;
+}
+.ops-organization-related {
+  display: grid;
+  min-width: 0;
+  gap: 2rem;
+}
+.ops-organization-related-list {
+  display: grid;
+  min-width: 0;
+  border-bottom: 1px solid #f7f5f0;
+}
+.ops-organization-related-list > a {
+  display: grid;
+  min-width: 0;
+  gap: 0.35rem;
+  border-bottom: 1px solid #f7f5f0;
+  padding: 1rem 0;
+  color: #f7f5f0;
+  text-decoration: none;
+}
+.ops-organization-related-list > a:last-child {
+  border-bottom: 0;
+}
+.ops-organization-related-list > a:hover strong,
+.ops-organization-related-list > a:focus-visible strong {
+  color: #ff7a3d;
+}
+.ops-organization-related-list strong,
+.ops-organization-related-list span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ops-organization-related-list span,
+.ops-organization-empty {
+  color: #aeb3bb;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+.ops-organization-empty {
+  margin: 0;
+  padding: 1rem 0;
+}
+.ops-organization-empty a {
+  color: #ff7a3d;
+}
+.ops-organization-detail-page .admin-organizations-rare-actions {
+  border-top: 1px solid #f7f5f0;
+  border-bottom: 0;
+}
+@media (max-width: 900px) {
+  .ops-organization-detail-page .ops-organization-detail-content {
+    margin-top: 8vh;
+  }
+  .ops-organization-detail-grid {
+    display: block;
+  }
+  .ops-organization-related {
+    margin-top: 3rem;
+  }
+  .ops-organization-detail-page .ops-org-detail-head {
+    display: block;
+  }
+  .ops-organization-detail-page .ops-org-detail-head > .ops-status {
+    display: inline-block;
+    margin-top: 1rem;
+  }
+}
+
+.ops-venue-page .admin-venue-org-tools {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+}
+.ops-venue-page .admin-venue-org-search {
+  display: grid;
+  min-width: min(100%, 22rem);
+  gap: 0.45rem;
+  color: #aeb3bb;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+}
+.ops-venue-page .admin-venue-org-search > div {
+  display: flex;
+  gap: 0.45rem;
+}
+.ops-venue-page .admin-venue-org-search input {
+  min-width: 0;
+  min-height: 44px;
+  flex: 1;
+  border: 1px solid #f7f5f0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.65rem 0.75rem;
+  color: #f7f5f0;
+  font: inherit;
+  text-transform: none;
+}
+.ops-venue-page .admin-venue-org-search input::placeholder {
+  color: #aeb3bb;
+}
+.ops-venue-page .admin-venue-org-search button,
+.ops-venue-page .admin-venue-org-search a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #f7f5f0;
+  background: transparent;
+  padding: 0.65rem 0.8rem;
+  color: #f7f5f0;
+  font: inherit;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.ops-venue-page .admin-venue-org-search button:hover,
+.ops-venue-page .admin-venue-org-search button:focus-visible,
+.ops-venue-page .admin-venue-org-search a:hover,
+.ops-venue-page .admin-venue-org-search a:focus-visible {
+  background: #ff7a3d;
+  color: #17191c;
+}
+.ops-venue-page .admin-venue-mobile-picker {
+  display: none;
+}
+.ops-venue-page .admin-venue-mobile-search {
+  display: grid;
+  gap: 0.45rem;
+  color: #aeb3bb;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+}
+.ops-venue-page .admin-venue-mobile-search > div {
+  display: flex;
+  gap: 0.45rem;
+}
+.ops-venue-page .admin-venue-mobile-search input {
+  min-width: 0;
+  min-height: 44px;
+  flex: 1;
+  border: 1px solid #f7f5f0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.65rem 0.75rem;
+  color: #f7f5f0;
+  font: inherit;
+  text-transform: none;
+}
+.ops-venue-page .admin-venue-mobile-search button {
+  min-height: 44px;
+  border: 1px solid #f7f5f0;
+  background: transparent;
+  padding: 0.65rem 0.8rem;
+  color: #f7f5f0;
+  font: inherit;
+  text-transform: uppercase;
+}
+.ops-venue-page .admin-venue-org-no-results {
+  border-bottom: 1px solid #f7f5f0;
+  padding: 1rem 0;
+  color: #aeb3bb;
+  font-size: 0.72rem;
+}
+
+@media (max-width: 900px) {
+  .ops-venue-page .admin-venue-org-tools {
+    display: block;
+    margin-top: 1.5rem;
+  }
+  .ops-venue-page .admin-venue-org-search {
+    display: none;
+  }
+  .ops-venue-page .admin-venue-mobile-picker {
+    display: block;
+    border-top: 1px solid #f7f5f0;
+    border-bottom: 1px solid #f7f5f0;
+  }
+  .ops-venue-page .admin-venue-mobile-picker summary {
+    display: grid;
+    min-height: 64px;
+    align-content: center;
+    gap: 0.25rem;
+    cursor: pointer;
+    list-style: none;
+  }
+  .ops-venue-page .admin-venue-mobile-picker {
+    position: relative;
+  }
+  .ops-venue-page .admin-venue-mobile-picker summary::-webkit-details-marker {
+    display: none;
+  }
+  .ops-venue-page .admin-venue-mobile-picker summary::after {
+    content: "+";
+    position: absolute;
+    right: 1rem;
+    color: #ff7a3d;
+    font-size: 1.3rem;
+  }
+  .ops-venue-page .admin-venue-mobile-picker[open] summary::after {
+    content: "−";
+  }
+  .ops-venue-page .admin-venue-mobile-picker summary span,
+  .ops-venue-page .admin-venue-picker-hint {
+    color: #aeb3bb;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+  }
+  .ops-venue-page .admin-venue-mobile-picker summary strong {
+    max-width: calc(100% - 2rem);
+    overflow-wrap: anywhere;
+    color: #f7f5f0;
+    font-size: 1.05rem;
+  }
+  .ops-venue-page .admin-venue-mobile-picker > div {
+    padding-bottom: 0.5rem;
+  }
+  .ops-venue-page .admin-venue-picker-hint {
+    margin: 0.5rem 0;
+  }
+  .ops-venue-page .admin-venue-mobile-picker .ops-org-list-item {
+    display: flex;
+  }
+  .ops-venue-page .ops-org-index {
+    display: none;
+  }
+}
+
+/* Canonical Organizations & Venues master/detail scope. The Organization
+   route is not a Venue-detail page, so it needs its own Northstar-derived
+   layout scope. */
+.admin-organization-venue-workspace {
+  --admin-rule: var(--line);
+  --admin-rule-strong: var(--line-strong);
+  --admin-fidelity-kicker-size: 0.66rem;
+  --admin-fidelity-copy-size: 0.66rem;
+  --admin-fidelity-row-size: 0.72rem;
+  --admin-fidelity-row-space: 0.72rem;
+  min-width: 0;
+  max-width: 1280px;
+  margin-inline: auto;
+  overflow-x: hidden;
+  font-family: var(--font-display), Arial, Helvetica, sans-serif;
+}
+
+.admin-venues-page {
+  padding: 11vh 1rem 3rem;
+}
+
+.admin-venues-page .admin-venues-toolbar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.admin-venues-page .admin-venues-toolbar .button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.7rem 0;
+  color: #e75b38;
+  font-size: 10.56px;
+  text-transform: uppercase;
+  transition: color 180ms ease-out;
+}
+
+.admin-venues-page .admin-venues-toolbar .button:hover,
+.admin-venues-page .admin-venues-toolbar .button:focus-visible,
+.admin-venues-page .admin-venues-toolbar .button:active {
+  background: transparent;
+  color: #c7f36b;
+}
+
+.admin-venues-page .admin-venues-page-head-add {
+  margin-top: 1rem;
+}
+
+.admin-venues-page .ops-venue-inventory {
+  margin-top: 9vh;
+}
+
+.admin-venues-page .ops-venue-inventory-section + .ops-venue-inventory-section {
+  margin-top: 4rem;
+}
+
+.admin-venues-page .ops-context .ops-label.orange {
+  color: #ff7a3d;
+}
+
+.admin-venues-page .ops-context .admin-venues-inventory-heading {
+  margin-top: 0;
+}
+
+.admin-venues-page .ops-context .admin-venues-inventory-toggle {
+  width: 12.3rem;
+  max-width: 100%;
+  text-align: left;
+}
+
+.admin-venues-page .admin-venues-accordion-shell {
+  margin-top: 9vh;
+}
+
+.admin-venues-page .admin-venues-accordion-shell .admin-create-disclosure {
+  border-bottom: 1px solid #f7f5f0;
+}
+
+.admin-venues-page .admin-venues-accordion-shell .admin-create-disclosure-number:empty {
+  display: none;
+}
+
+.admin-venues-page .admin-venues-accordion-shell .admin-venues-index {
+  margin-top: 0;
+}
+
+.admin-venues-page .admin-venues-inventory-heading {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.admin-venues-page .admin-venues-inventory-toggle {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 0;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--ink);
+  font-family:
+    "SF Pro Display",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  font-size: calc(1.35rem + 2px);
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+
+.admin-venues-page .admin-venues-inventory-toggle .arakkis-disclosure-toggle-icon {
+  order: 2;
+  margin-left: 0.6rem;
+  color: #ff7a3d;
+}
+
+.admin-venues-page .admin-venues-inventory-count {
+  color: #aeb3bb;
+  font-size: 0.66rem;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.admin-venues-page .admin-venues-inventory-content {
+  margin-top: 2rem;
+}
+
+.admin-venues-page .admin-venues-inventory-content[hidden] {
+  display: none;
+}
+
+.admin-venues-page .admin-venue-relationship-options {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 2.5rem;
+}
+
+.admin-venues-page .admin-venue-relationship-option {
+  display: grid;
+  min-height: 14rem;
+  align-content: space-between;
+  justify-items: start;
+  border: 1px solid #59616b;
+  border-radius: 0;
+  background: transparent;
+  padding: 2rem;
+  color: #f7f5f0;
+  text-align: left;
+  transition:
+    border-color 180ms ease-out,
+    background 180ms ease-out,
+    color 180ms ease-out;
+}
+
+.admin-venues-page .admin-venue-relationship-option strong {
+  font-family: var(--admin-events-header-font);
+  font-size: clamp(1.7rem, 4vw, 2.3rem);
+  font-weight: 900;
+  letter-spacing: -0.07em;
+  line-height: 0.9;
+  text-transform: none;
+}
+
+.admin-venues-page .admin-venue-relationship-option span {
+  color: #aeb3bb;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-size: 0.85rem;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.admin-venues-page .admin-venue-relationship-option .arakkis-arrow-icon {
+  font-family:
+    "SF Pro Display",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.admin-venues-page .admin-venue-relationship-option:hover,
+.admin-venues-page .admin-venue-relationship-option:focus-visible {
+  border-color: #ff7a3d;
+  background: #ff7a3d;
+  color: #17191c;
+}
+
+.admin-venues-page .admin-venue-relationship-option:hover span,
+.admin-venues-page .admin-venue-relationship-option:focus-visible span {
+  color: #17191c;
+}
+
+.admin-venues-page .admin-venues-public-disclosure {
+  margin-top: 4rem;
+  border-top: 1px solid var(--admin-rule-strong);
+  padding-top: 2rem;
+}
+
+.admin-venues-page .admin-venues-public-heading {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.admin-venues-page .admin-venues-public-heading > .ops-label.orange {
+  color: #ff7a3d;
+}
+
+.admin-venues-page .admin-venues-public-heading .admin-venues-inventory-heading {
+  margin-top: 0;
+}
+
+.admin-organization-venue-workspace .ops-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.admin-organization-venue-workspace .ops-organizations-head > div:first-child > .ops-kicker {
+  color: var(--energy);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: normal;
+  text-transform: uppercase;
+}
+
+.admin-organization-venue-workspace .ops-head h1 {
+  max-width: 12ch;
+  margin-top: 5vh;
+  color: var(--ink);
+  font-family:
+    "SF Pro Display",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  font-size: clamp(4rem, 9vw, 9rem);
+  font-weight: 900;
+  line-height: 0.75;
+  letter-spacing: -0.09em;
+  text-transform: uppercase;
+}
+
+.admin-organization-venue-workspace .ops-head h1 em {
+  color: var(--energy);
+  font-style: normal;
+}
+
+.admin-organization-venue-workspace .ops-context {
+  max-width: 260px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: var(--admin-fidelity-copy-size);
+  line-height: 1.2;
+}
+
+.admin-organization-venue-workspace .ops-context strong {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--ink);
+  font-family:
+    "SF Pro Display",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+}
+
+.admin-organization-venue-workspace .ops-kicker,
+.admin-organization-venue-workspace .ops-label,
+.admin-organization-venue-workspace .ops-meta {
+  font-size: var(--admin-fidelity-kicker-size);
+  line-height: 1.05;
+}
+
+.admin-organization-venue-workspace .ops-context .ops-label {
+  display: block;
+}
+
+.admin-organization-venue-workspace .ops-org-layout {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(250px, 0.7fr) minmax(0, 1.5fr);
+  gap: 3rem;
+  margin-top: 9vh;
+}
+
+.admin-organization-venue-workspace .ops-org-index,
+.admin-organization-venue-workspace .ops-org-detail {
+  min-width: 0;
+}
+
+.admin-organization-venue-workspace .ops-org-index {
+  align-self: start;
+}
+
+.admin-organization-venue-workspace .ops-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+  border-top: 1px solid var(--admin-rule-strong);
+  border-bottom: 1px solid var(--admin-rule-strong);
+  padding: 0 0 0.75rem;
+}
+
+.admin-organization-venue-workspace .ops-org-section-head {
+  border-top: 0;
+  border-bottom: 0;
+}
+
+.admin-organization-venue-workspace .ops-org-section-head .ops-kicker,
+.admin-organization-venue-workspace .ops-org-add-link {
+  font-size: 10.56px;
+  font-weight: 400;
+  line-height: normal;
+  text-transform: uppercase;
+}
+
+.admin-organization-venue-workspace .ops-org-section-head .ops-kicker {
+  color: #f7f5f0;
+  text-decoration-line: underline;
+  text-decoration-color: #f28a4b;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.admin-organization-venue-workspace .ops-org-add-link {
+  color: #e75b38;
+  letter-spacing: -0.1056px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.admin-organization-venue-workspace .ops-org-add-link:hover,
+.admin-organization-venue-workspace .ops-org-add-link:focus-visible,
+.admin-organization-venue-workspace .ops-org-add-link:active {
+  color: #c7f36b;
+}
+
+.admin-organization-venue-workspace .ops-org-list-item {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid #f7f5f0;
+  padding: var(--admin-fidelity-row-space) 0;
+  color: var(--ink);
+  font-size: var(--admin-fidelity-row-size);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  transition:
+    background-color 180ms ease-out,
+    padding-left 180ms ease-out;
+}
+
+.admin-organization-venue-workspace .ops-org-list-item > span:first-child,
+.admin-organization-venue-workspace .ops-org-list-item strong,
+.admin-organization-venue-workspace .ops-org-list-item small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-organization-venue-workspace .ops-org-list-item > span:first-child {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.admin-organization-venue-workspace .ops-org-list-item strong {
+  color: #f7f5f0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 21px;
+  letter-spacing: -1px;
+  text-transform: none;
+}
+
+.admin-organization-venue-workspace .ops-org-list-item small,
+.admin-organization-venue-workspace .ops-org-count {
+  color: #68665f;
+  font-size: 10.4px;
+  line-height: 12.48px;
+  letter-spacing: -0.1152px;
+  text-transform: uppercase;
+}
+
+.admin-organization-venue-workspace .ops-org-count {
+  flex: 0 0 auto;
+  font-size: 9.6px;
+  line-height: 13.44px;
+  text-align: right;
+}
+
+.admin-organization-venue-workspace .ops-org-pagination {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  border-top: 1px solid var(--admin-rule-strong);
+  padding-top: 1.5rem;
+}
+
+.admin-organization-venue-workspace .ops-org-pagination-button {
+  display: inline-flex;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #505861;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 17.6px;
+  line-height: 1;
+  text-decoration: none;
+  transition:
+    background-color 180ms ease-out,
+    color 180ms ease-out,
+    border-color 180ms ease-out;
+}
+
+.admin-organization-venue-workspace .ops-org-pagination-button:hover,
+.admin-organization-venue-workspace .ops-org-pagination-button:focus-visible {
+  border-color: var(--energy);
+  background: var(--energy);
+  color: #101315;
+}
+
+.admin-organization-venue-workspace .ops-org-pagination-button.is-disabled {
+  border-color: #505861;
+  color: var(--ink);
+  opacity: 0.35;
+}
+
+.admin-organization-venue-workspace .ops-org-pagination-label {
+  color: var(--ink-soft);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.62rem;
+  line-height: normal;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.admin-organization-venue-workspace .ops-org-list-item:hover,
+.admin-organization-venue-workspace .ops-org-list-item:focus-visible,
+.admin-organization-venue-workspace .ops-org-list-item.is-selected {
+  background: var(--surface-raised);
+  padding-left: 0.7rem;
+}
+
+.admin-venues-page .admin-venue-card {
+  border: 0;
+  border-bottom: 1px solid #f7f5f0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.admin-organization-venue-workspace .admin-venue-card:hover,
+.admin-organization-venue-workspace .admin-venue-card:focus-visible,
+.admin-organization-venue-workspace .admin-venue-card.is-selected {
+  padding-left: 0;
+}
+
+.admin-organization-venue-workspace .ops-org-detail-head {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid #111111;
+  padding-bottom: 24px;
+}
+
+.admin-organization-venue-workspace .ops-org-detail-head > div,
+.admin-organization-venue-workspace .ops-org-detail-head h2,
+.admin-organization-venue-workspace .ops-org-detail-head p {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-organization-venue-workspace .ops-org-detail-head h2 {
+  max-width: 48rem;
+  margin-top: 23.04px;
+  font-size: clamp(3rem, 6vw, 4.8rem);
+  font-weight: 700;
+  line-height: 0.8;
+  letter-spacing: -0.08em;
+  text-transform: uppercase;
+}
+
+.admin-organization-venue-workspace .ops-org-detail-head p:last-child {
+  max-width: 42rem;
+  margin-top: 11.52px;
+  color: #68665f;
+  font-size: 11.52px;
+  line-height: 13.824px;
+  letter-spacing: -0.1152px;
+}
+
+.admin-organization-venue-workspace .ops-org-detail-head > div > .ops-kicker {
+  color: #ff7a3d;
+  font-size: 10.56px;
+  font-weight: 400;
+  line-height: 11.088px;
+  letter-spacing: -0.1056px;
+  text-transform: uppercase;
+}
+
+.admin-organization-venue-workspace .ops-org-detail-head > .ops-status,
+.admin-organization-venue-workspace .ops-org-detail-status-actions > .ops-status {
+  color: #c7f36b;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.admin-organization-venue-workspace .ops-org-detail-status-actions {
+  display: flex;
+  min-width: max-content;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  text-align: left;
+}
+
+.admin-organization-venue-workspace .ops-org-detail-status-actions .text-link {
+  white-space: nowrap;
+}
+
+.admin-organization-venue-workspace .ops-org-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 32px 0 80px;
+}
+
+.admin-organization-venue-workspace .ops-org-stats > div {
+  display: grid;
+  min-width: 0;
+  gap: 5.6px;
+  border-top: 1px solid #aaa79f;
+  padding-top: 11.2px;
+}
+
+.admin-organization-venue-workspace .ops-org-stats strong,
+.admin-organization-venue-workspace .ops-org-stats small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-organization-venue-workspace .ops-org-stats strong {
+  color: #f7f5f0;
+  font-size: 35.2px;
+  font-weight: 700;
+  line-height: normal;
+  letter-spacing: -2.464px;
+}
+
+.admin-organization-venue-workspace .ops-org-stats .ops-label {
+  color: #f7f5f0;
+  font-size: 10.56px;
+  font-weight: 400;
+  line-height: normal;
+  text-transform: uppercase;
+}
+
+.admin-organization-venue-workspace .ops-org-stats small {
+  color: #68665f;
+  font-size: 9.92px;
+  font-weight: 400;
+  line-height: normal;
+  text-transform: uppercase;
+}
+
+.admin-organization-venue-workspace .ops-venue-head {
+  align-items: flex-start;
+  border-top: 0;
+  border-bottom: 1px solid #111111;
+  padding-bottom: 12px;
+}
+
+.admin-organization-venue-workspace .ops-venue-head .ops-kicker {
+  color: #f7f5f0;
+  font-size: 10.56px;
+  font-weight: 400;
+  line-height: normal;
+  text-transform: uppercase;
+}
+
+.admin-organization-venue-workspace .ops-venue-add-button {
+  display: inline-flex;
+  width: 103.375px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ff7a3d;
+  background: #ff7a3d;
+  color: #101410;
+  font-size: 9.92px;
+  font-weight: 600;
+  line-height: 10.416px;
+  letter-spacing: -0.0992px;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.admin-organization-venue-workspace .ops-venue-add-button:hover,
+.admin-organization-venue-workspace .ops-venue-add-button:focus-visible,
+.admin-organization-venue-workspace .ops-venue-add-button:active {
+  border-color: #ff7a3d;
+  background: transparent;
+  color: #ff7a3d;
+}
+
+.admin-organization-venue-workspace .ops-venue-list {
+  min-width: 0;
+  border-top: 1px solid #111111;
+}
+
+.admin-organization-venue-workspace .ops-venue-row {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1.5fr) minmax(90px, 0.6fr) minmax(90px, 0.7fr) 24px;
+  gap: 16px;
+  align-items: center;
+  border-bottom: 1px solid #aaa79f;
+  padding: 16px 0;
+}
+
+.admin-organization-venue-workspace button.admin-venue-row-trigger {
+  display: grid !important;
+  width: 100%;
+  appearance: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  justify-items: stretch;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-organization-venue-workspace .ops-venue-identity,
+.admin-organization-venue-workspace .ops-venue-identity strong,
+.admin-organization-venue-workspace .ops-venue-identity span,
+.admin-organization-venue-workspace .ops-venue-row > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-organization-venue-workspace .ops-venue-identity {
+  display: grid;
+  gap: 5.6px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.admin-organization-venue-workspace .ops-venue-identity strong {
+  color: #f7f5f0;
+  font-size: 17.6px;
+  font-weight: 700;
+  line-height: normal;
+  letter-spacing: -0.704px;
+}
+
+.admin-organization-venue-workspace .ops-venue-identity span {
+  color: #68665f;
+  font-size: 10.4px;
+  font-weight: 400;
+  line-height: normal;
+  text-transform: uppercase;
+}
+
+.admin-organization-venue-workspace .ops-venue-arrow {
+  display: inline-flex;
+  width: 24px;
+  min-height: 24px;
+  align-items: center;
+  justify-content: center;
+  color: #68665f;
+  font-size: 10.4px;
+  line-height: normal;
+}
+
+.admin-organization-venue-workspace .ops-venue-arrow .arakkis-arrow-icon {
+  margin-left: 0;
+  font-size: 10.4px;
+  font-weight: 900;
+}
+
+.admin-organization-venue-workspace .admin-organizations-rare-actions .arakkis-arrow-icon {
+  margin-left: 0;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.admin-organization-venue-workspace .ops-venue-row > div {
+  display: grid;
+  gap: 5.6px;
+}
+
+.admin-organization-venue-workspace .ops-venue-row .ops-label,
+.admin-organization-venue-workspace .ops-venue-row > div strong {
+  line-height: normal;
+}
+
+.admin-organization-venue-workspace .ops-venue-row .ops-label {
+  color: #68665f;
+  font-size: 10.4px;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.admin-organization-venue-workspace .ops-venue-row > div strong {
+  color: #f7f5f0;
+  font-size: 17.6px;
+  font-weight: 700;
+  letter-spacing: -0.704px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-organization-venue-workspace .ops-venue-identity:hover strong,
+.admin-organization-venue-workspace .ops-venue-identity:focus-visible strong {
+  color: #f28a4b;
+}
+
+.admin-organization-venue-workspace .admin-venue-row-trigger:hover .ops-venue-identity strong,
+.admin-organization-venue-workspace
+  .admin-venue-row-trigger:focus-visible
+  .ops-venue-identity
+  strong,
+.admin-organization-venue-workspace
+  .admin-venue-row-trigger.is-selected
+  .ops-venue-identity
+  strong {
+  color: #f28a4b;
+}
+
+.admin-organization-venue-workspace .admin-venue-card:hover strong,
+.admin-organization-venue-workspace .admin-venue-card:focus-visible strong,
+.admin-organization-venue-workspace .admin-venue-card.is-selected strong {
+  color: #f28a4b;
+}
+
+@media (max-width: 900px) {
+  .admin-organization-venue-workspace .ops-org-layout {
+    display: block;
+    margin-top: 8vh;
+  }
+
+  .admin-organization-venue-workspace .ops-head {
+    display: block;
+  }
+
+  .admin-organization-venue-workspace .ops-head h1 {
+    max-width: 100%;
+    margin-top: 4vh;
+    font-size: clamp(3.6rem, 17.5vw, 7.2rem);
+    line-height: 0.75;
+    letter-spacing: -0.09em;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-organization-venue-workspace .ops-context {
+    margin-top: 2rem;
+  }
+
+  .admin-organization-venue-workspace .ops-org-index {
+    display: block;
+  }
+
+  .admin-organization-venue-workspace .ops-org-detail {
+    margin-top: 3rem;
+  }
+
+  .admin-organization-venue-workspace .ops-org-detail-head {
+    display: block;
+  }
+
+  .admin-organization-venue-workspace .ops-org-detail-status-actions {
+    align-items: flex-start;
+    margin-top: 1rem;
+  }
+
+  .admin-organization-venue-workspace .ops-org-detail-status-actions > .ops-status {
+    display: block;
+    margin-top: 0;
+  }
+
+  .admin-organization-venue-workspace .ops-org-stats {
+    gap: 0.6rem;
+    margin-bottom: 4rem;
+  }
+
+  .admin-organization-venue-workspace .ops-org-stats strong {
+    font-size: 1.7rem;
+  }
+
+  .admin-organization-venue-workspace .ops-venue-row {
+    grid-template-columns: minmax(0, 1.6fr) minmax(70px, 0.7fr) 24px;
+    gap: 16px;
+  }
+
+  .admin-organization-venue-workspace .ops-venue-row > div strong {
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .admin-organization-venue-workspace .ops-venue-identity {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  /* The in-place edit trigger uses a button with div children; keep its
+     identity block in the date/name column instead of the generic metric
+     column rule below. */
+  .admin-organization-venue-workspace .ops-venue-row > div.ops-venue-identity {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .admin-organization-venue-workspace .ops-venue-row > div {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .admin-organization-venue-workspace .ops-venue-row > div:nth-child(3) {
+    display: none;
+  }
+
+  .admin-organization-venue-workspace .ops-venue-arrow {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-organization-venue-workspace .ops-org-list-item {
+    transition: none;
+  }
+}

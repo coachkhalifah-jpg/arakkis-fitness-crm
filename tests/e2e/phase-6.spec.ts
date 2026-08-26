@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { randomUUID } from "node:crypto";
 import {
   createEvent,
   createPhase5Fixture,
@@ -76,6 +77,28 @@ test("Host Admin is denied global participant CRM and follow-up routes", async (
   await expect(page).toHaveURL(/\/admin\/access-denied/);
   await signInPage(page, fixture.hostA, "/admin/follow-ups");
   await expect(page).toHaveURL(/\/admin\/access-denied/);
+});
+
+test("group chat reminders are readable only by an active System Admin", async () => {
+  const reminderId = randomUUID();
+  localSql(`
+    insert into public.group_chat_reminders (
+      id, organization_id, event_id, reminder_type, trigger_key, due_at, suggested_message
+    ) values (
+      ${sql(reminderId)}, ${sql(fixture.organizationA)}, null, 'WEEKLY_TIP',
+      ${sql(`community-001:${fixture.suffix}`)}, now(), 'Synthetic reminder for RLS coverage.'
+    );
+  `);
+
+  const host = await signedInClient(fixture.hostA);
+  const hostResult = await host.from("group_chat_reminders").select("id").eq("id", reminderId);
+  expect(hostResult.error).toBeNull();
+  expect(hostResult.data).toEqual([]);
+
+  const system = await signedInClient(fixture.system);
+  const systemResult = await system.from("group_chat_reminders").select("id").eq("id", reminderId);
+  expect(systemResult.error).toBeNull();
+  expect(systemResult.data).toEqual([{ id: reminderId }]);
 });
 
 test("copy evidence and completion preserve the task lifecycle", async ({ page }) => {

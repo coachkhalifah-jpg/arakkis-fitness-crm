@@ -2,17 +2,22 @@
 
 import { useState } from "react";
 import { useEffect, useRef } from "react";
+import { ArakkisCard } from "@/components/registration/arakkis-card";
+import { DisclosureToggle } from "@/components/ui/disclosure-toggle";
 
 export function WhatToBring({
   eventId,
   instructions,
+  variant = "legacy",
 }: {
   eventId: string;
   instructions: string[];
+  variant?: "legacy" | "northstar";
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(variant === "northstar");
   const contentId = `what-to-bring-${eventId}`;
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const preview = instructions.slice(0, 3).join(" • ") + (instructions.length > 3 ? " + more" : "");
 
   useEffect(() => {
     if (!open) {
@@ -31,26 +36,45 @@ export function WhatToBring({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open]);
 
+  if (variant === "northstar") {
+    return (
+      <div className={`confirmation-prep${open ? " is-expanded" : ""}`}>
+        <DisclosureToggle
+          ref={triggerRef}
+          className="confirmation-prep-toggle"
+          expanded={open}
+          controls={contentId}
+          onClick={() => setOpen((current) => !current)}
+        >
+          <span>Before you arrive</span>
+        </DisclosureToggle>
+        <div
+          id={contentId}
+          className={`confirmation-prep-content${open ? " is-open" : ""}`}
+          aria-hidden={!open}
+        >
+          <p>{instructions.join("\n")}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`confirmation-what-to-bring-card${open ? " is-expanded" : ""}`}>
-      <button
-        type="button"
+    <ArakkisCard
+      interactive
+      className={`confirmation-what-to-bring-card${open ? " is-expanded" : ""}`}
+    >
+      <DisclosureToggle
         ref={triggerRef}
         className="confirmation-what-to-bring-trigger"
-        aria-expanded={open}
-        aria-controls={contentId}
+        expanded={open}
+        controls={contentId}
         onClick={() => setOpen((current) => !current)}
       >
         <span className="confirmation-what-to-bring-label">
-          <span className="block font-semibold">What to bring</span>
+          <span className="confirmation-what-to-bring-preview">{preview}</span>
         </span>
-        <span
-          aria-hidden="true"
-          className={`confirmation-what-to-bring-chevron${open ? " is-open" : ""}`}
-        >
-          ⋮
-        </span>
-      </button>
+      </DisclosureToggle>
 
       <div
         id={contentId}
@@ -73,6 +97,6 @@ export function WhatToBring({
           </button>
         </div>
       </div>
-    </div>
+    </ArakkisCard>
   );
 }

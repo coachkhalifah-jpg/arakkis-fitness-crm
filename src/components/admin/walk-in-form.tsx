@@ -9,10 +9,12 @@ export function WalkInForm({
   eventId,
   participationVersionId,
   dataUseVersionId,
+  showOverrideReason = false,
 }: {
   eventId: string;
   participationVersionId: string;
   dataUseVersionId: string;
+  showOverrideReason?: boolean;
 }) {
   const router = useRouter();
   const [state, action] = useActionState(createWalkIn, {});
@@ -49,14 +51,20 @@ export function WalkInForm({
         Email
         <input name="email" type="email" className="mt-1 w-full rounded border p-2" />
       </label>
-      <label>
-        Affiliation organization ID
-        <input name="affiliation" className="mt-1 w-full rounded border p-2" />
-      </label>
-      <label className="sm:col-span-2">
-        System Admin override reason (only used when authorized and full)
-        <input name="overrideReason" className="mt-1 w-full rounded border p-2" />
-      </label>
+      {showOverrideReason ? (
+        <label className="sm:col-span-2">
+          System Admin override reason
+          <input
+            name="overrideReason"
+            required
+            className="mt-1 w-full rounded border p-2"
+            aria-describedby="walk-in-override-help"
+          />
+          <span id="walk-in-override-help" className="mt-1 text-xs text-slate-500">
+            Required when adding a walk-in to a full Event.
+          </span>
+        </label>
+      ) : null}
       <SubmitButton>Add Walk-In &amp; Check In</SubmitButton>
       {state.error ? (
         <div role="alert" className="sm:col-span-2 text-sm text-red-700">

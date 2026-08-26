@@ -4,6 +4,7 @@
 
 \set ON_ERROR_STOP on
 begin;
+select set_config('app.environment', 'test', true);
 
 -- Disposable Auth identities and database fixtures.
 insert into auth.users (id, aud, role, email, email_confirmed_at, created_at, updated_at)
@@ -124,12 +125,12 @@ declare
   response jsonb;
 begin
   response := public.register_selected_events_with_legal(
-    'Existing', 'Affiliated', '+15550000006', '+15550000006', 'US', null, null, null,
+    'Existing', 'Affiliated', '+15550000006', '+15550000006', 'US', null, null, null, null,
     array['40000000-0000-0000-0000-000000000002'::uuid],
-    '60000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002',
+    '06400000-0000-0000-0000-000000000001', null,
     now(), now(), '127.0.0.1', 'phase-1-referral-runtime', 'runtime-referral',
     'OTHER', 'Partner recommendation',
-    array['03500000-0000-0000-0000-000000000001'::uuid,'03500000-0000-0000-0000-000000000002'::uuid,'03500000-0000-0000-0000-000000000003'::uuid,'03500000-0000-0000-0000-000000000004'::uuid,'03500000-0000-0000-0000-000000000005'::uuid]
+    array['06400000-0000-0000-0000-000000000001'::uuid], '06400000-0000-0000-0000-000000000001'::uuid
   );
   perform set_config('app.referral_group_id', response->>'registration_group_id', true);
 end;
@@ -164,15 +165,15 @@ do $$
 declare
   response jsonb;
 begin
-  response := public.register_selected_events_with_legal('RPC', 'Participant', '+15550000003', '+15550000003', 'US', null, null, null, array['40000000-0000-0000-0000-000000000003'::uuid], '60000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002', now(), now(), '127.0.0.1', 'phase-1-runtime', 'runtime-replay', null, null, array['03500000-0000-0000-0000-000000000001'::uuid,'03500000-0000-0000-0000-000000000002'::uuid,'03500000-0000-0000-0000-000000000003'::uuid,'03500000-0000-0000-0000-000000000004'::uuid,'03500000-0000-0000-0000-000000000005'::uuid]);
+  response := public.register_selected_events_with_legal('RPC', 'Participant', '+15550000003', '+15550000003', 'US', null, null, null, null, array['40000000-0000-0000-0000-000000000003'::uuid], '06400000-0000-0000-0000-000000000001', null, now(), null, '127.0.0.1', 'phase-1-runtime', 'runtime-replay', null, null, array['06400000-0000-0000-0000-000000000001'::uuid], '06400000-0000-0000-0000-000000000001'::uuid);
   if coalesce((response->'results'->0->>'success')::boolean, false) is distinct from true then raise exception 'valid RPC registration failed: %', response; end if;
   if response->>'confirmation_token' is null then raise exception 'valid RPC did not return confirmation token'; end if;
-  response := public.register_selected_events_with_legal('RPC', 'Participant', '+15550000003', '+15550000003', 'US', null, null, null, array['40000000-0000-0000-0000-000000000003'::uuid], '60000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002', now(), now(), '127.0.0.1', 'phase-1-runtime', 'runtime-replay', null, null, array['03500000-0000-0000-0000-000000000001'::uuid,'03500000-0000-0000-0000-000000000002'::uuid,'03500000-0000-0000-0000-000000000003'::uuid,'03500000-0000-0000-0000-000000000004'::uuid,'03500000-0000-0000-0000-000000000005'::uuid]);
+  response := public.register_selected_events_with_legal('RPC', 'Participant', '+15550000003', '+15550000003', 'US', null, null, null, null, array['40000000-0000-0000-0000-000000000003'::uuid], '06400000-0000-0000-0000-000000000001', null, now(), null, '127.0.0.1', 'phase-1-runtime', 'runtime-replay', null, null, array['06400000-0000-0000-0000-000000000001'::uuid], '06400000-0000-0000-0000-000000000001'::uuid);
   if response->>'confirmation_token' is not null then raise exception 'RPC replay issued a new token'; end if;
   if (response->'results'->0->>'success')::boolean is distinct from true then raise exception 'RPC replay did not return the original result'; end if;
-  response := public.register_selected_events_with_legal('RPC', 'Participant', '+15550000003', '+15550000003', 'US', null, null, null, array['40000000-0000-0000-0000-000000000003'::uuid], '60000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002', now(), now(), '127.0.0.1', 'phase-1-runtime', 'runtime-duplicate', null, null, array['03500000-0000-0000-0000-000000000001'::uuid,'03500000-0000-0000-0000-000000000002'::uuid,'03500000-0000-0000-0000-000000000003'::uuid,'03500000-0000-0000-0000-000000000004'::uuid,'03500000-0000-0000-0000-000000000005'::uuid]);
+  response := public.register_selected_events_with_legal('RPC', 'Participant', '+15550000003', '+15550000003', 'US', null, null, null, null, array['40000000-0000-0000-0000-000000000003'::uuid], '06400000-0000-0000-0000-000000000001', null, now(), null, '127.0.0.1', 'phase-1-runtime', 'runtime-duplicate', null, null, array['06400000-0000-0000-0000-000000000001'::uuid], '06400000-0000-0000-0000-000000000001'::uuid);
   if response->'results'->0->>'reason' <> 'ALREADY_REGISTERED' then raise exception 'duplicate RPC was not rejected: %', response; end if;
-  response := public.register_selected_events_with_legal('Partial', 'Participant', '+15550000004', '+15550000004', 'US', null, null, null, array['40000000-0000-0000-0000-000000000003'::uuid, '40000000-0000-0000-0000-000000000004'::uuid], '60000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002', now(), now(), '127.0.0.1', 'phase-1-runtime', 'runtime-partial', null, null, array['03500000-0000-0000-0000-000000000001'::uuid,'03500000-0000-0000-0000-000000000002'::uuid,'03500000-0000-0000-0000-000000000003'::uuid,'03500000-0000-0000-0000-000000000004'::uuid,'03500000-0000-0000-0000-000000000005'::uuid]);
+  response := public.register_selected_events_with_legal('Partial', 'Participant', '+15550000004', '+15550000004', 'US', null, null, null, null, array['40000000-0000-0000-0000-000000000003'::uuid, '40000000-0000-0000-0000-000000000004'::uuid], '06400000-0000-0000-0000-000000000001', null, now(), null, '127.0.0.1', 'phase-1-runtime', 'runtime-partial', null, null, array['06400000-0000-0000-0000-000000000001'::uuid], '06400000-0000-0000-0000-000000000001'::uuid);
   if (response->'results'->0->>'success')::boolean is distinct from true or response->'results'->1->>'reason' <> 'FULL' then raise exception 'partial RPC result incorrect: %', response; end if;
 exception when others then
   if sqlerrm like 'invalid Participation%' then return; end if;
@@ -183,10 +184,10 @@ $$;
 do $$
 begin
   begin
-    perform public.register_selected_events_with_legal('Bad', 'Acknowledgment', '+15550000005', '+15550000005', 'US', null, null, null, array['40000000-0000-0000-0000-000000000003'::uuid], gen_random_uuid(), '60000000-0000-0000-0000-000000000002', now(), now(), '127.0.0.1', 'phase-1-runtime', 'runtime-invalid-ack', null, null, array['03500000-0000-0000-0000-000000000001'::uuid,'03500000-0000-0000-0000-000000000002'::uuid,'03500000-0000-0000-0000-000000000003'::uuid,'03500000-0000-0000-0000-000000000004'::uuid,'03500000-0000-0000-0000-000000000005'::uuid]);
+    perform public.register_selected_events_with_legal('Bad', 'Acknowledgment', '+15550000005', '+15550000005', 'US', null, null, null, null, array['40000000-0000-0000-0000-000000000003'::uuid], gen_random_uuid(), null, now(), null, '127.0.0.1', 'phase-1-runtime', 'runtime-invalid-ack', null, null, array['06400000-0000-0000-0000-000000000001'::uuid], '06400000-0000-0000-0000-000000000001'::uuid);
     raise exception 'invalid acknowledgment was accepted';
   exception when others then
-    if sqlerrm not like 'invalid Participation%' then raise; end if;
+    if sqlerrm not like 'the current waiver acknowledgment is required%' then raise; end if;
   end;
 end;
 $$;
@@ -572,7 +573,82 @@ begin
 end;
 $$;
 
+-- Multi-schedule creation regression: transaction-local relations, atomicity,
+-- stable occurrence materialization, idempotent replay, and role enforcement.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
+do $$
+declare
+  response jsonb;
+begin
+  response := public.phase3_create_multi_schedule_bundle(
+    'b1000000-0000-0000-0000-000000000001'::uuid,
+    '10000000-0000-0000-0000-000000000001'::uuid,
+    'b2000000-0000-0000-0000-000000000001'::uuid,
+    '2030-01-31'::date,
+    jsonb_build_array(
+      jsonb_build_object('weekday', 2, 'local_start_time', '18:00', 'local_end_time', '19:00', 'effective_start_date', '2030-01-01'),
+      jsonb_build_object('weekday', 4, 'local_start_time', '18:00', 'local_end_time', '19:00', 'effective_start_date', '2030-01-01')
+    ),
+    jsonb_build_object(
+      'host_organization_id', '20000000-0000-0000-0000-000000000001',
+      'venue_id', '30000000-0000-0000-0000-000000000001',
+      'name', 'Runtime Multi Schedule Event',
+      'timezone', 'America/New_York',
+      'start_local', '2030-01-01 18:00',
+      'end_local', '2030-01-01 19:00',
+      'registration_deadline_local', '2030-01-01 17:00',
+      'capacity', 10,
+      'visibility', 'PUBLIC',
+      'access_mode', 'PUBLIC'
+    ),
+    '[]'::jsonb,
+    'EVENT_SERIES_CREATED',
+    jsonb_build_object('name', 'Runtime Multi Schedule Event')
+  );
+  if (response->>'occurrence_count')::integer <> 10 then raise exception 'multi-schedule occurrence count was incorrect: %', response; end if;
+  if (select count(*) from public.events where event_series_id = 'b2000000-0000-0000-0000-000000000001') <> 10 then raise exception 'multi-schedule Events were not atomically created'; end if;
+  if (select count(*) from public.event_series_schedule_rules where event_series_id = 'b2000000-0000-0000-0000-000000000001') <> 2 then raise exception 'multi-schedule provenance rows were not persisted'; end if;
+  if (select count(*) from public.events where event_series_id = 'b2000000-0000-0000-0000-000000000001' and generated_local_date = '2030-01-01' and starts_at = '2030-01-01 18:00 America/New_York'::timestamptz) <> 1 then raise exception 'multi-schedule local-time occurrence was incorrect'; end if;
+
+  response := public.phase3_create_multi_schedule_bundle(
+    'b1000000-0000-0000-0000-000000000001'::uuid,
+    '10000000-0000-0000-0000-000000000001'::uuid,
+    'b2000000-0000-0000-0000-000000000001'::uuid,
+    '2030-01-31'::date,
+    jsonb_build_array(
+      jsonb_build_object('weekday', 2, 'local_start_time', '18:00', 'local_end_time', '19:00', 'effective_start_date', '2030-01-01'),
+      jsonb_build_object('weekday', 4, 'local_start_time', '18:00', 'local_end_time', '19:00', 'effective_start_date', '2030-01-01')
+    ),
+    jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Runtime Multi Schedule Event', 'timezone', 'America/New_York', 'start_local', '2030-01-01 18:00', 'end_local', '2030-01-01 19:00', 'registration_deadline_local', '2030-01-01 17:00', 'capacity', 10, 'visibility', 'PUBLIC', 'access_mode', 'PUBLIC'),
+    '[]'::jsonb, 'EVENT_SERIES_CREATED', jsonb_build_object('name', 'Runtime Multi Schedule Event')
+  );
+  if (coalesce((response->>'idempotent')::boolean, false) is distinct from true) then raise exception 'multi-schedule replay was not idempotent'; end if;
+  if (select count(*) from public.events where event_series_id = 'b2000000-0000-0000-0000-000000000001') <> 10 then raise exception 'multi-schedule replay created duplicate Events'; end if;
+end;
+$$;
+
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000002', true);
+do $$
+begin
+  begin
+    perform public.phase3_create_multi_schedule_bundle(
+      'b1000000-0000-0000-0000-000000000002'::uuid,
+      '10000000-0000-0000-0000-000000000002'::uuid,
+      'b2000000-0000-0000-0000-000000000002'::uuid,
+      '2030-01-31'::date,
+      jsonb_build_array(jsonb_build_object('weekday', 2, 'local_start_time', '18:00', 'local_end_time', '19:00', 'effective_start_date', '2030-01-01')),
+      jsonb_build_object('host_organization_id', '20000000-0000-0000-0000-000000000001', 'venue_id', '30000000-0000-0000-0000-000000000001', 'name', 'Host Multi Schedule Attempt', 'timezone', 'America/New_York', 'start_local', '2030-01-01 18:00', 'end_local', '2030-01-01 19:00', 'registration_deadline_local', '2030-01-01 17:00', 'capacity', 10, 'visibility', 'PUBLIC', 'access_mode', 'PUBLIC'),
+      '[]'::jsonb, 'EVENT_SERIES_CREATED', '{}'::jsonb
+    );
+    raise exception 'Host Admin was allowed to create a multi-schedule Event';
+  exception when insufficient_privilege then null;
+  end;
+end;
+$$;
+
 -- Critical relational protections.
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 do $$
 begin
   begin

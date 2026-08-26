@@ -16,7 +16,7 @@ export const organizationSchema = z.object({
 
 export const venueSchema = organizationSchema.omit({ name: true }).extend({
   name: z.string().trim().min(1).max(200),
-  organizationId: z.string().uuid(),
+  organizationId: z.string().uuid().nullable().optional(),
   street: z.string().trim().min(1).max(200),
   city: z.string().trim().min(1).max(100),
   state: z.string().trim().min(1).max(50),
@@ -28,6 +28,10 @@ export const eventSchema = z.object({
   hostOrganizationId: z.string().uuid(),
   venueId: z.string().uuid(),
   name: z.string().trim().min(1).max(200),
+  eventTitleColor: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .default("#FFFFFF"),
   description: z.string().trim().max(5000).optional(),
   participantInstructions: z.string().trim().max(5000).optional(),
   startLocal: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
@@ -35,6 +39,7 @@ export const eventSchema = z.object({
   registrationDeadlineLocal: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
   capacity: z.coerce.number().int().positive().max(100000),
   visibility: z.enum(["PUBLIC", "AFFILIATION_RESTRICTED"]),
+  accessMode: z.enum(["PUBLIC", "UNLISTED", "INVITE_ONLY"]),
   communicationUrl: z.string().trim().max(2048).optional().or(z.literal("")),
   communicationLabel: z.string().trim().max(100).optional().or(z.literal("")),
 });
@@ -49,6 +54,55 @@ export const recurrenceSchema = z
   })
   .refine((value) => !value.enabled || Boolean(value.endsOn), {
     message: "Choose an end date for the recurring series.",
+  });
+
+export const scheduleRuleInputSchema = z.object({
+  weekday: z.number().int().min(1).max(7),
+  localStartTime: z.string().regex(/^\d{2}:\d{2}$/, "Enter a valid start time."),
+  localEndTime: z.string().regex(/^\d{2}:\d{2}$/, "Enter a valid end time."),
+});
+
+export const multiScheduleSchema = z
+  .array(scheduleRuleInputSchema)
+  .min(1, "Add at least one day and time schedule.")
+  .max(14, "A recurring Event may contain at most 14 schedules.")
+  .superRefine((rules, context) => {
+    const seen = new Set<string>();
+    rules.forEach((rule, index) => {
+      if (rule.localEndTime <= rule.localStartTime) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [index, "localEndTime"],
+          message: `Schedule row ${index + 1}: end time must be after start time.`,
+        });
+      }
+      const exact = `${rule.weekday}:${rule.localStartTime}:${rule.localEndTime}`;
+      if (seen.has(exact)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [index],
+          message: `Schedule row ${index + 1} duplicates another day and time.`,
+        });
+      }
+      seen.add(exact);
+    });
+    for (let left = 0; left < rules.length; left += 1) {
+      for (let right = left + 1; right < rules.length; right += 1) {
+        const a = rules[left];
+        const b = rules[right];
+        if (
+          a.weekday === b.weekday &&
+          a.localStartTime < b.localEndTime &&
+          b.localStartTime < a.localEndTime
+        ) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [right],
+            message: `Schedule row ${right + 1} overlaps schedule row ${left + 1}.`,
+          });
+        }
+      }
+    }
   });
 
 export class Phase3Error extends Error {
@@ -197,6 +251,51 @@ export function buildWeeklyOccurrences(
     if (result.length > 104)
       throw new Phase3Error("invalid", "A recurring series may contain at most 104 weekly dates.");
   }
+  return result;
+}
+
+export function buildMultiScheduleOccurrences(
+  input: z.infer<typeof eventSchema>,
+  rules: z.infer<typeof multiScheduleSchema>,
+  timezone: string,
+  endsOn: string,
+) {
+  const parsedRules = multiScheduleSchema.parse(rules);
+  const startDate = input.startLocal.slice(0, 10);
+  if (endsOn < startDate)
+    throw new Phase3Error(
+      "invalid",
+      "The recurrence end date must be on or after the first event.",
+    );
+  const registrationOffset =
+    new Date(`${input.registrationDeadlineLocal}:00`).getTime() -
+    new Date(`${input.startLocal}:00`).getTime();
+  const result: Array<
+    ReturnType<typeof parseEventTimes> & { localDate: string; scheduleIndex: number }
+  > = [];
+  parsedRules.forEach((rule, scheduleIndex) => {
+    for (let localDate = startDate; localDate <= endsOn; localDate = addDays(localDate, 1)) {
+      const weekday = new Date(`${localDate}T00:00:00Z`).getUTCDay() || 7;
+      if (weekday !== rule.weekday) continue;
+      const startLocal = `${localDate}T${rule.localStartTime}`;
+      const endLocal = `${localDate}T${rule.localEndTime}`;
+      const deadlineDate = new Date(new Date(`${startLocal}:00`).getTime() + registrationOffset);
+      const deadlineLocal = `${localDate}T${String(deadlineDate.getHours()).padStart(2, "0")}:${String(deadlineDate.getMinutes()).padStart(2, "0")}`;
+      result.push({
+        ...parseEventTimes(
+          { ...input, startLocal, endLocal, registrationDeadlineLocal: deadlineLocal },
+          timezone,
+        ),
+        localDate,
+        scheduleIndex,
+      });
+    }
+  });
+  result.sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
+  if (!result.length)
+    throw new Phase3Error("invalid", "The schedules have no valid dates before the series end.");
+  if (result.length > 104)
+    throw new Phase3Error("invalid", "A recurring series may contain at most 104 total dates.");
   return result;
 }
 

@@ -53,7 +53,7 @@ if (!existsSync(".demo-credentials.local")) {
       await expect(page).toHaveURL(/\/admin$/);
       await expect(page.getByText("Demo Organization A")).toBeVisible();
       await page.goto("/admin/events");
-      await expect(page.getByText("Demo Weekly Flow — This Week")).toBeVisible();
+      await expect(page.getByText("Demo Weekly Flow").first()).toBeVisible();
       await expect(page.getByText("Demo Paused Event")).not.toBeVisible();
       await page.goto("/admin/participants");
       await expect(page).toHaveURL(/\/admin\/access-denied/);
@@ -65,7 +65,7 @@ if (!existsSync(".demo-credentials.local")) {
       await expect(page.getByText("Demo Organization A")).not.toBeVisible();
       await page.goto("/admin/events");
       await expect(page.getByText("Demo Paused Event")).toBeVisible();
-      await expect(page.getByText("Demo Weekly Flow — This Week")).not.toBeVisible();
+      await expect(page.getByText("Demo Weekly Flow").first()).not.toBeVisible();
       await page.context().clearCookies();
     });
 

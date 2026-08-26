@@ -19,6 +19,7 @@ export type RememberedParticipant = {
   primary_affiliation_organization_id: string | null;
   affiliation_other_text: string | null;
   fitness_experience: string | null;
+  goals: string | null;
 };
 
 export async function resolveRememberedParticipant(token?: string) {

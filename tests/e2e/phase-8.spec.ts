@@ -17,14 +17,7 @@ function sql(value: string) {
 }
 
 async function acceptRequiredLegal(page: import("@playwright/test").Page) {
-  for (const label of [
-    /Participation Agreement.*Version 1\.0\.0/,
-    /Assumption of Risk.*Version 1\.0\.0/,
-    /Cancellation.*Policy.*Version 1\.0\.0/,
-    /Terms of Use.*Version 1\.0\.0/,
-    /Privacy Policy.*Version 1\.0\.0/,
-  ])
-    await page.getByLabel(label).check();
+  await page.getByLabel("I agree to the Terms & Conditions").check();
 }
 
 function localSql(statement: string) {
@@ -126,15 +119,12 @@ test.describe("Phase 8 participant productization", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.getByRole("link", { name: /explore upcoming events/i }).click();
+    await page.getByRole("link", { name: /browse events/i }).click();
     await expect(page).toHaveURL(/\/events$/);
-    const card = page
-      .getByRole("article")
-      .filter({ has: page.locator(`a[href="/register/${slug}"]`) });
+    await page.getByRole("button", { name: /phase 8 organization/i }).click();
+    const card = page.locator(`a[href="/register/${slug}"]`);
     await expect(card).toBeVisible();
-    await expect(
-      card.getByRole("link", { name: /view class|view session details/i }),
-    ).toHaveAttribute("href", `/register/${slug}`);
+    await expect(card).toHaveAttribute("href", `/register/${slug}`);
     expect(await page.content()).not.toContain(eventId);
     expect(await card.innerText()).not.toContain(fixtureSuffix);
   });
@@ -142,38 +132,40 @@ test.describe("Phase 8 participant productization", () => {
   test("completes the participant journey with keyboard-operable controls", async ({ page }) => {
     await page.goto(`/register/${slug}`);
     await expect(page.getByRole("heading", { name: displayEventName })).toBeVisible();
-    expect(await page.locator("main").innerText()).not.toContain(fixtureSuffix);
+    expect(await page.locator(".registration-northstar").innerText()).not.toContain(fixtureSuffix);
     await expect(page.getByLabel("Primary affiliation")).toHaveCount(0);
-    await expect(page.getByLabel("How did you hear about us? — Optional")).toBeVisible();
-    await expect(page.getByText("Save your spot")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "What to bring" })).toBeVisible();
-    await expect(page.getByText("Bring water.", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Help us help you/i })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Choose an upcoming class" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Make it yours." })).toBeVisible();
+    await page.getByRole("button", { name: /Help us help you/i }).click();
+    await expect(page.getByRole("heading", { name: "Tell us a little about you." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "What are you working toward?" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "What to bring" })).toHaveCount(0);
+    await expect(page.getByText("Bring water.", { exact: true })).toHaveCount(0);
     await expect(page.getByText("Class details")).toHaveCount(0);
     await expect(page.getByText("Location")).toHaveCount(0);
-    await expect(page.locator(".event-hero-status")).toHaveText("open");
-    await expect(page.getByText("You’re reserving the class below.")).toBeVisible();
-    await expect(page.locator('.registration-slot input[type="checkbox"]')).toBeChecked();
-    await expect(page.getByText("SELECTED", { exact: true })).toBeVisible();
-    await expect(page.getByText(/class(?:es)? selected/i)).toHaveCount(0);
-    await page.getByRole("checkbox", { name: new RegExp(displayEventName) }).check();
+    const eventChoice = page.getByRole("checkbox", { name: new RegExp(displayEventName) });
+    await expect(eventChoice).toHaveCount(1);
+    await eventChoice.check();
     await page.getByLabel("First name").fill("Keyboard");
     await page.getByLabel("Last name").fill("Participant");
     await page.getByLabel("Mobile phone").fill("+15185550199");
     await acceptRequiredLegal(page);
     await page.getByRole("button", { name: /book class/i }).press("Enter");
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
-    await expect(page.getByRole("heading", { name: "You're in!" })).toBeVisible();
-    await expect(page.getByText(/We’re looking forward to seeing you, Keyboard\./)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /see you there/i })).toBeVisible();
+    await expect(
+      page.getByText(/Your place is held\. Here’s everything you need for a smooth arrival/i),
+    ).toBeVisible();
     await expect(page.getByRole("link", { name: /Google Calendar/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /iCal/i })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Directions" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /get directions/i })).toBeVisible();
     await expect(page.getByRole("button", { name: "Copy directions" })).toBeVisible();
-    const whatToBring = page.getByRole("button", { name: "What to bring", exact: false });
+    const whatToBring = page.getByRole("button", { name: "Before you arrive", exact: true });
     await expect(whatToBring).toBeVisible();
+    await expect(page.locator(".confirmation-prep-content.is-open")).toBeVisible();
     await whatToBring.click();
-    await expect(page.locator(".confirmation-what-to-bring-content-wrap.is-open")).toBeVisible();
-    await page.getByRole("button", { name: "Close What to bring" }).click();
-    await expect(page.locator(".confirmation-what-to-bring-content-wrap.is-open")).toHaveCount(0);
+    await expect(page.locator(".confirmation-prep-content.is-open")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Save" })).toHaveCount(0);
     expect(
       localSqlQuery(
@@ -189,7 +181,7 @@ test.describe("Phase 8 participant productization", () => {
 
     await page.goto(`/register/${recurringSlug}`);
     const occurrenceChoices = page.locator('input[name="selectedOccurrenceStartsAt"]');
-    await expect(occurrenceChoices).toHaveCount(2);
+    await expect(occurrenceChoices).toHaveCount(3);
     await occurrenceChoices.first().check();
     await page.getByLabel("First name").fill("Recurring");
     await page.getByLabel("Last name").fill("Regression");
@@ -197,18 +189,19 @@ test.describe("Phase 8 participant productization", () => {
     await acceptRequiredLegal(page);
     await page.getByRole("button", { name: /book class/i }).click();
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
-    await expect(page.getByRole("heading", { name: "You're in!" })).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: "Stay connected with your class" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: /see you there/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /keep the connection/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /Join class chat/ })).toHaveAttribute(
       "href",
       "https://example.test/demo-group",
     );
     const confirmationText = await page.locator("main.confirmation-page").innerText();
-    expect(confirmationText.indexOf("Stay connected with your class")).toBeLessThan(
-      confirmationText.indexOf("Directions"),
-    );
+    const directionsHeading = page.getByRole("heading", { name: /get directions/i });
+    if (await directionsHeading.count()) {
+      expect(confirmationText.toLowerCase().indexOf("keep the")).toBeLessThan(
+        confirmationText.toLowerCase().indexOf("get directions"),
+      );
+    }
   });
 
   test("remembers, reuses, and forgets a participant browser token safely", async ({ page }) => {
@@ -262,8 +255,8 @@ test.describe("Phase 8 participant productization", () => {
     await page.goto(`/register/${slug}`);
     await expect(page.getByText("Welcome back")).toBeVisible();
     await page.goto("/manage-bookings");
-    await expect(page.getByRole("heading", { name: "Manage My Bookings" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: eventName, exact: true })).toBeVisible();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByText("Welcome back")).toBeVisible();
     await page.goto(`/register/${slug}`);
     await expect(page.getByText("Welcome back")).toBeVisible();
     await expect(page.getByLabel("Make future bookings faster on this device")).toHaveCount(0);
@@ -275,6 +268,9 @@ test.describe("Phase 8 participant productization", () => {
 
     await page.goto(`/register/${slug}`);
     await page.getByRole("button", { name: "Forget this device" }).click();
+    await expect(page.getByRole("button", { name: /book class/i })).toBeVisible();
+    await expect(page.getByText(/continue as null/i)).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /continue as/i })).toHaveCount(0);
     await page.goto(`/register/${slug}`);
     await expect(page.getByText("Welcome back")).toHaveCount(0);
     expect(
@@ -298,7 +294,7 @@ test.describe("Phase 8 participant productization", () => {
 
   test("shows a calm unavailable state for an invalid slug", async ({ page }) => {
     await page.goto("/register/does-not-exist");
-    await expect(page.getByText("This event is unavailable.")).toBeVisible();
-    await expect(page.getByRole("heading", { name: /event unavailable/i })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: /event could not be found/i })).toBeVisible();
+    await expect(page.getByText(/unpublished, closed, cancelled/i)).toBeVisible();
   });
 });

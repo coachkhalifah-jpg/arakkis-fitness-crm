@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 import Link from "next/link";
 import type { Phase3ActionState } from "@/lib/services/phase-3-actions";
 import { SubmitButton } from "@/components/admin/submit-button";
+import { CopyLinkButton } from "@/components/admin/copy-link-button";
 
 type Action = (state: Phase3ActionState, formData: FormData) => Promise<Phase3ActionState>;
 
@@ -12,13 +13,27 @@ export function ActionForm({
   children,
   submitLabel = "Save",
   submitOptions,
+  focusFirstError = false,
   className,
+  cancelHref,
+  cancelLabel = "Cancel",
+  cancelAction,
+  actionsClassName = "admin-action-form-buttons",
+  submitClassName,
+  cancelClassName = "admin-action-form-cancel",
 }: {
   action: Action;
   children: React.ReactNode;
   submitLabel?: string;
   submitOptions?: Array<{ label: string; value: string }>;
+  focusFirstError?: boolean;
   className?: string;
+  cancelHref?: string;
+  cancelLabel?: string;
+  cancelAction?: () => void;
+  actionsClassName?: string;
+  submitClassName?: string;
+  cancelClassName?: string;
 }) {
   const [state, formAction] = useActionState(action, {});
   const formRef = useRef<HTMLFormElement>(null);
@@ -32,7 +47,18 @@ export function ActionForm({
       const value = submittedValues.current.get(control.name);
       if (value !== undefined) control.value = value;
     }
-  }, [state.error]);
+    if (focusFirstError) {
+      window.requestAnimationFrame(() => {
+        formRef.current?.querySelector<HTMLElement>(":invalid")?.focus();
+      });
+    }
+    formRef.current.dispatchEvent(
+      new CustomEvent("arakkis:form-error", {
+        bubbles: true,
+        detail: { form: formRef.current, message: state.error },
+      }),
+    );
+  }, [focusFirstError, state.error]);
   return (
     <form
       ref={formRef}
@@ -48,12 +74,25 @@ export function ActionForm({
     >
       {children}
       {submitOptions?.length ? (
-        <div className="flex flex-wrap gap-3">
+        <div className="admin-create-final-actions flex flex-wrap gap-3">
           {submitOptions.map((option) => (
             <SubmitButton key={option.value} name="intent" value={option.value}>
               {option.label}
             </SubmitButton>
           ))}
+        </div>
+      ) : cancelHref || cancelAction ? (
+        <div className={actionsClassName}>
+          <SubmitButton className={submitClassName}>{submitLabel}</SubmitButton>
+          {cancelHref ? (
+            <Link className={cancelClassName} href={cancelHref}>
+              {cancelLabel}
+            </Link>
+          ) : (
+            <button type="button" className={cancelClassName} onClick={cancelAction}>
+              {cancelLabel}
+            </button>
+          )}
         </div>
       ) : (
         <SubmitButton>{submitLabel}</SubmitButton>
@@ -85,6 +124,14 @@ export function ActionForm({
                 </Link>
               </span>
             </>
+          ) : null}
+          {state.inviteUrl ? (
+            <span className="mt-2 flex flex-wrap gap-3">
+              <a className="break-all underline" href={state.inviteUrl}>
+                {state.inviteUrl}
+              </a>
+              <CopyLinkButton url={state.inviteUrl} />
+            </span>
           ) : null}
         </p>
       ) : null}

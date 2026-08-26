@@ -52,6 +52,7 @@ describe("Phase 4 registration normalization", () => {
       participationAcknowledged: "on",
       dataUseAcknowledged: "on",
       affiliation: "browser-supplied-value",
+      legalPackageAcknowledged: "on",
     });
 
     expect(result).not.toHaveProperty("affiliation");
@@ -68,10 +69,45 @@ describe("Phase 4 registration normalization", () => {
         referralSource: "PREVIOUS_CLASS",
         referralSourceOther: "Unexpected detail",
         eventIds: ["00000000-0000-0000-0000-000000000001"],
+        legalPackageAcknowledged: "on",
         participationAcknowledged: "on",
         dataUseAcknowledged: "on",
       }),
     ).toThrow("Referral detail can only be used with Other.");
+  });
+
+  it("accepts optional trimmed plain-text goals up to 500 characters", () => {
+    const result = participantInputSchema.parse({
+      firstName: "Ava",
+      lastName: "Example",
+      phone: "+1 518-867-5309",
+      phoneCountry: "US",
+      goals: "  Build strength\nfor my first competition.  ",
+      eventIds: ["00000000-0000-0000-0000-000000000001"],
+      legalPackageAcknowledged: "on",
+      participationAcknowledged: "on",
+      dataUseAcknowledged: "on",
+    });
+    expect(result.goals).toBe("Build strength\nfor my first competition.");
+  });
+
+  it("rejects oversized or marked-up goals", () => {
+    const base = {
+      firstName: "Ava",
+      lastName: "Example",
+      phone: "+1 518-867-5309",
+      phoneCountry: "US",
+      eventIds: ["00000000-0000-0000-0000-000000000001"],
+      legalPackageAcknowledged: "on" as const,
+      participationAcknowledged: "on" as const,
+      dataUseAcknowledged: "on" as const,
+    };
+    expect(() => participantInputSchema.parse({ ...base, goals: "x".repeat(501) })).toThrow(
+      "Goals must be 500 characters or fewer.",
+    );
+    expect(() =>
+      participantInputSchema.parse({ ...base, goals: "<script>alert(1)</script>" }),
+    ).toThrow("Goals must be plain text.");
   });
 });
 

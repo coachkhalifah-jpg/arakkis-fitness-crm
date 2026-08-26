@@ -27,22 +27,18 @@ export type RegistrationField =
   | "phoneCountry"
   | "email"
   | "fitnessExperience"
+  | "goals"
   | "referralSource"
   | "referralSourceOther"
-  | "participationAcknowledged"
-  | "dataUseAcknowledged";
+  | "legalPackageAcknowledged";
 
 export type RegistrationActionState = {
   error?: string;
   fieldErrors?: Partial<Record<RegistrationField, string>>;
   focusField?: RegistrationField;
   selectedValues?: string[];
-  acknowledgments?: {
-    participationAcknowledged: boolean;
-    dataUseAcknowledged: boolean;
-  };
+  legalPackageAcknowledged?: boolean;
   rememberDevice?: boolean;
-  legalDocumentIds?: string[];
 };
 export type RegistrationAction = (
   state: RegistrationActionState,
@@ -69,12 +65,8 @@ function preserveSubmittedState(
   return {
     ...state,
     selectedValues,
-    acknowledgments: {
-      participationAcknowledged: form.get("participationAcknowledged") === "on",
-      dataUseAcknowledged: form.get("dataUseAcknowledged") === "on",
-    },
+    legalPackageAcknowledged: form.get("legalPackageAcknowledged") === "on",
     rememberDevice: form.get("rememberDevice") === "on",
-    legalDocumentIds: [...new Set(form.getAll("legalDocumentIds").map(String))],
   };
 }
 
@@ -126,11 +118,11 @@ async function executeRegistration(form: FormData, selectedEventIds: string[]) {
     phoneCountry: remembered?.phone_country ?? form.get("phoneCountry"),
     email: remembered?.email ?? form.get("email") ?? "",
     fitnessExperience: remembered?.fitness_experience ?? form.get("fitnessExperience") ?? "",
+    goals: remembered?.goals ?? form.get("goals") ?? "",
     referralSource: form.get("referralSource") ?? "",
     referralSourceOther: form.get("referralSourceOther") ?? "",
     eventIds: selectedEventIds,
-    participationAcknowledged: form.get("participationAcknowledged"),
-    dataUseAcknowledged: form.get("dataUseAcknowledged"),
+    legalPackageAcknowledged: form.get("legalPackageAcknowledged"),
   });
   const normalizedPhone = normalizePhone(input.phone, input.phoneCountry);
   let normalizedEmail: string | null;
@@ -150,27 +142,32 @@ async function executeRegistration(form: FormData, selectedEventIds: string[]) {
   if (!userAgent || !ipAddress) throw new Error("registration evidence unavailable");
   const db = await createClient();
   const legalDocumentIds = [...new Set(form.getAll("legalDocumentIds").map(String))];
-  const { data, error } = await db.rpc("register_selected_events_with_legal", {
-    p_first_name: input.firstName.trim(),
-    p_last_name: input.lastName.trim(),
-    p_display_phone: input.phone.trim(),
-    p_normalized_phone: normalizedPhone.e164,
-    p_phone_country: normalizedPhone.country,
-    p_email: normalizedEmail,
-    p_normalized_email: normalizedEmail,
-    p_fitness_experience: input.fitnessExperience || null,
-    p_event_ids: input.eventIds,
-    p_participation_acknowledgment_version_id: String(form.get("participationVersionId")),
-    p_data_use_acknowledgment_version_id: String(form.get("dataUseVersionId")),
-    p_participation_acknowledged_at: new Date().toISOString(),
-    p_data_use_acknowledged_at: new Date().toISOString(),
-    p_ip_address: ipAddress,
-    p_user_agent: userAgent,
-    p_idempotency_key: String(form.get("idempotencyKey") || crypto.randomUUID()),
-    p_referral_source: input.referralSource || null,
-    p_referral_source_other_text:
-      input.referralSource === "OTHER" ? input.referralSourceOther || null : null,
-    p_legal_document_version_ids: legalDocumentIds,
+  const { data, error } = await db.rpc("register_selected_events_with_access", {
+    p_payload: {
+      first_name: input.firstName.trim(),
+      last_name: input.lastName.trim(),
+      display_phone: input.phone.trim(),
+      normalized_phone: normalizedPhone.e164,
+      phone_country: normalizedPhone.country,
+      email: normalizedEmail,
+      normalized_email: normalizedEmail,
+      fitness_experience: input.fitnessExperience || null,
+      goals: input.goals || null,
+      event_ids: input.eventIds,
+      event_access_token: String(form.get("eventInviteToken") || ""),
+      participation_acknowledgment_version_id: String(form.get("participationVersionId")),
+      data_use_acknowledgment_version_id: null,
+      participation_acknowledged_at: new Date().toISOString(),
+      data_use_acknowledged_at: new Date().toISOString(),
+      ip_address: ipAddress,
+      user_agent: userAgent,
+      idempotency_key: String(form.get("idempotencyKey") || crypto.randomUUID()),
+      referral_source: input.referralSource || null,
+      referral_source_other_text:
+        input.referralSource === "OTHER" ? input.referralSourceOther || null : null,
+      legal_document_version_ids: legalDocumentIds,
+      legal_package_id: String(form.get("legalPackageId")),
+    },
   } as never);
   if (error || !data) throw new Error("registration unavailable");
   const result = data as { confirmation_token?: string };
@@ -224,8 +221,9 @@ export async function submitSlugRegistration(
     }
     if (selectedStarts.length) {
       const db = await createClient();
-      const { data: event, error: eventError } = await db.rpc("get_public_event_by_slug", {
+      const { data: event, error: eventError } = await db.rpc("get_public_event_by_slug_access", {
         p_slug: slug,
+        p_invite_token: String(form.get("eventInviteToken") || "") || null,
       });
       const recurringEvent = event as {
         series_slug?: string | null;

@@ -5,6 +5,7 @@ const eslintConfig = [
   {
     ignores: [
       ".next/**",
+      ".next-diagnose-*/**",
       ".next-playwright/**",
       "node_modules/**",
       "coverage/**",

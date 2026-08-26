@@ -3,6 +3,9 @@ do $$
 begin
   if not exists (select 1 from pg_proc where proname = 'phase5_open_attendance' and pronamespace = 'public'::regnamespace) then raise exception 'Phase 5 open-attendance RPC is missing'; end if;
   if not exists (select 1 from pg_proc where proname = 'phase5_finalize_attendance' and pronamespace = 'public'::regnamespace) then raise exception 'Phase 5 finalization RPC is missing'; end if;
+  if not exists (select 1 from pg_proc where oid = 'public.phase5_finalize_attendance(uuid)'::regprocedure and prosecdef) then raise exception 'Phase 5 finalization RPC must remain SECURITY DEFINER'; end if;
+  if has_function_privilege('anon', 'public.phase5_finalize_attendance(uuid)', 'EXECUTE') then raise exception 'anonymous finalization execution must be denied'; end if;
+  if not has_function_privilege('authenticated', 'public.phase5_finalize_attendance(uuid)', 'EXECUTE') then raise exception 'authenticated finalization execution must be granted for internal role checks'; end if;
   if has_function_privilege('anon', 'public.phase5_open_attendance(uuid)', 'EXECUTE') then raise exception 'anonymous execution must be denied'; end if;
   if not has_function_privilege('authenticated', 'public.phase5_create_walk_in(uuid,text,text,text,text,text,text,text,uuid,text,uuid,uuid,inet,text,text)', 'EXECUTE') then raise exception 'authenticated walk-in execution must be granted'; end if;
   if not exists (select 1 from pg_constraint where conname = 'registrations_override_fk' and condeferrable and condeferred) then raise exception 'capacity override relationship must be deferred for atomic walk-ins'; end if;

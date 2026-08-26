@@ -1,6 +1,6 @@
 "use server";
 
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -13,13 +13,14 @@ import {
 } from "@/lib/services/event-creation-lifecycle";
 import {
   audit,
+  buildMultiScheduleOccurrences,
   eventSchema,
-  buildWeeklyOccurrences,
   localDateTimeToUtc,
   organizationSchema,
   parseCommunicationLink,
   parseEventTimes,
   Phase3Error,
+  multiScheduleSchema,
   recurrenceSchema,
   venueSchema,
 } from "@/lib/services/phase-3";
@@ -33,6 +34,7 @@ import {
 } from "@/lib/services/phase-5-actions";
 import { cleanupStoragePaths } from "@/lib/services/storage-cleanup";
 import { normalizePublicSlug } from "@/lib/services/phase-7";
+import { getServerEnv } from "@/lib/config/env";
 
 export type Phase3ActionState = {
   error?: string;
@@ -43,6 +45,7 @@ export type Phase3ActionState = {
   createdName?: string;
   createdStatus?: "Draft" | "Published";
   publicUrl?: string;
+  inviteUrl?: string;
 };
 const message = (error: unknown) =>
   error instanceof Phase3Error || error instanceof Error
@@ -69,8 +72,15 @@ export async function setOccurrenceLocationOverride(form: FormData): Promise<Pha
       .select("id,organization_id,active_status")
       .eq("id", venueId)
       .single();
-    if (!venue || venue.active_status !== "ACTIVE")
-      throw new Phase3Error("invalid", "Choose an active venue.");
+    if (
+      !venue ||
+      venue.active_status !== "ACTIVE" ||
+      (venue.organization_id !== null && venue.organization_id !== event.host_organization_id)
+    )
+      throw new Phase3Error(
+        "invalid",
+        "Choose an active venue belonging to the Event organization or a Public Venue.",
+      );
     const { error } = await db
       .from("events")
       .update({
@@ -178,6 +188,47 @@ async function uploadEventImages(
       uploadedPaths.push(path);
       assets.push({
         event_id: eventId,
+        storage_path: path,
+        original_filename: file.name.slice(0, 255) || "event-image",
+        mime_type: file.type,
+        byte_size: file.size,
+        content_sha256: contentSha256,
+        alt_text: `${eventName} event image`,
+      });
+    }
+  } catch (error) {
+    await removeEventImagePaths(uploadedPaths, requestId, "staged-upload-failure");
+    throw error;
+  }
+  return { paths: uploadedPaths, assets };
+}
+
+async function uploadScheduleEventImage(
+  requestId: string,
+  occurrenceCount: number,
+  eventName: string,
+  file: File | null,
+) {
+  if (!file || occurrenceCount < 1) return { paths: [], assets: [] };
+  const storage = createPrivilegedClient();
+  const uploadedPaths: string[] = [];
+  const assets: Array<Record<string, string | number>> = [];
+  const fileBytes = Buffer.from(await file.arrayBuffer());
+  const contentSha256 = createHash("sha256").update(fileBytes).digest("hex");
+  try {
+    for (let index = 0; index < occurrenceCount; index += 1) {
+      const path = `event_image_staging/${requestId}/occurrence-${index + 1}/${randomUUID()}${eventImageExtension(file)}`;
+      const { error: uploadError } = await storage.storage
+        .from("design-assets")
+        .upload(path, fileBytes, {
+          contentType: file.type,
+          cacheControl: "31536000",
+          upsert: false,
+        });
+      if (uploadError) throw new Phase3Error("conflict", "The event image could not be uploaded.");
+      uploadedPaths.push(path);
+      assets.push({
+        occurrence_index: index + 1,
         storage_path: path,
         original_filename: file.name.slice(0, 255) || "event-image",
         mime_type: file.type,
@@ -317,14 +368,14 @@ export async function createVenue(
           ? admin.organizationIds[0]
           : null
         : value(form, "organizationId");
-    if (!assignedOrganizationId)
+    if (admin.role === "HOST_ADMIN" && !assignedOrganizationId)
       throw new Phase3Error(
         "invalid",
         "Your account must have exactly one active organization assignment to create a venue.",
       );
     const input = venueSchema.parse({
       name: value(form, "name"),
-      organizationId: assignedOrganizationId,
+      organizationId: assignedOrganizationId || null,
       street: value(form, "street"),
       city: value(form, "city"),
       state: value(form, "state"),
@@ -334,13 +385,15 @@ export async function createVenue(
     if (!isTimezone(input.timezone))
       throw new Phase3Error("invalid", "Choose a valid IANA timezone.");
     const db = await createClient();
-    const { data: org } = await db
-      .from("organizations")
-      .select("id")
-      .eq("id", input.organizationId)
-      .eq("active_status", "ACTIVE")
-      .single();
-    if (!org) throw new Phase3Error("invalid", "Choose an active organization.");
+    if (input.organizationId) {
+      const { data: org } = await db
+        .from("organizations")
+        .select("id")
+        .eq("id", input.organizationId)
+        .eq("active_status", "ACTIVE")
+        .single();
+      if (!org) throw new Phase3Error("invalid", "Choose an active organization.");
+    }
     const { data, error } = await db
       .from("venues")
       .insert({
@@ -355,15 +408,20 @@ export async function createVenue(
       .select("id")
       .single();
     if (error || !data) throw new Phase3Error("conflict", "Venue could not be created.");
+    const auditInput = {
+      ...input,
+      venueType: input.organizationId ? "ORGANIZATION" : "INDEPENDENT_PUBLIC",
+    };
     await audit(
       admin.userId,
       "VENUE_CREATED",
       "VENUE",
       data.id,
-      input,
+      auditInput,
       undefined,
       admin.role === "HOST_ADMIN",
     );
+    revalidatePath("/admin/organizations");
     revalidatePath("/admin/venues");
     revalidatePath("/admin/events");
     return { success: "Venue created." };
@@ -405,10 +463,11 @@ export async function updateVenue(form: FormData): Promise<Phase3ActionState> {
     ) {
       throw new Phase3Error("forbidden", "You cannot edit this venue.");
     }
+    const requestedOrganizationId =
+      admin.role === "SYSTEM_ADMIN" ? value(form, "organizationId") || null : old.organization_id;
     const input = venueSchema.parse({
       name: value(form, "name"),
-      organizationId:
-        admin.role === "SYSTEM_ADMIN" ? value(form, "organizationId") : old.organization_id,
+      organizationId: requestedOrganizationId,
       street: value(form, "street"),
       city: value(form, "city"),
       state: value(form, "state"),
@@ -417,13 +476,15 @@ export async function updateVenue(form: FormData): Promise<Phase3ActionState> {
     });
     if (!isTimezone(input.timezone))
       throw new Phase3Error("invalid", "Choose a valid IANA timezone.");
-    const { data: org } = await db
-      .from("organizations")
-      .select("id")
-      .eq("id", input.organizationId)
-      .eq("active_status", "ACTIVE")
-      .single();
-    if (!org) throw new Phase3Error("invalid", "Choose an active organization.");
+    if (input.organizationId) {
+      const { data: org } = await db
+        .from("organizations")
+        .select("id")
+        .eq("id", input.organizationId)
+        .eq("active_status", "ACTIVE")
+        .single();
+      if (!org) throw new Phase3Error("invalid", "Choose an active organization.");
+    }
     const { error } = await db
       .from("venues")
       .update({
@@ -437,12 +498,17 @@ export async function updateVenue(form: FormData): Promise<Phase3ActionState> {
       })
       .eq("id", id);
     if (error) throw new Phase3Error("conflict", "Venue could not be updated.");
+    const auditInput = {
+      ...input,
+      venueType: input.organizationId ? "ORGANIZATION" : "INDEPENDENT_PUBLIC",
+      previousVenueType: old.organization_id ? "ORGANIZATION" : "INDEPENDENT_PUBLIC",
+    };
     await audit(
       admin.userId,
       "VENUE_UPDATED",
       "VENUE",
       id,
-      input,
+      auditInput,
       old,
       admin.role === "HOST_ADMIN",
     );
@@ -474,6 +540,7 @@ export async function createEvent(
       hostOrganizationId: value(form, "hostOrganizationId"),
       venueId: value(form, "venueId"),
       name: value(form, "name"),
+      eventTitleColor: value(form, "eventTitleColor") || "#FFFFFF",
       description: value(form, "description"),
       participantInstructions: value(form, "participantInstructions"),
       startLocal: value(form, "startLocal"),
@@ -481,6 +548,7 @@ export async function createEvent(
       registrationDeadlineLocal: value(form, "registrationDeadlineLocal"),
       capacity: value(form, "capacity"),
       visibility: value(form, "visibility"),
+      accessMode: value(form, "accessMode") || "PUBLIC",
       communicationUrl: value(form, "communicationUrl"),
       communicationLabel: value(form, "communicationLabel"),
     });
@@ -490,6 +558,20 @@ export async function createEvent(
       enabled: form.get("recurring") === "on",
       endsOn: value(form, "recurrenceEndsOn") || undefined,
     });
+    if (recurrence.enabled && input.accessMode === "INVITE_ONLY")
+      throw new Phase3Error(
+        "invalid",
+        "Invite-only access is currently available for single Events only.",
+      );
+    const scheduleRules = recurrence.enabled
+      ? multiScheduleSchema.parse(
+          form.getAll("scheduleRuleWeekday").map((weekday, index) => ({
+            weekday: Number(weekday),
+            localStartTime: String(form.getAll("scheduleRuleStartTime")[index] ?? ""),
+            localEndTime: String(form.getAll("scheduleRuleEndTime")[index] ?? ""),
+          })),
+        )
+      : null;
     const db = await createClient();
     const { data: venue } = await db
       .from("venues")
@@ -497,55 +579,113 @@ export async function createEvent(
       .eq("id", input.venueId)
       .eq("active_status", "ACTIVE")
       .single();
-    if (!venue || venue.organization_id !== input.hostOrganizationId)
-      throw new Phase3Error("invalid", "Choose a venue belonging to the selected organization.");
+    if (
+      !venue ||
+      (venue.organization_id !== null && venue.organization_id !== input.hostOrganizationId)
+    )
+      throw new Phase3Error(
+        "invalid",
+        "Choose a venue belonging to the selected organization or an independent/public venue.",
+      );
     const times = parseEventTimes(input, venue.timezone);
     const occurrences = recurrence.enabled
-      ? buildWeeklyOccurrences(input, venue.timezone, recurrence.endsOn!)
+      ? buildMultiScheduleOccurrences(input, scheduleRules!, venue.timezone, recurrence.endsOn!)
       : [{ ...times, localDate: input.startLocal.slice(0, 10), occurrence: 1 }];
-    const eventIds = occurrences.map(() => randomUUID());
+    const eventIds = recurrence.enabled ? [] : occurrences.map(() => randomUUID());
     const seriesId = recurrence.enabled ? randomUUID() : null;
     const requestId = value(form, "creationRequestId") || randomUUID();
-    const uploaded = await uploadEventImages(requestId, eventIds, input.name, imageFile);
+    const uploaded = recurrence.enabled
+      ? await uploadScheduleEventImage(requestId, occurrences.length, input.name, imageFile)
+      : await uploadEventImages(requestId, eventIds, input.name, imageFile);
     uploadedPaths = uploaded.paths;
+    const rpcName = recurrence.enabled
+      ? "phase3_create_multi_schedule_bundle"
+      : "phase3_create_event_bundle";
+    const rpcInput = recurrence.enabled
+      ? {
+          p_request_id: requestId,
+          p_actor_admin_id: admin.userId,
+          p_series_id: seriesId,
+          p_series_ends_on: recurrence.endsOn,
+          p_schedule_rules: scheduleRules!.map((rule) => ({
+            weekday: rule.weekday,
+            local_start_time: rule.localStartTime,
+            local_end_time: rule.localEndTime,
+            effective_start_date: input.startLocal.slice(0, 10),
+          })),
+          p_defaults: {
+            host_organization_id: input.hostOrganizationId,
+            venue_id: input.venueId,
+            name: input.name,
+            description: input.description || null,
+            participant_instructions: input.participantInstructions || null,
+            timezone: venue.timezone,
+            capacity: input.capacity,
+            visibility: input.visibility,
+            access_mode: input.accessMode,
+            communication_url: communication.url,
+            communication_label: communication.label,
+            event_title_color: input.eventTitleColor,
+            start_local: input.startLocal,
+            end_local: input.endLocal,
+            registration_deadline_local: input.registrationDeadlineLocal,
+          },
+          p_assets: uploaded.assets,
+          p_audit_action: "EVENT_SERIES_CREATED",
+          p_audit_values: {
+            name: input.name,
+            host_organization_id: input.hostOrganizationId,
+            venue_id: input.venueId,
+            venue_type: venue.organization_id ? "ORGANIZATION" : "INDEPENDENT_PUBLIC",
+            timezone: venue.timezone,
+            frequency: "WEEKLY",
+            ends_on: recurrence.endsOn,
+            schedule_count: scheduleRules!.length,
+            occurrence_count: occurrences.length,
+          },
+        }
+      : {
+          p_request_id: requestId,
+          p_actor_admin_id: admin.userId,
+          p_series_id: seriesId,
+          p_series_ends_on: null,
+          p_event_rows: occurrences.map((occurrence, index) => ({
+            id: eventIds[index],
+            series_occurrence_number: null,
+            starts_at: occurrence.startsAt,
+            ends_at: occurrence.endsAt,
+            registration_deadline: occurrence.registrationDeadline,
+          })),
+          p_defaults: {
+            host_organization_id: input.hostOrganizationId,
+            venue_id: input.venueId,
+            name: input.name,
+            description: input.description || null,
+            participant_instructions: input.participantInstructions || null,
+            timezone: venue.timezone,
+            capacity: input.capacity,
+            visibility: input.visibility,
+            access_mode: input.accessMode,
+            communication_url: communication.url,
+            communication_label: communication.label,
+            event_title_color: input.eventTitleColor,
+          },
+          p_assets: uploaded.assets,
+          p_audit_action: "EVENT_CREATED",
+          p_audit_values: {
+            name: input.name,
+            host_organization_id: input.hostOrganizationId,
+            venue_id: input.venueId,
+            venue_type: venue.organization_id ? "ORGANIZATION" : "INDEPENDENT_PUBLIC",
+            timezone: venue.timezone,
+            frequency: null,
+            ends_on: null,
+            occurrence_count: 1,
+          },
+        };
     const { data: bundle, error: bundleError } = (await db.rpc(
-      "phase3_create_event_bundle" as never,
-      {
-        p_request_id: requestId,
-        p_actor_admin_id: admin.userId,
-        p_series_id: seriesId,
-        p_series_ends_on: recurrence.endsOn ?? null,
-        p_event_rows: occurrences.map((occurrence, index) => ({
-          id: eventIds[index],
-          series_occurrence_number: recurrence.enabled ? occurrence.occurrence : null,
-          starts_at: occurrence.startsAt,
-          ends_at: occurrence.endsAt,
-          registration_deadline: occurrence.registrationDeadline,
-        })),
-        p_defaults: {
-          host_organization_id: input.hostOrganizationId,
-          venue_id: input.venueId,
-          name: input.name,
-          description: input.description || null,
-          participant_instructions: input.participantInstructions || null,
-          timezone: venue.timezone,
-          capacity: input.capacity,
-          visibility: input.visibility,
-          communication_url: communication.url,
-          communication_label: communication.label,
-        },
-        p_assets: uploaded.assets,
-        p_audit_action: recurrence.enabled ? "EVENT_SERIES_CREATED" : "EVENT_CREATED",
-        p_audit_values: {
-          name: input.name,
-          host_organization_id: input.hostOrganizationId,
-          venue_id: input.venueId,
-          timezone: venue.timezone,
-          frequency: recurrence.enabled ? "WEEKLY" : null,
-          ends_on: recurrence.endsOn ?? null,
-          occurrence_count: occurrences.length,
-        },
-      } as never,
+      rpcName as never,
+      rpcInput as never,
     )) as {
       data: { event_ids?: string[]; idempotent?: boolean } | null;
       error: { message?: string; code?: string } | null;
@@ -566,15 +706,24 @@ export async function createEvent(
     // The RPC commit is authoritative. Never let a later cache/UI failure delete
     // storage objects that are now attached to the committed event(s).
     clearCommittedCleanupCandidates(uploadedPaths);
+    const { error: accessError } = await db
+      .from("events")
+      .update({ access_mode: input.accessMode })
+      .in("id", bundle.event_ids);
+    if (accessError) throw new Phase3Error("conflict", "Event access could not be saved.");
     let createdStatus: "Draft" | "Published" = "Draft";
     let publicUrl: string | undefined;
     let publicationNotice = "";
     if (value(form, "intent") === "publish") {
       const { phase7EventUrl, publishPhase7Event } = await import("@/lib/services/phase-7-actions");
-      const publication = await publishPhase7Event(bundle.event_ids[0]);
-      if (publication.error) {
-        publicationNotice = ` Draft created, but publishing failed: ${publication.error}`;
-      } else {
+      for (const eventId of bundle.event_ids) {
+        const publication = await publishPhase7Event(eventId);
+        if (publication.error) {
+          publicationNotice = ` Draft created, but publishing failed: ${publication.error}`;
+          break;
+        }
+      }
+      if (!publicationNotice) {
         createdStatus = "Published";
         publicUrl = await phase7EventUrl(normalizePublicSlug(input.name));
       }
@@ -658,6 +807,7 @@ export async function updateEvent(
       hostOrganizationId: value(form, "hostOrganizationId"),
       venueId: value(form, "venueId"),
       name: value(form, "name"),
+      eventTitleColor: value(form, "eventTitleColor") || "#FFFFFF",
       description: value(form, "description"),
       participantInstructions: value(form, "participantInstructions"),
       startLocal: value(form, "startLocal"),
@@ -665,9 +815,15 @@ export async function updateEvent(
       registrationDeadlineLocal: value(form, "registrationDeadlineLocal"),
       capacity: value(form, "capacity"),
       visibility: value(form, "visibility"),
+      accessMode: value(form, "accessMode") || "PUBLIC",
       communicationUrl: value(form, "communicationUrl"),
       communicationLabel: value(form, "communicationLabel"),
     });
+    if (old.event_series_id && input.accessMode === "INVITE_ONLY")
+      throw new Phase3Error(
+        "invalid",
+        "Invite-only access is currently available for single Events only.",
+      );
     const communication = parseCommunicationLink(input.communicationUrl, input.communicationLabel);
     if (
       old.status !== "DRAFT" &&
@@ -680,8 +836,14 @@ export async function updateEvent(
       .eq("id", input.venueId)
       .eq("active_status", "ACTIVE")
       .single();
-    if (!venue || venue.organization_id !== input.hostOrganizationId)
-      throw new Phase3Error("invalid", "Choose a venue belonging to the selected organization.");
+    if (
+      !venue ||
+      (venue.organization_id !== null && venue.organization_id !== input.hostOrganizationId)
+    )
+      throw new Phase3Error(
+        "invalid",
+        "Choose a venue belonging to the selected organization or an independent/public venue.",
+      );
     const times = parseEventTimes(input, venue.timezone);
     const { error } = await db
       .from("events")
@@ -697,8 +859,10 @@ export async function updateEvent(
         registration_deadline: times.registrationDeadline,
         capacity: input.capacity,
         visibility: input.visibility,
+        access_mode: input.accessMode,
         communication_url: communication.url,
         communication_label: communication.label,
+        event_title_color: input.eventTitleColor,
       })
       .eq("id", id);
     if (error)
@@ -713,7 +877,12 @@ export async function updateEvent(
       "EVENT_UPDATED",
       "EVENT",
       id,
-      { ...input, ...times, timezone: venue.timezone },
+      {
+        ...input,
+        ...times,
+        timezone: venue.timezone,
+        venue_type: venue.organization_id ? "ORGANIZATION" : "INDEPENDENT_PUBLIC",
+      },
       old,
     );
     revalidatePath("/admin/events");
@@ -802,6 +971,84 @@ export async function createEventForm(form: FormData) {
 }
 export async function updateEventForm(form: FormData) {
   await updateEvent({}, form);
+}
+
+export async function generateEventInviteLink(
+  _state: Phase3ActionState,
+  form: FormData,
+): Promise<Phase3ActionState> {
+  try {
+    const admin = await requireActiveAdmin();
+    const eventId = value(form, "eventId");
+    const db = await createClient();
+    const { data: event } = await db
+      .from("events")
+      .select("id,access_mode,public_slug,event_series(public_slug),host_organization_id,status")
+      .eq("id", eventId)
+      .single();
+    if (
+      !event ||
+      (admin.role === "HOST_ADMIN" && !admin.organizationIds.includes(event.host_organization_id))
+    )
+      throw new Phase3Error("forbidden", "You cannot manage this event.");
+    if (event.access_mode !== "INVITE_ONLY" || event.status === "CANCELLED")
+      throw new Phase3Error(
+        "invalid",
+        "Invite links are available only for active invite-only events.",
+      );
+    const slug = event.public_slug ?? event.event_series?.[0]?.public_slug;
+    if (!slug)
+      throw new Phase3Error("invalid", "Publish the event before creating an invite link.");
+    const rawToken = randomBytes(32).toString("base64url");
+    const privileged = createPrivilegedClient();
+    const { error } = await privileged.from("event_invite_links").insert({
+      event_id: event.id,
+      token_hash: `\\x${createHash("sha256").update(rawToken).digest("hex")}`,
+      created_by_admin_id: admin.userId,
+    });
+    if (error) throw new Phase3Error("conflict", "The invite link could not be created.");
+    const env = getServerEnv();
+    const base = env.APP_BASE_URL || env.NEXT_PUBLIC_APP_URL;
+    return {
+      success: "Reusable invite link created.",
+      inviteUrl: `${base.replace(/\/+$/, "")}/register/${encodeURIComponent(slug)}?invite=${rawToken}`,
+    };
+  } catch (error) {
+    return { error: message(error) };
+  }
+}
+
+export async function revokeEventInviteLinks(form: FormData): Promise<Phase3ActionState> {
+  try {
+    const admin = await requireActiveAdmin();
+    const eventId = value(form, "eventId");
+    const db = await createClient();
+    const { data: event } = await db
+      .from("events")
+      .select("id,host_organization_id")
+      .eq("id", eventId)
+      .single();
+    if (
+      !event ||
+      (admin.role === "HOST_ADMIN" && !admin.organizationIds.includes(event.host_organization_id))
+    )
+      throw new Phase3Error("forbidden", "You cannot manage this event.");
+    const privileged = createPrivilegedClient();
+    const { error } = await privileged
+      .from("event_invite_links")
+      .update({ revoked_at: new Date().toISOString() })
+      .eq("event_id", eventId)
+      .is("revoked_at", null);
+    if (error) throw new Phase3Error("conflict", "Active invite links could not be revoked.");
+    revalidatePath(`/admin/events/${eventId}`);
+    return { success: "Active invite links revoked." };
+  } catch (error) {
+    return { error: message(error) };
+  }
+}
+
+export async function revokeEventInviteLinksForm(form: FormData): Promise<void> {
+  await revokeEventInviteLinks(form);
 }
 export async function publishEventForm(id: string) {
   await publishEvent(id);

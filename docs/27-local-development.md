@@ -1,6 +1,6 @@
 # Local development
 
-Prerequisites: Node 22.x, pnpm 10.x via Corepack, Docker, and Supabase CLI 2.110.0 (or a reviewed
+Prerequisites: Node 22.22.1, pnpm 10.15.1 via Corepack, Docker, and Supabase CLI 2.110.0 (or a reviewed
 compatible version). From a clean checkout:
 
 ```bash

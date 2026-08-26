@@ -14,9 +14,9 @@ export const legalDocuments: LegalDocument[] = [
     slug: "participation-agreement",
     type: "PARTICIPATION_RISK",
     title: "Participation Agreement",
-    version: "1.0.0",
-    effectiveDate: "August 3, 2026",
-    required: "EVERY_BOOKING",
+    version: "1.0",
+    effectiveDate: "August 27, 2026",
+    required: "INFORMATIONAL",
     versionId: "03500000-0000-0000-0000-000000000001",
     sections: [
       {
@@ -26,10 +26,7 @@ export const legalDocuments: LegalDocument[] = [
         heading: "Participant Responsibilities",
         text: "Participants agree to follow instructor directions, exercise within their abilities, stop immediately if they experience pain, dizziness, or other concerning symptoms, and treat others respectfully.",
       },
-      {
-        heading: "Registration",
-        text: "A completed registration and acceptance of this Agreement and the Liability Waiver are required for every booking.",
-      },
+      { text: "This document is informational for the pilot registration flow." },
       {
         heading: "Communications",
         text: "Eoke LLC may contact participants regarding registrations or schedule changes using the contact information provided. Marketing communications are optional where applicable.",
@@ -42,24 +39,36 @@ export const legalDocuments: LegalDocument[] = [
   },
   {
     slug: "liability-waiver",
-    type: "LIABILITY_WAIVER",
-    title: "Assumption of Risk & Liability Waiver",
+    type: "EOKE_PARTICIPATION_WAIVER",
+    title: "Eoke LLC Participation Liability Waiver",
     version: "1.0.0",
     effectiveDate: "August 3, 2026",
     required: "EVERY_BOOKING",
-    versionId: "03500000-0000-0000-0000-000000000002",
+    versionId: "06400000-0000-0000-0000-000000000001",
     sections: [
       {
-        heading: "Assumption of Risk",
-        text: "Participant understands boxing and fitness activities involve inherent risks including falls, collisions, overexertion, accidental contact, equipment misuse, and other foreseeable injuries.",
+        text: "The individual accepting this Waiver desires to participate in boxing, boxing fitness, group fitness, strength and conditioning, personal training, and related physical activities sponsored, organized, or instructed by Eoke LLC, including Activities conducted at third-party Host Facilities or partner locations.",
       },
       {
-        heading: "Release",
-        text: "To the fullest extent permitted by applicable law, participant releases Eoke LLC, its instructors, volunteers, and affiliates from claims arising from ordinary negligence. This release does not apply to gross negligence, reckless conduct, or intentional misconduct where such claims cannot legally be waived.",
+        text: "I am aware and understand that the Activity is potentially dangerous and involves the risk of serious injury, disability, death, and/or property damage, including risks arising from the actions, omissions, or negligence of Eoke or the applicable Host Facility.",
       },
       {
-        heading: "Medical",
-        text: "Participant is responsible for determining whether participation is appropriate and authorizes emergency services to be contacted if reasonably necessary.",
+        text: "I warrant that I am physically fit to participate, and that my participation is voluntary and taken with knowledge of the dangers involved.",
+      },
+      {
+        text: "I HEREBY AGREE TO ACCEPT AND ASSUME ANY AND ALL RISKS OF INJURY, DISABILITY, DEATH, AND/OR PROPERTY DAMAGE ARISING FROM MY PARTICIPATION IN THE ACTIVITY, WHETHER CAUSED BY THE ORDINARY NEGLIGENCE OF EOKE AND/OR THE APPLICABLE HOST FACILITY, OR OTHERWISE.",
+      },
+      {
+        heading: "Release and Indemnification",
+        text: "I expressly waive and release claims against Eoke, the applicable Host Facility, and their respective owners, officers, directors, managers, members, employees, coaches, trainers, contractors, agents, affiliates, successors, and assigns. I shall defend, indemnify, and hold harmless those Releasees against third-party claims related to my participation, including claims related to my own negligence or the ordinary negligence of Eoke and/or the applicable Host Facility.",
+      },
+      {
+        heading: "Medical Treatment",
+        text: "I consent to necessary medical treatment if injured or requiring medical attention during participation. I am solely responsible for related costs, transportation, and evacuation, and release Eoke and the applicable Host Facility from claims based on that treatment or medical service.",
+      },
+      {
+        heading: "Electronic Acknowledgment",
+        text: "By affirmatively accepting this Waiver through Arakkis, I acknowledge that I have read it, understand that I am giving up substantial legal rights, including the right to sue to the extent stated above, and accept it freely and voluntarily.",
       },
     ],
   },

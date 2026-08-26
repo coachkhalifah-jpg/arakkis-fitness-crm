@@ -54,7 +54,6 @@ test("registered check-in persists, is idempotent, and records actor/time/audit 
   const row = page.getByRole("row").filter({ hasText: participant.firstName });
   await expect(row.getByText("NOT_RECORDED")).toBeVisible();
   await row.getByRole("button", { name: "Check in" }).click();
-  await page.getByRole("button", { name: "Save Attendance Changes" }).click();
   await expect(row.getByText("ATTENDED", { exact: true })).toBeVisible();
   await page.reload();
   await expect(
@@ -94,7 +93,6 @@ test("registered check-in persists, is idempotent, and records actor/time/audit 
     ),
   ).toBe("t");
 
-  await row.getByRole("button", { name: "Checked in" }).click();
   await page.reload();
   await expect(
     page
@@ -360,13 +358,18 @@ test("finalization converts only eligible unmarked registrations, is idempotent,
     p_status: "ATTENDED",
     p_reason: null,
   });
+  await openEventInBrowser(page, event.id, fixture.hostA);
+  await expect(page.getByRole("button", { name: "Finalize Attendance" })).toHaveCount(0);
+  await openEventInBrowser(page, event.id, fixture.system);
+  await expect(page.getByRole("button", { name: "Finalize Attendance" })).toBeVisible();
   const before = await host.rpc("phase5_mark_attendance", {
     p_registration_id: unchecked.registrationId,
     p_status: "NO_SHOW",
     p_reason: null,
   });
   expect(before.error?.message).toMatch(/finalization/i);
-  const finalized = await host.rpc("phase5_finalize_attendance", { p_event_id: event.id });
+  const system = await signedInClient(fixture.system);
+  const finalized = await system.rpc("phase5_finalize_attendance", { p_event_id: event.id });
   expect(finalized.error).toBeNull();
   expect(
     localQuery(
@@ -409,7 +412,14 @@ test("finalization converts only eligible unmarked registrations, is idempotent,
     page.getByText(/Authorized Host Admins may correct individual results/),
   ).toBeVisible();
   await expect(page.getByLabel("Correction reason")).toHaveCount(1);
-  await host.rpc("phase5_finalize_attendance", { p_event_id: event.id });
+  const unauthorizedFinalize = await host.rpc("phase5_finalize_attendance", {
+    p_event_id: event.id,
+  });
+  expect(unauthorizedFinalize.error?.message).toMatch(/forbidden|event unavailable/i);
+  const idempotentFinalize = await system.rpc("phase5_finalize_attendance", {
+    p_event_id: event.id,
+  });
+  expect(idempotentFinalize.error).toBeNull();
   expect(
     localQuery(
       `select count(*) from public.audit_events where entity_id=${JSON.stringify(event.id)} and action='ATTENDANCE_FINALIZED'`,
@@ -421,7 +431,6 @@ test("finalization converts only eligible unmarked registrations, is idempotent,
     p_reason: "Host attempt",
   });
   expect(unauthorizedReopen.error?.message).toMatch(/forbidden|event unavailable/i);
-  const system = await signedInClient(fixture.system);
   const blankReason = await system.rpc("phase5_reopen_attendance", {
     p_event_id: event.id,
     p_reason: "",
@@ -473,6 +482,7 @@ test("direct RPC authorization and organization isolation deny every unauthorize
   const registrationB = createRegisteredParticipant(fixture, eventB.id);
   const hostA = await signedInClient(fixture.hostA);
   const hostB = await signedInClient(fixture.hostB);
+  const system = await signedInClient(fixture.system);
   const nonAdmin = await signedInClient(fixture.nonAdmin);
   const inactive = await signedInClient(fixture.inactive);
   const anonymous = (await import("./phase-5-fixtures")).adminClient();
@@ -481,6 +491,20 @@ test("direct RPC authorization and organization isolation deny every unauthorize
   expect(
     (await hostA.rpc("phase5_open_attendance", { p_event_id: eventB.id })).error,
   ).not.toBeNull();
+  const hostFinalize = await hostA.rpc("phase5_finalize_attendance", { p_event_id: eventA.id });
+  expect(hostFinalize.error?.message).toMatch(/forbidden|event unavailable/i);
+  expect(
+    localQuery(
+      `select attendance_processing_state from public.events where id=${JSON.stringify(eventA.id)}`,
+    ),
+  ).toBe("OPEN");
+  const systemFinalize = await system.rpc("phase5_finalize_attendance", { p_event_id: eventA.id });
+  expect(systemFinalize.error).toBeNull();
+  expect(
+    localQuery(
+      `select attendance_processing_state from public.events where id=${JSON.stringify(eventA.id)}`,
+    ),
+  ).toBe("FINALIZED");
   expect(
     (
       await hostA.rpc("phase5_mark_attendance", {
@@ -552,7 +576,7 @@ test("direct RPC authorization and organization isolation deny every unauthorize
     localQuery(
       `select count(*) from public.attendance where registration_id=${JSON.stringify(registrationA.registrationId)}`,
     ),
-  ).toBe("0");
+  ).toBe("1");
   expect(
     localQuery(
       `select count(*) from public.registrations where event_id=${JSON.stringify(eventB.id)} and participant_id=(select id from public.participants where normalized_phone='+15185550999')`,

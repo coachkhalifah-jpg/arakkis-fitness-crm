@@ -10,16 +10,29 @@ export default async function SignInPage({
   const params = await searchParams;
   const next = safeAdminRedirect(params.next);
   return (
-    <section className="mx-auto max-w-md px-6 py-16">
-      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">Admin access</p>
-      <h1 className="mt-3 text-4xl font-semibold tracking-tight text-ink">Sign in</h1>
-      <p className="mt-4 text-slate-600">Administrator access is invitation-only.</p>
-      <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <SignInForm next={next} />
-      </div>
-      <Link className="mt-6 inline-block text-sm text-brand underline" href="/">
-        Return home
-      </Link>
-    </section>
+    <main className="page ops-page ops-auth-page">
+      <section className="ops-auth-layout">
+        <div className="ops-auth-intro">
+          <p className="ops-kicker orange">Arakkis / Admin access</p>
+          <h1>
+            Make room
+            <br />
+            <em>to lead.</em>
+          </h1>
+          <Link className="ops-auth-return" href="/">
+            ← Return to participant site
+          </Link>
+        </div>
+        <div className="ops-auth-card">
+          <div className="ops-auth-card-head">
+            <span className="ops-label">Secure workspace entry</span>
+            <span className="ops-auth-lock" aria-hidden="true">
+              ◌
+            </span>
+          </div>
+          <SignInForm next={next} />
+        </div>
+      </section>
+    </main>
   );
 }

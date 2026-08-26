@@ -16,15 +16,7 @@ function localQuery(statement: string) {
 }
 
 async function acceptRequiredLegal(page: import("@playwright/test").Page) {
-  for (const label of [
-    /Participation Agreement.*Version 1\.0\.0/,
-    /Assumption of Risk.*Version 1\.0\.0/,
-    /Cancellation.*Policy.*Version 1\.0\.0/,
-    /Terms of Use.*Version 1\.0\.0/,
-    /Privacy Policy.*Version 1\.0\.0/,
-  ]) {
-    await page.getByLabel(label).check();
-  }
+  await page.getByLabel("I agree to the Terms & Conditions").check();
 }
 
 test("J2 matches the seeded returning participant without creating a duplicate", async ({
@@ -36,20 +28,19 @@ test("J2 matches the seeded returning participant without creating a duplicate",
   if (!slug || !suffix) throw new Error("The demo recurring route was not generated");
 
   await page.goto(`/register/${slug}`);
-  const nextOccurrence = page.getByRole("checkbox", {
-    name: /Demo Weekly Flow — Next Week.*open, not selected/,
-  });
+  const nextOccurrence = page.getByRole("checkbox").nth(1);
   await expect(nextOccurrence).toHaveCount(1);
   await nextOccurrence.check();
   await page.getByLabel("First name").fill("Taylor");
   await page.getByLabel("Last name").fill("Returning");
   await page.getByLabel("Mobile phone").fill("+1 518-867-5309");
-  await page.getByLabel("Email (optional)").fill(`taylor-${suffix}@example.test`);
+  await page.getByRole("button", { name: /Help us help you/i }).click();
+  await page.getByLabel("Email").fill(`taylor-${suffix}@example.test`);
   await acceptRequiredLegal(page);
   await page.getByRole("button", { name: "Book Class" }).click();
 
   await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
-  await expect(page.getByRole("heading", { name: "You're in!" })).toBeVisible();
+  await expect(page.getByText("See you").first()).toBeVisible();
   expect(
     localQuery(
       "select count(*) from public.participants where normalized_phone='+15188675309' and normalized_first_name='taylor' and normalized_last_name='returning'",

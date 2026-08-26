@@ -1,29 +1,30 @@
 import { RegistrationForm } from "@/components/registration/registration-form";
 import { EventHero } from "@/components/registration/event-hero";
-import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/db/server";
-import { createPrivilegedClient } from "@/lib/db/privileged";
 import { isProductionRegistrationBlocked } from "@/lib/config/env";
 import { resolveRememberedParticipant } from "@/lib/registration/device";
 import { designAssetPublicUrl } from "@/lib/config/design-assets";
 import { legalDocuments } from "@/lib/legal/documents";
+import type { LegalPackage } from "@/lib/legal/package";
+import { PublicErrorState } from "@/components/registration/public-error-state";
 
-export default async function PublicEventPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function PublicEventPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ invite?: string }>;
+}) {
   const { slug } = await params;
+  const { invite } = await searchParams;
   const db = await createClient();
   const [{ data }, { data: config }] = await Promise.all([
-    db.rpc("get_public_event_by_slug", { p_slug: slug }),
+    db.rpc("get_public_event_by_slug_access", { p_slug: slug, p_invite_token: invite ?? null }),
     db.rpc("get_public_registration_config"),
   ]);
-  const { data: publicEventIdentity } = await db
-    .from("public_event_schedule")
-    .select("id")
-    .eq("public_slug", slug.toLowerCase())
-    .maybeSingle();
   const registrationConfig = (config ?? {}) as {
-    participation: { id: string; text: string } | null;
-    data_use: { id: string; text: string } | null;
     legal_documents: unknown[];
+    legal_package: LegalPackage | null;
     organizations: Array<{ id: string; name: string }>;
   };
   const event = data as {
@@ -52,6 +53,7 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
       timezone: string;
       capacity: number;
       active_registration_count: number;
+      availability: string;
       venue_name: string;
       venue_street: string;
       venue_city: string;
@@ -62,124 +64,92 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
   } | null;
   if (!event)
     return (
-      <section className="mx-auto max-w-2xl px-6 py-16">
-        <Card className="p-8">This event is unavailable.</Card>
-      </section>
+      <PublicErrorState
+        code="404"
+        title="This event could not be found."
+        message="The event may be unpublished, closed, cancelled, or no longer available."
+        actionLabel="Browse events"
+        actionHref="/events"
+      />
     );
   const legallyBlocked = isProductionRegistrationBlocked();
   const remembered = await resolveRememberedParticipant();
-  let termsAccepted = false;
-  if (remembered) {
-    const privileged = createPrivilegedClient();
-    const { data: accepted } = await privileged
-      .from("registration_legal_acceptances")
-      .select("id")
-      .eq("participant_id", remembered.participant_id)
-      .eq(
-        "acknowledgment_version_id",
-        legalDocuments.find((document) => document.type === "TERMS_OF_USE")?.versionId ?? "",
-      )
-      .maybeSingle();
-    termsAccepted = Boolean(accepted);
-  }
   const { data: eventAssets } = await db
     .from("design_assets")
     .select("asset_type,storage_path,focal_position")
-    .eq("event_id", publicEventIdentity?.id ?? "00000000-0000-0000-0000-000000000000")
+    .eq("event_id", event.id)
     .eq("active", true);
   const desktopAsset = eventAssets?.find((asset) => asset.asset_type === "EVENT_IMAGE_DESKTOP");
   const mobileAsset = eventAssets?.find((asset) => asset.asset_type === "EVENT_IMAGE_MOBILE");
   const availability = legallyBlocked ? "LEGALLY_BLOCKED" : event.availability;
   const recurringEvents = event.series_slug ? event.occurrences : [];
   const registrationEvents = recurringEvents.length ? recurringEvents : [event];
-  const availableSessionCount = registrationEvents.filter(
-    (session) => session.active_registration_count < session.capacity,
-  ).length;
   const available =
     !legallyBlocked &&
     (event.series_slug
       ? recurringEvents.some(
-          (occurrence) => occurrence.active_registration_count < occurrence.capacity,
+          (occurrence) =>
+            ![
+              "FULL",
+              "CLOSED",
+              "CANCELLED",
+              "PAUSED",
+              "NOT_YET_OPEN",
+              "UNPUBLISHED",
+              "LEGALLY_BLOCKED",
+            ].includes(occurrence.availability),
         )
       : availability === "OPEN");
-  const formattedDate = new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    timeZone: event.timezone,
-  }).format(new Date(event.starts_at));
-  const formattedTime = new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: event.timezone,
-  }).format(new Date(event.starts_at));
+  if (!available)
+    return (
+      <PublicErrorState
+        code="CLOSED"
+        title="Registration is unavailable."
+        message="This event is not currently accepting registrations."
+        actionLabel="Browse events"
+        actionHref="/events"
+      />
+    );
   return (
-    <section className="booking-environment mx-auto min-h-screen w-full max-w-[520px] pb-16 transition-colors duration-500">
+    <section className="booking-environment registration-northstar mx-auto min-h-screen w-full max-w-[520px] pb-16 transition-colors duration-500">
       <EventHero
         eventName={event.name}
         host={event.host_organization_name}
         venue={event.venue_name}
-        date={formattedDate}
-        time={formattedTime}
-        availability={availability}
-        availableSessionCount={availableSessionCount}
         imageUrl={desktopAsset ? designAssetPublicUrl(desktopAsset.storage_path) : undefined}
         mobileImageUrl={mobileAsset ? designAssetPublicUrl(mobileAsset.storage_path) : undefined}
         focalPosition={desktopAsset?.focal_position ?? mobileAsset?.focal_position ?? "center"}
       />
       <div className="public-registration-content px-4 pt-8 sm:px-5 sm:pt-10">
-        {event.participant_instructions ? (
-          <section
-            className="public-class-details text-left"
-            aria-labelledby="what-to-bring-heading"
-          >
-            <div className="mt-6">
-              <h2
-                id="what-to-bring-heading"
-                className="text-sm font-semibold uppercase tracking-[0.14em] text-brand-dark"
-              >
-                What to bring
-              </h2>
-              <p className="mt-2 whitespace-pre-wrap leading-7 text-slate-600">
-                {event.participant_instructions}
-              </p>
-            </div>
-          </section>
-        ) : null}
-        {available ? (
-          <div className="mt-8">
-            <RegistrationForm
-              events={registrationEvents.map((occurrence) => ({
-                name: occurrence.name,
-                starts_at: occurrence.starts_at,
-                ends_at: occurrence.ends_at,
-                timezone: occurrence.timezone,
-                venue_name: occurrence.venue_name ?? event.venue_name,
-                venue_street: occurrence.venue_street ?? event.venue_street,
-                venue_city: occurrence.venue_city ?? event.venue_city,
-                venue_state: occurrence.venue_state ?? event.venue_state,
-                venue_postal_code: occurrence.venue_postal_code ?? event.venue_postal_code,
-                host_organization_name:
-                  occurrence.host_organization_name ?? event.host_organization_name,
-                active_registration_count: occurrence.active_registration_count,
-                capacity: occurrence.capacity,
-                visibility: "PUBLIC",
-              }))}
-              participation={registrationConfig.participation}
-              dataUse={registrationConfig.data_use}
-              idempotencyKey={crypto.randomUUID()}
-              publicSlug={slug}
-              seriesMode={Boolean(event.series_slug)}
-              rememberedFirstName={remembered?.first_name ?? null}
-              legalDocuments={legalDocuments}
-              termsAccepted={termsAccepted}
-            />
-          </div>
-        ) : (
-          <p className="mx-auto mt-8 max-w-xl rounded-2xl border border-amber-300 bg-amber-50 p-4 text-center text-amber-900">
-            Registration is currently unavailable.
-          </p>
-        )}
+        <div className="mt-8">
+          <RegistrationForm
+            events={registrationEvents.map((occurrence) => ({
+              name: occurrence.name,
+              starts_at: occurrence.starts_at,
+              ends_at: occurrence.ends_at,
+              timezone: occurrence.timezone,
+              venue_name: occurrence.venue_name ?? event.venue_name,
+              venue_street: occurrence.venue_street ?? event.venue_street,
+              venue_city: occurrence.venue_city ?? event.venue_city,
+              venue_state: occurrence.venue_state ?? event.venue_state,
+              venue_postal_code: occurrence.venue_postal_code ?? event.venue_postal_code,
+              host_organization_name:
+                occurrence.host_organization_name ?? event.host_organization_name,
+              active_registration_count: occurrence.active_registration_count,
+              capacity: occurrence.capacity,
+              availability: occurrence.availability,
+              visibility: "PUBLIC",
+            }))}
+            legalPackage={registrationConfig.legal_package}
+            idempotencyKey={crypto.randomUUID()}
+            publicSlug={slug}
+            seriesMode={Boolean(event.series_slug)}
+            rememberedFirstName={remembered?.first_name ?? null}
+            rememberedGoals={remembered?.goals ?? null}
+            legalDocuments={legalDocuments}
+            eventInviteToken={invite ?? null}
+          />
+        </div>
       </div>
     </section>
   );

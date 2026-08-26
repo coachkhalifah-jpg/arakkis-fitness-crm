@@ -4,6 +4,7 @@ import { expect, test, type Browser } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import jsQR from "jsqr";
 import { PNG } from "pngjs";
+import { hashInvitationToken } from "../../src/lib/auth/tokens";
 
 function env(name: string) {
   const value = process.env[name];
@@ -72,14 +73,7 @@ function serviceClient() {
 }
 
 async function acceptRequiredLegal(page: import("@playwright/test").Page) {
-  for (const label of [
-    /Participation Agreement.*Version 1\.0\.0/,
-    /Assumption of Risk.*Version 1\.0\.0/,
-    /Cancellation.*Policy.*Version 1\.0\.0/,
-    /Terms of Use.*Version 1\.0\.0/,
-    /Privacy Policy.*Version 1\.0\.0/,
-  ])
-    await page.getByLabel(label).check();
+  await page.getByLabel("I agree to the Terms & Conditions").check();
 }
 
 async function systemFixture(capacity = 20) {
@@ -177,7 +171,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     const fixture = await systemFixture();
     await page.goto(`/register/${fixture.slug}`);
     await expect(page.getByLabel("Mobile phone")).toHaveAttribute("type", "tel");
-    await expect(page.getByLabel("Mobile phone")).toHaveAttribute("placeholder", "+1 518-867-5309");
+    await expect(page.getByLabel("Mobile phone")).toHaveAttribute("placeholder", "+1 111-111-1111");
     await expect(page.getByRole("heading", { name: "Phase 7 Browser Event" })).toBeVisible();
     await expect(page.locator('input[name="eventIds"]')).toHaveCount(0);
     expect(await page.content()).not.toContain(fixture.eventId);
@@ -198,7 +192,8 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await page.getByLabel("First name").fill("Test");
     await page.getByLabel("Last name").fill("Booker");
     await page.getByLabel("Mobile phone").fill("123");
-    await page.getByLabel("Email (optional)").fill("test.booker@example.test");
+    await page.getByRole("button", { name: /Tell us a little more/ }).click();
+    await page.getByLabel("Email").fill("test.booker@example.test");
     await page.locator('input[type="checkbox"]').nth(0).check();
     await acceptRequiredLegal(page);
     await page.getByLabel("Make future bookings faster on this device").check();
@@ -211,7 +206,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await expect(page.getByLabel("First name")).toHaveValue("Test");
     await expect(page.getByLabel("Last name")).toHaveValue("Booker");
     await expect(page.getByLabel("Mobile phone")).toHaveValue("123");
-    await expect(page.getByLabel("Email (optional)")).toHaveValue("test.booker@example.test");
+    await expect(page.getByLabel("Email")).toHaveValue("test.booker@example.test");
     await expect(page.locator('input[type="checkbox"]').nth(0)).toBeChecked();
     await expect(page.getByLabel("Make future bookings faster on this device")).toBeChecked();
     await expect(page.getByLabel("Mobile phone")).toBeFocused();
@@ -601,6 +596,95 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await context.close();
   });
 
+  test("enforces one pending invitation per normalized email and Organization", async () => {
+    const fixture = await systemFixture();
+    const service = serviceClient();
+    const email = `duplicate-${fixture.slug}@example.test`;
+    const expiresAt = "2099-06-20T00:00:00Z";
+    const firstToken = `${fixture.slug}-first-token-abcdefghijklmnopqrstuvwxyz`;
+    const secondToken = `${fixture.slug}-second-token-abcdefghijklmnopqrstuvwxyz`;
+    const actor = (
+      await service.from("admin_profiles").select("id").eq("email", fixture.email).single()
+    ).data?.id;
+    if (!actor) throw new Error("System Admin fixture profile was not found");
+    const first = await service.rpc("create_admin_invitation", {
+      p_invited_email: ` ${email.toUpperCase()} `,
+      p_token_hash: hashInvitationToken(firstToken),
+      p_token_expires_at: expiresAt,
+      p_invited_by_admin_id: actor,
+      p_organization_ids: [fixture.organizationId],
+    });
+    expect(first.error).toBeNull();
+    const duplicate = (token: string, organizationId = fixture.organizationId) =>
+      service.rpc("create_admin_invitation", {
+        p_invited_email: email,
+        p_token_hash: hashInvitationToken(token),
+        p_token_expires_at: expiresAt,
+        p_invited_by_admin_id: actor,
+        p_organization_ids: [organizationId],
+      });
+
+    const sequential = await duplicate(secondToken);
+    expect(sequential.error).toBeNull();
+    expect(sequential.data).toBe(first.data);
+    const { data: pendingRows, error: pendingError } = await service
+      .from("admin_invitations")
+      .select(
+        "id, status, admin_invitation_organizations!inner(organization_id, normalized_email, is_pending)",
+      )
+      .eq("normalized_email", email)
+      .eq("status", "PENDING")
+      .eq("admin_invitation_organizations.organization_id", fixture.organizationId)
+      .eq("admin_invitation_organizations.is_pending", true);
+    expect(pendingError).toBeNull();
+    expect(pendingRows).toHaveLength(1);
+
+    const concurrentEmail = `concurrent-${fixture.slug}@example.test`;
+    const concurrent = (token: string) =>
+      service.rpc("create_admin_invitation", {
+        p_invited_email: concurrentEmail,
+        p_token_hash: hashInvitationToken(token),
+        p_token_expires_at: expiresAt,
+        p_invited_by_admin_id: actor,
+        p_organization_ids: [fixture.organizationId],
+      });
+    const concurrentResults = await Promise.all([
+      concurrent(`${fixture.slug}-concurrent-a-token-abcdefghijklmnopqrstuvwxyz`),
+      concurrent(`${fixture.slug}-concurrent-b-token-abcdefghijklmnopqrstuvwxyz`),
+    ]);
+    expect(concurrentResults.every((result) => result.error === null)).toBe(true);
+    expect(concurrentResults[0].data).toBe(concurrentResults[1].data);
+
+    const otherOrganizationId = randomUUID();
+    localSql(
+      `insert into public.organizations (id, name) values (${sql(otherOrganizationId)}, ${sql(`Duplicate Invitation Other ${fixture.slug}`)})`,
+    );
+    const crossOrganization = await duplicate(
+      `${fixture.slug}-cross-org-token-abcdefghijklmnopqrstuvwxyz`,
+      otherOrganizationId,
+    );
+    expect(crossOrganization.error).toBeNull();
+    expect(crossOrganization.data).not.toBe(first.data);
+
+    const revoked = await service.rpc("revoke_admin_invitation", {
+      p_invitation_id: first.data,
+      p_actor_admin_id: actor,
+    });
+    expect(revoked.data).toBe(true);
+    const afterRevoke = await duplicate(
+      `${fixture.slug}-after-revoke-token-abcdefghijklmnopqrstuvwxyz`,
+    );
+    expect(afterRevoke.error).toBeNull();
+    expect(afterRevoke.data).not.toBe(first.data);
+
+    localSql(
+      `update public.admin_invitations set status = 'ACCEPTED', accepted_at = now() where id = '${afterRevoke.data}'`,
+    );
+    const afterUse = await duplicate(`${fixture.slug}-after-use-token-abcdefghijklmnopqrstuvwxyz`);
+    expect(afterUse.error).toBeNull();
+    expect(afterUse.data).not.toBe(afterRevoke.data);
+  });
+
   test("restricts invitation management to System Admin and denies scoped or inactive identities", async ({
     page,
   }) => {
@@ -682,7 +766,6 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await page.getByLabel("Last name").fill("Participant");
     await page.getByLabel("Mobile phone").fill("+15185550129");
     await acceptRequiredLegal(page);
-    await page.getByLabel(/Privacy Policy.*Version 1\.0\.0/).check();
     await page.getByRole("button", { name: "Book Class" }).click();
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
 

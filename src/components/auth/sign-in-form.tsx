@@ -9,41 +9,37 @@ const initialState: AuthActionState = {};
 export function SignInForm({ next }: { next: string }) {
   const [state, action, pending] = useActionState(signIn, initialState);
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} className="ops-auth-form">
       <input type="hidden" name="next" value={next} />
-      <div>
-        <label className="mb-2 block text-sm font-medium" htmlFor="email">
-          Email
-        </label>
+      <label htmlFor="email">
+        Email or username
         <input
-          className="w-full rounded-md border border-slate-300 px-3 py-2"
           id="email"
           name="email"
           type="email"
           autoComplete="email"
           required
+          placeholder="you@arakkis.test"
         />
-      </div>
-      <div>
-        <label className="mb-2 block text-sm font-medium" htmlFor="password">
-          Password
-        </label>
+      </label>
+      <label htmlFor="password">
+        Password
         <input
-          className="w-full rounded-md border border-slate-300 px-3 py-2"
           id="password"
           name="password"
           type="password"
           autoComplete="current-password"
           required
+          placeholder="Enter your password"
         />
-      </div>
+      </label>
       {state.error ? (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="ops-auth-error" role="alert">
           {state.error}
         </p>
       ) : null}
-      <Button disabled={pending} type="submit">
-        {pending ? "Signing in…" : "Sign in"}
+      <Button className="button ops-auth-submit" disabled={pending} type="submit">
+        {pending ? "Opening workspace…" : "Sign in ↗"}
       </Button>
     </form>
   );

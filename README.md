@@ -12,7 +12,7 @@ Production registration remains blocked until the Participation acknowledgment i
 
 ## Prerequisites and installation
 
-- Node.js 22.x and pnpm 10.x
+- Node.js 22.22.1 and pnpm 10.15.1
 - Git
 - Docker and Supabase CLI 2.110.0
 
@@ -22,7 +22,7 @@ pnpm install
 pnpm db:start
 cp .env.example .env.local
 pnpm db:status
-pnpm dev
+pnpm uat:start
 ```
 
 `.env.local` must be filled with local, non-production values before the app reads the environment. Never commit it.
@@ -38,7 +38,8 @@ Start local Supabase and apply migrations with `bash scripts/validate-database.s
 ## Commands
 
 ```bash
-pnpm dev              # Next.js development server
+pnpm dev              # raw Next.js development server
+pnpm uat:start        # canonical UAT server: 127.0.0.1:3000, with port-owner guard
 pnpm dev:stack        # local Supabase then Next.js
 pnpm db:start         # start local Supabase/Docker stack
 pnpm db:status        # show local services and keys; do not paste secrets
@@ -66,15 +67,15 @@ pnpm db:stop          # stop local stack
 - Stable event registration: `http://127.0.0.1:3000/register/<slug>`
 - Administrator login: `http://127.0.0.1:3000/admin/sign-in`
 
-`pnpm demo:reset` creates fresh local-only Auth users and writes their random credentials to the
+`pnpm demo:reset` creates fresh local-only Auth users and writes their credentials to the
 ignored `.demo-credentials.local` file. It also writes a generated route index to
 `.demo-routes.local.md`. Both files are replaced on every reset and must never be staged or used
 outside local development. See `docs/27-local-development.md` for the complete local workflow.
 
-The fixture catalog includes System Admin, Organization A and B Host Admins, a non-admin regression
-user, and an inactive-admin regression user. Participant fixtures are synthetic records (participants
+The fixture catalog includes System Admin, Organization A and B Host Admins, an Empty Organization
+Host Admin, a non-admin regression user, and an inactive-admin regression user. Participant fixtures are synthetic records (participants
 do not authenticate in the MVP): New, Returning, Existing Registered, Walk-in, and Capacity/Duplicate.
-It also includes two active organizations with two venues each, published/open, full, cancelled,
+It also includes three active organizations, published/open, draft, reopened, full, cancelled,
 unpublished, multi-date, existing-registration, and finalized-attendance events. Local email remains
 inside Supabase's Mailpit inbox at `http://127.0.0.1:54324`.
 

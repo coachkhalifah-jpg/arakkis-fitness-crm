@@ -19,30 +19,30 @@ function safeError(error: unknown) {
 
 export async function updateFollowUpMessage(form: FormData) {
   try {
-    await requireSystemAdmin("/admin/follow-ups");
+    await requireSystemAdmin("/admin/community");
     const db = await createClient();
     const { error } = await db.rpc("phase6_update_follow_up_task", {
       p_task_id: value(form, "taskId"),
       p_suggested_message: value(form, "suggestedMessage"),
     } as never);
     if (error) throw new Error(error.message);
-    revalidatePath("/admin/follow-ups");
+    revalidatePath("/admin/community");
   } catch (error) {
     throw new Error(safeError(error));
   }
 }
 
 export async function recordFollowUpCopy(taskId: string) {
-  await requireSystemAdmin("/admin/follow-ups");
+  await requireSystemAdmin("/admin/community");
   const db = await createClient();
   const { error } = await db.rpc("phase6_record_follow_up_copy", { p_task_id: taskId } as never);
   if (error) throw new Error(safeError(error));
-  revalidatePath("/admin/follow-ups");
+  revalidatePath("/admin/community");
 }
 
 export async function completeFollowUpTask(form: FormData) {
   try {
-    await requireSystemAdmin("/admin/follow-ups");
+    await requireSystemAdmin("/admin/community");
     const db = await createClient();
     const { error } = await db.rpc("phase6_complete_follow_up_task", {
       p_task_id: value(form, "taskId"),
@@ -50,7 +50,7 @@ export async function completeFollowUpTask(form: FormData) {
       p_notes: value(form, "notes") || null,
     } as never);
     if (error) throw new Error(error.message);
-    revalidatePath("/admin/follow-ups");
+    revalidatePath("/admin/community");
     revalidatePath(`/admin/participants/${value(form, "participantId")}`);
   } catch (error) {
     throw new Error(safeError(error));
@@ -59,14 +59,14 @@ export async function completeFollowUpTask(form: FormData) {
 
 export async function dismissFollowUpTask(form: FormData) {
   try {
-    await requireSystemAdmin("/admin/follow-ups");
+    await requireSystemAdmin("/admin/community");
     const db = await createClient();
     const { error } = await db.rpc("phase6_dismiss_follow_up_task", {
       p_task_id: value(form, "taskId"),
       p_reason: value(form, "reason"),
     } as never);
     if (error) throw new Error(error.message);
-    revalidatePath("/admin/follow-ups");
+    revalidatePath("/admin/community");
   } catch (error) {
     throw new Error(safeError(error));
   }
@@ -74,7 +74,7 @@ export async function dismissFollowUpTask(form: FormData) {
 
 export async function snoozeFollowUpTask(form: FormData) {
   try {
-    await requireSystemAdmin("/admin/follow-ups");
+    await requireSystemAdmin("/admin/community");
     const dueAt = value(form, "dueAt");
     if (!dueAt || Number.isNaN(Date.parse(dueAt))) throw new Error("invalid snooze date");
     const db = await createClient();
@@ -83,7 +83,7 @@ export async function snoozeFollowUpTask(form: FormData) {
       p_due_at: dueAt,
     } as never);
     if (error) throw new Error(error.message);
-    revalidatePath("/admin/follow-ups");
+    revalidatePath("/admin/community");
   } catch (error) {
     throw new Error(safeError(error));
   }
@@ -91,32 +91,32 @@ export async function snoozeFollowUpTask(form: FormData) {
 
 export async function updateGroupChatReminderMessage(form: FormData) {
   try {
-    await requireSystemAdmin("/admin/follow-ups?mode=group");
+    await requireSystemAdmin("/admin/community?mode=group");
     const db = await createClient();
     const { error } = await db.rpc("phase6_update_group_chat_reminder", {
       p_reminder_id: value(form, "reminderId"),
       p_suggested_message: value(form, "suggestedMessage"),
     } as never);
     if (error) throw new Error(error.message);
-    revalidatePath("/admin/follow-ups");
+    revalidatePath("/admin/community");
   } catch (error) {
     throw new Error(safeError(error));
   }
 }
 
 export async function recordGroupChatReminderCopy(reminderId: string) {
-  await requireSystemAdmin("/admin/follow-ups?mode=group");
+  await requireSystemAdmin("/admin/community?mode=group");
   const db = await createClient();
   const { error } = await db.rpc("phase6_record_group_chat_reminder_copy", {
     p_reminder_id: reminderId,
   } as never);
   if (error) throw new Error(safeError(error));
-  revalidatePath("/admin/follow-ups");
+  revalidatePath("/admin/community");
 }
 
 export async function completeGroupChatReminder(form: FormData) {
   try {
-    await requireSystemAdmin("/admin/follow-ups?mode=group");
+    await requireSystemAdmin("/admin/community?mode=group");
     const db = await createClient();
     const { error } = await db.rpc("phase6_complete_group_chat_reminder", {
       p_reminder_id: value(form, "reminderId"),
@@ -124,7 +124,7 @@ export async function completeGroupChatReminder(form: FormData) {
       p_notes: value(form, "notes") || null,
     } as never);
     if (error) throw new Error(error.message);
-    revalidatePath("/admin/follow-ups");
+    revalidatePath("/admin/community");
   } catch (error) {
     throw new Error(safeError(error));
   }
@@ -132,14 +132,14 @@ export async function completeGroupChatReminder(form: FormData) {
 
 export async function dismissGroupChatReminder(form: FormData) {
   try {
-    await requireSystemAdmin("/admin/follow-ups?mode=group");
+    await requireSystemAdmin("/admin/community?mode=group");
     const db = await createClient();
     const { error } = await db.rpc("phase6_dismiss_group_chat_reminder", {
       p_reminder_id: value(form, "reminderId"),
       p_reason: value(form, "reason"),
     } as never);
     if (error) throw new Error(error.message);
-    revalidatePath("/admin/follow-ups");
+    revalidatePath("/admin/community");
   } catch (error) {
     throw new Error(safeError(error));
   }
@@ -147,7 +147,7 @@ export async function dismissGroupChatReminder(form: FormData) {
 
 export async function snoozeGroupChatReminder(form: FormData) {
   try {
-    await requireSystemAdmin("/admin/follow-ups?mode=group");
+    await requireSystemAdmin("/admin/community?mode=group");
     const dueAt = value(form, "dueAt");
     if (!dueAt || Number.isNaN(Date.parse(dueAt))) throw new Error("invalid snooze date");
     const db = await createClient();
@@ -156,7 +156,7 @@ export async function snoozeGroupChatReminder(form: FormData) {
       p_due_at: dueAt,
     } as never);
     if (error) throw new Error(error.message);
-    revalidatePath("/admin/follow-ups");
+    revalidatePath("/admin/community");
   } catch (error) {
     throw new Error(safeError(error));
   }
@@ -164,14 +164,14 @@ export async function snoozeGroupChatReminder(form: FormData) {
 
 export async function assignFollowUpTask(form: FormData) {
   try {
-    await requireSystemAdmin("/admin/follow-ups");
+    await requireSystemAdmin("/admin/community");
     const db = await createClient();
     const { error } = await db.rpc("phase6_assign_follow_up_task", {
       p_task_id: value(form, "taskId"),
       p_assigned_admin_id: value(form, "assignedAdminId"),
     } as never);
     if (error) throw new Error(error.message);
-    revalidatePath("/admin/follow-ups");
+    revalidatePath("/admin/community");
   } catch (error) {
     throw new Error(safeError(error));
   }

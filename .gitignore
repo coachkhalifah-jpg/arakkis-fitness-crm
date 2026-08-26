@@ -1,6 +1,7 @@
 node_modules/
 .pnpm-store/
 .next/
+.next-diagnose-*/
 .next-playwright/
 out/
 coverage/
@@ -13,5 +14,7 @@ test-results/
 !.env.example
 .demo-credentials.local
 .demo-routes.local.md
+.demo-credentials*.local
+.demo-routes*.md
 *.log
 .DS_Store

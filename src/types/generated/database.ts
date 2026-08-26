@@ -7,1528 +7,1681 @@ export type Database = {
     Tables: {
       organizations: {
         Row: {
-          id: string;
-          name: string;
-          organization_type: string | null;
-          street: string | null;
-          city: string | null;
-          state: string | null;
-          postal_code: string | null;
-          active_status: Database["public"]["Enums"]["organization_status"];
-          created_at: string;
-          updated_at: string;
-          archived_at: string | null;
+      id: string
+      name: string
+      organization_type: string | null
+      street: string | null
+      city: string | null
+      state: string | null
+      postal_code: string | null
+      active_status: Database["public"]["Enums"]["organization_status"]
+      created_at: string
+      updated_at: string
+      archived_at: string | null
         };
         Insert: {
-          id?: string;
-          name: string;
-          organization_type?: string;
-          street?: string;
-          city?: string;
-          state?: string;
-          postal_code?: string;
-          active_status?: Database["public"]["Enums"]["organization_status"];
-          created_at?: string;
-          updated_at?: string;
-          archived_at?: string;
+      id?: string
+      name: string
+      organization_type?: string
+      street?: string
+      city?: string
+      state?: string
+      postal_code?: string
+      active_status?: Database["public"]["Enums"]["organization_status"]
+      created_at?: string
+      updated_at?: string
+      archived_at?: string
         };
         Update: {
-          id?: string;
-          name: string;
-          organization_type?: string;
-          street?: string;
-          city?: string;
-          state?: string;
-          postal_code?: string;
-          active_status?: Database["public"]["Enums"]["organization_status"];
-          created_at?: string;
-          updated_at?: string;
-          archived_at?: string;
+      id?: string
+      name: string
+      organization_type?: string
+      street?: string
+      city?: string
+      state?: string
+      postal_code?: string
+      active_status?: Database["public"]["Enums"]["organization_status"]
+      created_at?: string
+      updated_at?: string
+      archived_at?: string
         };
         Relationships: [];
       };
       venues: {
         Row: {
-          id: string;
-          organization_id: string | null;
-          name: string;
-          street: string;
-          city: string;
-          state: string;
-          postal_code: string;
-          timezone: string;
-          active_status: Database["public"]["Enums"]["organization_status"];
-          created_at: string;
-          updated_at: string;
-          archived_at: string | null;
+      id: string
+      organization_id: string | null
+      name: string
+      street: string
+      city: string
+      state: string
+      postal_code: string
+      timezone: string
+      active_status: Database["public"]["Enums"]["organization_status"]
+      created_at: string
+      updated_at: string
+      archived_at: string | null
         };
         Insert: {
-          id?: string;
-          organization_id?: string;
-          name: string;
-          street: string;
-          city: string;
-          state: string;
-          postal_code: string;
-          timezone?: string;
-          active_status?: Database["public"]["Enums"]["organization_status"];
-          created_at?: string;
-          updated_at?: string;
-          archived_at?: string;
+      id?: string
+      organization_id?: string
+      name: string
+      street: string
+      city: string
+      state: string
+      postal_code: string
+      timezone?: string
+      active_status?: Database["public"]["Enums"]["organization_status"]
+      created_at?: string
+      updated_at?: string
+      archived_at?: string
         };
         Update: {
-          id?: string;
-          organization_id?: string;
-          name: string;
-          street: string;
-          city: string;
-          state: string;
-          postal_code: string;
-          timezone?: string;
-          active_status?: Database["public"]["Enums"]["organization_status"];
-          created_at?: string;
-          updated_at?: string;
-          archived_at?: string;
+      id?: string
+      organization_id?: string
+      name: string
+      street: string
+      city: string
+      state: string
+      postal_code: string
+      timezone?: string
+      active_status?: Database["public"]["Enums"]["organization_status"]
+      created_at?: string
+      updated_at?: string
+      archived_at?: string
         };
         Relationships: [];
       };
       admin_profiles: {
         Row: {
-          id: string;
-          display_name: string;
-          email: string;
-          normalized_email: string | null;
-          role: Database["public"]["Enums"]["admin_role"];
-          status: Database["public"]["Enums"]["admin_status"];
-          created_at: string;
-          updated_at: string;
+      id: string
+      display_name: string
+      email: string
+      normalized_email: string | null
+      role: Database["public"]["Enums"]["admin_role"]
+      status: Database["public"]["Enums"]["admin_status"]
+      created_at: string
+      updated_at: string
         };
         Insert: {
-          id: string;
-          display_name: string;
-          email: string;
-          normalized_email?: string;
-          role: Database["public"]["Enums"]["admin_role"];
-          status: Database["public"]["Enums"]["admin_status"];
-          created_at?: string;
-          updated_at?: string;
+      id: string
+      display_name: string
+      email: string
+      normalized_email?: string
+      role: Database["public"]["Enums"]["admin_role"]
+      status: Database["public"]["Enums"]["admin_status"]
+      created_at?: string
+      updated_at?: string
         };
         Update: {
-          id: string;
-          display_name: string;
-          email: string;
-          normalized_email?: string;
-          role: Database["public"]["Enums"]["admin_role"];
-          status: Database["public"]["Enums"]["admin_status"];
-          created_at?: string;
-          updated_at?: string;
+      id: string
+      display_name: string
+      email: string
+      normalized_email?: string
+      role: Database["public"]["Enums"]["admin_role"]
+      status: Database["public"]["Enums"]["admin_status"]
+      created_at?: string
+      updated_at?: string
         };
         Relationships: [];
       };
       admin_invitations: {
         Row: {
-          id: string;
-          invited_email: string;
-          normalized_email: string | null;
-          role: Database["public"]["Enums"]["admin_role"];
-          status: Database["public"]["Enums"]["invitation_status"];
-          token_hash: string;
-          token_expires_at: string;
-          issued_at: string;
-          invited_by_admin_id: string;
-          accepted_auth_user_id: string | null;
-          accepted_admin_profile_id: string | null;
-          accepted_at: string | null;
-          revoked_at: string | null;
-          suspended_at: string | null;
-          reactivated_at: string | null;
+      id: string
+      invited_email: string
+      normalized_email: string | null
+      role: Database["public"]["Enums"]["admin_role"]
+      status: Database["public"]["Enums"]["invitation_status"]
+      token_hash: string
+      token_expires_at: string
+      issued_at: string
+      invited_by_admin_id: string
+      accepted_auth_user_id: string | null
+      accepted_admin_profile_id: string | null
+      accepted_at: string | null
+      revoked_at: string | null
+      suspended_at: string | null
+      reactivated_at: string | null
         };
         Insert: {
-          id?: string;
-          invited_email: string;
-          normalized_email?: string;
-          role?: Database["public"]["Enums"]["admin_role"];
-          status?: Database["public"]["Enums"]["invitation_status"];
-          token_hash: string;
-          token_expires_at: string;
-          issued_at?: string;
-          invited_by_admin_id: string;
-          accepted_auth_user_id?: string;
-          accepted_admin_profile_id?: string;
-          accepted_at?: string;
-          revoked_at?: string;
-          suspended_at?: string;
-          reactivated_at?: string;
+      id?: string
+      invited_email: string
+      normalized_email?: string
+      role?: Database["public"]["Enums"]["admin_role"]
+      status?: Database["public"]["Enums"]["invitation_status"]
+      token_hash: string
+      token_expires_at: string
+      issued_at?: string
+      invited_by_admin_id: string
+      accepted_auth_user_id?: string
+      accepted_admin_profile_id?: string
+      accepted_at?: string
+      revoked_at?: string
+      suspended_at?: string
+      reactivated_at?: string
         };
         Update: {
-          id?: string;
-          invited_email: string;
-          normalized_email?: string;
-          role?: Database["public"]["Enums"]["admin_role"];
-          status?: Database["public"]["Enums"]["invitation_status"];
-          token_hash: string;
-          token_expires_at: string;
-          issued_at?: string;
-          invited_by_admin_id: string;
-          accepted_auth_user_id?: string;
-          accepted_admin_profile_id?: string;
-          accepted_at?: string;
-          revoked_at?: string;
-          suspended_at?: string;
-          reactivated_at?: string;
+      id?: string
+      invited_email: string
+      normalized_email?: string
+      role?: Database["public"]["Enums"]["admin_role"]
+      status?: Database["public"]["Enums"]["invitation_status"]
+      token_hash: string
+      token_expires_at: string
+      issued_at?: string
+      invited_by_admin_id: string
+      accepted_auth_user_id?: string
+      accepted_admin_profile_id?: string
+      accepted_at?: string
+      revoked_at?: string
+      suspended_at?: string
+      reactivated_at?: string
         };
         Relationships: [];
       };
       admin_organization_assignments: {
         Row: {
-          admin_profile_id: string;
-          organization_id: string;
-          created_by_admin_id: string;
-          created_at: string;
-          revoked_at: string | null;
+      admin_profile_id: string
+      organization_id: string
+      created_by_admin_id: string
+      created_at: string
+      revoked_at: string | null
         };
         Insert: {
-          admin_profile_id: string;
-          organization_id: string;
-          created_by_admin_id: string;
-          created_at?: string;
-          revoked_at?: string;
+      admin_profile_id: string
+      organization_id: string
+      created_by_admin_id: string
+      created_at?: string
+      revoked_at?: string
         };
         Update: {
-          admin_profile_id: string;
-          organization_id: string;
-          created_by_admin_id: string;
-          created_at?: string;
-          revoked_at?: string;
+      admin_profile_id: string
+      organization_id: string
+      created_by_admin_id: string
+      created_at?: string
+      revoked_at?: string
         };
         Relationships: [];
       };
       events: {
         Row: {
-          id: string;
-          host_organization_id: string;
-          venue_id: string;
-          name: string;
-          description: string | null;
-          participant_instructions: string | null;
-          starts_at: string;
-          ends_at: string;
-          timezone: string;
-          capacity: number;
-          registration_deadline: string;
-          status: Database["public"]["Enums"]["event_status"];
-          visibility: Database["public"]["Enums"]["event_visibility"];
-          whatsapp_group_invite_url: string | null;
-          whatsapp_invitation_message: string | null;
-          attendance_processing_state: Database["public"]["Enums"]["attendance_processing_state"];
-          created_by_admin_id: string;
-          created_at: string;
-          updated_at: string;
-          archived_at: string | null;
+      id: string
+      host_organization_id: string
+      venue_id: string
+      name: string
+      event_title_color: string
+      description: string | null
+      participant_instructions: string | null
+      starts_at: string
+      ends_at: string
+      timezone: string
+      capacity: number
+      registration_deadline: string
+      status: Database["public"]["Enums"]["event_status"]
+      visibility: Database["public"]["Enums"]["event_visibility"]
+      whatsapp_group_invite_url: string | null
+      whatsapp_invitation_message: string | null
+      attendance_processing_state: Database["public"]["Enums"]["attendance_processing_state"]
+      schedule_rule_id: string | null
+      generated_local_date: string | null
+      created_by_admin_id: string
+      created_at: string
+      updated_at: string
+      archived_at: string | null
         };
         Insert: {
-          id?: string;
-          host_organization_id: string;
-          venue_id: string;
-          name: string;
-          description?: string;
-          participant_instructions?: string;
-          starts_at: string;
-          ends_at: string;
-          timezone: string;
-          capacity: number;
-          registration_deadline: string;
-          status?: Database["public"]["Enums"]["event_status"];
-          visibility?: Database["public"]["Enums"]["event_visibility"];
-          whatsapp_group_invite_url?: string;
-          whatsapp_invitation_message?: string;
-          attendance_processing_state?: Database["public"]["Enums"]["attendance_processing_state"];
-          created_by_admin_id: string;
-          created_at?: string;
-          updated_at?: string;
-          archived_at?: string;
+      id?: string
+      host_organization_id: string
+      venue_id: string
+      name: string
+      event_title_color?: string
+      description?: string
+      participant_instructions?: string
+      starts_at: string
+      ends_at: string
+      timezone: string
+      capacity: number
+      registration_deadline: string
+      status?: Database["public"]["Enums"]["event_status"]
+      visibility?: Database["public"]["Enums"]["event_visibility"]
+      whatsapp_group_invite_url?: string
+      whatsapp_invitation_message?: string
+      attendance_processing_state?: Database["public"]["Enums"]["attendance_processing_state"]
+      schedule_rule_id?: string
+      generated_local_date?: string
+      created_by_admin_id: string
+      created_at?: string
+      updated_at?: string
+      archived_at?: string
         };
         Update: {
-          id?: string;
-          host_organization_id: string;
-          venue_id: string;
-          name: string;
-          description?: string;
-          participant_instructions?: string;
-          starts_at: string;
-          ends_at: string;
-          timezone: string;
-          capacity: number;
-          registration_deadline: string;
-          status?: Database["public"]["Enums"]["event_status"];
-          visibility?: Database["public"]["Enums"]["event_visibility"];
-          whatsapp_group_invite_url?: string;
-          whatsapp_invitation_message?: string;
-          attendance_processing_state?: Database["public"]["Enums"]["attendance_processing_state"];
-          created_by_admin_id: string;
-          created_at?: string;
-          updated_at?: string;
-          archived_at?: string;
+      id?: string
+      host_organization_id: string
+      venue_id: string
+      name: string
+      event_title_color?: string
+      description?: string
+      participant_instructions?: string
+      starts_at: string
+      ends_at: string
+      timezone: string
+      capacity: number
+      registration_deadline: string
+      status?: Database["public"]["Enums"]["event_status"]
+      visibility?: Database["public"]["Enums"]["event_visibility"]
+      whatsapp_group_invite_url?: string
+      whatsapp_invitation_message?: string
+      attendance_processing_state?: Database["public"]["Enums"]["attendance_processing_state"]
+      schedule_rule_id?: string
+      generated_local_date?: string
+      created_by_admin_id: string
+      created_at?: string
+      updated_at?: string
+      archived_at?: string
         };
         Relationships: [];
       };
       participants: {
         Row: {
-          id: string;
-          first_name: string;
-          last_name: string;
-          normalized_first_name: string;
-          normalized_last_name: string;
-          display_phone: string;
-          normalized_phone: string;
-          phone_country: string;
-          email: string | null;
-          normalized_email: string | null;
-          primary_affiliation_organization_id: string | null;
-          affiliation_other_text: string | null;
-          fitness_experience: string | null;
-          status: Database["public"]["Enums"]["participant_status"];
-          created_at: string;
-          updated_at: string;
-          archived_at: string | null;
+      id: string
+      first_name: string
+      last_name: string
+      normalized_first_name: string
+      normalized_last_name: string
+      display_phone: string
+      normalized_phone: string
+      phone_country: string
+      email: string | null
+      normalized_email: string | null
+      primary_affiliation_organization_id: string | null
+      affiliation_other_text: string | null
+      fitness_experience: string | null
+      goals: string | null
+      status: Database["public"]["Enums"]["participant_status"]
+      created_at: string
+      updated_at: string
+      archived_at: string | null
         };
         Insert: {
-          id?: string;
-          first_name: string;
-          last_name: string;
-          normalized_first_name: string;
-          normalized_last_name: string;
-          display_phone: string;
-          normalized_phone: string;
-          phone_country: string;
-          email?: string;
-          normalized_email?: string;
-          primary_affiliation_organization_id?: string;
-          affiliation_other_text?: string;
-          fitness_experience?: string;
-          status?: Database["public"]["Enums"]["participant_status"];
-          created_at?: string;
-          updated_at?: string;
-          archived_at?: string;
+      id?: string
+      first_name: string
+      last_name: string
+      normalized_first_name: string
+      normalized_last_name: string
+      display_phone: string
+      normalized_phone: string
+      phone_country: string
+      email?: string
+      normalized_email?: string
+      primary_affiliation_organization_id?: string
+      affiliation_other_text?: string
+      fitness_experience?: string
+      goals?: string
+      status?: Database["public"]["Enums"]["participant_status"]
+      created_at?: string
+      updated_at?: string
+      archived_at?: string
         };
         Update: {
-          id?: string;
-          first_name: string;
-          last_name: string;
-          normalized_first_name: string;
-          normalized_last_name: string;
-          display_phone: string;
-          normalized_phone: string;
-          phone_country: string;
-          email?: string;
-          normalized_email?: string;
-          primary_affiliation_organization_id?: string;
-          affiliation_other_text?: string;
-          fitness_experience?: string;
-          status?: Database["public"]["Enums"]["participant_status"];
-          created_at?: string;
-          updated_at?: string;
-          archived_at?: string;
+      id?: string
+      first_name: string
+      last_name: string
+      normalized_first_name: string
+      normalized_last_name: string
+      display_phone: string
+      normalized_phone: string
+      phone_country: string
+      email?: string
+      normalized_email?: string
+      primary_affiliation_organization_id?: string
+      affiliation_other_text?: string
+      fitness_experience?: string
+      goals?: string
+      status?: Database["public"]["Enums"]["participant_status"]
+      created_at?: string
+      updated_at?: string
+      archived_at?: string
         };
         Relationships: [];
       };
       admin_invitation_organizations: {
         Row: {
-          invitation_id: string;
-          organization_id: string;
-          created_at: string;
+      invitation_id: string
+      organization_id: string
+      created_at: string
         };
         Insert: {
-          invitation_id: string;
-          organization_id: string;
-          created_at?: string;
+      invitation_id: string
+      organization_id: string
+      created_at?: string
         };
         Update: {
-          invitation_id: string;
-          organization_id: string;
-          created_at?: string;
+      invitation_id: string
+      organization_id: string
+      created_at?: string
         };
         Relationships: [];
       };
       event_eligible_organizations: {
         Row: {
-          event_id: string;
-          organization_id: string;
-          created_at: string;
+      event_id: string
+      organization_id: string
+      created_at: string
         };
         Insert: {
-          event_id: string;
-          organization_id: string;
-          created_at?: string;
+      event_id: string
+      organization_id: string
+      created_at?: string
         };
         Update: {
-          event_id: string;
-          organization_id: string;
-          created_at?: string;
+      event_id: string
+      organization_id: string
+      created_at?: string
         };
         Relationships: [];
       };
       acknowledgment_versions: {
         Row: {
-          id: string;
-          type: Database["public"]["Enums"]["acknowledgment_type"];
-          version: number;
-          exact_text: string;
-          content_hash: string;
-          effective_at: string;
-          retired_at: string | null;
-          legal_status: Database["public"]["Enums"]["legal_status"];
-          created_at: string;
-          created_by_admin_id: string;
+      id: string
+      type: Database["public"]["Enums"]["acknowledgment_type"]
+      version: number
+      exact_text: string
+      content_hash: string
+      effective_at: string
+      retired_at: string | null
+      legal_status: Database["public"]["Enums"]["legal_status"]
+      created_at: string
+      created_by_admin_id: string
         };
         Insert: {
-          id?: string;
-          type: Database["public"]["Enums"]["acknowledgment_type"];
-          version: number;
-          exact_text: string;
-          content_hash: string;
-          effective_at: string;
-          retired_at?: string;
-          legal_status: Database["public"]["Enums"]["legal_status"];
-          created_at?: string;
-          created_by_admin_id: string;
+      id?: string
+      type: Database["public"]["Enums"]["acknowledgment_type"]
+      version: number
+      exact_text: string
+      content_hash: string
+      effective_at: string
+      retired_at?: string
+      legal_status: Database["public"]["Enums"]["legal_status"]
+      created_at?: string
+      created_by_admin_id: string
         };
         Update: {
-          id?: string;
-          type: Database["public"]["Enums"]["acknowledgment_type"];
-          version: number;
-          exact_text: string;
-          content_hash: string;
-          effective_at: string;
-          retired_at?: string;
-          legal_status: Database["public"]["Enums"]["legal_status"];
-          created_at?: string;
-          created_by_admin_id: string;
+      id?: string
+      type: Database["public"]["Enums"]["acknowledgment_type"]
+      version: number
+      exact_text: string
+      content_hash: string
+      effective_at: string
+      retired_at?: string
+      legal_status: Database["public"]["Enums"]["legal_status"]
+      created_at?: string
+      created_by_admin_id: string
         };
         Relationships: [];
       };
       registration_groups: {
         Row: {
-          id: string;
-          participant_id: string;
-          submission_source: Database["public"]["Enums"]["submission_source"];
-          participation_acknowledgment_version_id: string;
-          participation_acknowledged_at: string;
-          data_use_acknowledgment_version_id: string;
-          data_use_acknowledged_at: string;
-          submitted_at: string;
-          created_by_admin_id: string | null;
-          idempotency_key: string | null;
+      id: string
+      participant_id: string
+      submission_source: Database["public"]["Enums"]["submission_source"]
+      participation_acknowledgment_version_id: string
+      participation_acknowledged_at: string
+      data_use_acknowledgment_version_id: string | null
+      data_use_acknowledged_at: string | null
+      submitted_at: string
+      created_by_admin_id: string | null
+      idempotency_key: string | null
         };
         Insert: {
-          id?: string;
-          participant_id: string;
-          submission_source: Database["public"]["Enums"]["submission_source"];
-          participation_acknowledgment_version_id: string;
-          participation_acknowledged_at: string;
-          data_use_acknowledgment_version_id: string;
-          data_use_acknowledged_at: string;
-          submitted_at?: string;
-          created_by_admin_id?: string;
-          idempotency_key?: string;
+      id?: string
+      participant_id: string
+      submission_source: Database["public"]["Enums"]["submission_source"]
+      participation_acknowledgment_version_id: string
+      participation_acknowledged_at: string
+      data_use_acknowledgment_version_id?: string | null
+      data_use_acknowledged_at?: string | null
+      submitted_at?: string
+      created_by_admin_id?: string
+      idempotency_key?: string
         };
         Update: {
-          id?: string;
-          participant_id: string;
-          submission_source: Database["public"]["Enums"]["submission_source"];
-          participation_acknowledgment_version_id: string;
-          participation_acknowledged_at: string;
-          data_use_acknowledgment_version_id: string;
-          data_use_acknowledged_at: string;
-          submitted_at?: string;
-          created_by_admin_id?: string;
-          idempotency_key?: string;
+      id?: string
+      participant_id: string
+      submission_source: Database["public"]["Enums"]["submission_source"]
+      participation_acknowledgment_version_id: string
+      participation_acknowledged_at: string
+      data_use_acknowledgment_version_id?: string | null
+      data_use_acknowledged_at?: string | null
+      submitted_at?: string
+      created_by_admin_id?: string
+      idempotency_key?: string
         };
         Relationships: [];
       };
       possible_duplicate_cases: {
         Row: {
-          id: string;
-          candidate_participant_id: string;
-          possible_match_participant_id: string | null;
-          source_registration_id: string | null;
-          source_registration_group_id: string | null;
-          matching_signals: Json;
-          normalized_values: Json;
-          status: Database["public"]["Enums"]["duplicate_case_status"];
-          reviewed_by_admin_id: string | null;
-          reviewed_at: string | null;
-          review_notes: string | null;
-          created_at: string;
+      id: string
+      candidate_participant_id: string
+      possible_match_participant_id: string | null
+      source_registration_id: string | null
+      source_registration_group_id: string | null
+      matching_signals: Json
+      normalized_values: Json
+      status: Database["public"]["Enums"]["duplicate_case_status"]
+      reviewed_by_admin_id: string | null
+      reviewed_at: string | null
+      review_notes: string | null
+      created_at: string
         };
         Insert: {
-          id?: string;
-          candidate_participant_id: string;
-          possible_match_participant_id?: string;
-          source_registration_id?: string;
-          source_registration_group_id?: string;
-          matching_signals: Json;
-          normalized_values: Json;
-          status?: Database["public"]["Enums"]["duplicate_case_status"];
-          reviewed_by_admin_id?: string;
-          reviewed_at?: string;
-          review_notes?: string;
-          created_at?: string;
+      id?: string
+      candidate_participant_id: string
+      possible_match_participant_id?: string
+      source_registration_id?: string
+      source_registration_group_id?: string
+      matching_signals: Json
+      normalized_values: Json
+      status?: Database["public"]["Enums"]["duplicate_case_status"]
+      reviewed_by_admin_id?: string
+      reviewed_at?: string
+      review_notes?: string
+      created_at?: string
         };
         Update: {
-          id?: string;
-          candidate_participant_id: string;
-          possible_match_participant_id?: string;
-          source_registration_id?: string;
-          source_registration_group_id?: string;
-          matching_signals: Json;
-          normalized_values: Json;
-          status?: Database["public"]["Enums"]["duplicate_case_status"];
-          reviewed_by_admin_id?: string;
-          reviewed_at?: string;
-          review_notes?: string;
-          created_at?: string;
+      id?: string
+      candidate_participant_id: string
+      possible_match_participant_id?: string
+      source_registration_id?: string
+      source_registration_group_id?: string
+      matching_signals: Json
+      normalized_values: Json
+      status?: Database["public"]["Enums"]["duplicate_case_status"]
+      reviewed_by_admin_id?: string
+      reviewed_at?: string
+      review_notes?: string
+      created_at?: string
         };
         Relationships: [];
       };
       registrations: {
         Row: {
-          id: string;
-          registration_group_id: string;
-          participant_id: string;
-          event_id: string;
-          affiliation_organization_id_at_registration: string | null;
-          affiliation_other_text_at_registration: string | null;
-          registration_status: Database["public"]["Enums"]["registration_status"];
-          registration_outcome: Database["public"]["Enums"]["registration_outcome"];
-          registered_at: string;
-          cancelled_at: string | null;
-          cancellation_reason: string | null;
-          possible_duplicate_case_id: string | null;
-          whatsapp_opt_in: boolean;
-          whatsapp_invitation_status: Database["public"]["Enums"]["whatsapp_invitation_status"];
-          whatsapp_opt_in_at: string | null;
-          whatsapp_disclosure_version_id: string | null;
-          whatsapp_invitation_sent_at: string | null;
-          whatsapp_invitation_sent_by_admin_id: string | null;
-          created_by_admin_id: string | null;
-          over_capacity_override_id: string | null;
+      id: string
+      registration_group_id: string
+      participant_id: string
+      event_id: string
+      affiliation_organization_id_at_registration: string | null
+      affiliation_other_text_at_registration: string | null
+      registration_status: Database["public"]["Enums"]["registration_status"]
+      registration_outcome: Database["public"]["Enums"]["registration_outcome"]
+      registered_at: string
+      cancelled_at: string | null
+      cancellation_reason: string | null
+      possible_duplicate_case_id: string | null
+      whatsapp_opt_in: boolean
+      whatsapp_invitation_status: Database["public"]["Enums"]["whatsapp_invitation_status"]
+      whatsapp_opt_in_at: string | null
+      whatsapp_disclosure_version_id: string | null
+      whatsapp_invitation_sent_at: string | null
+      whatsapp_invitation_sent_by_admin_id: string | null
+      created_by_admin_id: string | null
+      over_capacity_override_id: string | null
         };
         Insert: {
-          id?: string;
-          registration_group_id: string;
-          participant_id: string;
-          event_id: string;
-          affiliation_organization_id_at_registration?: string;
-          affiliation_other_text_at_registration?: string;
-          registration_status?: Database["public"]["Enums"]["registration_status"];
-          registration_outcome?: Database["public"]["Enums"]["registration_outcome"];
-          registered_at?: string;
-          cancelled_at?: string;
-          cancellation_reason?: string;
-          possible_duplicate_case_id?: string;
-          whatsapp_opt_in?: boolean;
-          whatsapp_invitation_status?: Database["public"]["Enums"]["whatsapp_invitation_status"];
-          whatsapp_opt_in_at?: string;
-          whatsapp_disclosure_version_id?: string;
-          whatsapp_invitation_sent_at?: string;
-          whatsapp_invitation_sent_by_admin_id?: string;
-          created_by_admin_id?: string;
-          over_capacity_override_id?: string;
+      id?: string
+      registration_group_id: string
+      participant_id: string
+      event_id: string
+      affiliation_organization_id_at_registration?: string
+      affiliation_other_text_at_registration?: string
+      registration_status?: Database["public"]["Enums"]["registration_status"]
+      registration_outcome?: Database["public"]["Enums"]["registration_outcome"]
+      registered_at?: string
+      cancelled_at?: string
+      cancellation_reason?: string
+      possible_duplicate_case_id?: string
+      whatsapp_opt_in?: boolean
+      whatsapp_invitation_status?: Database["public"]["Enums"]["whatsapp_invitation_status"]
+      whatsapp_opt_in_at?: string
+      whatsapp_disclosure_version_id?: string
+      whatsapp_invitation_sent_at?: string
+      whatsapp_invitation_sent_by_admin_id?: string
+      created_by_admin_id?: string
+      over_capacity_override_id?: string
         };
         Update: {
-          id?: string;
-          registration_group_id: string;
-          participant_id: string;
-          event_id: string;
-          affiliation_organization_id_at_registration?: string;
-          affiliation_other_text_at_registration?: string;
-          registration_status?: Database["public"]["Enums"]["registration_status"];
-          registration_outcome?: Database["public"]["Enums"]["registration_outcome"];
-          registered_at?: string;
-          cancelled_at?: string;
-          cancellation_reason?: string;
-          possible_duplicate_case_id?: string;
-          whatsapp_opt_in?: boolean;
-          whatsapp_invitation_status?: Database["public"]["Enums"]["whatsapp_invitation_status"];
-          whatsapp_opt_in_at?: string;
-          whatsapp_disclosure_version_id?: string;
-          whatsapp_invitation_sent_at?: string;
-          whatsapp_invitation_sent_by_admin_id?: string;
-          created_by_admin_id?: string;
-          over_capacity_override_id?: string;
+      id?: string
+      registration_group_id: string
+      participant_id: string
+      event_id: string
+      affiliation_organization_id_at_registration?: string
+      affiliation_other_text_at_registration?: string
+      registration_status?: Database["public"]["Enums"]["registration_status"]
+      registration_outcome?: Database["public"]["Enums"]["registration_outcome"]
+      registered_at?: string
+      cancelled_at?: string
+      cancellation_reason?: string
+      possible_duplicate_case_id?: string
+      whatsapp_opt_in?: boolean
+      whatsapp_invitation_status?: Database["public"]["Enums"]["whatsapp_invitation_status"]
+      whatsapp_opt_in_at?: string
+      whatsapp_disclosure_version_id?: string
+      whatsapp_invitation_sent_at?: string
+      whatsapp_invitation_sent_by_admin_id?: string
+      created_by_admin_id?: string
+      over_capacity_override_id?: string
         };
         Relationships: [];
       };
       attendance: {
         Row: {
-          id: string;
-          registration_id: string;
-          status: Database["public"]["Enums"]["attendance_status"];
-          checked_in_at: string | null;
-          finalized_at: string | null;
-          updated_by_admin_id: string;
-          updated_at: string;
+      id: string
+      registration_id: string
+      status: Database["public"]["Enums"]["attendance_status"]
+      checked_in_at: string | null
+      finalized_at: string | null
+      updated_by_admin_id: string
+      updated_at: string
         };
         Insert: {
-          id?: string;
-          registration_id: string;
-          status?: Database["public"]["Enums"]["attendance_status"];
-          checked_in_at?: string;
-          finalized_at?: string;
-          updated_by_admin_id: string;
-          updated_at?: string;
+      id?: string
+      registration_id: string
+      status?: Database["public"]["Enums"]["attendance_status"]
+      checked_in_at?: string
+      finalized_at?: string
+      updated_by_admin_id: string
+      updated_at?: string
         };
         Update: {
-          id?: string;
-          registration_id: string;
-          status?: Database["public"]["Enums"]["attendance_status"];
-          checked_in_at?: string;
-          finalized_at?: string;
-          updated_by_admin_id: string;
-          updated_at?: string;
+      id?: string
+      registration_id: string
+      status?: Database["public"]["Enums"]["attendance_status"]
+      checked_in_at?: string
+      finalized_at?: string
+      updated_by_admin_id: string
+      updated_at?: string
         };
         Relationships: [];
       };
       attendance_transitions: {
         Row: {
-          id: string;
-          attendance_id: string;
-          from_status: Database["public"]["Enums"]["attendance_status"] | null;
-          to_status: Database["public"]["Enums"]["attendance_status"];
-          changed_by_admin_id: string;
-          changed_at: string;
-          reason: string | null;
-          source: Database["public"]["Enums"]["attendance_transition_source"];
+      id: string
+      attendance_id: string
+      from_status: Database["public"]["Enums"]["attendance_status"] | null
+      to_status: Database["public"]["Enums"]["attendance_status"]
+      changed_by_admin_id: string
+      changed_at: string
+      reason: string | null
+      source: Database["public"]["Enums"]["attendance_transition_source"]
         };
         Insert: {
-          id?: string;
-          attendance_id: string;
-          from_status?: Database["public"]["Enums"]["attendance_status"];
-          to_status: Database["public"]["Enums"]["attendance_status"];
-          changed_by_admin_id: string;
-          changed_at?: string;
-          reason?: string;
-          source: Database["public"]["Enums"]["attendance_transition_source"];
+      id?: string
+      attendance_id: string
+      from_status?: Database["public"]["Enums"]["attendance_status"]
+      to_status: Database["public"]["Enums"]["attendance_status"]
+      changed_by_admin_id: string
+      changed_at?: string
+      reason?: string
+      source: Database["public"]["Enums"]["attendance_transition_source"]
         };
         Update: {
-          id?: string;
-          attendance_id: string;
-          from_status?: Database["public"]["Enums"]["attendance_status"];
-          to_status: Database["public"]["Enums"]["attendance_status"];
-          changed_by_admin_id: string;
-          changed_at?: string;
-          reason?: string;
-          source: Database["public"]["Enums"]["attendance_transition_source"];
+      id?: string
+      attendance_id: string
+      from_status?: Database["public"]["Enums"]["attendance_status"]
+      to_status: Database["public"]["Enums"]["attendance_status"]
+      changed_by_admin_id: string
+      changed_at?: string
+      reason?: string
+      source: Database["public"]["Enums"]["attendance_transition_source"]
         };
         Relationships: [];
       };
       follow_up_tasks: {
         Row: {
-          id: string;
-          participant_id: string;
-          event_id: string | null;
-          reason: Database["public"]["Enums"]["follow_up_reason"];
-          trigger_key: string | null;
-          due_at: string;
-          status: Database["public"]["Enums"]["follow_up_status"];
-          suggested_message: string | null;
-          completion_notes: string | null;
-          created_at: string;
-          completed_at: string | null;
-          completed_by_admin_id: string | null;
+      id: string
+      participant_id: string
+      event_id: string | null
+      reason: Database["public"]["Enums"]["follow_up_reason"]
+      trigger_key: string | null
+      due_at: string
+      status: Database["public"]["Enums"]["follow_up_status"]
+      suggested_message: string | null
+      completion_notes: string | null
+      created_at: string
+      completed_at: string | null
+      completed_by_admin_id: string | null
         };
         Insert: {
-          id?: string;
-          participant_id: string;
-          event_id?: string;
-          reason: Database["public"]["Enums"]["follow_up_reason"];
-          trigger_key?: string;
-          due_at: string;
-          status?: Database["public"]["Enums"]["follow_up_status"];
-          suggested_message?: string;
-          completion_notes?: string;
-          created_at?: string;
-          completed_at?: string;
-          completed_by_admin_id?: string;
+      id?: string
+      participant_id: string
+      event_id?: string
+      reason: Database["public"]["Enums"]["follow_up_reason"]
+      trigger_key?: string
+      due_at: string
+      status?: Database["public"]["Enums"]["follow_up_status"]
+      suggested_message?: string
+      completion_notes?: string
+      created_at?: string
+      completed_at?: string
+      completed_by_admin_id?: string
         };
         Update: {
-          id?: string;
-          participant_id: string;
-          event_id?: string;
-          reason: Database["public"]["Enums"]["follow_up_reason"];
-          trigger_key?: string;
-          due_at: string;
-          status?: Database["public"]["Enums"]["follow_up_status"];
-          suggested_message?: string;
-          completion_notes?: string;
-          created_at?: string;
-          completed_at?: string;
-          completed_by_admin_id?: string;
+      id?: string
+      participant_id: string
+      event_id?: string
+      reason: Database["public"]["Enums"]["follow_up_reason"]
+      trigger_key?: string
+      due_at: string
+      status?: Database["public"]["Enums"]["follow_up_status"]
+      suggested_message?: string
+      completion_notes?: string
+      created_at?: string
+      completed_at?: string
+      completed_by_admin_id?: string
         };
         Relationships: [];
       };
       confirmation_tokens: {
         Row: {
-          id: string;
-          registration_group_id: string;
-          token_hash: string;
-          issued_at: string;
-          expires_at: string;
-          revoked_at: string | null;
-          last_accessed_at: string | null;
-          access_count: number;
+      id: string
+      registration_group_id: string
+      token_hash: string
+      issued_at: string
+      expires_at: string
+      revoked_at: string | null
+      last_accessed_at: string | null
+      access_count: number
         };
         Insert: {
-          id?: string;
-          registration_group_id: string;
-          token_hash: string;
-          issued_at?: string;
-          expires_at: string;
-          revoked_at?: string;
-          last_accessed_at?: string;
-          access_count?: number;
+      id?: string
+      registration_group_id: string
+      token_hash: string
+      issued_at?: string
+      expires_at: string
+      revoked_at?: string
+      last_accessed_at?: string
+      access_count?: number
         };
         Update: {
-          id?: string;
-          registration_group_id: string;
-          token_hash: string;
-          issued_at?: string;
-          expires_at: string;
-          revoked_at?: string;
-          last_accessed_at?: string;
-          access_count?: number;
+      id?: string
+      registration_group_id: string
+      token_hash: string
+      issued_at?: string
+      expires_at: string
+      revoked_at?: string
+      last_accessed_at?: string
+      access_count?: number
         };
         Relationships: [];
       };
       cancellation_template_versions: {
         Row: {
-          id: string;
-          template_type: Database["public"]["Enums"]["cancellation_template_type"];
-          version: number;
-          exact_text: string;
-          status: Database["public"]["Enums"]["template_status"];
-          created_at: string;
-          created_by_admin_id: string;
-          retired_at: string | null;
+      id: string
+      template_type: Database["public"]["Enums"]["cancellation_template_type"]
+      version: number
+      exact_text: string
+      status: Database["public"]["Enums"]["template_status"]
+      created_at: string
+      created_by_admin_id: string
+      retired_at: string | null
         };
         Insert: {
-          id?: string;
-          template_type: Database["public"]["Enums"]["cancellation_template_type"];
-          version: number;
-          exact_text: string;
-          status: Database["public"]["Enums"]["template_status"];
-          created_at?: string;
-          created_by_admin_id: string;
-          retired_at?: string;
+      id?: string
+      template_type: Database["public"]["Enums"]["cancellation_template_type"]
+      version: number
+      exact_text: string
+      status: Database["public"]["Enums"]["template_status"]
+      created_at?: string
+      created_by_admin_id: string
+      retired_at?: string
         };
         Update: {
-          id?: string;
-          template_type: Database["public"]["Enums"]["cancellation_template_type"];
-          version: number;
-          exact_text: string;
-          status: Database["public"]["Enums"]["template_status"];
-          created_at?: string;
-          created_by_admin_id: string;
-          retired_at?: string;
+      id?: string
+      template_type: Database["public"]["Enums"]["cancellation_template_type"]
+      version: number
+      exact_text: string
+      status: Database["public"]["Enums"]["template_status"]
+      created_at?: string
+      created_by_admin_id: string
+      retired_at?: string
         };
         Relationships: [];
       };
       event_cancellation_requests: {
         Row: {
-          id: string;
-          event_id: string;
-          requested_by_admin_id: string;
-          reason: string;
-          urgency: string;
-          proposed_replacement_date: string | null;
-          cancellation_type: Database["public"]["Enums"]["cancellation_type"];
-          status: Database["public"]["Enums"]["cancellation_request_status"];
-          requested_at: string;
-          reviewed_at: string | null;
-          reviewed_by_admin_id: string | null;
-          review_decision: Database["public"]["Enums"]["cancellation_request_status"] | null;
-          review_reason: string | null;
-          withdrawn_by_admin_id: string | null;
-          withdrawn_at: string | null;
+      id: string
+      event_id: string
+      requested_by_admin_id: string
+      reason: string
+      urgency: string
+      proposed_replacement_date: string | null
+      cancellation_type: Database["public"]["Enums"]["cancellation_type"]
+      status: Database["public"]["Enums"]["cancellation_request_status"]
+      requested_at: string
+      reviewed_at: string | null
+      reviewed_by_admin_id: string | null
+      review_decision: Database["public"]["Enums"]["cancellation_request_status"] | null
+      review_reason: string | null
+      withdrawn_by_admin_id: string | null
+      withdrawn_at: string | null
         };
         Insert: {
-          id?: string;
-          event_id: string;
-          requested_by_admin_id: string;
-          reason: string;
-          urgency: string;
-          proposed_replacement_date?: string;
-          cancellation_type: Database["public"]["Enums"]["cancellation_type"];
-          status?: Database["public"]["Enums"]["cancellation_request_status"];
-          requested_at?: string;
-          reviewed_at?: string;
-          reviewed_by_admin_id?: string;
-          review_decision?: Database["public"]["Enums"]["cancellation_request_status"];
-          review_reason?: string;
-          withdrawn_by_admin_id?: string;
-          withdrawn_at?: string;
+      id?: string
+      event_id: string
+      requested_by_admin_id: string
+      reason: string
+      urgency: string
+      proposed_replacement_date?: string
+      cancellation_type: Database["public"]["Enums"]["cancellation_type"]
+      status?: Database["public"]["Enums"]["cancellation_request_status"]
+      requested_at?: string
+      reviewed_at?: string
+      reviewed_by_admin_id?: string
+      review_decision?: Database["public"]["Enums"]["cancellation_request_status"]
+      review_reason?: string
+      withdrawn_by_admin_id?: string
+      withdrawn_at?: string
         };
         Update: {
-          id?: string;
-          event_id: string;
-          requested_by_admin_id: string;
-          reason: string;
-          urgency: string;
-          proposed_replacement_date?: string;
-          cancellation_type: Database["public"]["Enums"]["cancellation_type"];
-          status?: Database["public"]["Enums"]["cancellation_request_status"];
-          requested_at?: string;
-          reviewed_at?: string;
-          reviewed_by_admin_id?: string;
-          review_decision?: Database["public"]["Enums"]["cancellation_request_status"];
-          review_reason?: string;
-          withdrawn_by_admin_id?: string;
-          withdrawn_at?: string;
+      id?: string
+      event_id: string
+      requested_by_admin_id: string
+      reason: string
+      urgency: string
+      proposed_replacement_date?: string
+      cancellation_type: Database["public"]["Enums"]["cancellation_type"]
+      status?: Database["public"]["Enums"]["cancellation_request_status"]
+      requested_at?: string
+      reviewed_at?: string
+      reviewed_by_admin_id?: string
+      review_decision?: Database["public"]["Enums"]["cancellation_request_status"]
+      review_reason?: string
+      withdrawn_by_admin_id?: string
+      withdrawn_at?: string
         };
         Relationships: [];
       };
       event_cancellations: {
         Row: {
-          id: string;
-          event_id: string;
-          cancelled_by_admin_id: string;
-          cancellation_type: Database["public"]["Enums"]["cancellation_type"];
-          reason: string;
-          active_registrations_affected: number;
-          confirmed_at: string;
-          template_version_id: string;
-          rendered_message_snapshot: string;
-          administrator_message_edits: string | null;
-          replacement_event_id: string | null;
+      id: string
+      event_id: string
+      cancelled_by_admin_id: string
+      cancellation_type: Database["public"]["Enums"]["cancellation_type"]
+      reason: string
+      active_registrations_affected: number
+      confirmed_at: string
+      template_version_id: string
+      rendered_message_snapshot: string
+      administrator_message_edits: string | null
+      replacement_event_id: string | null
         };
         Insert: {
-          id?: string;
-          event_id: string;
-          cancelled_by_admin_id: string;
-          cancellation_type: Database["public"]["Enums"]["cancellation_type"];
-          reason: string;
-          active_registrations_affected: number;
-          confirmed_at: string;
-          template_version_id: string;
-          rendered_message_snapshot: string;
-          administrator_message_edits?: string;
-          replacement_event_id?: string;
+      id?: string
+      event_id: string
+      cancelled_by_admin_id: string
+      cancellation_type: Database["public"]["Enums"]["cancellation_type"]
+      reason: string
+      active_registrations_affected: number
+      confirmed_at: string
+      template_version_id: string
+      rendered_message_snapshot: string
+      administrator_message_edits?: string
+      replacement_event_id?: string
         };
         Update: {
-          id?: string;
-          event_id: string;
-          cancelled_by_admin_id: string;
-          cancellation_type: Database["public"]["Enums"]["cancellation_type"];
-          reason: string;
-          active_registrations_affected: number;
-          confirmed_at: string;
-          template_version_id: string;
-          rendered_message_snapshot: string;
-          administrator_message_edits?: string;
-          replacement_event_id?: string;
+      id?: string
+      event_id: string
+      cancelled_by_admin_id: string
+      cancellation_type: Database["public"]["Enums"]["cancellation_type"]
+      reason: string
+      active_registrations_affected: number
+      confirmed_at: string
+      template_version_id: string
+      rendered_message_snapshot: string
+      administrator_message_edits?: string
+      replacement_event_id?: string
         };
         Relationships: [];
       };
       participant_notification_tasks: {
         Row: {
-          id: string;
-          participant_id: string;
-          event_id: string;
-          event_cancellation_id: string;
-          notification_type: Database["public"]["Enums"]["notification_type"];
-          status: Database["public"]["Enums"]["notification_task_status"];
-          priority: Database["public"]["Enums"]["notification_priority"];
-          template_version_id: string;
-          template_type: Database["public"]["Enums"]["cancellation_template_type"];
-          suggested_message: string;
-          event_starts_at_snapshot: string;
-          created_at: string;
-          due_at: string;
-          completed_at: string | null;
-          completed_by_admin_id: string | null;
-          completion_reason: string | null;
+      id: string
+      participant_id: string
+      event_id: string
+      event_cancellation_id: string
+      notification_type: Database["public"]["Enums"]["notification_type"]
+      status: Database["public"]["Enums"]["notification_task_status"]
+      priority: Database["public"]["Enums"]["notification_priority"]
+      template_version_id: string
+      template_type: Database["public"]["Enums"]["cancellation_template_type"]
+      suggested_message: string
+      event_starts_at_snapshot: string
+      created_at: string
+      due_at: string
+      completed_at: string | null
+      completed_by_admin_id: string | null
+      completion_reason: string | null
         };
         Insert: {
-          id?: string;
-          participant_id: string;
-          event_id: string;
-          event_cancellation_id: string;
-          notification_type?: Database["public"]["Enums"]["notification_type"];
-          status?: Database["public"]["Enums"]["notification_task_status"];
-          priority?: Database["public"]["Enums"]["notification_priority"];
-          template_version_id: string;
-          template_type: Database["public"]["Enums"]["cancellation_template_type"];
-          suggested_message: string;
-          event_starts_at_snapshot: string;
-          created_at: string;
-          due_at: string;
-          completed_at?: string;
-          completed_by_admin_id?: string;
-          completion_reason?: string;
+      id?: string
+      participant_id: string
+      event_id: string
+      event_cancellation_id: string
+      notification_type?: Database["public"]["Enums"]["notification_type"]
+      status?: Database["public"]["Enums"]["notification_task_status"]
+      priority?: Database["public"]["Enums"]["notification_priority"]
+      template_version_id: string
+      template_type: Database["public"]["Enums"]["cancellation_template_type"]
+      suggested_message: string
+      event_starts_at_snapshot: string
+      created_at: string
+      due_at: string
+      completed_at?: string
+      completed_by_admin_id?: string
+      completion_reason?: string
         };
         Update: {
-          id?: string;
-          participant_id: string;
-          event_id: string;
-          event_cancellation_id: string;
-          notification_type?: Database["public"]["Enums"]["notification_type"];
-          status?: Database["public"]["Enums"]["notification_task_status"];
-          priority?: Database["public"]["Enums"]["notification_priority"];
-          template_version_id: string;
-          template_type: Database["public"]["Enums"]["cancellation_template_type"];
-          suggested_message: string;
-          event_starts_at_snapshot: string;
-          created_at: string;
-          due_at: string;
-          completed_at?: string;
-          completed_by_admin_id?: string;
-          completion_reason?: string;
+      id?: string
+      participant_id: string
+      event_id: string
+      event_cancellation_id: string
+      notification_type?: Database["public"]["Enums"]["notification_type"]
+      status?: Database["public"]["Enums"]["notification_task_status"]
+      priority?: Database["public"]["Enums"]["notification_priority"]
+      template_version_id: string
+      template_type: Database["public"]["Enums"]["cancellation_template_type"]
+      suggested_message: string
+      event_starts_at_snapshot: string
+      created_at: string
+      due_at: string
+      completed_at?: string
+      completed_by_admin_id?: string
+      completion_reason?: string
         };
         Relationships: [];
       };
       participant_notification_deliveries: {
         Row: {
-          id: string;
-          participant_notification_task_id: string;
-          registration_id: string;
-          status: Database["public"]["Enums"]["delivery_status"];
-          channel: Database["public"]["Enums"]["delivery_channel"];
-          sent_at: string | null;
-          sent_by_admin_id: string | null;
-          delivery_note: string | null;
-          created_at: string;
-          updated_at: string;
+      id: string
+      participant_notification_task_id: string
+      registration_id: string
+      status: Database["public"]["Enums"]["delivery_status"]
+      channel: Database["public"]["Enums"]["delivery_channel"]
+      sent_at: string | null
+      sent_by_admin_id: string | null
+      delivery_note: string | null
+      created_at: string
+      updated_at: string
         };
         Insert: {
-          id?: string;
-          participant_notification_task_id: string;
-          registration_id: string;
-          status?: Database["public"]["Enums"]["delivery_status"];
-          channel: Database["public"]["Enums"]["delivery_channel"];
-          sent_at?: string;
-          sent_by_admin_id?: string;
-          delivery_note?: string;
-          created_at?: string;
-          updated_at?: string;
+      id?: string
+      participant_notification_task_id: string
+      registration_id: string
+      status?: Database["public"]["Enums"]["delivery_status"]
+      channel: Database["public"]["Enums"]["delivery_channel"]
+      sent_at?: string
+      sent_by_admin_id?: string
+      delivery_note?: string
+      created_at?: string
+      updated_at?: string
         };
         Update: {
-          id?: string;
-          participant_notification_task_id: string;
-          registration_id: string;
-          status?: Database["public"]["Enums"]["delivery_status"];
-          channel: Database["public"]["Enums"]["delivery_channel"];
-          sent_at?: string;
-          sent_by_admin_id?: string;
-          delivery_note?: string;
-          created_at?: string;
-          updated_at?: string;
+      id?: string
+      participant_notification_task_id: string
+      registration_id: string
+      status?: Database["public"]["Enums"]["delivery_status"]
+      channel: Database["public"]["Enums"]["delivery_channel"]
+      sent_at?: string
+      sent_by_admin_id?: string
+      delivery_note?: string
+      created_at?: string
+      updated_at?: string
         };
         Relationships: [];
       };
       notification_delivery_transitions: {
         Row: {
-          id: string;
-          delivery_id: string;
-          previous_status: Database["public"]["Enums"]["delivery_status"] | null;
-          new_status: Database["public"]["Enums"]["delivery_status"];
-          actor_admin_id: string;
-          changed_at: string;
-          channel: Database["public"]["Enums"]["delivery_channel"];
-          note: string | null;
+      id: string
+      delivery_id: string
+      previous_status: Database["public"]["Enums"]["delivery_status"] | null
+      new_status: Database["public"]["Enums"]["delivery_status"]
+      actor_admin_id: string
+      changed_at: string
+      channel: Database["public"]["Enums"]["delivery_channel"]
+      note: string | null
         };
         Insert: {
-          id?: string;
-          delivery_id: string;
-          previous_status?: Database["public"]["Enums"]["delivery_status"];
-          new_status: Database["public"]["Enums"]["delivery_status"];
-          actor_admin_id: string;
-          changed_at?: string;
-          channel: Database["public"]["Enums"]["delivery_channel"];
-          note?: string;
+      id?: string
+      delivery_id: string
+      previous_status?: Database["public"]["Enums"]["delivery_status"]
+      new_status: Database["public"]["Enums"]["delivery_status"]
+      actor_admin_id: string
+      changed_at?: string
+      channel: Database["public"]["Enums"]["delivery_channel"]
+      note?: string
         };
         Update: {
-          id?: string;
-          delivery_id: string;
-          previous_status?: Database["public"]["Enums"]["delivery_status"];
-          new_status: Database["public"]["Enums"]["delivery_status"];
-          actor_admin_id: string;
-          changed_at?: string;
-          channel: Database["public"]["Enums"]["delivery_channel"];
-          note?: string;
+      id?: string
+      delivery_id: string
+      previous_status?: Database["public"]["Enums"]["delivery_status"]
+      new_status: Database["public"]["Enums"]["delivery_status"]
+      actor_admin_id: string
+      changed_at?: string
+      channel: Database["public"]["Enums"]["delivery_channel"]
+      note?: string
         };
         Relationships: [];
       };
       over_capacity_overrides: {
         Row: {
-          id: string;
-          event_id: string;
-          registration_id: string;
-          approved_by_admin_id: string;
-          reason: string;
-          capacity_at_override: number;
-          active_registration_count_before: number;
-          active_registration_count_after: number;
-          created_at: string;
-          source: Database["public"]["Enums"]["override_source"];
+      id: string
+      event_id: string
+      registration_id: string
+      approved_by_admin_id: string
+      reason: string
+      capacity_at_override: number
+      active_registration_count_before: number
+      active_registration_count_after: number
+      created_at: string
+      source: Database["public"]["Enums"]["override_source"]
         };
         Insert: {
-          id?: string;
-          event_id: string;
-          registration_id: string;
-          approved_by_admin_id: string;
-          reason: string;
-          capacity_at_override: number;
-          active_registration_count_before: number;
-          active_registration_count_after: number;
-          created_at?: string;
-          source: Database["public"]["Enums"]["override_source"];
+      id?: string
+      event_id: string
+      registration_id: string
+      approved_by_admin_id: string
+      reason: string
+      capacity_at_override: number
+      active_registration_count_before: number
+      active_registration_count_after: number
+      created_at?: string
+      source: Database["public"]["Enums"]["override_source"]
         };
         Update: {
-          id?: string;
-          event_id: string;
-          registration_id: string;
-          approved_by_admin_id: string;
-          reason: string;
-          capacity_at_override: number;
-          active_registration_count_before: number;
-          active_registration_count_after: number;
-          created_at?: string;
-          source: Database["public"]["Enums"]["override_source"];
+      id?: string
+      event_id: string
+      registration_id: string
+      approved_by_admin_id: string
+      reason: string
+      capacity_at_override: number
+      active_registration_count_before: number
+      active_registration_count_after: number
+      created_at?: string
+      source: Database["public"]["Enums"]["override_source"]
         };
         Relationships: [];
       };
       acknowledgment_acceptances: {
         Row: {
-          id: string;
-          participant_id: string;
-          registration_group_id: string;
-          acknowledgment_version_id: string;
-          accepted_at: string;
-          acceptance_method: string;
-          ip_address: string;
-          user_agent: string;
+      id: string
+      participant_id: string
+      registration_group_id: string
+      acknowledgment_version_id: string
+      accepted_at: string
+      acceptance_method: string
+      ip_address: string
+      user_agent: string
         };
         Insert: {
-          id?: string;
-          participant_id: string;
-          registration_group_id: string;
-          acknowledgment_version_id: string;
-          accepted_at?: string;
-          acceptance_method: string;
-          ip_address: string;
-          user_agent: string;
+      id?: string
+      participant_id: string
+      registration_group_id: string
+      acknowledgment_version_id: string
+      accepted_at?: string
+      acceptance_method: string
+      ip_address: string
+      user_agent: string
         };
         Update: {
-          id?: string;
-          participant_id: string;
-          registration_group_id: string;
-          acknowledgment_version_id: string;
-          accepted_at?: string;
-          acceptance_method: string;
-          ip_address: string;
-          user_agent: string;
+      id?: string
+      participant_id: string
+      registration_group_id: string
+      acknowledgment_version_id: string
+      accepted_at?: string
+      acceptance_method: string
+      ip_address: string
+      user_agent: string
         };
         Relationships: [];
       };
       participant_merges: {
         Row: {
-          id: string;
-          surviving_participant_id: string;
-          archived_duplicate_participant_id: string;
-          merged_by_admin_id: string;
-          merged_at: string;
-          migrated_record_counts: Json;
-          merge_notes: string | null;
-          contact_resolution: Json;
-          affiliation_resolution: Json;
-          attendance_conflict_resolution: Json;
+      id: string
+      surviving_participant_id: string
+      archived_duplicate_participant_id: string
+      merged_by_admin_id: string
+      merged_at: string
+      migrated_record_counts: Json
+      merge_notes: string | null
+      contact_resolution: Json
+      affiliation_resolution: Json
+      attendance_conflict_resolution: Json
         };
         Insert: {
-          id?: string;
-          surviving_participant_id: string;
-          archived_duplicate_participant_id: string;
-          merged_by_admin_id: string;
-          merged_at?: string;
-          migrated_record_counts: Json;
-          merge_notes?: string;
-          contact_resolution: Json;
-          affiliation_resolution: Json;
-          attendance_conflict_resolution: Json;
+      id?: string
+      surviving_participant_id: string
+      archived_duplicate_participant_id: string
+      merged_by_admin_id: string
+      merged_at?: string
+      migrated_record_counts: Json
+      merge_notes?: string
+      contact_resolution: Json
+      affiliation_resolution: Json
+      attendance_conflict_resolution: Json
         };
         Update: {
-          id?: string;
-          surviving_participant_id: string;
-          archived_duplicate_participant_id: string;
-          merged_by_admin_id: string;
-          merged_at?: string;
-          migrated_record_counts: Json;
-          merge_notes?: string;
-          contact_resolution: Json;
-          affiliation_resolution: Json;
-          attendance_conflict_resolution: Json;
+      id?: string
+      surviving_participant_id: string
+      archived_duplicate_participant_id: string
+      merged_by_admin_id: string
+      merged_at?: string
+      migrated_record_counts: Json
+      merge_notes?: string
+      contact_resolution: Json
+      affiliation_resolution: Json
+      attendance_conflict_resolution: Json
         };
         Relationships: [];
       };
       participant_merge_conflicts: {
         Row: {
-          id: string;
-          participant_merge_id: string;
-          conflict_type: Database["public"]["Enums"]["merge_conflict_type"];
-          affected_record_ids: Json;
-          selected_resolution: Json;
-          reason: string;
-          created_at: string;
+      id: string
+      participant_merge_id: string
+      conflict_type: Database["public"]["Enums"]["merge_conflict_type"]
+      affected_record_ids: Json
+      selected_resolution: Json
+      reason: string
+      created_at: string
         };
         Insert: {
-          id?: string;
-          participant_merge_id: string;
-          conflict_type: Database["public"]["Enums"]["merge_conflict_type"];
-          affected_record_ids: Json;
-          selected_resolution: Json;
-          reason: string;
-          created_at?: string;
+      id?: string
+      participant_merge_id: string
+      conflict_type: Database["public"]["Enums"]["merge_conflict_type"]
+      affected_record_ids: Json
+      selected_resolution: Json
+      reason: string
+      created_at?: string
         };
         Update: {
-          id?: string;
-          participant_merge_id: string;
-          conflict_type: Database["public"]["Enums"]["merge_conflict_type"];
-          affected_record_ids: Json;
-          selected_resolution: Json;
-          reason: string;
-          created_at?: string;
+      id?: string
+      participant_merge_id: string
+      conflict_type: Database["public"]["Enums"]["merge_conflict_type"]
+      affected_record_ids: Json
+      selected_resolution: Json
+      reason: string
+      created_at?: string
         };
         Relationships: [];
       };
       participant_notes: {
         Row: {
-          id: string;
-          participant_id: string;
-          note: string;
-          created_by_admin_id: string;
-          visibility_scope: string;
-          created_at: string;
-          archived_at: string | null;
+      id: string
+      participant_id: string
+      note: string
+      created_by_admin_id: string
+      visibility_scope: string
+      created_at: string
+      archived_at: string | null
         };
         Insert: {
-          id?: string;
-          participant_id: string;
-          note: string;
-          created_by_admin_id: string;
-          visibility_scope?: string;
-          created_at?: string;
-          archived_at?: string;
+      id?: string
+      participant_id: string
+      note: string
+      created_by_admin_id: string
+      visibility_scope?: string
+      created_at?: string
+      archived_at?: string
         };
         Update: {
-          id?: string;
-          participant_id: string;
-          note: string;
-          created_by_admin_id: string;
-          visibility_scope?: string;
-          created_at?: string;
-          archived_at?: string;
+      id?: string
+      participant_id: string
+      note: string
+      created_by_admin_id: string
+      visibility_scope?: string
+      created_at?: string
+      archived_at?: string
         };
         Relationships: [];
       };
       audit_events: {
         Row: {
-          id: string;
-          actor_admin_id: string | null;
-          action: string;
-          entity_type: string;
-          entity_id: string | null;
-          old_values: Json | null;
-          new_values: Json | null;
-          reason: string | null;
-          request_id: string | null;
-          ip_address: string | null;
-          user_agent: string | null;
-          created_at: string;
+      id: string
+      actor_admin_id: string | null
+      action: string
+      entity_type: string
+      entity_id: string | null
+      old_values: Json | null
+      new_values: Json | null
+      reason: string | null
+      request_id: string | null
+      ip_address: string | null
+      user_agent: string | null
+      created_at: string
         };
         Insert: {
-          id?: string;
-          actor_admin_id?: string;
-          action: string;
-          entity_type: string;
-          entity_id?: string;
-          old_values?: Json;
-          new_values?: Json;
-          reason?: string;
-          request_id?: string;
-          ip_address?: string;
-          user_agent?: string;
-          created_at?: string;
+      id?: string
+      actor_admin_id?: string
+      action: string
+      entity_type: string
+      entity_id?: string
+      old_values?: Json
+      new_values?: Json
+      reason?: string
+      request_id?: string
+      ip_address?: string
+      user_agent?: string
+      created_at?: string
         };
         Update: {
-          id?: string;
-          actor_admin_id?: string;
-          action: string;
-          entity_type: string;
-          entity_id?: string;
-          old_values?: Json;
-          new_values?: Json;
-          reason?: string;
-          request_id?: string;
-          ip_address?: string;
-          user_agent?: string;
-          created_at?: string;
+      id?: string
+      actor_admin_id?: string
+      action: string
+      entity_type: string
+      entity_id?: string
+      old_values?: Json
+      new_values?: Json
+      reason?: string
+      request_id?: string
+      ip_address?: string
+      user_agent?: string
+      created_at?: string
         };
         Relationships: [];
       };
       completed_event_invalidations: {
         Row: {
-          id: string;
-          event_id: string;
-          requested_by_admin_id: string;
-          confirmed_by_admin_id: string;
-          reason: string;
-          confirmed_at: string;
-          audit_event_id: string | null;
+      id: string
+      event_id: string
+      requested_by_admin_id: string
+      confirmed_by_admin_id: string
+      reason: string
+      confirmed_at: string
+      audit_event_id: string | null
         };
         Insert: {
-          id?: string;
-          event_id: string;
-          requested_by_admin_id: string;
-          confirmed_by_admin_id: string;
-          reason: string;
-          confirmed_at?: string;
-          audit_event_id?: string;
+      id?: string
+      event_id: string
+      requested_by_admin_id: string
+      confirmed_by_admin_id: string
+      reason: string
+      confirmed_at?: string
+      audit_event_id?: string
         };
         Update: {
-          id?: string;
-          event_id: string;
-          requested_by_admin_id: string;
-          confirmed_by_admin_id: string;
-          reason: string;
-          confirmed_at?: string;
-          audit_event_id?: string;
+      id?: string
+      event_id: string
+      requested_by_admin_id: string
+      confirmed_by_admin_id: string
+      reason: string
+      confirmed_at?: string
+      audit_event_id?: string
         };
         Relationships: [];
       };
       registration_group_results: {
         Row: {
-          id: string;
-          registration_group_id: string;
-          event_id: string;
-          success: boolean;
-          reason: string | null;
-          registration_id: string | null;
-          created_at: string;
+      id: string
+      registration_group_id: string
+      event_id: string
+      success: boolean
+      reason: string | null
+      registration_id: string | null
+      created_at: string
         };
         Insert: {
-          id?: string;
-          registration_group_id: string;
-          event_id: string;
-          success: boolean;
-          reason?: string;
-          registration_id?: string;
-          created_at?: string;
+      id?: string
+      registration_group_id: string
+      event_id: string
+      success: boolean
+      reason?: string
+      registration_id?: string
+      created_at?: string
         };
         Update: {
-          id?: string;
-          registration_group_id: string;
-          event_id: string;
-          success: boolean;
-          reason?: string;
-          registration_id?: string;
-          created_at?: string;
+      id?: string
+      registration_group_id: string
+      event_id: string
+      success: boolean
+      reason?: string
+      registration_id?: string
+      created_at?: string
         };
         Relationships: [];
       };
       event_series: {
         Row: {
-          id: string;
-          frequency: Database["public"]["Enums"]["event_recurrence_frequency"];
-          interval_count: number;
-          ends_on: string;
-          selection_window_days: number;
-          public_slug: string | null;
-          created_by_admin_id: string;
-          created_at: string;
-          updated_at: string;
+      id: string
+      frequency: Database["public"]["Enums"]["event_recurrence_frequency"]
+      interval_count: number
+      ends_on: string
+      selection_window_days: number
+      public_slug: string | null
+      created_by_admin_id: string
+      created_at: string
+      updated_at: string
         };
         Insert: {
-          id?: string;
-          frequency?: Database["public"]["Enums"]["event_recurrence_frequency"];
-          interval_count?: number;
-          ends_on: string;
-          selection_window_days?: number;
-          public_slug?: string;
-          created_by_admin_id: string;
-          created_at?: string;
-          updated_at?: string;
+      id?: string
+      frequency?: Database["public"]["Enums"]["event_recurrence_frequency"]
+      interval_count?: number
+      ends_on: string
+      selection_window_days?: number
+      public_slug?: string
+      created_by_admin_id: string
+      created_at?: string
+      updated_at?: string
         };
         Update: {
-          id?: string;
-          frequency?: Database["public"]["Enums"]["event_recurrence_frequency"];
-          interval_count?: number;
-          ends_on: string;
-          selection_window_days?: number;
-          public_slug?: string;
-          created_by_admin_id: string;
-          created_at?: string;
-          updated_at?: string;
+      id?: string
+      frequency?: Database["public"]["Enums"]["event_recurrence_frequency"]
+      interval_count?: number
+      ends_on: string
+      selection_window_days?: number
+      public_slug?: string
+      created_by_admin_id: string
+      created_at?: string
+      updated_at?: string
+        };
+        Relationships: [];
+      };
+      event_series_schedule_rules: {
+        Row: {
+      id: string
+      event_series_id: string
+      weekday: number
+      local_start_time: string
+      local_end_time: string
+      effective_start_date: string
+      effective_end_date: string | null
+      created_by_admin_id: string
+      supersedes_rule_id: string | null
+      created_at: string
+      updated_at: string
+        };
+        Insert: {
+      id?: string
+      event_series_id: string
+      weekday: number
+      local_start_time: string
+      local_end_time: string
+      effective_start_date: string
+      effective_end_date?: string
+      created_by_admin_id: string
+      supersedes_rule_id?: string
+      created_at?: string
+      updated_at?: string
+        };
+        Update: {
+      id?: string
+      event_series_id?: string
+      weekday?: number
+      local_start_time?: string
+      local_end_time?: string
+      effective_start_date?: string
+      effective_end_date?: string
+      created_by_admin_id?: string
+      supersedes_rule_id?: string
+      created_at?: string
+      updated_at?: string
         };
         Relationships: [];
       };
       participant_remembered_devices: {
         Row: {
-          id: string;
-          participant_id: string;
-          token_hash: string;
-          created_at: string;
-          last_used_at: string | null;
-          expires_at: string;
-          revoked_at: string | null;
-          replaced_by_device_id: string | null;
-          label: string;
+      id: string
+      participant_id: string
+      token_hash: string
+      created_at: string
+      last_used_at: string | null
+      expires_at: string
+      revoked_at: string | null
+      replaced_by_device_id: string | null
+      label: string
         };
         Insert: {
-          id?: string;
-          participant_id: string;
-          token_hash: string;
-          created_at?: string;
-          last_used_at?: string;
-          expires_at: string;
-          revoked_at?: string;
-          replaced_by_device_id?: string;
-          label?: string;
+      id?: string
+      participant_id: string
+      token_hash: string
+      created_at?: string
+      last_used_at?: string
+      expires_at: string
+      revoked_at?: string
+      replaced_by_device_id?: string
+      label?: string
         };
         Update: {
-          id?: string;
-          participant_id: string;
-          token_hash: string;
-          created_at?: string;
-          last_used_at?: string;
-          expires_at: string;
-          revoked_at?: string;
-          replaced_by_device_id?: string;
-          label?: string;
+      id?: string
+      participant_id: string
+      token_hash: string
+      created_at?: string
+      last_used_at?: string
+      expires_at: string
+      revoked_at?: string
+      replaced_by_device_id?: string
+      label?: string
         };
         Relationships: [];
       };
       design_assets: {
         Row: {
-          id: string;
-          asset_type: string;
-          event_id: string | null;
-          category_key: string | null;
-          storage_path: string;
-          original_filename: string | null;
-          mime_type: string;
-          byte_size: number;
-          alt_text: string;
-          focal_position: string;
-          active: boolean;
-          created_by_admin_id: string;
-          created_at: string;
-          updated_at: string;
-          retired_at: string | null;
+      id: string
+      asset_type: string
+      event_id: string | null
+      category_key: string | null
+      storage_path: string
+      original_filename: string | null
+      mime_type: string
+      byte_size: number
+      alt_text: string
+      focal_position: string
+      active: boolean
+      created_by_admin_id: string
+      created_at: string
+      updated_at: string
+      retired_at: string | null
         };
         Insert: {
-          id?: string;
-          asset_type: string;
-          event_id?: string;
-          category_key?: string;
-          storage_path: string;
-          original_filename?: string;
-          mime_type: string;
-          byte_size: number;
-          alt_text: string;
-          focal_position?: string;
-          active?: boolean;
-          created_by_admin_id: string;
-          created_at?: string;
-          updated_at?: string;
-          retired_at?: string;
+      id?: string
+      asset_type: string
+      event_id?: string
+      category_key?: string
+      storage_path: string
+      original_filename?: string
+      mime_type: string
+      byte_size: number
+      alt_text: string
+      focal_position?: string
+      active?: boolean
+      created_by_admin_id: string
+      created_at?: string
+      updated_at?: string
+      retired_at?: string
         };
         Update: {
-          id?: string;
-          asset_type: string;
-          event_id?: string;
-          category_key?: string;
-          storage_path: string;
-          original_filename?: string;
-          mime_type: string;
-          byte_size: number;
-          alt_text: string;
-          focal_position?: string;
-          active?: boolean;
-          created_by_admin_id: string;
-          created_at?: string;
-          updated_at?: string;
-          retired_at?: string;
+      id?: string
+      asset_type: string
+      event_id?: string
+      category_key?: string
+      storage_path: string
+      original_filename?: string
+      mime_type: string
+      byte_size: number
+      alt_text: string
+      focal_position?: string
+      active?: boolean
+      created_by_admin_id: string
+      created_at?: string
+      updated_at?: string
+      retired_at?: string
         };
         Relationships: [];
       };
       participant_booking_management_tokens: {
         Row: {
-          id: string;
-          participant_id: string;
-          token_hash: string;
-          email: string;
-          issued_at: string;
-          expires_at: string;
-          consumed_at: string | null;
-          revoked_at: string | null;
+      id: string
+      participant_id: string
+      token_hash: string
+      email: string
+      issued_at: string
+      expires_at: string
+      consumed_at: string | null
+      revoked_at: string | null
         };
         Insert: {
-          id?: string;
-          participant_id: string;
-          token_hash: string;
-          email: string;
-          issued_at?: string;
-          expires_at: string;
-          consumed_at?: string;
-          revoked_at?: string;
+      id?: string
+      participant_id: string
+      token_hash: string
+      email: string
+      issued_at?: string
+      expires_at: string
+      consumed_at?: string
+      revoked_at?: string
         };
         Update: {
-          id?: string;
-          participant_id: string;
-          token_hash: string;
-          email: string;
-          issued_at?: string;
-          expires_at: string;
-          consumed_at?: string;
-          revoked_at?: string;
+      id?: string
+      participant_id: string
+      token_hash: string
+      email: string
+      issued_at?: string
+      expires_at: string
+      consumed_at?: string
+      revoked_at?: string
         };
         Relationships: [];
       };
       participant_booking_audits: {
         Row: {
-          id: string;
-          participant_id: string;
-          registration_id: string;
-          action: string;
-          source_event_id: string;
-          target_event_id: string | null;
-          old_venue_id: string | null;
-          new_venue_id: string | null;
-          result: string;
-          metadata: Json;
-          created_at: string;
+      id: string
+      participant_id: string
+      registration_id: string
+      action: string
+      source_event_id: string
+      target_event_id: string | null
+      old_venue_id: string | null
+      new_venue_id: string | null
+      result: string
+      metadata: Json
+      created_at: string
         };
         Insert: {
-          id?: string;
-          participant_id: string;
-          registration_id: string;
-          action: string;
-          source_event_id: string;
-          target_event_id?: string;
-          old_venue_id?: string;
-          new_venue_id?: string;
-          result: string;
-          metadata?: Json;
-          created_at?: string;
+      id?: string
+      participant_id: string
+      registration_id: string
+      action: string
+      source_event_id: string
+      target_event_id?: string
+      old_venue_id?: string
+      new_venue_id?: string
+      result: string
+      metadata?: Json
+      created_at?: string
         };
         Update: {
-          id?: string;
-          participant_id: string;
-          registration_id: string;
-          action: string;
-          source_event_id: string;
-          target_event_id?: string;
-          old_venue_id?: string;
-          new_venue_id?: string;
-          result: string;
-          metadata?: Json;
-          created_at?: string;
+      id?: string
+      participant_id: string
+      registration_id: string
+      action: string
+      source_event_id: string
+      target_event_id?: string
+      old_venue_id?: string
+      new_venue_id?: string
+      result: string
+      metadata?: Json
+      created_at?: string
         };
         Relationships: [];
       };
       group_chat_reminders: {
         Row: {
-          id: string;
-          organization_id: string;
-          event_id: string | null;
-          reminder_type: Database["public"]["Enums"]["group_chat_reminder_type"];
-          trigger_key: string;
-          due_at: string;
-          status: Database["public"]["Enums"]["follow_up_status"];
-          suggested_message: string;
-          copied_at: string | null;
-          copied_by_admin_id: string | null;
-          completion_notes: string | null;
-          completed_at: string | null;
-          completed_by_admin_id: string | null;
-          completion_outcome: string | null;
-          created_at: string;
-          updated_at: string;
+      id: string
+      organization_id: string
+      event_id: string | null
+      reminder_type: Database["public"]["Enums"]["group_chat_reminder_type"]
+      trigger_key: string
+      due_at: string
+      status: Database["public"]["Enums"]["follow_up_status"]
+      suggested_message: string
+      copied_at: string | null
+      copied_by_admin_id: string | null
+      completion_notes: string | null
+      completed_at: string | null
+      completed_by_admin_id: string | null
+      completion_outcome: string | null
+      created_at: string
+      updated_at: string
         };
         Insert: {
-          id?: string;
-          organization_id: string;
-          event_id?: string;
-          reminder_type: Database["public"]["Enums"]["group_chat_reminder_type"];
-          trigger_key: string;
-          due_at: string;
-          status?: Database["public"]["Enums"]["follow_up_status"];
-          suggested_message: string;
-          copied_at?: string;
-          copied_by_admin_id?: string;
-          completion_notes?: string;
-          completed_at?: string;
-          completed_by_admin_id?: string;
-          completion_outcome?: string;
-          created_at?: string;
-          updated_at?: string;
+      id?: string
+      organization_id: string
+      event_id?: string
+      reminder_type: Database["public"]["Enums"]["group_chat_reminder_type"]
+      trigger_key: string
+      due_at: string
+      status?: Database["public"]["Enums"]["follow_up_status"]
+      suggested_message: string
+      copied_at?: string
+      copied_by_admin_id?: string
+      completion_notes?: string
+      completed_at?: string
+      completed_by_admin_id?: string
+      completion_outcome?: string
+      created_at?: string
+      updated_at?: string
         };
         Update: {
-          id?: string;
-          organization_id: string;
-          event_id?: string;
-          reminder_type: Database["public"]["Enums"]["group_chat_reminder_type"];
-          trigger_key: string;
-          due_at: string;
-          status?: Database["public"]["Enums"]["follow_up_status"];
-          suggested_message: string;
-          copied_at?: string;
-          copied_by_admin_id?: string;
-          completion_notes?: string;
-          completed_at?: string;
-          completed_by_admin_id?: string;
-          completion_outcome?: string;
-          created_at?: string;
-          updated_at?: string;
+      id?: string
+      organization_id: string
+      event_id?: string
+      reminder_type: Database["public"]["Enums"]["group_chat_reminder_type"]
+      trigger_key: string
+      due_at: string
+      status?: Database["public"]["Enums"]["follow_up_status"]
+      suggested_message: string
+      copied_at?: string
+      copied_by_admin_id?: string
+      completion_notes?: string
+      completed_at?: string
+      completed_by_admin_id?: string
+      completion_outcome?: string
+      created_at?: string
+      updated_at?: string
         };
         Relationships: [];
       };
       registration_legal_acceptances: {
         Row: {
-          id: string;
-          participant_id: string;
-          registration_group_id: string;
-          acknowledgment_version_id: string;
-          accepted_at: string;
-          acceptance_method: string;
-          ip_address: string;
-          user_agent: string;
+      id: string
+      participant_id: string
+      registration_group_id: string
+      acknowledgment_version_id: string
+      accepted_at: string
+      acceptance_method: string
+      ip_address: string
+      user_agent: string
         };
         Insert: {
-          id?: string;
-          participant_id: string;
-          registration_group_id: string;
-          acknowledgment_version_id: string;
-          accepted_at?: string;
-          acceptance_method: string;
-          ip_address: string;
-          user_agent: string;
+      id?: string
+      participant_id: string
+      registration_group_id: string
+      acknowledgment_version_id: string
+      accepted_at?: string
+      acceptance_method: string
+      ip_address: string
+      user_agent: string
         };
         Update: {
-          id?: string;
-          participant_id: string;
-          registration_group_id: string;
-          acknowledgment_version_id: string;
-          accepted_at?: string;
-          acceptance_method: string;
-          ip_address: string;
-          user_agent: string;
+      id?: string
+      participant_id: string
+      registration_group_id: string
+      acknowledgment_version_id: string
+      accepted_at?: string
+      acceptance_method: string
+      ip_address: string
+      user_agent: string
+        };
+        Relationships: [];
+      };
+      legal_packages: {
+        Row: {
+      id: string
+      package_version: string
+      effective_at: string
+      approval_status: string
+      content_hash: string
+      approved_at: string | null
+      retired_at: string | null
+      revoked_at: string | null
+      created_at: string
+        };
+        Insert: {
+      id: string
+      package_version: string
+      effective_at: string
+      approval_status: string
+      content_hash: string
+      approved_at?: string
+      retired_at?: string
+      revoked_at?: string
+      created_at?: string
+        };
+        Update: {
+      id: string
+      package_version: string
+      effective_at: string
+      approval_status: string
+      content_hash: string
+      approved_at?: string
+      retired_at?: string
+      revoked_at?: string
+      created_at?: string
+        };
+        Relationships: [];
+      };
+      legal_package_components: {
+        Row: {
+      legal_package_id: string
+      document_type: Database["public"]["Enums"]["acknowledgment_type"]
+      acknowledgment_version_id: string
+        };
+        Insert: {
+      legal_package_id: string
+      document_type: Database["public"]["Enums"]["acknowledgment_type"]
+      acknowledgment_version_id: string
+        };
+        Update: {
+      legal_package_id: string
+      document_type: Database["public"]["Enums"]["acknowledgment_type"]
+      acknowledgment_version_id: string
+        };
+        Relationships: [];
+      };
+      registration_legal_package_acceptances: {
+        Row: {
+      id: string
+      participant_id: string
+      registration_group_id: string
+      legal_package_id: string
+      package_version: string
+      package_effective_at: string
+      package_content_hash: string
+      component_versions: Json
+      accepted_at: string
+      acceptance_method: string
+      ip_address: string
+      user_agent: string
+        };
+        Insert: {
+      id?: string
+      participant_id: string
+      registration_group_id: string
+      legal_package_id: string
+      package_version: string
+      package_effective_at: string
+      package_content_hash: string
+      component_versions: Json
+      accepted_at?: string
+      acceptance_method: string
+      ip_address: string
+      user_agent: string
+        };
+        Update: {
+      id?: string
+      participant_id: string
+      registration_group_id: string
+      legal_package_id: string
+      package_version: string
+      package_effective_at: string
+      package_content_hash: string
+      component_versions: Json
+      accepted_at?: string
+      acceptance_method: string
+      ip_address: string
+      user_agent: string
         };
         Relationships: [];
       };
     };
     Views: {
-      public_event_schedule: { Row: Record<string, unknown>; Relationships: [] };
+      public_event_schedule: { Row: Record<string, unknown>; Relationships: []; };
     };
     Functions: {};
     Enums: {
@@ -1541,12 +1694,7 @@ export type Database = {
       attendance_processing_state: "NOT_STARTED" | "OPEN" | "FINALIZED" | "REOPENED";
       submission_source: "PUBLIC" | "SYSTEM_ADMIN" | "HOST_ADMIN" | "WALK_IN";
       registration_status: "REGISTERED" | "CANCELLED";
-      registration_outcome:
-        | "ACTIVE"
-        | "PARTICIPANT_CANCELLED"
-        | "ADMIN_CANCELLED"
-        | "EVENT_CANCELLED"
-        | "MERGED_DUPLICATE";
+      registration_outcome: "ACTIVE" | "PARTICIPANT_CANCELLED" | "ADMIN_CANCELLED" | "EVENT_CANCELLED" | "MERGED_DUPLICATE";
       attendance_status: "NOT_RECORDED" | "ATTENDED" | "NO_SHOW" | "EXCUSED";
       follow_up_reason: "FIRST_ATTENDANCE" | "NO_SHOW";
       follow_up_status: "PENDING" | "COMPLETED" | "DISMISSED";
@@ -1557,47 +1705,19 @@ export type Database = {
       delivery_channel: "WHATSAPP" | "SMS" | "EMAIL" | "PHONE" | "OTHER";
       cancellation_request_status: "PENDING" | "APPROVED" | "REJECTED" | "WITHDRAWN";
       cancellation_type: "PERMANENT" | "RESCHEDULING_PLANNED" | "REPLACEMENT_DATE_TO_BE_ANNOUNCED";
-      cancellation_template_type:
-        | "PERMANENT_CANCELLATION"
-        | "REPLACEMENT_DATE_PENDING"
-        | "REPLACEMENT_EVENT_AVAILABLE";
+      cancellation_template_type: "PERMANENT_CANCELLATION" | "REPLACEMENT_DATE_PENDING" | "REPLACEMENT_EVENT_AVAILABLE";
       template_status: "DRAFT" | "PUBLISHED" | "RETIRED";
-      acknowledgment_type: "PARTICIPATION_RISK" | "DATA_USE" | "WHATSAPP_DISCLOSURE";
+      acknowledgment_type: "PARTICIPATION_RISK" | "DATA_USE" | "WHATSAPP_DISCLOSURE" | "EOKE_PARTICIPATION_WAIVER";
       legal_status: "DRAFT" | "PROVISIONAL" | "APPROVED" | "RETIRED" | "REVOKED";
       invitation_status: "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED" | "REPLACED";
       duplicate_case_status: "OPEN" | "MERGED" | "DISMISSED";
       merge_conflict_type: "CONTACT" | "AFFILIATION" | "REGISTRATION" | "ATTENDANCE" | "OTHER";
       whatsapp_invitation_status: "NOT_APPLICABLE" | "PENDING" | "SENT" | "FAILED";
-      attendance_transition_source:
-        | "CHECK_IN"
-        | "FINALIZE"
-        | "CORRECTION"
-        | "REOPEN"
-        | "CANCELLATION"
-        | "INVALIDATION"
-        | "MERGE";
+      attendance_transition_source: "CHECK_IN" | "FINALIZE" | "CORRECTION" | "REOPEN" | "CANCELLATION" | "INVALIDATION" | "MERGE";
       override_source: "WALK_IN" | "ADMIN_REGISTRATION" | "OTHER";
       event_recurrence_frequency: "WEEKLY";
-      registration_referral_source:
-        | "FRIEND_OR_FAMILY"
-        | "WHATSAPP_OR_GROUP_CHAT"
-        | "INSTAGRAM_OR_SOCIAL_MEDIA"
-        | "FLYER_OR_QR_CODE"
-        | "VENUE_ANNOUNCEMENT"
-        | "PREVIOUS_CLASS"
-        | "OTHER";
-      group_chat_reminder_type:
-        | "CLASS_PREVIEW"
-        | "ATTENDANCE_CHECK_IN"
-        | "POST_CLASS_REFLECTION"
-        | "WELCOME_FIRST_TIME"
-        | "THIRD_CLASS_MILESTONE"
-        | "TENTH_CLASS_MILESTONE"
-        | "WEEKLY_CHALLENGE"
-        | "WEEKLY_TIP"
-        | "COMMUNITY_POLL"
-        | "INACTIVE_GROUP"
-        | "ORGANIZER_CANCELLATION";
+      registration_referral_source: "FRIEND_OR_FAMILY" | "WHATSAPP_OR_GROUP_CHAT" | "INSTAGRAM_OR_SOCIAL_MEDIA" | "FLYER_OR_QR_CODE" | "VENUE_ANNOUNCEMENT" | "PREVIOUS_CLASS" | "OTHER";
+      group_chat_reminder_type: "CLASS_PREVIEW" | "ATTENDANCE_CHECK_IN" | "POST_CLASS_REFLECTION" | "WELCOME_FIRST_TIME" | "THIRD_CLASS_MILESTONE" | "TENTH_CLASS_MILESTONE" | "WEEKLY_CHALLENGE" | "WEEKLY_TIP" | "COMMUNITY_POLL" | "INACTIVE_GROUP" | "ORGANIZER_CANCELLATION";
     };
     CompositeTypes: {};
   };

@@ -1,0 +1,19 @@
+import type { EngageCategory } from "@/lib/services/engage-recommendations";
+
+const GROUP_REMINDER_CATEGORIES: Record<string, EngageCategory> = {
+  CLASS_PREVIEW: "BEFORE_CLASS",
+  ATTENDANCE_CHECK_IN: "BEFORE_CLASS",
+  POST_CLASS_REFLECTION: "AFTER_CLASS",
+  WELCOME_FIRST_TIME: "AFTER_CLASS",
+  THIRD_CLASS_MILESTONE: "AFTER_CLASS",
+  TENTH_CLASS_MILESTONE: "AFTER_CLASS",
+  WEEKLY_CHALLENGE: "CHALLENGES",
+  WEEKLY_TIP: "TIPS",
+  COMMUNITY_POLL: "POLLS",
+  INACTIVE_GROUP: "LOGISTICS",
+  ORGANIZER_CANCELLATION: "LOGISTICS",
+};
+
+export function groupReminderCategory(type: string): EngageCategory {
+  return GROUP_REMINDER_CATEGORIES[type] ?? "LOGISTICS";
+}
