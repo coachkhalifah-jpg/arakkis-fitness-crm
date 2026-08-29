@@ -31,6 +31,7 @@ export async function middleware(request: NextRequest) {
   const isPublicAdminRoute =
     pathname === "/admin/sign-in" ||
     pathname === "/admin/reset-password" ||
+    pathname === "/admin/update-password" ||
     pathname === "/admin/access-denied" ||
     pathname === "/admin/invitations/accept";
 

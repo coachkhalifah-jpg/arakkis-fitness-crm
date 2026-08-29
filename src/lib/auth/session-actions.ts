@@ -3,8 +3,8 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/db/server";
-import { safeAdminRedirect } from "@/lib/auth/redirects";
-import { getPublicEnv } from "@/lib/config/env";
+import { PASSWORD_UPDATE_PATH, safeAdminRedirect } from "@/lib/auth/redirects";
+import { getServerEnv } from "@/lib/config/env";
 
 export type AuthActionState = { error?: string; success?: string };
 const GENERIC_AUTH_ERROR = "Sign-in failed. Check your email and password and try again.";
@@ -36,12 +36,12 @@ export async function requestPasswordReset(
     .toLowerCase();
   if (!email) return { error: "Enter your email address." };
 
-  const env = getPublicEnv();
+  const env = getServerEnv();
   const supabase = await createClient();
   await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: new URL(
-      "/auth/callback?next=/admin/reset-password",
-      env.NEXT_PUBLIC_APP_URL,
+      `/auth/callback?next=${PASSWORD_UPDATE_PATH}`,
+      env.APP_BASE_URL || env.NEXT_PUBLIC_APP_URL,
     ).toString(),
   });
 
