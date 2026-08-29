@@ -63,7 +63,7 @@ values (
   '1.0',
   '2026-08-27T00:00:00Z',
   'APPROVED',
-  digest('EOKE_PARTICIPATION_WAIVER:06400000-0000-0000-0000-000000000001:' || encode((select content_hash from public.acknowledgment_versions where id='06400000-0000-0000-0000-000000000001'), 'hex'), 'sha256'),
+  extensions.digest('EOKE_PARTICIPATION_WAIVER:06400000-0000-0000-0000-000000000001:' || encode((select content_hash from public.acknowledgment_versions where id='06400000-0000-0000-0000-000000000001'), 'hex'), 'sha256'),
   '2026-08-25T00:00:00Z',
   'OWNER APPROVED',
   '2026-08-25',
