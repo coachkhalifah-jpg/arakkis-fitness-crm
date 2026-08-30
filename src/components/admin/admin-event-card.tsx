@@ -254,6 +254,7 @@ export function AdminEventCard({
                       check-in
                     </span>
                   </div>
+                  {actions ? <div className="event-roster-actions mt-5">{actions}</div> : null}
                 </div>
                 <div className="event-roster-table event-roster-desktop mt-5 overflow-auto">
                   {visiblePeople.length ? (
