@@ -94,6 +94,16 @@ run_phase_15_participant_contact_tests() {
   docker exec -i "$db_container" psql --set ON_ERROR_STOP=1 --username postgres --dbname postgres --file - < supabase/tests/phase-15-participant-contact.sql
 }
 
+run_phase_9_booking_transfer_tests() {
+  local db_container
+  db_container="$(docker ps --filter "name=supabase_db_" --format '{{.Names}}' | head -n 1)"
+  if [[ -z "$db_container" ]]; then
+    echo 'Local Supabase database container is not running.' >&2
+    exit 2
+  fi
+  docker exec -i "$db_container" psql --set ON_ERROR_STOP=1 --username postgres --dbname postgres --file - < supabase/tests/phase-9-booking-transfer.sql
+}
+
 run_pnpm_script() {
   if command -v pnpm >/dev/null 2>&1; then
     pnpm "$@"
@@ -153,6 +163,7 @@ if command -v supabase >/dev/null 2>&1; then
   run_phase_7_tests
   run_phase_15_admin_lifecycle_tests
   run_phase_15_participant_contact_tests
+  run_phase_9_booking_transfer_tests
   run_pnpm_script test:concurrency
   exit 0
 fi
