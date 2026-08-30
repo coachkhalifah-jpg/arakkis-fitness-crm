@@ -1,6 +1,11 @@
 import Link from "next/link";
-import { getManagedBookings, getScopedBooking } from "@/lib/registration/booking-management";
+import {
+  getBookingAlternatives,
+  getManagedBookings,
+  getScopedBooking,
+} from "@/lib/registration/booking-management";
 import { CancelBookingDialog } from "@/components/registration/cancel-booking-dialog";
+import { TransferBookingDialog } from "@/components/registration/transfer-booking-dialog";
 import { PublicErrorState } from "@/components/registration/public-error-state";
 import { googleMapsDirectionsUrl } from "@/lib/registration/maps";
 
@@ -50,6 +55,10 @@ export default async function ManageBookingPage({
   const confirmationHref = confirmationToken
     ? `/registration/confirmation?token=${encodeURIComponent(confirmationToken)}`
     : `/manage-bookings/confirmation?registrationId=${encodeURIComponent(registrationId)}`;
+  const alternatives =
+    booking.registration_status === "REGISTERED" && booking.registration_outcome === "ACTIVE"
+      ? await getBookingAlternatives(registrationId, confirmationToken || undefined)
+      : null;
   return (
     <main className="manage-booking-detail-page">
       <header className="manage-booking-detail-header">
@@ -107,6 +116,13 @@ export default async function ManageBookingPage({
         <Link className="manage-booking-detail-secondary" href="/events">
           Browse more classes
         </Link>
+        {alternatives?.length ? (
+          <TransferBookingDialog
+            booking={booking}
+            alternatives={alternatives}
+            accessToken={confirmationToken || undefined}
+          />
+        ) : null}
         <CancelBookingDialog
           booking={booking}
           label="Cancel booking"

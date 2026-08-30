@@ -8992,6 +8992,60 @@ body:has(.manage-booking-detail-page) > header {
 .manage-booking-detail-cancel:focus-visible {
   color: #f7f5f0;
 }
+.manage-booking-transfer {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+.manage-booking-transfer h2 {
+  margin: 0;
+  color: #f7f5f0;
+  font-size: 1.1rem;
+}
+.manage-booking-transfer p {
+  margin: 0;
+  color: rgba(247, 245, 240, 0.7);
+  font-size: 0.9rem;
+}
+.manage-booking-transfer form {
+  display: grid;
+  gap: 0.65rem;
+}
+.manage-booking-transfer label {
+  color: #f7f5f0;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.manage-booking-transfer select,
+.manage-booking-transfer button {
+  min-height: 2.75rem;
+  border-radius: 999px;
+  padding: 0.6rem 0.9rem;
+  font: inherit;
+}
+.manage-booking-transfer select {
+  border: 1px solid rgba(247, 245, 240, 0.25);
+  background: transparent;
+  color: #f7f5f0;
+}
+.manage-booking-transfer button {
+  border: 0;
+  background: #ff7a3d;
+  color: #17191c;
+  font-weight: 700;
+}
+.manage-booking-transfer button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+.manage-booking-transfer [role="alert"] {
+  color: #ff9b7a;
+  font-weight: 600;
+}
 .manage-booking-detail-header,
 .manage-booking-detail-hero,
 .manage-booking-detail-facts,

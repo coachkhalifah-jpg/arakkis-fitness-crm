@@ -27,6 +27,23 @@ export type ManagedBooking = {
   communication_label?: string | null;
 };
 
+export type BookingAlternative = {
+  event_id: string;
+  name: string;
+  starts_at: string;
+  ends_at: string;
+  timezone: string;
+  venue_name: string;
+  venue_street: string;
+  venue_city: string;
+  venue_state: string;
+  venue_postal_code: string;
+  host_organization_name: string;
+  capacity: number;
+  active_registration_count: number;
+  location_updated: boolean;
+};
+
 export type BookingActionError = {
   error: string;
 };
@@ -41,10 +58,14 @@ export function mapBookingError(message: string) {
     return "This booking has already been cancelled or changed.";
   if (normalized.includes("can no longer be cancelled"))
     return "This booking can no longer be cancelled.";
-  if (normalized.includes("no longer bookable") || normalized.includes("unavailable"))
+  if (normalized.includes("alternative venue"))
+    return "That occurrence's venue is no longer available.";
+  if (normalized.includes("alternative occurrence"))
+    return "That occurrence is no longer available. Choose another class in this series.";
+  if (normalized.includes("no longer bookable"))
     return "This booking is no longer available to restore.";
   if (normalized.includes("full"))
-    return "This class is now full, so the booking cannot be restored.";
+    return "This class is now full, so the booking cannot be moved or restored.";
   if (normalized.includes("already exists"))
     return "You already have an active booking for this class.";
   return "We couldn't update this booking. Please refresh and try again.";
@@ -64,15 +85,15 @@ export async function getManagedBookings() {
   return error || !data ? null : (data as { participant_id: string; bookings: ManagedBooking[] });
 }
 
-export async function getBookingAlternatives(registrationId: string) {
-  const raw = await token();
+export async function getBookingAlternatives(registrationId: string, accessToken?: string) {
+  const raw = accessToken ?? (await token());
   if (!raw) return null;
   const db = createPrivilegedClient();
   const { data, error } = await db.rpc("get_participant_booking_alternatives", {
     p_token: raw,
     p_registration_id: registrationId,
   } as never);
-  return error || !data ? null : (data as Array<Record<string, unknown>>);
+  return error || !data ? null : (data as BookingAlternative[]);
 }
 
 export async function getConfirmationToken(registrationId: string) {
