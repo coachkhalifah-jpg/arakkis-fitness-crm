@@ -41,6 +41,14 @@ export function normalizeName(value: string) {
   return value.normalize("NFKC").trim().replace(/\s+/gu, " ").toLocaleLowerCase();
 }
 
+export function canonicalizeName(value: string) {
+  return value.normalize("NFKC").trim().replace(/\s+/gu, " ");
+}
+
+export function canonicalizeContactText(value: string) {
+  return value.normalize("NFKC").trim().replace(/\s+/gu, " ");
+}
+
 export function normalizeEmail(value: string) {
   const email = value.trim().toLocaleLowerCase();
   if (!email) return null;
