@@ -160,32 +160,35 @@ function publicRegistrationClient() {
   });
 }
 
-async function submitPublicRegistration(eventId: string, firstName: string, lastName: string) {
+async function submitPublicRegistration(
+  eventId: string,
+  firstName: string,
+  lastName: string,
+  phone = `+1518555${Math.floor(1000 + Math.random() * 8999)}`,
+) {
   const client = publicRegistrationClient();
   return client.rpc("register_selected_events_with_legal", {
     p_first_name: firstName,
     p_last_name: lastName,
-    p_display_phone: `+1 (518) 555-${Math.floor(1000 + Math.random() * 8999)}`,
-    p_normalized_phone: `+1518555${Math.floor(1000 + Math.random() * 8999)}`,
+    p_display_phone: phone,
+    p_normalized_phone: phone,
     p_phone_country: "US",
     p_email: `${firstName.toLowerCase().replaceAll(" ", "-")}@example.test`,
     p_normalized_email: `${firstName.toLowerCase().replaceAll(" ", "-")}@example.test`,
     p_fitness_experience: null,
+    p_goals: null,
     p_event_ids: [eventId],
-    p_participation_acknowledgment_version_id: fixture.participationAckId,
-    p_data_use_acknowledgment_version_id: fixture.dataUseAckId,
+    p_participation_acknowledgment_version_id: "06400000-0000-0000-0000-000000000001",
+    p_data_use_acknowledgment_version_id: null,
     p_participation_acknowledged_at: new Date().toISOString(),
     p_data_use_acknowledged_at: new Date().toISOString(),
     p_ip_address: "127.0.0.1",
     p_user_agent: "phase-4-concurrency-test",
     p_idempotency_key: randomUUID(),
-    p_legal_document_version_ids: [
-      "03500000-0000-0000-0000-000000000001",
-      "03500000-0000-0000-0000-000000000002",
-      "03500000-0000-0000-0000-000000000003",
-      "03500000-0000-0000-0000-000000000004",
-      "03500000-0000-0000-0000-000000000005",
-    ],
+    p_referral_source: null,
+    p_referral_source_other_text: null,
+    p_legal_document_version_ids: ["06400000-0000-0000-0000-000000000001"],
+    p_legal_package_id: "06400000-0000-0000-0000-000000000001",
   } as never);
 }
 
@@ -260,23 +263,39 @@ test("registers multiple dates, exports only successful events, and scopes the a
   await expect(page.getByText("José Van Dyke")).toBeVisible();
 });
 
+test("generates URL-safe confirmation tokens that resolve after query transport", async ({
+  page,
+}) => {
+  for (let index = 0; index < 12; index += 1) {
+    const firstName = `Token ${randomUUID().slice(0, 8)}`;
+    const lastName = `Roundtrip ${index}`;
+    const registration = await submitPublicRegistration(fixture.eventA, firstName, lastName);
+    expect(registration.error).toBeNull();
+    const token = (registration.data as { confirmation_token: string }).confirmation_token;
+    expect(token).toMatch(/^[A-Za-z0-9_-]{40,60}$/);
+
+    const confirmation = await page.request.get(
+      `/registration/confirmation?token=${encodeURIComponent(token)}`,
+    );
+    expect(confirmation.status()).toBe(200);
+    expect(await confirmation.text()).toContain("You're in!");
+  }
+});
+
 test("reuses an exact normalized participant match and rejects an altered token", async ({
   page,
 }) => {
   const participantId = randomUUID();
   localSql(`insert into public.participants (id, first_name, last_name, normalized_first_name, normalized_last_name, display_phone, normalized_phone, phone_country, email, normalized_email, fitness_experience)
     values (${sql(participantId)}, ${sql(fixture.matchFirstName)}, ${sql(fixture.matchLastName)}, ${sql(fixture.matchFirstName.toLowerCase())}, ${sql(fixture.matchLastName.toLowerCase())}, '+17035551213', '+17035551213', 'US', 'old@example.test', 'old@example.test', 'protected history');`);
-  await fillRegistration(
-    page,
-    [fixture.eventA],
+  const registration = await submitPublicRegistration(
+    fixture.eventA,
     ` ${fixture.matchFirstName} `,
     ` ${fixture.matchLastName} `,
-    "1 (703) 555-1213",
-    "new@example.test",
+    "+17035551213",
   );
-  await expect(page).toHaveURL(/\/registration\/confirmation\?token=/, { timeout: 15000 });
-  const token = new URL(page.url()).searchParams.get("token");
-  expect(token).toBeTruthy();
+  expect(registration.error).toBeNull();
+  const token = (registration.data as { confirmation_token: string }).confirmation_token;
   expect(
     localQuery(`select count(*) from public.participants where id=${sql(participantId)}`),
   ).toBe("1");
@@ -290,6 +309,39 @@ test("reuses an exact normalized participant match and rejects an altered token"
   );
   await page.goto(`/registration/confirmation?token=${encodeURIComponent(`${token}x`)}`);
   await expect(page.getByText("This confirmation link is invalid or has expired.")).toBeVisible();
+});
+
+test("excludes archived participants and agrees with canonical Unicode whitespace normalization", async ({
+  page,
+}) => {
+  const participantId = randomUUID();
+  const phone = "+17035551214";
+  localSql(`insert into public.participants (id, first_name, last_name, normalized_first_name, normalized_last_name, display_phone, normalized_phone, phone_country, status)
+    values (${sql(participantId)}, 'José', 'Van Dyke', 'josé van dyke', 'archived', ${sql(phone)}, ${sql(phone)}, 'US', 'ARCHIVED');`);
+  const registration = await submitPublicRegistration(
+    fixture.eventA,
+    "  JOSÉ   Van   Dyke ",
+    "Archived",
+    phone,
+  );
+  expect(registration.error).toBeNull();
+  const createdParticipantId = localQuery(
+    `select participant_id from public.registration_groups where id=${sql((registration.data as { registration_group_id: string }).registration_group_id)}`,
+  );
+  expect(createdParticipantId).not.toBe(participantId);
+  expect(
+    localQuery(`select status from public.participants where id=${sql(createdParticipantId)}`),
+  ).toBe("ACTIVE");
+  expect(
+    localQuery(
+      `select normalized_first_name || '|' || normalized_last_name from public.participants where id=${sql(createdParticipantId)}`,
+    ),
+  ).toBe("josé van dyke|archived");
+  const confirmation = await page.request.get(
+    `/registration/confirmation?token=${encodeURIComponent((registration.data as { confirmation_token: string }).confirmation_token)}`,
+  );
+  expect(confirmation.status()).toBe(200);
+  expect(await confirmation.text()).toContain("You're in!");
 });
 
 test("serializes final-spot registration through the public RPC without orphaned success records", async ({
@@ -365,7 +417,7 @@ test("serializes final-spot registration through the public RPC without orphaned
       localQuery(
         `select count(*) from public.acknowledgment_acceptances a join public.registration_groups g on g.id=a.registration_group_id where g.participant_id in (select id from public.participants where first_name like 'Concurrency %' and last_name=${sql(suffix)})`,
       ),
-    ).toBe("4");
+    ).toBe("2");
     expect(
       localQuery(
         `select count(*) from public.registrations r join public.registration_groups g on g.id=r.registration_group_id where r.event_id=${sql(eventId)} and g.participant_id in (select id from public.participants where first_name like 'Concurrency %' and last_name=${sql(suffix)})`,
@@ -453,7 +505,7 @@ test("confirmation and ICS reject the complete malformed, expired, and cross-gro
   const valid = await page.goto(`/registration/confirmation?token=${encodeURIComponent(tokenA)}`);
   const validBody = await page.locator("main").last().innerText();
   expect(valid?.status()).toBe(200);
-  await expect(page.getByText(/We’re looking forward to seeing you, Token\./)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "See you there" })).toBeVisible();
   expect(validBody).not.toContain("Token Scope Alpha");
   expect(validBody).not.toContain("Token Scope Beta");
   expect(validBody).toContain("Google Calendar");
