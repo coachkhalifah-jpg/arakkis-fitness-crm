@@ -74,7 +74,7 @@ run_phase_7_tests() {
   docker exec -i "$db_container" psql --set ON_ERROR_STOP=1 --username postgres --dbname postgres --file - < supabase/tests/phase-7-runtime.sql
 }
 
-run_phase_15_tests() {
+run_phase_15_admin_lifecycle_tests() {
   local db_container
   db_container="$(docker ps --filter "name=supabase_db_" --format '{{.Names}}' | head -n 1)"
   if [[ -z "$db_container" ]]; then
@@ -82,6 +82,16 @@ run_phase_15_tests() {
     exit 2
   fi
   docker exec -i "$db_container" psql --set ON_ERROR_STOP=1 --username postgres --dbname postgres --file - < supabase/tests/phase-15-admin-lifecycle.sql
+}
+
+run_phase_15_participant_contact_tests() {
+  local db_container
+  db_container="$(docker ps --filter "name=supabase_db_" --format '{{.Names}}' | head -n 1)"
+  if [[ -z "$db_container" ]]; then
+    echo 'Local Supabase database container is not running.' >&2
+    exit 2
+  fi
+  docker exec -i "$db_container" psql --set ON_ERROR_STOP=1 --username postgres --dbname postgres --file - < supabase/tests/phase-15-participant-contact.sql
 }
 
 run_pnpm_script() {
@@ -141,7 +151,8 @@ if command -v supabase >/dev/null 2>&1; then
   run_phase_2_tests
   run_phase_6_tests
   run_phase_7_tests
-  run_phase_15_tests
+  run_phase_15_admin_lifecycle_tests
+  run_phase_15_participant_contact_tests
   run_pnpm_script test:concurrency
   exit 0
 fi
