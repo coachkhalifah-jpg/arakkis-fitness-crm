@@ -102,7 +102,7 @@ declare
   v_existing_new_id uuid;
   v_new_id uuid;
 begin
-  v_participant_id := public.phase10_resolve_booking_participant(p_token);
+  v_participant_id := public.phase10_resolve_booking_access(p_token, p_registration_id);
   if v_participant_id is null then
     raise exception 'booking access is invalid' using errcode = '42501';
   end if;

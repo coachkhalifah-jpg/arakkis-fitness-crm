@@ -13,6 +13,7 @@ declare
   full_participant_id uuid := '79000000-0000-0000-0000-000000000007';
   group_id uuid := '79000000-0000-0000-0000-000000000008';
   full_group_id uuid := '79000000-0000-0000-0000-000000000009';
+  expired_group_id uuid := '79000000-0000-0000-0000-000000000027';
   source_id uuid := '79000000-0000-0000-0000-000000000010';
   target_id uuid := '79000000-0000-0000-0000-000000000011';
   cross_source_id uuid := '79000000-0000-0000-0000-000000000012';
@@ -28,6 +29,8 @@ declare
   deadline_source_id uuid := '79000000-0000-0000-0000-000000000022';
   deadline_target_id uuid := '79000000-0000-0000-0000-000000000023';
   token text := repeat('t', 32);
+  confirmation_token text := repeat('c', 40);
+  expired_confirmation_token text := repeat('e', 40);
   result jsonb;
   alternatives jsonb;
   new_registration_id uuid;
@@ -54,7 +57,8 @@ begin
   insert into public.registration_groups (id, participant_id, submission_source, participation_acknowledgment_version_id, participation_acknowledged_at, data_use_acknowledgment_version_id, data_use_acknowledged_at)
   values
     (group_id, participant_key, 'PUBLIC', '79000000-0000-0000-0000-000000000024', now(), '79000000-0000-0000-0000-000000000025', now()),
-    (full_group_id, full_participant_id, 'PUBLIC', '79000000-0000-0000-0000-000000000024', now(), '79000000-0000-0000-0000-000000000025', now());
+    (full_group_id, full_participant_id, 'PUBLIC', '79000000-0000-0000-0000-000000000024', now(), '79000000-0000-0000-0000-000000000025', now()),
+    (expired_group_id, participant_key, 'PUBLIC', '79000000-0000-0000-0000-000000000024', now(), '79000000-0000-0000-0000-000000000025', now());
   insert into public.participant_remembered_devices (participant_id, token_hash, expires_at)
   values (participant_key, digest(token, 'sha256'), now() + interval '1 day');
 
@@ -84,6 +88,12 @@ begin
     (close_source_id, group_id, participant_key, close_source_id),
     (deadline_source_id, group_id, participant_key, deadline_source_id),
     ('79000000-0000-0000-0000-000000000026', full_group_id, full_participant_id, full_target_id);
+  insert into public.registration_group_results (registration_group_id, event_id, success, reason, registration_id)
+  values (group_id, source_id, true, null, source_id);
+  insert into public.confirmation_tokens (registration_group_id, token_hash, expires_at)
+  values
+    (group_id, digest(confirmation_token, 'sha256'), now() + interval '1 day'),
+    (expired_group_id, digest(expired_confirmation_token, 'sha256'), now() - interval '1 hour');
 
   begin
     perform public.manage_participant_booking(repeat('x', 32), 'TRANSFER', source_id, target_id);
@@ -92,12 +102,19 @@ begin
     if sqlerrm <> 'booking access is invalid' then raise; end if;
   end;
 
-  alternatives := public.get_participant_booking_alternatives(token, source_id);
+  begin
+    perform public.manage_participant_booking(expired_confirmation_token, 'TRANSFER', source_id, target_id);
+    raise exception 'expired confirmation token was accepted';
+  exception when others then
+    if sqlerrm <> 'booking access is invalid' then raise; end if;
+  end;
+
+  alternatives := public.get_participant_booking_alternatives(confirmation_token, source_id);
   if jsonb_array_length(alternatives) <> 1 or not (alternatives @> jsonb_build_array(jsonb_build_object('event_id', target_id))) then
     raise exception 'destination eligibility filter returned an incorrect set: %', alternatives;
   end if;
 
-  result := public.manage_participant_booking(token, 'TRANSFER', source_id, target_id);
+  result := public.manage_participant_booking(confirmation_token, 'TRANSFER', source_id, target_id);
   if result->>'status' <> 'TRANSFERRED' or result->>'idempotent' <> 'false' then
     raise exception 'initial transfer result was incorrect: %', result;
   end if;
@@ -117,7 +134,7 @@ begin
     raise exception 'transfer provenance audit is missing';
   end if;
 
-  result := public.manage_participant_booking(token, 'TRANSFER', source_id, target_id);
+  result := public.manage_participant_booking(confirmation_token, 'TRANSFER', source_id, target_id);
   if result->>'status' <> 'TRANSFERRED' or result->>'idempotent' <> 'true' or (result->>'registration_id')::uuid <> new_registration_id then
     raise exception 'transfer replay was not idempotent: %', result;
   end if;
