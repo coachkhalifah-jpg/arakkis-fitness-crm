@@ -35,3 +35,31 @@ access and review RLS/audit history before reopening. For a legal-gate concern, 
 and verify the database function/settings. Rotate Supabase public keys when applicable, service key,
 database password, Supabase/Vercel/Git tokens, and Auth credentials in their owning systems; redeploy
 all affected environments and run smoke tests.
+
+## Owner-controlled administrator recovery
+
+Only the business owner or an explicitly designated owner-controlled operator may perform
+administrator recovery in a hosted environment. Engineering must not use a service key, Auth Admin
+API, or production SQL for this procedure. First pause administrator operations, preserve sanitized
+logs, confirm the incident and operator identity out of band, and take a backup/PITR checkpoint.
+
+If a valid active System Admin still exists, use the reviewed 0067 lifecycle RPCs from the owner-
+authenticated Supabase SQL console or an owner-controlled maintenance tool:
+
+1. Verify the target Auth user, profile ID, requested Host Admin status, and Organization IDs.
+2. Call `deactivate_admin_profile`, `reactivate_admin_profile`,
+   `add_admin_organization_assignment`, or `revoke_admin_organization_assignment` with the active
+   System Admin profile ID and a non-empty incident reason. Do not edit lifecycle tables directly.
+3. Confirm the resulting profile/assignment state, the matching immutable `audit_events` rows, and
+   a fresh authenticated request denial/allow result before reopening access.
+
+If no active System Admin remains, the owner must first restore the owner-verified Auth identity and
+its `SYSTEM_ADMIN` profile through the owner-controlled Supabase recovery process. Use a reviewed
+transaction, set `app.admin_lifecycle_mutation` only for that recovery transaction, record the
+owner/profile identity and incident reason in `audit_events`, and never create a default password or
+share a service credential. Then use the 0067 RPCs for all Host Admin recovery and assignment work.
+
+After recovery, rotate any suspected credentials, review Auth/database/audit logs for unauthorized
+requests, verify that inactive or unassigned Hosts are denied immediately, and retain the checkpoint
+and recovery record with the incident. This procedure does not restore archived Organizations,
+Venues, Events, registrations, or immutable history.

@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 
-const LOCAL_API_URL = "http://127.0.0.1:54321";
+const LOCAL_API_URL = process.env.PLAYWRIGHT_SUPABASE_API_URL || "http://127.0.0.1:54321";
 export const PLAYWRIGHT_PORT = process.env.PLAYWRIGHT_PORT || "3100";
 export const PLAYWRIGHT_APP_URL = `http://127.0.0.1:${PLAYWRIGHT_PORT}`;
 
@@ -14,6 +14,19 @@ function parseStatusEnv(output: string) {
 }
 
 function localSupabaseValues() {
+  const overrideApiUrl = process.env.PLAYWRIGHT_SUPABASE_API_URL;
+  const overrideAnonKey = process.env.PLAYWRIGHT_SUPABASE_ANON_KEY;
+  const overrideServiceRoleKey = process.env.PLAYWRIGHT_SUPABASE_SERVICE_ROLE_KEY;
+  if (overrideApiUrl || overrideAnonKey || overrideServiceRoleKey) {
+    if (!overrideApiUrl || !overrideAnonKey || !overrideServiceRoleKey) {
+      throw new Error("alternate browser Supabase configuration is incomplete");
+    }
+    return {
+      apiUrl: overrideApiUrl,
+      anonKey: overrideAnonKey,
+      serviceRoleKey: overrideServiceRoleKey,
+    };
+  }
   try {
     const output = execFileSync("supabase", ["status", "-o", "env"], {
       cwd: process.cwd(),
@@ -28,7 +41,9 @@ function localSupabaseValues() {
       throw new Error("local Supabase status did not include the required test values");
     }
     if (apiUrl !== LOCAL_API_URL) {
-      throw new Error("browser tests require the local Supabase API at 127.0.0.1:54321");
+      throw new Error(
+        `browser tests require the configured local Supabase API at ${LOCAL_API_URL}`,
+      );
     }
     return { apiUrl, anonKey, serviceRoleKey };
   } catch (error) {

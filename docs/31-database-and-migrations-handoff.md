@@ -9,6 +9,14 @@ Critical behavior is enforced with constraints, triggers, RPCs, grants, and RLS:
 duplicate-registration concurrency, organization scope, attendance transitions, idempotent
 follow-up, invitation token lifecycle, public slug resolution, and fail-closed legal registration.
 
+Migration `0067_admin_lifecycle_safety.sql` adds the owner-controlled Host Admin lifecycle boundary:
+deactivation/reactivation and organization assignment changes are audited transactional RPCs,
+direct authenticated table mutation is removed, the last active System Admin cannot be deactivated,
+and Host authorization checks the current active Organization assignment at request time. It follows
+the reserved cancelled-Event archive migration `0066_cancelled_event_archive_guard.sql`; the
+integration base used for this slice currently contains 0065 but not 0066, so integration must apply
+0066 before 0067.
+
 Run `bash scripts/validate-database.sh` for clean local replay, SQL assertions, runtime tests,
 schema lint, and concurrency. To add schema, create the next ordered migration, update generated
 types and assertions, test from a clean reset, and never edit an applied migration. Hosted flow is
