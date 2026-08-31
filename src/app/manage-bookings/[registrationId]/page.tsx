@@ -22,10 +22,15 @@ export default async function ManageBookingPage({
   searchParams,
 }: {
   params: Promise<{ registrationId: string }>;
-  searchParams: Promise<{ confirmationToken?: string }>;
+  searchParams: Promise<{ token?: string; confirmationToken?: string }>;
 }) {
   const { registrationId } = await params;
-  const confirmationToken = (await searchParams).confirmationToken?.trim() ?? "";
+  const routeSearchParams = await searchParams;
+  const confirmationToken = (
+    routeSearchParams.token ??
+    routeSearchParams.confirmationToken ??
+    ""
+  ).trim();
   const scopedBooking = confirmationToken
     ? await getScopedBooking(registrationId, confirmationToken)
     : null;

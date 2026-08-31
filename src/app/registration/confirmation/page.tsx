@@ -13,6 +13,7 @@ import { getConfirmationParticipantId } from "@/lib/registration/booking-managem
 import { resolveRememberedParticipant } from "@/lib/registration/device";
 import { eventCardAsset } from "@/lib/config/admin-visual-assets";
 import { designAssetPublicUrl } from "@/lib/config/design-assets";
+import { bookingManagementHref } from "@/lib/registration/booking-links";
 
 type ConfirmationEvent = CalendarEvent & {
   event_id: string;
@@ -416,7 +417,8 @@ export default async function ConfirmationPage({
               <p className="confirmation-booking-access-heading">Keep your booking handy</p>
               <div className="confirmation-booking-access-list">
                 {successful.map((event) => {
-                  const bookingHref = `/manage-bookings/${encodeURIComponent(event.registration_id)}?confirmationToken=${encodeURIComponent(token)}`;
+                  const bookingHref = bookingManagementHref(event.registration_id, token);
+                  if (!bookingHref) return null;
                   return (
                     <div
                       className="confirmation-booking-access-row"

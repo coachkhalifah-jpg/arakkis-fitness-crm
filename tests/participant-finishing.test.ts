@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { isUnavailableEvent } from "@/lib/registration/availability";
 import { mapBookingError } from "@/lib/registration/booking-management";
+import { bookingManagementHref } from "@/lib/registration/booking-links";
 
 describe("participant finishing batch", () => {
   it.each([
@@ -21,6 +22,14 @@ describe("participant finishing batch", () => {
     expect(
       isUnavailableEvent({ availability: "OPEN", active_registration_count: 2, capacity: 10 }),
     ).toBe(false);
+  });
+
+  it("creates a canonical token-scoped booking-management link", () => {
+    expect(bookingManagementHref("registration/1", "confirmation_token_123")).toBe(
+      "/manage-bookings/registration%2F1?token=confirmation_token_123",
+    );
+    expect(bookingManagementHref("", "confirmation_token_123")).toBeNull();
+    expect(bookingManagementHref("registration-1", "")).toBeNull();
   });
 
   it.each([
