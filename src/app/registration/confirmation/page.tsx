@@ -108,12 +108,17 @@ export default async function ConfirmationPage({
     events: ConfirmationEvent[];
     expires_at: string;
   };
+  const confirmationDiagnosticCorrelationId = crypto.randomUUID();
   const [rememberedParticipant, confirmationParticipantId] = await Promise.all([
-    resolveRememberedParticipant(),
+    resolveRememberedParticipant(undefined, confirmationDiagnosticCorrelationId),
     getConfirmationParticipantId(token),
   ]);
   const isRememberedParticipant =
     rememberedParticipant?.participant_id === confirmationParticipantId;
+  console.info("[rc2-remembered-device] confirmation", {
+    correlationId: confirmationDiagnosticCorrelationId,
+    participant_match: isRememberedParticipant,
+  });
   const events = result.events ?? [];
   const successful = events.filter((event) => event.success);
   const { data: eventImageAssets } = successful.length

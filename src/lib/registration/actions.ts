@@ -105,6 +105,12 @@ function emailValidationState(form: FormData): RegistrationActionState {
 
 async function executeRegistration(form: FormData, selectedEventIds: string[]) {
   let confirmationToken: string | undefined;
+  const diagnosticCorrelationId = crypto.randomUUID();
+  const rememberRequested = form.get("rememberDevice") === "on";
+  console.info("[rc2-remembered-device] registration", {
+    correlationId: diagnosticCorrelationId,
+    remember_requested: rememberRequested,
+  });
   const rememberedParticipant = await resolveRememberedParticipant();
   const remembered = form.get("continueAsRemembered") === "true" ? rememberedParticipant : null;
   const shouldRememberDevice =
@@ -173,7 +179,8 @@ async function executeRegistration(form: FormData, selectedEventIds: string[]) {
   const result = data as { confirmation_token?: string };
   if (!result.confirmation_token) throw new Error("submission already received");
   confirmationToken = result.confirmation_token;
-  if (shouldRememberDevice) await rememberParticipantFromConfirmation(confirmationToken);
+  if (shouldRememberDevice)
+    await rememberParticipantFromConfirmation(confirmationToken, diagnosticCorrelationId);
   return confirmationToken;
 }
 

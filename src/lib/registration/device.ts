@@ -22,29 +22,84 @@ export type RememberedParticipant = {
   goals: string | null;
 };
 
-export async function resolveRememberedParticipant(token?: string) {
+export async function resolveRememberedParticipant(
+  token?: string,
+  correlationId = crypto.randomUUID(),
+) {
   const raw = token ?? (await cookies()).get(rememberedDeviceCookie)?.value;
-  if (!raw) return null;
+  if (!raw) {
+    console.info("[rc2-remembered-device] resolution", {
+      correlationId,
+      cookie_present: false,
+      resolution_status: "missing",
+    });
+    return null;
+  }
   const db = createPrivilegedClient();
   const { data, error } = await db.rpc("phase10_resolve_participant_device_token", {
     p_token: raw,
   } as never);
+  console.info("[rc2-remembered-device] resolution", {
+    correlationId,
+    cookie_present: true,
+    resolution_status: error || !data ? "missing" : "matched",
+  });
   return error || !data ? null : (data as RememberedParticipant);
 }
 
-export async function rememberParticipantFromConfirmation(confirmationToken: string) {
+export async function rememberParticipantFromConfirmation(
+  confirmationToken: string,
+  correlationId = crypto.randomUUID(),
+) {
   const db = createPrivilegedClient();
+  console.info("[rc2-remembered-device] issuance", {
+    correlationId,
+    rpc_attempted: true,
+  });
   const { data, error } = await db.rpc("phase10_issue_participant_device_token", {
     p_confirmation_token: confirmationToken,
   } as never);
-  if (error || !data) return { error: "This confirmation link is no longer available." };
+  if (error || !data) {
+    console.info("[rc2-remembered-device] issuance", {
+      correlationId,
+      rpc_attempted: true,
+      rpc_status: "error",
+      cookie_set_attempted: false,
+      cookie_set_completed: false,
+    });
+    return { error: "This confirmation link is no longer available." };
+  }
   const result = data as { token: string; first_name: string };
-  (await cookies()).set(rememberedDeviceCookie, result.token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: cookieMaxAge,
+  console.info("[rc2-remembered-device] issuance", {
+    correlationId,
+    rpc_attempted: true,
+    rpc_status: "success",
+    cookie_set_attempted: true,
+  });
+  try {
+    (await cookies()).set(rememberedDeviceCookie, result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: cookieMaxAge,
+    });
+  } catch (error) {
+    console.info("[rc2-remembered-device] issuance", {
+      correlationId,
+      rpc_attempted: true,
+      rpc_status: "success",
+      cookie_set_attempted: true,
+      cookie_set_completed: false,
+    });
+    throw error;
+  }
+  console.info("[rc2-remembered-device] issuance", {
+    correlationId,
+    rpc_attempted: true,
+    rpc_status: "success",
+    cookie_set_attempted: true,
+    cookie_set_completed: true,
   });
   return { firstName: result.first_name };
 }
