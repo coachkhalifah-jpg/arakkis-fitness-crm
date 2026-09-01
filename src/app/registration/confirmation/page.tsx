@@ -14,6 +14,7 @@ import { resolveRememberedParticipant } from "@/lib/registration/device";
 import { eventCardAsset } from "@/lib/config/admin-visual-assets";
 import { designAssetPublicUrl } from "@/lib/config/design-assets";
 import { bookingManagementHref } from "@/lib/registration/booking-links";
+import { logHostedAccessDiagnostic } from "@/lib/diagnostics/hosted-access";
 
 type ConfirmationEvent = CalendarEvent & {
   event_id: string;
@@ -114,6 +115,11 @@ export default async function ConfirmationPage({
   ]);
   const isRememberedParticipant =
     rememberedParticipant?.participant_id === confirmationParticipantId;
+  logHostedAccessDiagnostic({
+    correlation_id: crypto.randomUUID(),
+    participant_match: isRememberedParticipant,
+    remember_resolution: rememberedParticipant ? "matched" : "missing",
+  });
   const events = result.events ?? [];
   const successful = events.filter((event) => event.success);
   const { data: eventImageAssets } = successful.length
