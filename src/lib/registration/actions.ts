@@ -17,6 +17,7 @@ import {
   normalizePhone,
   participantInputSchema,
 } from "@/lib/registration/normalization";
+import { logHostedAccessDiagnostic } from "@/lib/diagnostics/hosted-access";
 
 export type RegistrationField =
   | "selectedOccurrenceStartsAt"
@@ -104,6 +105,11 @@ function emailValidationState(form: FormData): RegistrationActionState {
 }
 
 async function executeRegistration(form: FormData, selectedEventIds: string[]) {
+  const diagnosticCorrelationId = crypto.randomUUID();
+  logHostedAccessDiagnostic({
+    correlation_id: diagnosticCorrelationId,
+    remember_requested: form.get("rememberDevice") === "on",
+  });
   let confirmationToken: string | undefined;
   const rememberedParticipant = await resolveRememberedParticipant();
   const remembered = form.get("continueAsRemembered") === "true" ? rememberedParticipant : null;
@@ -173,7 +179,8 @@ async function executeRegistration(form: FormData, selectedEventIds: string[]) {
   const result = data as { confirmation_token?: string };
   if (!result.confirmation_token) throw new Error("submission already received");
   confirmationToken = result.confirmation_token;
-  if (shouldRememberDevice) await rememberParticipantFromConfirmation(confirmationToken);
+  if (shouldRememberDevice)
+    await rememberParticipantFromConfirmation(confirmationToken, diagnosticCorrelationId);
   return confirmationToken;
 }
 

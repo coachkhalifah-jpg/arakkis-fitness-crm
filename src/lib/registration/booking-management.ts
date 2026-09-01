@@ -3,6 +3,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { createPrivilegedClient } from "@/lib/db/privileged";
 import { rememberedDeviceCookie } from "@/lib/registration/device";
+import { logHostedAccessDiagnostic } from "@/lib/diagnostics/hosted-access";
 
 export type ManagedBooking = {
   registration_id: string;
@@ -110,11 +111,30 @@ export async function getConfirmationToken(registrationId: string) {
 
 export async function getScopedBooking(registrationId: string, confirmationToken: string) {
   if (!confirmationToken) return null;
+  const correlationId = crypto.randomUUID();
+  logHostedAccessDiagnostic({ correlation_id: correlationId, booking_rpc_attempted: true });
   const db = createPrivilegedClient();
   const { data, error } = await db.rpc("get_participant_booking_by_confirmation", {
     p_confirmation_token: confirmationToken,
     p_registration_id: registrationId,
   } as never);
+  const bookingRpcStatus = error
+    ? /expired/i.test(error.message)
+      ? "expired"
+      : /token|invalid/i.test(error.message)
+        ? "invalid"
+        : /scope|registration/i.test(error.message)
+          ? "scope_mismatch"
+          : "error"
+    : data
+      ? "success"
+      : "not_found";
+  logHostedAccessDiagnostic({
+    correlation_id: correlationId,
+    booking_rpc_status: bookingRpcStatus,
+    registration_match: Boolean(data),
+    booking_result: data ? "resolved" : error ? "error" : "not_found",
+  });
   return error || !data ? null : (data as ManagedBooking);
 }
 
