@@ -14,6 +14,10 @@ import { resolveRememberedParticipant } from "@/lib/registration/device";
 import { eventCardAsset } from "@/lib/config/admin-visual-assets";
 import { designAssetPublicUrl } from "@/lib/config/design-assets";
 import { bookingManagementHref } from "@/lib/registration/booking-links";
+import {
+  isHostedAccessCorrelationId,
+  logHostedAccessDiagnostic,
+} from "@/lib/diagnostics/hosted-access";
 
 type ConfirmationEvent = CalendarEvent & {
   event_id: string;
@@ -84,15 +88,31 @@ function bookingTitle(name: string) {
 export default async function ConfirmationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{ token?: string; correlationId?: string }>;
 }) {
-  const token = (await searchParams).token ?? "";
+  const routeSearchParams = await searchParams;
+  const token = routeSearchParams.token ?? "";
+  const correlationId = isHostedAccessCorrelationId(routeSearchParams.correlationId)
+    ? routeSearchParams.correlationId
+    : crypto.randomUUID();
+  if (!token) {
+    logHostedAccessDiagnostic({
+      correlation_id: correlationId,
+      boundary: "confirmation_route",
+      outcome_category: "route_failure",
+    });
+  }
   const db = await createClient();
   const { data, error } = await db.rpc("get_registration_confirmation", {
     p_token: token,
   } as never);
 
-  if (error || !data)
+  if (error || !data) {
+    logHostedAccessDiagnostic({
+      correlation_id: correlationId,
+      boundary: "confirmation_route",
+      outcome_category: error ? "rpc_failure" : "data_state_failure",
+    });
     return (
       <PublicErrorState
         code="INVALID"
@@ -102,6 +122,12 @@ export default async function ConfirmationPage({
         actionHref="/events"
       />
     );
+  }
+  logHostedAccessDiagnostic({
+    correlation_id: correlationId,
+    boundary: "confirmation_route",
+    outcome_category: "success",
+  });
 
   const result = data as {
     participant_name: string;
@@ -109,11 +135,18 @@ export default async function ConfirmationPage({
     expires_at: string;
   };
   const [rememberedParticipant, confirmationParticipantId] = await Promise.all([
-    resolveRememberedParticipant(),
-    getConfirmationParticipantId(token),
+    resolveRememberedParticipant(undefined, correlationId),
+    getConfirmationParticipantId(token, correlationId),
   ]);
   const isRememberedParticipant =
     rememberedParticipant?.participant_id === confirmationParticipantId;
+  logHostedAccessDiagnostic({
+    correlation_id: correlationId,
+    boundary: "confirmation_route",
+    outcome_category: "success",
+    participant_match: isRememberedParticipant,
+    remember_resolution: rememberedParticipant ? "matched" : "missing",
+  });
   const events = result.events ?? [];
   const successful = events.filter((event) => event.success);
   const { data: eventImageAssets } = successful.length
@@ -417,8 +450,19 @@ export default async function ConfirmationPage({
               <p className="confirmation-booking-access-heading">Keep your booking handy</p>
               <div className="confirmation-booking-access-list">
                 {successful.map((event) => {
-                  const bookingHref = bookingManagementHref(event.registration_id, token);
-                  if (!bookingHref) return null;
+                  const bookingHref = bookingManagementHref(
+                    event.registration_id,
+                    token,
+                    correlationId,
+                  );
+                  if (!bookingHref) {
+                    logHostedAccessDiagnostic({
+                      correlation_id: correlationId,
+                      boundary: "confirmation_route",
+                      outcome_category: "data_state_failure",
+                    });
+                    return null;
+                  }
                   return (
                     <div
                       className="confirmation-booking-access-row"

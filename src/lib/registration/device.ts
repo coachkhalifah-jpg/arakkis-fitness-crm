@@ -2,6 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { createPrivilegedClient } from "@/lib/db/privileged";
+import { logHostedAccessDiagnostic } from "@/lib/diagnostics/hosted-access";
 
 export const rememberedDeviceCookie = "fitness_remembered_device";
 const cookieMaxAge = 60 * 60 * 24 * 180;
@@ -22,30 +23,104 @@ export type RememberedParticipant = {
   goals: string | null;
 };
 
-export async function resolveRememberedParticipant(token?: string) {
-  const raw = token ?? (await cookies()).get(rememberedDeviceCookie)?.value;
-  if (!raw) return null;
+export async function resolveRememberedParticipant(
+  token?: string,
+  correlationId = crypto.randomUUID(),
+) {
+  let raw: string | undefined;
+  try {
+    raw = token ?? (await cookies()).get(rememberedDeviceCookie)?.value;
+  } catch (error) {
+    logHostedAccessDiagnostic({
+      correlation_id: correlationId,
+      boundary: "registration_submission",
+      outcome_category: "cookie_failure",
+      confirmation_cookie_present: false,
+    });
+    throw error;
+  }
+  logHostedAccessDiagnostic({
+    correlation_id: correlationId,
+    boundary: "registration_submission",
+    confirmation_cookie_present: Boolean(raw),
+  });
+  if (!raw) {
+    logHostedAccessDiagnostic({
+      correlation_id: correlationId,
+      boundary: "registration_submission",
+      outcome_category: "success",
+      remember_resolution: "missing",
+    });
+    return null;
+  }
   const db = createPrivilegedClient();
   const { data, error } = await db.rpc("phase10_resolve_participant_device_token", {
     p_token: raw,
   } as never);
+  logHostedAccessDiagnostic({
+    correlation_id: correlationId,
+    boundary: "registration_submission",
+    outcome_category: error ? "rpc_failure" : data ? "success" : "data_state_failure",
+    remember_resolution: error ? "error" : data ? "matched" : "missing",
+    participant_match: Boolean(data),
+  });
   return error || !data ? null : (data as RememberedParticipant);
 }
 
-export async function rememberParticipantFromConfirmation(confirmationToken: string) {
+export async function rememberParticipantFromConfirmation(
+  confirmationToken: string,
+  correlationId = crypto.randomUUID(),
+) {
+  logHostedAccessDiagnostic({
+    correlation_id: correlationId,
+    boundary: "registration_submission",
+    device_rpc_attempted: true,
+  });
   const db = createPrivilegedClient();
   const { data, error } = await db.rpc("phase10_issue_participant_device_token", {
     p_confirmation_token: confirmationToken,
   } as never);
-  if (error || !data) return { error: "This confirmation link is no longer available." };
-  const result = data as { token: string; first_name: string };
-  (await cookies()).set(rememberedDeviceCookie, result.token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: cookieMaxAge,
+  if (error || !data) {
+    logHostedAccessDiagnostic({
+      correlation_id: correlationId,
+      boundary: "registration_submission",
+      outcome_category: error ? "rpc_failure" : "data_state_failure",
+      device_rpc_status: "error",
+      cookie_set_attempted: false,
+    });
+    return { error: "This confirmation link is no longer available." };
+  }
+  logHostedAccessDiagnostic({
+    correlation_id: correlationId,
+    boundary: "registration_submission",
+    outcome_category: "success",
+    device_rpc_status: "success",
+    cookie_set_attempted: true,
   });
+  const result = data as { token: string; first_name: string };
+  try {
+    (await cookies()).set(rememberedDeviceCookie, result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: cookieMaxAge,
+    });
+    logHostedAccessDiagnostic({
+      correlation_id: correlationId,
+      boundary: "registration_submission",
+      outcome_category: "success",
+      cookie_set_completed: true,
+    });
+  } catch (error) {
+    logHostedAccessDiagnostic({
+      correlation_id: correlationId,
+      boundary: "registration_submission",
+      outcome_category: "cookie_failure",
+      cookie_set_completed: false,
+    });
+    throw error;
+  }
   return { firstName: result.first_name };
 }
 
