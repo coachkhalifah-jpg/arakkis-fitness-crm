@@ -181,6 +181,12 @@ async function executeRegistration(form: FormData, selectedEventIds: string[]) {
   confirmationToken = result.confirmation_token;
   if (shouldRememberDevice)
     await rememberParticipantFromConfirmation(confirmationToken, diagnosticCorrelationId);
+  else
+    logHostedAccessDiagnostic({
+      correlation_id: diagnosticCorrelationId,
+      device_rpc_attempted: false,
+      cookie_set_attempted: false,
+    });
   return confirmationToken;
 }
 

@@ -56,7 +56,11 @@ export async function rememberParticipantFromConfirmation(
     p_confirmation_token: confirmationToken,
   } as never);
   if (error || !data) {
-    logHostedAccessDiagnostic({ correlation_id: correlationId, device_rpc_status: "error" });
+    logHostedAccessDiagnostic({
+      correlation_id: correlationId,
+      device_rpc_status: "error",
+      cookie_set_attempted: false,
+    });
     return { error: "This confirmation link is no longer available." };
   }
   logHostedAccessDiagnostic({
