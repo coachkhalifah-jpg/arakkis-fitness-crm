@@ -110,8 +110,16 @@ export async function getConfirmationToken(registrationId: string) {
 }
 
 export async function getScopedBooking(registrationId: string, confirmationToken: string) {
-  if (!confirmationToken) return null;
   const correlationId = crypto.randomUUID();
+  if (!confirmationToken) {
+    logHostedAccessDiagnostic({
+      correlation_id: correlationId,
+      booking_rpc_attempted: false,
+      registration_match: false,
+      booking_result: "not_found",
+    });
+    return null;
+  }
   logHostedAccessDiagnostic({ correlation_id: correlationId, booking_rpc_attempted: true });
   const db = createPrivilegedClient();
   const { data, error } = await db.rpc("get_participant_booking_by_confirmation", {
