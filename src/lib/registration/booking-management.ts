@@ -72,17 +72,36 @@ export function mapBookingError(message: string) {
   return "We couldn't update this booking. Please refresh and try again.";
 }
 
-async function token() {
-  return (await cookies()).get(rememberedDeviceCookie)?.value ?? null;
+async function token(correlationId?: string) {
+  try {
+    return (await cookies()).get(rememberedDeviceCookie)?.value ?? null;
+  } catch (error) {
+    if (correlationId)
+      logHostedAccessDiagnostic({
+        correlation_id: correlationId,
+        boundary: "booking_management",
+        outcome_category: "cookie_failure",
+        confirmation_cookie_present: false,
+      });
+    throw error;
+  }
 }
 
-export async function getManagedBookings() {
-  const raw = await token();
+export async function getManagedBookings(correlationId = crypto.randomUUID()) {
+  const raw = await token(correlationId);
   if (!raw) return null;
   const db = createPrivilegedClient();
   const { data, error } = await db.rpc("get_participant_upcoming_bookings", {
     p_token: raw,
   } as never);
+  logHostedAccessDiagnostic({
+    correlation_id: correlationId,
+    boundary: "booking_management",
+    outcome_category: error ? "rpc_failure" : data ? "success" : "data_state_failure",
+    booking_rpc_attempted: true,
+    booking_rpc_status: error ? "error" : data ? "success" : "not_found",
+    booking_result: data ? "resolved" : error ? "error" : "not_found",
+  });
   return error || !data ? null : (data as { participant_id: string; bookings: ManagedBooking[] });
 }
 
@@ -109,18 +128,27 @@ export async function getConfirmationToken(registrationId: string) {
   return (data as { token?: string }).token ?? null;
 }
 
-export async function getScopedBooking(registrationId: string, confirmationToken: string) {
-  const correlationId = crypto.randomUUID();
+export async function getScopedBooking(
+  registrationId: string,
+  confirmationToken: string,
+  correlationId = crypto.randomUUID(),
+) {
   if (!confirmationToken) {
     logHostedAccessDiagnostic({
       correlation_id: correlationId,
+      boundary: "booking_management",
+      outcome_category: "route_failure",
       booking_rpc_attempted: false,
       registration_match: false,
       booking_result: "not_found",
     });
     return null;
   }
-  logHostedAccessDiagnostic({ correlation_id: correlationId, booking_rpc_attempted: true });
+  logHostedAccessDiagnostic({
+    correlation_id: correlationId,
+    boundary: "booking_management",
+    booking_rpc_attempted: true,
+  });
   const db = createPrivilegedClient();
   const { data, error } = await db.rpc("get_participant_booking_by_confirmation", {
     p_confirmation_token: confirmationToken,
@@ -139,6 +167,8 @@ export async function getScopedBooking(registrationId: string, confirmationToken
       : "not_found";
   logHostedAccessDiagnostic({
     correlation_id: correlationId,
+    boundary: "booking_management",
+    outcome_category: error ? "rpc_failure" : data ? "success" : "data_state_failure",
     booking_rpc_status: bookingRpcStatus,
     registration_match: Boolean(data),
     booking_result: data ? "resolved" : error ? "error" : "not_found",
@@ -146,12 +176,22 @@ export async function getScopedBooking(registrationId: string, confirmationToken
   return error || !data ? null : (data as ManagedBooking);
 }
 
-export async function getConfirmationParticipantId(confirmationToken: string) {
+export async function getConfirmationParticipantId(
+  confirmationToken: string,
+  correlationId = crypto.randomUUID(),
+) {
   if (!confirmationToken) return null;
   const db = createPrivilegedClient();
   const { data, error } = await db.rpc("get_confirmation_participant_id", {
     p_token: confirmationToken,
   } as never);
+  if (error || !data) {
+    logHostedAccessDiagnostic({
+      correlation_id: correlationId,
+      boundary: "confirmation_route",
+      outcome_category: error ? "rpc_failure" : "data_state_failure",
+    });
+  }
   return error || !data ? null : String(data);
 }
 

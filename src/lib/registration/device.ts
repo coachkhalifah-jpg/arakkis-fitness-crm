@@ -23,15 +23,34 @@ export type RememberedParticipant = {
   goals: string | null;
 };
 
-export async function resolveRememberedParticipant(token?: string) {
-  const correlationId = crypto.randomUUID();
-  const raw = token ?? (await cookies()).get(rememberedDeviceCookie)?.value;
+export async function resolveRememberedParticipant(
+  token?: string,
+  correlationId = crypto.randomUUID(),
+) {
+  let raw: string | undefined;
+  try {
+    raw = token ?? (await cookies()).get(rememberedDeviceCookie)?.value;
+  } catch (error) {
+    logHostedAccessDiagnostic({
+      correlation_id: correlationId,
+      boundary: "registration_submission",
+      outcome_category: "cookie_failure",
+      confirmation_cookie_present: false,
+    });
+    throw error;
+  }
   logHostedAccessDiagnostic({
     correlation_id: correlationId,
+    boundary: "registration_submission",
     confirmation_cookie_present: Boolean(raw),
   });
   if (!raw) {
-    logHostedAccessDiagnostic({ correlation_id: correlationId, remember_resolution: "missing" });
+    logHostedAccessDiagnostic({
+      correlation_id: correlationId,
+      boundary: "registration_submission",
+      outcome_category: "success",
+      remember_resolution: "missing",
+    });
     return null;
   }
   const db = createPrivilegedClient();
@@ -40,6 +59,8 @@ export async function resolveRememberedParticipant(token?: string) {
   } as never);
   logHostedAccessDiagnostic({
     correlation_id: correlationId,
+    boundary: "registration_submission",
+    outcome_category: error ? "rpc_failure" : data ? "success" : "data_state_failure",
     remember_resolution: error ? "error" : data ? "matched" : "missing",
     participant_match: Boolean(data),
   });
@@ -50,7 +71,11 @@ export async function rememberParticipantFromConfirmation(
   confirmationToken: string,
   correlationId = crypto.randomUUID(),
 ) {
-  logHostedAccessDiagnostic({ correlation_id: correlationId, device_rpc_attempted: true });
+  logHostedAccessDiagnostic({
+    correlation_id: correlationId,
+    boundary: "registration_submission",
+    device_rpc_attempted: true,
+  });
   const db = createPrivilegedClient();
   const { data, error } = await db.rpc("phase10_issue_participant_device_token", {
     p_confirmation_token: confirmationToken,
@@ -58,6 +83,8 @@ export async function rememberParticipantFromConfirmation(
   if (error || !data) {
     logHostedAccessDiagnostic({
       correlation_id: correlationId,
+      boundary: "registration_submission",
+      outcome_category: error ? "rpc_failure" : "data_state_failure",
       device_rpc_status: "error",
       cookie_set_attempted: false,
     });
@@ -65,6 +92,8 @@ export async function rememberParticipantFromConfirmation(
   }
   logHostedAccessDiagnostic({
     correlation_id: correlationId,
+    boundary: "registration_submission",
+    outcome_category: "success",
     device_rpc_status: "success",
     cookie_set_attempted: true,
   });
@@ -77,9 +106,19 @@ export async function rememberParticipantFromConfirmation(
       path: "/",
       maxAge: cookieMaxAge,
     });
-    logHostedAccessDiagnostic({ correlation_id: correlationId, cookie_set_completed: true });
+    logHostedAccessDiagnostic({
+      correlation_id: correlationId,
+      boundary: "registration_submission",
+      outcome_category: "success",
+      cookie_set_completed: true,
+    });
   } catch (error) {
-    logHostedAccessDiagnostic({ correlation_id: correlationId, cookie_set_completed: false });
+    logHostedAccessDiagnostic({
+      correlation_id: correlationId,
+      boundary: "registration_submission",
+      outcome_category: "cookie_failure",
+      cookie_set_completed: false,
+    });
     throw error;
   }
   return { firstName: result.first_name };
