@@ -66,7 +66,7 @@ export async function requestPasswordReset(
       event: "password_reset_provider_error",
       error_name: error.name,
       error_status: error.status ?? null,
-      error_code: "code" in error ? (error as { code?: string }).code ?? null : null,
+      error_code: "code" in error ? ((error as { code?: string }).code ?? null) : null,
     });
   }
 

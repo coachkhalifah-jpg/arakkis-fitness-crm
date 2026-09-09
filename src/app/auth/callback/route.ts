@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       event: "auth_callback_exchange_failed",
       error_name: error.name,
       error_status: error.status ?? null,
-      error_code: "code" in error ? (error as { code?: string }).code ?? null : null,
+      error_code: "code" in error ? ((error as { code?: string }).code ?? null) : null,
     });
     return NextResponse.redirect(new URL("/admin/update-password?error=invalid", origin));
   }

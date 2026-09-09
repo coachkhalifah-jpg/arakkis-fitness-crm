@@ -1,10 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { getPublicEnv } from "@/lib/config/env";
-import {
-  applySessionCookies,
-  type SessionCookieToSet,
-} from "@/lib/auth/session-cookies";
+import { applySessionCookies, type SessionCookieToSet } from "@/lib/auth/session-cookies";
 
 /**
  * Session refresh + optimistic /admin gate.

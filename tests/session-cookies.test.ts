@@ -16,9 +16,7 @@ describe("session cookie helpers", () => {
         { name: "other", value: "x" },
       ]),
     ).toBe(true);
-    expect(
-      hasSupabaseAuthTokenCookie([{ name: "sb-abc-auth-token", value: "" }]),
-    ).toBe(false);
+    expect(hasSupabaseAuthTokenCookie([{ name: "sb-abc-auth-token", value: "" }])).toBe(false);
     expect(hasSupabaseAuthTokenCookie([{ name: "session", value: "nope" }])).toBe(false);
   });
 
