@@ -1,8 +1,17 @@
 import Link from "next/link";
-import { getManagedBookings, getScopedBooking } from "@/lib/registration/booking-management";
+import {
+  getBookingAlternatives,
+  getManagedBookings,
+  getScopedBooking,
+} from "@/lib/registration/booking-management";
 import { CancelBookingDialog } from "@/components/registration/cancel-booking-dialog";
+import { TransferBookingDialog } from "@/components/registration/transfer-booking-dialog";
 import { PublicErrorState } from "@/components/registration/public-error-state";
 import { googleMapsDirectionsUrl } from "@/lib/registration/maps";
+import {
+  isHostedAccessCorrelationId,
+  logHostedAccessDiagnostic,
+} from "@/lib/diagnostics/hosted-access";
 
 function formatTime(value: string, timezone: string) {
   return new Intl.DateTimeFormat("en-US", {
@@ -17,17 +26,32 @@ export default async function ManageBookingPage({
   searchParams,
 }: {
   params: Promise<{ registrationId: string }>;
-  searchParams: Promise<{ confirmationToken?: string }>;
+  searchParams: Promise<{ token?: string; confirmationToken?: string; correlationId?: string }>;
 }) {
   const { registrationId } = await params;
-  const confirmationToken = (await searchParams).confirmationToken?.trim() ?? "";
+  const routeSearchParams = await searchParams;
+  const correlationId = isHostedAccessCorrelationId(routeSearchParams.correlationId)
+    ? routeSearchParams.correlationId
+    : crypto.randomUUID();
+  const confirmationToken = (
+    routeSearchParams.token ??
+    routeSearchParams.confirmationToken ??
+    ""
+  ).trim();
   const scopedBooking = confirmationToken
-    ? await getScopedBooking(registrationId, confirmationToken)
+    ? await getScopedBooking(registrationId, confirmationToken, correlationId)
     : null;
-  const result = scopedBooking ? null : await getManagedBookings();
+  const result = scopedBooking ? null : await getManagedBookings(correlationId);
   const booking =
     scopedBooking ?? result?.bookings.find((item) => item.registration_id === registrationId);
-  if (!booking)
+  if (!booking) {
+    logHostedAccessDiagnostic({
+      correlation_id: correlationId,
+      boundary: "booking_management",
+      outcome_category: "data_state_failure",
+      registration_match: false,
+      booking_result: "not_found",
+    });
     return (
       <PublicErrorState
         code="404"
@@ -37,6 +61,14 @@ export default async function ManageBookingPage({
         actionHref="/manage-bookings"
       />
     );
+  }
+  logHostedAccessDiagnostic({
+    correlation_id: correlationId,
+    boundary: "booking_management",
+    outcome_category: "success",
+    registration_match: true,
+    booking_result: "resolved",
+  });
   const dateLabel = new Intl.DateTimeFormat("en-US", {
     weekday: "short",
     month: "short",
@@ -47,9 +79,14 @@ export default async function ManageBookingPage({
     .replace(",", " ·");
   const address = `${booking.venue_street}, ${booking.venue_city}, ${booking.venue_state} ${booking.venue_postal_code}`;
   const directionsUrl = googleMapsDirectionsUrl(address);
+  const correlationQuery = `&correlationId=${encodeURIComponent(correlationId)}`;
   const confirmationHref = confirmationToken
-    ? `/registration/confirmation?token=${encodeURIComponent(confirmationToken)}`
+    ? `/registration/confirmation?token=${encodeURIComponent(confirmationToken)}${correlationQuery}`
     : `/manage-bookings/confirmation?registrationId=${encodeURIComponent(registrationId)}`;
+  const alternatives =
+    booking.registration_status === "REGISTERED" && booking.registration_outcome === "ACTIVE"
+      ? await getBookingAlternatives(registrationId, confirmationToken || undefined)
+      : null;
   return (
     <main className="manage-booking-detail-page">
       <header className="manage-booking-detail-header">
@@ -107,6 +144,13 @@ export default async function ManageBookingPage({
         <Link className="manage-booking-detail-secondary" href="/events">
           Browse more classes
         </Link>
+        {alternatives?.length ? (
+          <TransferBookingDialog
+            booking={booking}
+            alternatives={alternatives}
+            accessToken={confirmationToken || undefined}
+          />
+        ) : null}
         <CancelBookingDialog
           booking={booking}
           label="Cancel booking"

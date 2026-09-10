@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { signIn, type AuthActionState } from "@/lib/auth/session-actions";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const initialState: AuthActionState = {};
 
@@ -33,6 +34,9 @@ export function SignInForm({ next }: { next: string }) {
           placeholder="Enter your password"
         />
       </label>
+      <Link href="/admin/reset-password" className="ops-auth-return">
+        Forgot password?
+      </Link>
       {state.error ? (
         <p className="ops-auth-error" role="alert">
           {state.error}

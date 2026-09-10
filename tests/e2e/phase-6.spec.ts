@@ -170,3 +170,37 @@ test("dismissal requires a reason and direct task mutation is System Admin-only"
   expect(result.data).toBeNull();
   expect(result.error?.message).toMatch(/task unavailable|permission|authorized/i);
 });
+
+test("System Admin can correct contact details without changing the participant history", async ({
+  page,
+}) => {
+  await signInSystem(page, `/admin/participants/${noShowParticipant.participantId}`);
+  const form = page.getByTestId("participant-contact-form");
+  await expect(form).toBeVisible();
+  await form.getByLabel("First name").fill("  CRM   Updated ");
+  await form.getByLabel("Last name").fill("  Contact ");
+  await form.getByLabel("Phone", { exact: true }).fill("+1 (518) 555-0199");
+  await form.getByLabel("Phone country").fill("us");
+  await form.getByLabel("Email").fill("  CRM.UPDATED@EXAMPLE.TEST ");
+  await form
+    .getByLabel("Reason for correction")
+    .fill("Participant confirmed updated contact details");
+  await form.getByRole("button", { name: "Save contact correction" }).click();
+  await expect(form.getByRole("status")).toHaveText("Participant contact details updated.");
+  await expect(page.getByRole("heading", { name: "CRM Updated Contact" })).toBeVisible();
+  expect(
+    localQuery(
+      `select normalized_email from public.participants where id=${sql(noShowParticipant.participantId)}`,
+    ),
+  ).toBe("crm.updated@example.test");
+  expect(
+    localQuery(
+      `select count(*) from public.follow_up_tasks where participant_id=${sql(noShowParticipant.participantId)}`,
+    ),
+  ).toBe("1");
+  expect(
+    localQuery(
+      `select count(*) from public.registrations where participant_id=${sql(noShowParticipant.participantId)}`,
+    ),
+  ).toBe("1");
+});

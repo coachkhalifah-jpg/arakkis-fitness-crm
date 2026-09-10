@@ -22,6 +22,7 @@ import { CalendarUtility } from "@/components/admin/calendar-utility";
 import { EventTitleOverlayControl } from "@/components/admin/event-title-overlay-control";
 import {
   cancelEventForm,
+  archiveCancelledEventForm,
   copyEventForm,
   finalizeAttendanceSubmit,
   reopenAttendanceSubmit,
@@ -806,6 +807,13 @@ export default async function EventDetailPage({
                     variant="destructive"
                   >
                     Cancel event
+                  </ConfirmSubmit>
+                </form>
+              ) : null}
+              {event.status === "CANCELLED" && !event.archived_at ? (
+                <form action={archiveCancelledEventForm.bind(null, id)}>
+                  <ConfirmSubmit message="Archive this cancelled event? Registrations and history will be preserved.">
+                    Archive event
                   </ConfirmSubmit>
                 </form>
               ) : null}

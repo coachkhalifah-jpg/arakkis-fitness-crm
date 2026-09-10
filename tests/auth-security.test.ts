@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { createInvitationToken, hashInvitationToken } from "@/lib/auth/tokens";
-import { safeAdminRedirect } from "@/lib/auth/redirects";
+import {
+  PASSWORD_UPDATE_PATH,
+  safeAdminRedirect,
+  safeRecoveryRedirect,
+} from "@/lib/auth/redirects";
 
 describe("authentication security primitives", () => {
   it("creates an opaque 256-bit invitation token and stores only its hash", () => {
@@ -19,5 +23,12 @@ describe("authentication security primitives", () => {
     expect(safeAdminRedirect("//evil.example")).toBe("/admin");
     expect(safeAdminRedirect("/\\\\evil.example")).toBe("/admin");
     expect(safeAdminRedirect("/public")).toBe("/admin");
+  });
+
+  it("keeps recovery redirects on the dedicated password-update route", () => {
+    expect(safeRecoveryRedirect(PASSWORD_UPDATE_PATH)).toBe(PASSWORD_UPDATE_PATH);
+    expect(safeRecoveryRedirect("/admin")).toBe(PASSWORD_UPDATE_PATH);
+    expect(safeRecoveryRedirect("https://evil.example/steal")).toBe(PASSWORD_UPDATE_PATH);
+    expect(safeRecoveryRedirect("//evil.example")).toBe(PASSWORD_UPDATE_PATH);
   });
 });

@@ -41,7 +41,7 @@ A completed registration and acceptance of this Agreement and the Liability Waiv
 
 Eoke LLC may contact participants regarding registrations or schedule changes using the contact information provided. Marketing communications are optional where applicable.
 
-This Agreement is governed by the laws of the Commonwealth of Virginia unless applicable law requires otherwise.$p$,digest($p$
+This Agreement is governed by the laws of the Commonwealth of Virginia unless applicable law requires otherwise.$p$,extensions.digest($p$
 Participation Agreement
 
 Owner: Eoke LLC
@@ -74,7 +74,7 @@ To the fullest extent permitted by applicable law, participant releases Eoke LLC
 
 Participant is responsible for determining whether participation is appropriate and authorizes emergency services to be contacted if reasonably necessary.
 
-This Liability Waiver is a separate required acknowledgment and must be accepted for every booking.$p$,digest($p$
+This Liability Waiver is a separate required acknowledgment and must be accepted for every booking.$p$,extensions.digest($p$
 Assumption of Risk & Liability Waiver
 
 Owner: Eoke LLC
@@ -107,7 +107,7 @@ Eoke LLC may cancel, reschedule, relocate, or modify events because of weather, 
 
 This Version 1.0 policy applies to the current pilot offering of free community classes only. References to paid classes, memberships, packages, donations, credits, and refunds are reserved for future versions if such services are introduced.
 
-This policy is acknowledged with every booking.$p$,digest($p$
+This policy is acknowledged with every booking.$p$,extensions.digest($p$
 Cancellation & Refund Policy
 
 Owner: Eoke LLC
@@ -140,7 +140,7 @@ Events, instructors, and schedules may change.
 
 Website content belongs to Eoke LLC unless otherwise indicated.
 
-Acceptance is required when a new version becomes effective.$p$,digest($p$
+Acceptance is required when a new version becomes effective.$p$,extensions.digest($p$
 Terms of Use
 
 Owner: Eoke LLC
@@ -173,7 +173,7 @@ The service uses Supabase hosting and cookies or similar technology required for
 
 Information is shared only as reasonably necessary to operate events, with service providers, or when required by law. External group chats (such as WhatsApp) are governed by their own terms.
 
-Current practices include collection of referral source, fitness experience, registration history, attendance and follow-up history, remembered-device preference, administrator access, Supabase-hosted services, and optional external community links (such as WhatsApp) governed by their own terms.$p$,digest($p$
+Current practices include collection of referral source, fitness experience, registration history, attendance and follow-up history, remembered-device preference, administrator access, Supabase-hosted services, and optional external community links (such as WhatsApp) governed by their own terms.$p$,extensions.digest($p$
 Privacy Policy
 
 Owner: Eoke LLC
@@ -206,7 +206,7 @@ If granted, Eoke LLC may use photographs or videos for marketing, educational, o
 
 Future consent may be withdrawn in writing; materials already published may remain in circulation.
 
-Photo & Video Consent is optional, separate from booking acceptance, and declining consent does not affect participation.$p$,digest($p$
+Photo & Video Consent is optional, separate from booking acceptance, and declining consent does not affect participation.$p$,extensions.digest($p$
 Photo & Video Consent
 
 Owner: Eoke LLC

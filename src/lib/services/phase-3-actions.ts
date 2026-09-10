@@ -791,6 +791,38 @@ export async function cancelEvent(id: string, reason: string): Promise<Phase3Act
   }
 }
 
+export async function archiveCancelledEvent(id: string): Promise<Phase3ActionState> {
+  try {
+    const admin = await requireSystemAdmin();
+    const db = await createClient();
+    const { data: old } = await db.from("events").select("*").eq("id", id).single();
+    if (!old) throw new Phase3Error("not_found", "Event not found.");
+    if (old.status !== "CANCELLED")
+      throw new Phase3Error("forbidden", "Only cancelled events can be archived.");
+    if (old.archived_at) return { success: "Event is already archived." };
+    const archivedAt = new Date().toISOString();
+    const { error } = await db
+      .from("events")
+      .update({ archived_at: archivedAt })
+      .eq("id", id)
+      .is("archived_at", null);
+    if (error) throw new Phase3Error("conflict", "Event could not be archived.");
+    await audit(
+      admin.userId,
+      "EVENT_ARCHIVED",
+      "EVENT",
+      id,
+      { archived_at: archivedAt, status: "CANCELLED" },
+      old,
+    );
+    revalidatePath("/admin/events");
+    revalidatePath(`/admin/events/${id}`);
+    return { success: "Event archived. Its history remains available." };
+  } catch (error) {
+    return { error: message(error) };
+  }
+}
+
 export async function updateEvent(
   _state: Phase3ActionState,
   form: FormData,
@@ -1058,6 +1090,9 @@ export async function copyEventForm(id: string) {
 }
 export async function cancelEventForm(id: string) {
   await cancelEvent(id, "Cancelled by System Admin");
+}
+export async function archiveCancelledEventForm(id: string) {
+  await archiveCancelledEvent(id);
 }
 export async function archiveOrganizationForm(id: string) {
   await archiveOrganization(id);

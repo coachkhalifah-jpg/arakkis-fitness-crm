@@ -100,7 +100,7 @@ select
   '1.0.0',
   '2026-08-03T00:00:00Z',
   'APPROVED',
-  digest(string_agg(c.document_type::text || ':' || v.id::text || ':' || encode(v.content_hash, 'hex'), '|' order by c.document_type), 'sha256'),
+  extensions.digest(string_agg(c.document_type::text || ':' || v.id::text || ':' || encode(v.content_hash, 'hex'), '|' order by c.document_type), 'sha256'),
   '2026-08-03T00:00:00Z'
 from (values
   ('PARTICIPATION_RISK'::public.acknowledgment_type, '03500000-0000-0000-0000-000000000001'::uuid),

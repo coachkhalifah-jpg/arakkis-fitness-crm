@@ -6,10 +6,12 @@ import { getServerEnv } from "@/lib/config/env";
 import { requireSystemAdmin } from "@/lib/authorization/server";
 import { createInvitationToken, hashInvitationToken } from "@/lib/auth/tokens";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 export type AuthActionState = { error?: string; success?: string };
 
 const GENERIC_INVITATION_ERROR = "This invitation is invalid or no longer available.";
+const GENERIC_ADMIN_LIFECYCLE_ERROR = "Administrator access could not be changed.";
 
 export async function createHostInvitation(formData: FormData) {
   const actor = await requireSystemAdmin();
@@ -70,6 +72,80 @@ export async function regenerateInvitation(invitationId: string) {
   const env = getServerEnv();
   return {
     inviteUrl: `${env.APP_BASE_URL || env.NEXT_PUBLIC_APP_URL}/admin/invitations/accept?token=${encodeURIComponent(token)}`,
+  };
+}
+
+export async function manageAdminAccess(
+  _previous: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  const actor = await requireSystemAdmin("/admin/invitations");
+  const intent = String(formData.get("intent") ?? "");
+  const adminProfileId = String(formData.get("adminProfileId") ?? "");
+  const organizationId = String(formData.get("organizationId") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+  const privileged = createPrivilegedClient();
+
+  const requests: Record<string, { rpc: string; args: Record<string, string> }> = {
+    DEACTIVATE_HOST_ADMIN: {
+      rpc: "deactivate_admin_profile",
+      args: {
+        p_admin_profile_id: adminProfileId,
+        p_actor_admin_id: actor.userId,
+        p_reason: reason,
+      },
+    },
+    REACTIVATE_HOST_ADMIN: {
+      rpc: "reactivate_admin_profile",
+      args: {
+        p_admin_profile_id: adminProfileId,
+        p_actor_admin_id: actor.userId,
+        p_reason: reason,
+      },
+    },
+    ADD_HOST_ADMIN_ASSIGNMENT: {
+      rpc: "add_admin_organization_assignment",
+      args: {
+        p_admin_profile_id: adminProfileId,
+        p_organization_id: organizationId,
+        p_actor_admin_id: actor.userId,
+        p_reason: reason,
+      },
+    },
+    REVOKE_HOST_ADMIN_ASSIGNMENT: {
+      rpc: "revoke_admin_organization_assignment",
+      args: {
+        p_admin_profile_id: adminProfileId,
+        p_organization_id: organizationId,
+        p_actor_admin_id: actor.userId,
+        p_reason: reason,
+      },
+    },
+  };
+  const request = requests[intent];
+  if (
+    !request ||
+    !adminProfileId ||
+    !reason ||
+    (request.args.p_organization_id && !organizationId)
+  ) {
+    return { error: GENERIC_ADMIN_LIFECYCLE_ERROR };
+  }
+
+  const { data: changed, error } = await privileged.rpc(request.rpc, request.args as never);
+  if (error || !changed) {
+    return { error: GENERIC_ADMIN_LIFECYCLE_ERROR };
+  }
+  revalidatePath("/admin/invitations");
+  return {
+    success:
+      intent === "DEACTIVATE_HOST_ADMIN"
+        ? "Host Admin deactivated."
+        : intent === "REACTIVATE_HOST_ADMIN"
+          ? "Host Admin reactivated."
+          : intent === "ADD_HOST_ADMIN_ASSIGNMENT"
+            ? "Organization assignment added."
+            : "Organization assignment revoked.",
   };
 }
 

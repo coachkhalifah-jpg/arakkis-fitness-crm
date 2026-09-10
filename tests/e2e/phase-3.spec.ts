@@ -208,6 +208,20 @@ test("System Admin completes the Phase 3 operational flow", async ({ page }) => 
   await page.goto(`/admin/events/${eventId}?refresh=${Date.now()}`);
   await expect(page.getByText(/permanently cancelled and cannot be restored/i)).toBeVisible();
   await expect(page.getByRole("button", { name: "Cancel event" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Archive event" })).toHaveCount(1);
+  await page.getByRole("button", { name: "Archive event" }).click();
+  await page.waitForTimeout(500);
+  expect(localQuery(`select status from public.events where id=${sql(eventId)}`)).toBe("CANCELLED");
+  expect(
+    localQuery(`select archived_at is not null from public.events where id=${sql(eventId)}`),
+  ).toBe("t");
+  await page.goto("/admin/events");
+  await expect(page.getByText(eventName, { exact: true })).toHaveCount(0);
+  await page.goto("/admin/events?view=archived");
+  await expect(page.getByText(eventName, { exact: true })).toBeVisible();
+  await page.goto(`/admin/events/${eventId}?refresh=${Date.now()}`);
+  await expect(page.getByText(/permanently cancelled and cannot be restored/i)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Archive event" })).toHaveCount(0);
 });
 
 test("Host Admin is denied organization management and scoped to assigned venue management", async ({
