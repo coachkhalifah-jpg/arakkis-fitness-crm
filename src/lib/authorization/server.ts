@@ -39,26 +39,20 @@ export async function getAdminContext(): Promise<AdminContext | null> {
     .is("revoked_at", null);
 
   if (assignmentError) return null;
+  const organizationIds = (assignments ?? []).map((assignment) => assignment.organization_id);
+
+  if (profile.role === "HOST_ADMIN" && organizationIds.length === 0) return null;
+
   let organizationNames: string[] = [];
-  const assignedOrganizationIds = (assignments ?? []).map(
-    (assignment) => assignment.organization_id,
-  );
-  let organizationIds = assignedOrganizationIds;
-  if (assignedOrganizationIds.length > 0) {
+  if (organizationIds.length > 0) {
     const { data: organizations, error: organizationError } = await supabase
       .from("organizations")
       .select("id, name")
-      .in("id", assignedOrganizationIds)
+      .in("id", organizationIds)
       .eq("active_status", "ACTIVE");
     if (organizationError) return null;
     organizationNames = (organizations ?? []).map((organization) => organization.name);
-    const activeOrganizationIds = new Set(
-      (organizations ?? []).map((organization) => organization.id),
-    );
-    organizationIds = assignedOrganizationIds.filter((id) => activeOrganizationIds.has(id));
   }
-
-  if (profile.role === "HOST_ADMIN" && organizationIds.length === 0) return null;
 
   return {
     userId: user.id,

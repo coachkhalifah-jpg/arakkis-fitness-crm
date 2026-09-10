@@ -5,7 +5,6 @@ import { AdminEventCard } from "@/components/admin/admin-event-card";
 import { AdminEventCardRail } from "@/components/admin/admin-event-card-rail";
 import { DisclosureToggle } from "@/components/ui/disclosure-toggle";
 import { CalendarUtility } from "@/components/admin/calendar-utility";
-import { ArchiveCancelledEventButton } from "@/components/admin/archive-cancelled-event-button";
 import type { CalendarEvent } from "@/lib/registration/calendar";
 
 export type AdminDiscoveryEvent = {
@@ -31,8 +30,6 @@ export type AdminDiscoveryEvent = {
   checkInAction: Parameters<typeof AdminEventCard>[0]["checkInAction"];
   removeRegistrationAction: Parameters<typeof AdminEventCard>[0]["removeRegistrationAction"];
   canRemoveRegistration: boolean;
-  canArchive: boolean;
-  archiveAction: (id: string) => Promise<void>;
 };
 
 type Filters = { query: string; organization: string; status: string; from: string; to: string };
@@ -104,7 +101,6 @@ export function AdminEventsDiscovery({
 }) {
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const shouldScrollToExpandedRef = useRef(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filtersClosing, setFiltersClosing] = useState(false);
   const filterCloseTimer = useRef<number | null>(null);
@@ -184,15 +180,7 @@ export function AdminEventsDiscovery({
       checkInAction={item.checkInAction}
       removeRegistrationAction={item.removeRegistrationAction}
       canRemoveRegistration={item.canRemoveRegistration}
-      actions={
-        item.canArchive ? (
-          <ArchiveCancelledEventButton
-            eventId={item.id}
-            eventName={item.name}
-            action={item.archiveAction}
-          />
-        ) : null
-      }
+      actions={null}
     />
   );
 
@@ -214,17 +202,6 @@ export function AdminEventsDiscovery({
       /* stale session state is non-critical */
     }
   }, []);
-  useEffect(() => {
-    if (!expanded || !shouldScrollToExpandedRef.current) return;
-    shouldScrollToExpandedRef.current = false;
-    const frame = window.requestAnimationFrame(() => {
-      document.getElementById(`organization-events-${expanded}`)?.scrollIntoView?.({
-        behavior: "smooth",
-        block: "start",
-      });
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [expanded]);
   useEffect(
     () => () =>
       sessionStorage.setItem(
@@ -398,10 +375,7 @@ export function AdminEventsDiscovery({
                     className="admin-event-organization-toggle"
                     expanded={expanded === group.id}
                     controls={`organization-events-${group.id}`}
-                    onClick={() => {
-                      if (expanded !== group.id) shouldScrollToExpandedRef.current = true;
-                      setExpanded(expanded === group.id ? null : group.id);
-                    }}
+                    onClick={() => setExpanded(expanded === group.id ? null : group.id)}
                   >
                     <strong>{group.name}</strong>
                     <span className="admin-event-organization-count">

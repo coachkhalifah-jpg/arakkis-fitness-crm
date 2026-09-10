@@ -4,7 +4,6 @@ import { signOut } from "@/lib/auth/session-actions";
 import { AdminWorkspaceMenu } from "@/components/admin/admin-workspace-menu";
 import { getAdminWorkspaceMenuItems } from "@/components/admin/admin-workspace-menu-items";
 import { InvitationManager } from "@/components/admin/invitation-manager";
-import { AdminAccessManager } from "@/components/admin/admin-access-manager";
 import { SegmentedNavigation } from "@/components/admin/segmented-navigation";
 
 export default async function InvitationsPage({
@@ -14,30 +13,21 @@ export default async function InvitationsPage({
 }) {
   await requireSystemAdmin();
   const db = await createClient();
-  const [
-    { data: organizations },
-    { data: invitations },
-    { data: invitationAssignments },
-    { data: profiles },
-    { data: adminAssignments },
-  ] = await Promise.all([
-    db.from("organizations").select("id,name,active_status").order("name"),
-    db
-      .from("admin_invitations")
-      .select("id,invited_email,role,status,token_expires_at,issued_at,accepted_at")
-      .order("issued_at", { ascending: false }),
-    db.from("admin_invitation_organizations").select("invitation_id,organization_id"),
-    db.from("admin_profiles").select("id,display_name,email,role,status").order("email"),
-    db
-      .from("admin_organization_assignments")
-      .select("admin_profile_id,organization_id,revoked_at")
-      .order("created_at"),
-  ]);
+  const [{ data: organizations }, { data: invitations }, { data: assignments }] = await Promise.all(
+    [
+      db.from("organizations").select("id,name").eq("active_status", "ACTIVE").order("name"),
+      db
+        .from("admin_invitations")
+        .select("id,invited_email,role,status,token_expires_at,issued_at,accepted_at")
+        .order("issued_at", { ascending: false }),
+      db.from("admin_invitation_organizations").select("invitation_id,organization_id"),
+    ],
+  );
   const names = new Map(
     (organizations ?? []).map((organization) => [organization.id, organization.name]),
   );
   const assignmentMap = new Map<string, string[]>();
-  for (const assignment of invitationAssignments ?? [])
+  for (const assignment of assignments ?? [])
     assignmentMap.set(assignment.invitation_id, [
       ...(assignmentMap.get(assignment.invitation_id) ?? []),
       names.get(assignment.organization_id) ?? "Unavailable organization",
@@ -46,27 +36,6 @@ export default async function InvitationsPage({
     ...invitation,
     organizationNames: assignmentMap.get(invitation.id) ?? [],
   }));
-  const adminAssignmentMap = new Map<string, string[]>();
-  for (const assignment of adminAssignments ?? []) {
-    if (assignment.revoked_at) continue;
-    adminAssignmentMap.set(assignment.admin_profile_id, [
-      ...(adminAssignmentMap.get(assignment.admin_profile_id) ?? []),
-      assignment.organization_id,
-    ]);
-  }
-  const safeAdmins = (profiles ?? []).map((profile) => {
-    const organizationIds = adminAssignmentMap.get(profile.id) ?? [];
-    return {
-      ...profile,
-      organizationIds,
-      organizationNames: organizationIds.map(
-        (organizationId) => names.get(organizationId) ?? "Unavailable organization",
-      ),
-    };
-  });
-  const activeOrganizations = (organizations ?? []).filter(
-    (organization) => organization.active_status === "ACTIVE",
-  );
   const mode = (await searchParams).mode === "invite" ? "invite" : "list";
   return (
     <>
@@ -101,11 +70,10 @@ export default async function InvitationsPage({
             className="ops-invitations-mode-nav"
           />
           <InvitationManager
-            organizations={activeOrganizations}
+            organizations={organizations ?? []}
             invitations={safeInvitations}
             mode={mode}
           />
-          <AdminAccessManager admins={safeAdmins} organizations={activeOrganizations} />
         </div>
       </main>
     </>
