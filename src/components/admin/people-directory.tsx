@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export type PeopleRecord = {
@@ -247,12 +246,6 @@ export function PeopleDirectory({
                 <a href={`mailto:${selectedPerson.email}`}>{selectedPerson.email}</a>
               ) : null}
             </div>
-            <Link
-              className="mt-4 inline-block text-sm font-medium underline"
-              href={`/admin/participants/${selectedPerson.id}`}
-            >
-              Open full participant profile
-            </Link>
             <div className="people-directory-detail-block people-directory-upcoming">
               <span>Upcoming booking</span>
               <strong>{selectedPerson.booking}</strong>

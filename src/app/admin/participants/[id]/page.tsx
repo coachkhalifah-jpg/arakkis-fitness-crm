@@ -6,7 +6,6 @@ import { createClient } from "@/lib/db/server";
 import { ContextualBack } from "@/components/admin/contextual-back";
 import { AdminWorkspaceMenu } from "@/components/admin/admin-workspace-menu";
 import { getAdminWorkspaceMenuItems } from "@/components/admin/admin-workspace-menu-items";
-import { ParticipantContactCorrectionForm } from "@/components/admin/participant-contact-correction-form";
 import {
   isQualifyingRegistration,
   organizationAffiliationLabel,
@@ -107,7 +106,6 @@ export default async function ParticipantProfilePage({
             <p className="text-sm text-slate-500">Participant history</p>
             <p>{participantHistoryLabel(qualifyingRegistrationCount)}</p>
           </div>
-          <ParticipantContactCorrectionForm participant={participant} />
           <div className="mt-8 rounded border bg-white p-6">
             <h2 className="text-xl font-semibold">Goals</h2>
             <p className="mt-2 whitespace-pre-wrap text-slate-700">

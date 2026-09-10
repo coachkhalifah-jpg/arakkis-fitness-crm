@@ -116,14 +116,6 @@ if (existingDesignAssetPaths.length) {
     throw new Error(`Could not clear local design assets before fixture reset: ${error.message}`);
 }
 
-const eokeWaiverId = "06400000-0000-0000-0000-000000000001";
-const eokePackageId = "06400000-0000-0000-0000-000000000001";
-const eokeWaiverText = readFileSync(
-  `${root}/supabase/migrations/0064_pilot_single_waiver_legal_package.sql`,
-  "utf8",
-).match(/\$p\$\n([\s\S]*?)\n\$p\$/)?.[1];
-if (!eokeWaiverText) throw new Error("Canonical Eoke waiver text is missing from migration 0064.");
-
 localSql(`
 create temp table legal_documents_reset_backup as
 select * from public.acknowledgment_versions
@@ -237,6 +229,13 @@ const participantOtherOrg = id();
 const ackParticipation = id();
 const ackDataUse = id();
 const ackWhatsApp = id();
+const eokeWaiverId = "06400000-0000-0000-0000-000000000001";
+const eokePackageId = "06400000-0000-0000-0000-000000000001";
+const eokeWaiverText = readFileSync(
+  `${root}/supabase/migrations/0064_pilot_single_waiver_legal_package.sql`,
+  "utf8",
+).match(/\$p\$\n([\s\S]*?)\n\$p\$/)?.[1];
+if (!eokeWaiverText) throw new Error("Canonical Eoke waiver text is missing from migration 0064.");
 const series = id();
 const seriesRule = id();
 const recurringEvents = [0, 7, 14].map(() => id());

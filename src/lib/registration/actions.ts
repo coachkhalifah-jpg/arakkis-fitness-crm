@@ -17,7 +17,6 @@ import {
   normalizePhone,
   participantInputSchema,
 } from "@/lib/registration/normalization";
-import { logHostedAccessDiagnostic } from "@/lib/diagnostics/hosted-access";
 
 export type RegistrationField =
   | "selectedOccurrenceStartsAt"
@@ -104,21 +103,9 @@ function emailValidationState(form: FormData): RegistrationActionState {
   });
 }
 
-async function executeRegistration(
-  form: FormData,
-  selectedEventIds: string[],
-  diagnosticCorrelationId = crypto.randomUUID(),
-) {
-  logHostedAccessDiagnostic({
-    correlation_id: diagnosticCorrelationId,
-    boundary: "registration_submission",
-    remember_requested: form.get("rememberDevice") === "on",
-  });
+async function executeRegistration(form: FormData, selectedEventIds: string[]) {
   let confirmationToken: string | undefined;
-  const rememberedParticipant = await resolveRememberedParticipant(
-    undefined,
-    diagnosticCorrelationId,
-  );
+  const rememberedParticipant = await resolveRememberedParticipant();
   const remembered = form.get("continueAsRemembered") === "true" ? rememberedParticipant : null;
   const shouldRememberDevice =
     form.get("rememberDevice") === "on" &&
@@ -182,35 +169,12 @@ async function executeRegistration(
       legal_package_id: String(form.get("legalPackageId")),
     },
   } as never);
-  if (error || !data) {
-    logHostedAccessDiagnostic({
-      correlation_id: diagnosticCorrelationId,
-      boundary: "registration_submission",
-      outcome_category: error ? "rpc_failure" : "data_state_failure",
-    });
-    throw new Error("registration unavailable");
-  }
+  if (error || !data) throw new Error("registration unavailable");
   const result = data as { confirmation_token?: string };
-  if (!result.confirmation_token) {
-    logHostedAccessDiagnostic({
-      correlation_id: diagnosticCorrelationId,
-      boundary: "registration_submission",
-      outcome_category: "data_state_failure",
-    });
-    throw new Error("submission already received");
-  }
+  if (!result.confirmation_token) throw new Error("submission already received");
   confirmationToken = result.confirmation_token;
-  if (shouldRememberDevice)
-    await rememberParticipantFromConfirmation(confirmationToken, diagnosticCorrelationId);
-  else
-    logHostedAccessDiagnostic({
-      correlation_id: diagnosticCorrelationId,
-      boundary: "registration_submission",
-      outcome_category: "success",
-      device_rpc_attempted: false,
-      cookie_set_attempted: false,
-    });
-  return { confirmationToken, diagnosticCorrelationId };
+  if (shouldRememberDevice) await rememberParticipantFromConfirmation(confirmationToken);
+  return confirmationToken;
 }
 
 export async function submitRegistration(
@@ -218,15 +182,12 @@ export async function submitRegistration(
   form: FormData,
 ): Promise<RegistrationActionState> {
   let confirmationToken: string | undefined;
-  let diagnosticCorrelationId: string | undefined;
   try {
     if (isProductionRegistrationBlocked())
       return { error: "Registration is temporarily unavailable while legal approval is pending." };
-    const result = await executeRegistration(form, [
+    confirmationToken = await executeRegistration(form, [
       ...new Set(form.getAll("eventIds").map(String)),
     ]);
-    confirmationToken = result.confirmationToken;
-    diagnosticCorrelationId = result.diagnosticCorrelationId;
   } catch (error) {
     if (error instanceof ZodError) return fieldErrorsFromZod(error, form);
     if (error instanceof Error && error.message.includes("valid phone"))
@@ -235,11 +196,7 @@ export async function submitRegistration(
       return emailValidationState(form);
     return { error: "The registration could not be completed. Please try again." };
   }
-  redirect(
-    `/registration/confirmation?token=${encodeURIComponent(confirmationToken!)}&correlationId=${encodeURIComponent(
-      diagnosticCorrelationId!,
-    )}`,
-  );
+  redirect(`/registration/confirmation?token=${encodeURIComponent(confirmationToken!)}`);
 }
 
 export async function submitSlugRegistration(
@@ -247,9 +204,7 @@ export async function submitSlugRegistration(
   form: FormData,
 ): Promise<RegistrationActionState> {
   let confirmationToken: string;
-  let diagnosticCorrelationId: string;
   try {
-    diagnosticCorrelationId = crypto.randomUUID();
     if (isProductionRegistrationBlocked())
       return { error: "Registration is temporarily unavailable while legal approval is pending." };
     const slug = assertPublicSlug(
@@ -274,23 +229,12 @@ export async function submitSlugRegistration(
         series_slug?: string | null;
         occurrences?: Array<{ id: string; starts_at: string }>;
       } | null;
-      if (eventError || !recurringEvent?.series_slug) {
-        logHostedAccessDiagnostic({
-          correlation_id: diagnosticCorrelationId,
-          boundary: "registration_submission",
-          outcome_category: eventError ? "rpc_failure" : "data_state_failure",
-        });
+      if (eventError || !recurringEvent?.series_slug)
         return { error: "This recurring event is unavailable." };
-      }
       const selected = (recurringEvent.occurrences ?? [])
         .filter((occurrence) => selectedStarts.includes(occurrence.starts_at))
         .map((occurrence) => occurrence.id);
-      if (selected.length !== selectedStarts.length) {
-        logHostedAccessDiagnostic({
-          correlation_id: diagnosticCorrelationId,
-          boundary: "registration_submission",
-          outcome_category: "data_state_failure",
-        });
+      if (selected.length !== selectedStarts.length)
         return preserveSubmittedState(form, {
           error: "Please correct the highlighted registration fields.",
           fieldErrors: {
@@ -298,35 +242,19 @@ export async function submitSlugRegistration(
           },
           focusField: "selectedOccurrenceStartsAt",
         });
-      }
-      const result = await executeRegistration(form, selected, diagnosticCorrelationId);
-      confirmationToken = result.confirmationToken;
+      confirmationToken = await executeRegistration(form, selected);
     } else {
       const privileged = createPrivilegedClient();
       const { data: eventId, error: eventError } = await privileged.rpc("phase7_event_id_by_slug", {
         p_slug: slug,
       });
-      if (eventError || !eventId) {
-        logHostedAccessDiagnostic({
-          correlation_id: diagnosticCorrelationId,
-          boundary: "registration_submission",
-          outcome_category: eventError ? "rpc_failure" : "data_state_failure",
-        });
-        return { error: "This event is unavailable." };
-      }
+      if (eventError || !eventId) return { error: "This event is unavailable." };
       const { data: available, error } = await privileged.rpc("phase7_registration_available", {
         p_event_id: eventId,
       });
-      if (error || !available) {
-        logHostedAccessDiagnostic({
-          correlation_id: diagnosticCorrelationId,
-          boundary: "registration_submission",
-          outcome_category: error ? "rpc_failure" : "data_state_failure",
-        });
+      if (error || !available)
         return { error: "Registration is no longer available for this event." };
-      }
-      const result = await executeRegistration(form, [eventId], diagnosticCorrelationId);
-      confirmationToken = result.confirmationToken;
+      confirmationToken = await executeRegistration(form, [eventId]);
     }
   } catch (error) {
     if (error instanceof ZodError) return fieldErrorsFromZod(error, form);
@@ -336,11 +264,7 @@ export async function submitSlugRegistration(
       return emailValidationState(form);
     return { error: "This event is unavailable or registration could not be completed." };
   }
-  redirect(
-    `/registration/confirmation?token=${encodeURIComponent(confirmationToken)}&correlationId=${encodeURIComponent(
-      diagnosticCorrelationId!,
-    )}`,
-  );
+  redirect(`/registration/confirmation?token=${encodeURIComponent(confirmationToken)}`);
 }
 
 export { normalizeName };

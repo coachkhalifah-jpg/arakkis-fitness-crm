@@ -46,7 +46,6 @@ export async function transferBookingAction(
     "TRANSFER",
     String(form.get("registrationId") ?? ""),
     String(form.get("targetEventId") ?? ""),
-    String(form.get("accessToken") ?? "") || undefined,
   );
   if (typeof result.error === "string") return { error: result.error };
   revalidatePath("/");

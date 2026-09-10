@@ -1,12 +1,7 @@
-import Link from "next/link";
 import { requireActiveAdmin } from "@/lib/authorization/server";
 import { signOut } from "@/lib/auth/session-actions";
 import { createClient } from "@/lib/db/server";
-import {
-  archiveCancelledEventForm,
-  createEvent,
-  markAttendanceSubmit,
-} from "@/lib/services/phase-3-actions";
+import { createEvent, markAttendanceSubmit } from "@/lib/services/phase-3-actions";
 import { removeRegistrationFromRoster } from "@/lib/services/phase-5-actions";
 import { SegmentedNavigation } from "@/components/admin/segmented-navigation";
 import {
@@ -28,7 +23,7 @@ import { getAuthorizedCalendarEvents } from "@/lib/services/admin-calendar";
 export default async function EventsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mode?: string; event?: string; view?: string }>;
+  searchParams: Promise<{ mode?: string; event?: string }>;
 }) {
   const admin = await requireActiveAdmin();
   const calendarEvents = await getAuthorizedCalendarEvents(admin);
@@ -43,7 +38,7 @@ export default async function EventsPage({
     db
       .from("events")
       .select(
-        "id,name,event_title_color,status,publication_status,public_slug,starts_at,ends_at,timezone,capacity,registration_deadline,host_organization_id,venue_id,event_series_id,attendance_processing_state,archived_at,event_series(public_slug)",
+        "id,name,event_title_color,status,publication_status,public_slug,starts_at,ends_at,timezone,capacity,registration_deadline,host_organization_id,venue_id,event_series_id,attendance_processing_state,event_series(public_slug)",
       )
       .order("starts_at", { ascending: true }),
   ]);
@@ -64,12 +59,8 @@ export default async function EventsPage({
   });
   const params = await searchParams;
   const mode = params.mode === "create" ? "create" : "list";
-  const showingArchived = admin.role === "SYSTEM_ADMIN" && params.view === "archived";
-  const listedEvents = (visibleEvents ?? []).filter((event) =>
-    showingArchived ? event.archived_at !== null : event.archived_at === null,
-  );
   const initialEventId =
-    params.event && listedEvents.some((event) => event.id === params.event) ? params.event : null;
+    params.event && visibleEvents?.some((event) => event.id === params.event) ? params.event : null;
   const { data: registrationRows } = await db
     .from("registrations")
     .select("event_id,registration_status,attendance(status)");
@@ -81,7 +72,7 @@ export default async function EventsPage({
     if (attendance?.status === "ATTENDED") current.checkedIn += 1;
     counts.set(row.event_id, current);
   }
-  const eventIds = listedEvents.map((event) => event.id);
+  const eventIds = (visibleEvents ?? []).map((event) => event.id);
   const { data: eventImageAssets } = eventIds.length
     ? await db
         .from("design_assets")
@@ -217,11 +208,6 @@ export default async function EventsPage({
                     : admin.organizationNames.join(" · ")}
                 </strong>
                 <span>Upcoming events are prioritized</span>
-                {admin.role === "SYSTEM_ADMIN" ? (
-                  <Link href={showingArchived ? "/admin/events" : "/admin/events?view=archived"}>
-                    {showingArchived ? "View active events" : "View archived events"}
-                  </Link>
-                ) : null}
               </div>
             ) : null}
           </div>
@@ -423,7 +409,7 @@ export default async function EventsPage({
           ) : null}
           {mode === "list" ? (
             <AdminEventsDiscovery
-              events={listedEvents.map((event): AdminDiscoveryEvent => {
+              events={(visibleEvents ?? []).map((event): AdminDiscoveryEvent => {
                 const venue = venues?.find((item) => item.id === event.venue_id);
                 const count = counts.get(event.id) ?? { booked: 0, checkedIn: 0 };
                 const people = rosterByEvent.get(event.id) ?? [];
@@ -486,8 +472,6 @@ export default async function EventsPage({
                   canRemoveRegistration:
                     event.status !== "CANCELLED" &&
                     event.attendance_processing_state !== "FINALIZED",
-                  canArchive: admin.role === "SYSTEM_ADMIN" && event.status === "CANCELLED",
-                  archiveAction: archiveCancelledEventForm,
                 };
               })}
               calendarEvents={calendarEvents ?? []}
