@@ -1,6 +1,6 @@
 # Admin Events Implementation Plan (Coordinator)
 
-Status: `PHASE 1 COMPLETE` — Foundation landed behind feature flags (default `false`). Awaiting Phase 2 go-ahead or continue per approved plan.
+Status: `PHASE 2 COMPLETE` — UI Integration behind `adminEventsV2`. Next: Phase 3 Client-State.
 
 Baseline: `fix/integration-and-ux` @ `5ab1907`  
 Canonical inputs: Findings Ledger + Product Decision Cycle 1 + PROJECT_CONTEXT.md

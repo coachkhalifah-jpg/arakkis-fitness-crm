@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { TimeTextInput } from "@/components/admin/time-text-input";
+import { RecurrencePreview } from "@/components/admin/RecurrencePreview";
+import { features } from "@/lib/features";
 
 type ScheduleRow = { weekday: string; start: string; end: string };
 
@@ -76,6 +78,7 @@ export function RecurringScheduleFields() {
   const [rows, setRows] = useState<ScheduleRow[]>([{ weekday: "1", start: "", end: "" }]);
   const [errors, setErrors] = useState<string[]>([]);
   const [enabled, setEnabled] = useState(false);
+  const [seriesWindow, setSeriesWindow] = useState({ startDate: "", endDate: "" });
   const recurrenceEndTouched = useRef(false);
 
   useEffect(() => {
@@ -85,7 +88,16 @@ export function RecurringScheduleFields() {
     const recurrenceEnd = document.querySelector<HTMLInputElement>(
       'input[name="recurrenceEndsOn"]',
     );
-    const syncEnabled = () => setEnabled(Boolean(recurring?.checked));
+    const syncSeriesWindow = () => {
+      setSeriesWindow({
+        startDate: start?.value.slice(0, 10) ?? "",
+        endDate: recurrenceEnd?.value ?? "",
+      });
+    };
+    const syncEnabled = () => {
+      setEnabled(Boolean(recurring?.checked));
+      syncSeriesWindow();
+    };
     const syncFirstRow = (event?: Event) => {
       const detail =
         event instanceof CustomEvent ? (event.detail as { start?: string; end?: string }) : null;
@@ -94,6 +106,7 @@ export function RecurringScheduleFields() {
       const defaultEndDate = endValue.slice(0, 10) || startValue.slice(0, 10);
       if (recurrenceEnd && defaultEndDate && !recurrenceEndTouched.current)
         recurrenceEnd.value = defaultEndDate;
+      syncSeriesWindow();
       if (!startValue) return;
       setRows((current) =>
         current.map((row, index) =>
@@ -111,6 +124,7 @@ export function RecurringScheduleFields() {
     syncEnabled();
     const markRecurrenceEndTouched = () => {
       recurrenceEndTouched.current = true;
+      syncSeriesWindow();
     };
     recurring?.addEventListener("change", syncEnabled);
     start?.addEventListener("input", syncFirstRow);
@@ -184,11 +198,15 @@ export function RecurringScheduleFields() {
     return () => form.removeEventListener("submit", onSubmit, true);
   }, [enabled, rows]);
 
+  const occurrenceResult = countOccurrences(rows, seriesWindow.startDate, seriesWindow.endDate);
+
   return (
     <fieldset className="admin-recurring-schedule-fields" onSubmitCapture={validateSubmit}>
       <legend>Schedule</legend>
       <p className="admin-create-guidance">
-        Add each weekday and local time that belongs to this one recurring Event series.
+        {features.adminEventsV2
+          ? "Opt in to Series above, then add each weekday and local time that belongs to this one recurring Event series."
+          : "Add each weekday and local time that belongs to this one recurring Event series."}
       </p>
       <div className="admin-recurring-schedule-list" aria-disabled={!enabled}>
         {rows.map((row, index) => (
@@ -262,6 +280,15 @@ export function RecurringScheduleFields() {
       >
         + Add day &amp; time
       </button>
+      <RecurrencePreview
+        enabled={enabled && Boolean(seriesWindow.startDate && seriesWindow.endDate)}
+        occurrenceCount={occurrenceResult.count}
+        firstOccurrence={seriesWindow.startDate || undefined}
+        lastOccurrence={seriesWindow.endDate || undefined}
+        endsOn={seriesWindow.endDate || undefined}
+        maxOccurrences={104}
+        selectionWindowDays={14}
+      />
       {errors.length ? (
         <div className="admin-create-field-error" role="alert">
           {errors.map((error) => (
