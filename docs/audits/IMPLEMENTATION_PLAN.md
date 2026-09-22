@@ -1,6 +1,6 @@
 # Admin Events Implementation Plan (Coordinator)
 
-Status: `AWAITING PRODUCT OWNER APPROVAL` — do not start implementation until approved.
+Status: `PHASE 1 COMPLETE` — Foundation landed behind feature flags (default `false`). Awaiting Phase 2 go-ahead or continue per approved plan.
 
 Baseline: `fix/integration-and-ux` @ `5ab1907`  
 Canonical inputs: Findings Ledger + Product Decision Cycle 1 + PROJECT_CONTEXT.md
