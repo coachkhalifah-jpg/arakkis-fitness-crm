@@ -211,7 +211,7 @@ test.describe("Phase 8 participant productization", () => {
     await page.getByLabel("Last name").fill("Participant");
     await page.getByLabel("Mobile phone").fill("+15185550198");
     await acceptRequiredLegal(page);
-    await page.getByLabel("Make future bookings faster on this device").check();
+    await page.getByLabel("Remember this device to see all your classes").check();
     await page.getByRole("button", { name: /book class/i }).click();
     await expect(page).toHaveURL(/\/registration\/confirmation\?token=/);
     await expect(page.getByRole("button", { name: "Save" })).toHaveCount(0);
@@ -259,7 +259,7 @@ test.describe("Phase 8 participant productization", () => {
     await expect(page.getByText("Welcome back")).toBeVisible();
     await page.goto(`/register/${slug}`);
     await expect(page.getByText("Welcome back")).toBeVisible();
-    await expect(page.getByLabel("Make future bookings faster on this device")).toHaveCount(0);
+    await expect(page.getByLabel("Remember this device to see all your classes")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Continue as Remembered" })).toBeVisible();
     await page.getByRole("checkbox", { name: new RegExp(displayEventName) }).check();
     await acceptRequiredLegal(page);

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { PublicErrorState } from "@/components/registration/public-error-state";
+import { ConfirmationRememberDevice } from "@/components/registration/confirmation-remember-device";
 import { createClient } from "@/lib/db/server";
 import { googleCalendarUrl, type CalendarEvent } from "@/lib/registration/calendar";
 import { WhatToBring } from "@/components/registration/what-to-bring";
@@ -18,6 +19,7 @@ import {
   isHostedAccessCorrelationId,
   logHostedAccessDiagnostic,
 } from "@/lib/diagnostics/hosted-access";
+import { confirmationLookupStatus } from "@/lib/registration/confirmation-lookup";
 
 type ConfirmationEvent = CalendarEvent & {
   event_id: string;
@@ -41,7 +43,8 @@ type ConfirmationEvent = CalendarEvent & {
 const reasonText: Record<string, string> = {
   FULL: "This class filled before your selection could be reserved.",
   CLOSED: "Registration closed before your selection could be reserved.",
-  ALREADY_REGISTERED: "You already have an active registration for this class.",
+  ALREADY_REGISTERED:
+    "You already have an active registration for this class. Open Manage bookings if this device is remembered, or use a saved confirmation or booking link.",
   INELIGIBLE: "You are not eligible for this class.",
   NOT_FOUND: "This class is no longer available.",
 };
@@ -108,18 +111,38 @@ export default async function ConfirmationPage({
   } as never);
 
   if (error || !data) {
+    const status = confirmationLookupStatus(error?.message);
+    const rememberedParticipant = await resolveRememberedParticipant(undefined, correlationId);
     logHostedAccessDiagnostic({
       correlation_id: correlationId,
       boundary: "confirmation_route",
       outcome_category: error ? "rpc_failure" : "data_state_failure",
+      remember_resolution: rememberedParticipant ? "matched" : "missing",
     });
+    if (status === "expired") {
+      return (
+        <PublicErrorState
+          variant="recovery"
+          eyebrow="Confirmation"
+          title="This confirmation link has expired."
+          message="Confirmation links are valid for 24 hours. If you remembered this device, you can still view and manage your upcoming classes. Otherwise browse events or use a saved booking link."
+          actionLabel={rememberedParticipant ? "View your bookings" : "Browse events"}
+          actionHref={rememberedParticipant ? "/manage-bookings" : "/events"}
+          secondaryActionLabel={rememberedParticipant ? "Browse events" : "Return home"}
+          secondaryActionHref={rememberedParticipant ? "/events" : "/"}
+        />
+      );
+    }
     return (
       <PublicErrorState
-        code="INVALID"
-        title="Confirmation unavailable."
-        message="This confirmation link is invalid or has expired."
-        actionLabel="Browse events"
-        actionHref="/events"
+        variant="recovery"
+        eyebrow="Confirmation"
+        title="This confirmation link isn’t available."
+        message="The link may be incomplete or no longer valid. Browse events to book again, or use a saved confirmation or booking link if you still have one."
+        actionLabel={rememberedParticipant ? "View your bookings" : "Browse events"}
+        actionHref={rememberedParticipant ? "/manage-bookings" : "/events"}
+        secondaryActionLabel={rememberedParticipant ? "Browse events" : "Return home"}
+        secondaryActionHref={rememberedParticipant ? "/events" : "/"}
       />
     );
   }
@@ -230,14 +253,8 @@ export default async function ConfirmationPage({
             Your place is held. Here’s everything you need for a smooth arrival and a good session.
           </p>
           {successful.length > 0 && !isRememberedParticipant ? (
-            <div className="confirmation-access-alert" aria-label="Remembered-device guidance">
-              <p className="confirmation-access-alert-title">
-                This device won’t remember your booking
-              </p>
-              <p>
-                You didn’t choose <strong>Remember this device</strong>, so save the secure booking
-                link to view or manage this reservation later.
-              </p>
+            <div className="confirmation-access-alert" aria-label="Remember this device">
+              <ConfirmationRememberDevice token={token} correlationId={correlationId} />
             </div>
           ) : null}
         </header>

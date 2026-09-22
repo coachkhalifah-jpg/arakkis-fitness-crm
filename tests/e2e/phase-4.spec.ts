@@ -308,7 +308,7 @@ test("reuses an exact normalized participant match and rejects an altered token"
     "ACTIVE",
   );
   await page.goto(`/registration/confirmation?token=${encodeURIComponent(`${token}x`)}`);
-  await expect(page.getByText("This confirmation link is invalid or has expired.")).toBeVisible();
+  await expect(page.getByText("This confirmation link isn’t available.")).toBeVisible();
 });
 
 test("excludes archived participants and agrees with canonical Unicode whitespace normalization", async ({
@@ -440,9 +440,7 @@ test("serializes final-spot registration through the public RPC without orphaned
     const failedConfirmation = await page.request.get(
       `/registration/confirmation?token=${encodeURIComponent(failedToken)}`,
     );
-    expect(await failedConfirmation.text()).toContain(
-      "This confirmation link is invalid or has expired.",
-    );
+    expect(await failedConfirmation.text()).toContain("This confirmation link isn’t available.");
     const failedIcs = await page.request.get(
       `/registration/confirmation/ics?token=${encodeURIComponent(failedToken)}`,
     );
@@ -482,26 +480,40 @@ test("confirmation and ICS reject the complete malformed, expired, and cross-gro
     "x".repeat(500),
     "%E0%A4%A",
     "\u0000\u{1F4A9}",
-    tokenB,
   ];
-  const genericError = "This confirmation link is invalid or has expired.";
+  const invalidError = "This confirmation link isn’t available.";
   for (const token of invalidTokens) {
     const response = await page.request.get(
       `/registration/confirmation?token=${encodeURIComponent(token)}`,
     );
     const body = await response.text();
     expect(response.status()).toBe(200);
-    expect(body).toContain(genericError);
+    expect(body).toContain(invalidError);
     expect(body).not.toContain("Token Scope Alpha");
     expect(body).not.toContain("Token Scope Beta");
     expect(body).not.toContain("registration_group_id");
     expect(body).not.toContain("token_hash");
+    expect(body).not.toContain("public-error-status-dial");
     const ics = await page.request.get(
       `/registration/confirmation/ics?token=${encodeURIComponent(token)}`,
     );
     expect(ics.status()).toBe(404);
     expect(await ics.text()).not.toContain("BEGIN:VEVENT");
   }
+  const expiredPage = await page.request.get(
+    `/registration/confirmation?token=${encodeURIComponent(tokenB)}`,
+  );
+  const expiredBody = await expiredPage.text();
+  expect(expiredPage.status()).toBe(200);
+  expect(expiredBody).toContain("This confirmation link has expired.");
+  expect(expiredBody).not.toContain(">EXPIRED<");
+  expect(expiredBody).not.toContain("Token Scope Beta");
+  const expiredIcs = await page.request.get(
+    `/registration/confirmation/ics?token=${encodeURIComponent(tokenB)}`,
+  );
+  expect(expiredIcs.status()).toBe(410);
+  expect(await expiredIcs.text()).toContain("This confirmation link has expired.");
+  expect(await expiredIcs.text()).not.toContain("BEGIN:VEVENT");
   const valid = await page.goto(`/registration/confirmation?token=${encodeURIComponent(tokenA)}`);
   const validBody = await page.locator("main").last().innerText();
   expect(valid?.status()).toBe(200);

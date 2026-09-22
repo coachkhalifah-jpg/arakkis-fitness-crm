@@ -31,3 +31,7 @@ System Admins directly cancel Events. Host Admins may submit scoped cancellation
 ## Images and Storage
 
 Design Asset management is System Admin-only. Event-image replacement binds Event, actor, purpose, exact asset type `EVENT_IMAGE_DESKTOP`, signature, and expiry. MIME and 5 MiB checks remain authoritative. Replacement preserves one active asset, audit history, rollback, and Storage cleanup behavior.
+
+## Confirmation and remembered device (DEC-058)
+
+Confirmation tokens remain opaque, hashed, and expire after 24 hours. Remember-this-device is the supported return path for viewing and managing upcoming classes. Remember-device is strongly encouraged on confirmation with clear consent (default-checked; issuance only after successful booking or explicit confirmation save). On Events, remembered participants see already-booked classes as **Booked** with a manage link. Disconnected `/manage-bookings` and expired confirmation use calm PublicErrorState recovery (never an HTTP-style 404 feel) with Browse events / use a saved link / View your bookings. Already-registered errors include a recovery sentence. Preserve existing public UI patterns; no new design language.
