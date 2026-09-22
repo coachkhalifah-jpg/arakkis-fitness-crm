@@ -2,6 +2,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createEventImageIntent,
   EVENT_IMAGE_ASSET_TYPE,
+  eventImageIntentErrorMessage,
+  eventImageIntentTtlMs,
+  inspectEventImageIntent,
   verifyEventImageIntent,
 } from "@/lib/services/event-image-intent";
 
@@ -45,7 +48,13 @@ describe("event image replacement intent", () => {
       ),
     ).toBe(false);
     expect(
-      verifyEventImageIntent(token, eventA, actor, EVENT_IMAGE_ASSET_TYPE, now + 10 * 60 * 1000),
+      verifyEventImageIntent(
+        token,
+        eventA,
+        actor,
+        EVENT_IMAGE_ASSET_TYPE,
+        now + eventImageIntentTtlMs,
+      ),
     ).toBe(false);
     expect(
       verifyEventImageIntent(
@@ -56,6 +65,33 @@ describe("event image replacement intent", () => {
         now + 1,
       ),
     ).toBe(false);
+  });
+
+  it("classifies missing, expired, and mismatch failures", () => {
+    vi.stubGlobal("window", undefined);
+    useServerEnv();
+    const now = 1_700_000_000_000;
+    const token = createEventImageIntent(eventA, actor, EVENT_IMAGE_ASSET_TYPE, now);
+    expect(inspectEventImageIntent("", eventA, actor, EVENT_IMAGE_ASSET_TYPE, now + 1)).toEqual({
+      ok: false,
+      reason: "missing",
+    });
+    expect(
+      inspectEventImageIntent(
+        token,
+        eventA,
+        actor,
+        EVENT_IMAGE_ASSET_TYPE,
+        now + eventImageIntentTtlMs,
+      ),
+    ).toEqual({ ok: false, reason: "expired" });
+    expect(inspectEventImageIntent(token, eventB, actor, EVENT_IMAGE_ASSET_TYPE, now + 1)).toEqual({
+      ok: false,
+      reason: "mismatch",
+    });
+    expect(eventImageIntentErrorMessage("expired")).toBe(
+      "This Event image form expired. Refresh the Event and try again.",
+    );
   });
 
   it("rejects a modified signature and malformed context", () => {

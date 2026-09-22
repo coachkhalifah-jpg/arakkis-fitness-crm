@@ -428,7 +428,8 @@ describe("presentation controls", () => {
     expect(document.querySelector('input[name="operation"]')).toHaveValue(
       "EVENT_IMAGE_REPLACEMENT",
     );
-    expect(screen.getByRole("combobox", { name: "Asset type" })).toHaveValue("EVENT_IMAGE_DESKTOP");
+    expect(document.querySelector('input[name="assetType"]')).toHaveValue("EVENT_IMAGE_DESKTOP");
+    expect(screen.queryByRole("combobox", { name: "Asset type" })).not.toBeInTheDocument();
   });
 
   it("labels the icon-only public back control", () => {
