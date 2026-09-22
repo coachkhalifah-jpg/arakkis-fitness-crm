@@ -39,7 +39,7 @@ export function DesignAssetUploadForm({
         Asset type
         <select
           name="assetType"
-          defaultValue="PUBLIC_BACKGROUND_DESKTOP"
+          defaultValue={eventOnly ? "EVENT_IMAGE_DESKTOP" : "PUBLIC_BACKGROUND_DESKTOP"}
           className="design-assets-control"
         >
           {eventOnly ? <option value="EVENT_IMAGE_DESKTOP">Event image</option> : null}
