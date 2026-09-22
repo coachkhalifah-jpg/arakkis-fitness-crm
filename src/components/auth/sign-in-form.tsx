@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { signIn, type AuthActionState } from "@/lib/auth/session-actions";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/auth/password-input";
 import Link from "next/link";
 
 const initialState: AuthActionState = {};
@@ -23,17 +24,14 @@ export function SignInForm({ next }: { next: string }) {
           placeholder="you@arakkis.test"
         />
       </label>
-      <label htmlFor="password">
-        Password
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          placeholder="Enter your password"
-        />
-      </label>
+      <PasswordInput
+        id="password"
+        name="password"
+        autoComplete="current-password"
+        required
+        placeholder="Enter your password"
+        label="Password"
+      />
       <Link href="/admin/reset-password" className="ops-auth-return">
         Forgot password?
       </Link>

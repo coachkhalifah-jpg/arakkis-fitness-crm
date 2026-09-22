@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { acceptInvitation, type AuthActionState } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/auth/password-input";
 
 export function AcceptInvitationForm({ token }: { token: string }) {
   const [state, action, pending] = useActionState(acceptInvitation, {} as AuthActionState);
@@ -35,17 +36,14 @@ export function AcceptInvitationForm({ token }: { token: string }) {
         />
       </div>
       <div>
-        <label className="mb-2 block text-sm font-medium" htmlFor="password">
-          Create password
-        </label>
-        <input
-          className="w-full rounded-md border border-slate-300 px-3 py-2"
+        <PasswordInput
+          className="mb-2 block text-sm font-medium normal-case tracking-normal"
           id="password"
           name="password"
-          type="password"
           minLength={8}
           autoComplete="new-password"
           required
+          label="Create password"
         />
       </div>
       {state.error ? (

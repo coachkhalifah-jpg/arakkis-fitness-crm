@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { updatePassword, type AuthActionState } from "@/lib/auth/session-actions";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/auth/password-input";
 
 const initialState: AuthActionState = {};
 
@@ -10,28 +11,22 @@ export function PasswordResetForm() {
   const [state, action, pending] = useActionState(updatePassword, initialState);
   return (
     <form action={action} className="ops-auth-form">
-      <label htmlFor="password">
-        New password
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          required
-          minLength={8}
-        />
-      </label>
-      <label htmlFor="confirmation">
-        Confirm password
-        <input
-          id="confirmation"
-          name="confirmation"
-          type="password"
-          autoComplete="new-password"
-          required
-          minLength={8}
-        />
-      </label>
+      <PasswordInput
+        id="password"
+        name="password"
+        autoComplete="new-password"
+        required
+        minLength={8}
+        label="New password"
+      />
+      <PasswordInput
+        id="confirmation"
+        name="confirmation"
+        autoComplete="new-password"
+        required
+        minLength={8}
+        label="Confirm password"
+      />
       {state.error ? (
         <p className="ops-auth-error" role="alert">
           {state.error}
