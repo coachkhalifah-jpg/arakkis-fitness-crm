@@ -7706,6 +7706,24 @@ body:has(.admin-manage-event-page) {
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
+.confirmation-page .confirmation-remember-prompt {
+  display: grid;
+  gap: 0.85rem;
+  text-align: left;
+}
+.confirmation-page .confirmation-remember-prompt > p {
+  margin: 0;
+}
+.confirmation-page .confirmation-remember-label {
+  text-align: left;
+}
+.confirmation-page .confirmation-remember-error {
+  margin: 0;
+  color: #fecaca;
+}
+.confirmation-page .confirmation-remember-prompt .confirmation-action-button {
+  justify-self: center;
+}
 .confirmation-page .confirmation-access-guidance-bottom {
   width: 100%;
   max-width: none;
@@ -9232,6 +9250,11 @@ body:has(.manage-booking-detail-page) > header {
   text-decoration: underline;
   text-transform: uppercase;
 }
+.public-error-action-secondary {
+  margin-top: 0.65rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
 .public-error-action span {
   color: var(--energy);
   text-decoration: none;
@@ -9935,9 +9958,11 @@ body:has(.manage-booking-detail-page) > header {
   display: none;
 }
 .registration-northstar .registration-device-section {
-  border: 0;
-  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--registration-accent) 55%, transparent);
+  border-radius: 0;
+  padding: 1rem 1rem 1.1rem;
   color: #f7f5f0;
+  background: color-mix(in srgb, var(--registration-accent) 10%, transparent);
 }
 .registration-northstar .registration-device-section label {
   align-items: flex-start;

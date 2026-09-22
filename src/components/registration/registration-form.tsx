@@ -130,7 +130,7 @@ export function RegistrationForm({
     referralSource: "",
     referralSourceOther: "",
   });
-  const [rememberDevice, setRememberDevice] = useState(false);
+  const [rememberDevice, setRememberDevice] = useState(true);
   const [showOptionalDetails, setShowOptionalDetails] = useState(false);
   const [waiverAcknowledged, setWaiverAcknowledged] = useState(false);
   const sortedEvents = useMemo(
@@ -682,8 +682,8 @@ export function RegistrationForm({
         </label>
       </div>
       {!activeRememberedFirstName ? (
-        <fieldset className="registration-device-section">
-          <legend className="sr-only">Optional device recognition</legend>
+        <fieldset className="registration-device-section registration-device-section-emphasized">
+          <legend className="sr-only">Remember this device</legend>
           <label className="flex min-h-12 items-start gap-3">
             <input
               id="rememberDevice"
@@ -696,14 +696,15 @@ export function RegistrationForm({
             />
             <span>
               <span className="block font-semibold text-ink">
-                Make future bookings faster on this device
+                Remember this device to see all your classes
               </span>
               <span
                 id="rememberDevice-description"
                 className="mt-1 block text-sm leading-6 text-slate-600"
               >
-                We’ll securely remember this device so you won’t need to enter your information
-                again. You can remove this at any time.
+                Confirmation links expire in 24 hours. We’ll securely remember this browser so you
+                can return and view or manage your upcoming classes here. You can forget this device
+                anytime. This is not an account login.
               </span>
             </span>
           </label>

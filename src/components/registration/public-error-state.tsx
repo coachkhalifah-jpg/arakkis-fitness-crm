@@ -6,6 +6,8 @@ type PublicErrorStateProps = {
   message: string;
   actionLabel?: string;
   actionHref?: string;
+  secondaryActionLabel?: string;
+  secondaryActionHref?: string;
 };
 
 export function PublicErrorState({
@@ -14,6 +16,8 @@ export function PublicErrorState({
   message,
   actionLabel,
   actionHref,
+  secondaryActionLabel,
+  secondaryActionHref,
 }: PublicErrorStateProps) {
   return (
     <main className="public-error-page" aria-labelledby="public-error-title">
@@ -34,6 +38,15 @@ export function PublicErrorState({
           {actionLabel && actionHref ? (
             <Link className="public-error-action" href={actionHref}>
               {actionLabel}
+              <span aria-hidden="true">↗</span>
+            </Link>
+          ) : null}
+          {secondaryActionLabel && secondaryActionHref ? (
+            <Link
+              className="public-error-action public-error-action-secondary"
+              href={secondaryActionHref}
+            >
+              {secondaryActionLabel}
               <span aria-hidden="true">↗</span>
             </Link>
           ) : null}
