@@ -308,7 +308,7 @@ test("reuses an exact normalized participant match and rejects an altered token"
     "ACTIVE",
   );
   await page.goto(`/registration/confirmation?token=${encodeURIComponent(`${token}x`)}`);
-  await expect(page.getByText("This confirmation link is invalid.")).toBeVisible();
+  await expect(page.getByText("This confirmation link isn’t available.")).toBeVisible();
 });
 
 test("excludes archived participants and agrees with canonical Unicode whitespace normalization", async ({
@@ -440,7 +440,7 @@ test("serializes final-spot registration through the public RPC without orphaned
     const failedConfirmation = await page.request.get(
       `/registration/confirmation?token=${encodeURIComponent(failedToken)}`,
     );
-    expect(await failedConfirmation.text()).toContain("This confirmation link is invalid.");
+    expect(await failedConfirmation.text()).toContain("This confirmation link isn’t available.");
     const failedIcs = await page.request.get(
       `/registration/confirmation/ics?token=${encodeURIComponent(failedToken)}`,
     );
@@ -481,7 +481,7 @@ test("confirmation and ICS reject the complete malformed, expired, and cross-gro
     "%E0%A4%A",
     "\u0000\u{1F4A9}",
   ];
-  const invalidError = "This confirmation link is invalid.";
+  const invalidError = "This confirmation link isn’t available.";
   for (const token of invalidTokens) {
     const response = await page.request.get(
       `/registration/confirmation?token=${encodeURIComponent(token)}`,
@@ -493,6 +493,7 @@ test("confirmation and ICS reject the complete malformed, expired, and cross-gro
     expect(body).not.toContain("Token Scope Beta");
     expect(body).not.toContain("registration_group_id");
     expect(body).not.toContain("token_hash");
+    expect(body).not.toContain("public-error-status-dial");
     const ics = await page.request.get(
       `/registration/confirmation/ics?token=${encodeURIComponent(token)}`,
     );
@@ -505,6 +506,7 @@ test("confirmation and ICS reject the complete malformed, expired, and cross-gro
   const expiredBody = await expiredPage.text();
   expect(expiredPage.status()).toBe(200);
   expect(expiredBody).toContain("This confirmation link has expired.");
+  expect(expiredBody).not.toContain(">EXPIRED<");
   expect(expiredBody).not.toContain("Token Scope Beta");
   const expiredIcs = await page.request.get(
     `/registration/confirmation/ics?token=${encodeURIComponent(tokenB)}`,

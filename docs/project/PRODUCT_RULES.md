@@ -34,4 +34,4 @@ Design Asset management is System Admin-only. Event-image replacement binds Even
 
 ## Confirmation and remembered device (DEC-058)
 
-Confirmation tokens remain opaque, hashed, and expire after 24 hours. Remember-this-device is the supported return path for viewing upcoming classes. Remember-device is encouraged (prominent, default-checked, clear consent) on booking and confirmation; issuance still requires a successful booking or an explicit confirmation save. Expired confirmation pages show a clear expired state and never hard-404; remembered devices get **View your bookings**.
+Confirmation tokens remain opaque, hashed, and expire after 24 hours. Remember-this-device is the supported return path for viewing and managing upcoming classes. Remember-device is strongly encouraged on confirmation (clear consent); issuance still requires a successful booking or an explicit confirmation save. On Events, remembered participants see already-booked classes as **Booked** with a manage link. Disconnected `/manage-bookings` and expired confirmation use calm recovery (never an HTTP-style 404 feel) with Browse events / use a saved link / View your bookings.

@@ -16,7 +16,7 @@ Event creation, recurring Events, draft/publish flow, Event images and replaceme
 
 ## Current focus
 
-Product candidate freeze at `f52da3f` (DEC-058): confirmation tokens remain 24h; remember-this-device is the return path for all classes; confirmation encourages remember-device; expired confirmation shows a clear expired state (never hard 404). Conventional hardening and QA only.
+Product candidate freeze at `f52da3f` (DEC-058): confirmation tokens remain 24h; remember-this-device is the return path for all bookings; confirmation strongly encourages remember-device; Events marks already-booked classes with manage links; disconnected `/manage-bookings` and expired confirmation use calm recovery. Narrow engineering and QA only.
 
 ## Next
 

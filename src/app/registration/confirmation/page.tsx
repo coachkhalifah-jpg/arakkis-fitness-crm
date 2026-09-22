@@ -121,25 +121,27 @@ export default async function ConfirmationPage({
     if (status === "expired") {
       return (
         <PublicErrorState
-          code="EXPIRED"
+          variant="recovery"
+          eyebrow="Confirmation"
           title="This confirmation link has expired."
-          message="Confirmation links are valid for 24 hours. If you remembered this device, you can still view your upcoming classes."
+          message="Confirmation links are valid for 24 hours. If you remembered this device, you can still view and manage your upcoming classes. Otherwise browse events or use a saved booking link."
           actionLabel={rememberedParticipant ? "View your bookings" : "Browse events"}
           actionHref={rememberedParticipant ? "/manage-bookings" : "/events"}
-          secondaryActionLabel={rememberedParticipant ? "Browse events" : undefined}
-          secondaryActionHref={rememberedParticipant ? "/events" : undefined}
+          secondaryActionLabel={rememberedParticipant ? "Browse events" : "Return home"}
+          secondaryActionHref={rememberedParticipant ? "/events" : "/"}
         />
       );
     }
     return (
       <PublicErrorState
-        code="INVALID"
-        title="Confirmation unavailable."
-        message="This confirmation link is invalid."
+        variant="recovery"
+        eyebrow="Confirmation"
+        title="This confirmation link isn’t available."
+        message="The link may be incomplete or no longer valid. Browse events to book again, or use a saved confirmation or booking link if you still have one."
         actionLabel={rememberedParticipant ? "View your bookings" : "Browse events"}
         actionHref={rememberedParticipant ? "/manage-bookings" : "/events"}
-        secondaryActionLabel={rememberedParticipant ? "Browse events" : undefined}
-        secondaryActionHref={rememberedParticipant ? "/events" : undefined}
+        secondaryActionLabel={rememberedParticipant ? "Browse events" : "Return home"}
+        secondaryActionHref={rememberedParticipant ? "/events" : "/"}
       />
     );
   }

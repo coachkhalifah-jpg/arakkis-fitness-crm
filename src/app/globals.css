@@ -8824,6 +8824,24 @@ textarea {
   color: #fff;
   padding: 2rem 1.25rem;
 }
+.public-error-eyebrow {
+  margin: 0;
+  color: rgb(255 255 255 / 72%);
+  font-family:
+    "SF Pro Display",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.public-error-page-recovery .public-error-copy h1 {
+  max-width: 18ch;
+}
 body:has(.public-error-page) > header {
   display: none;
 }
@@ -10846,6 +10864,22 @@ body:has(.manage-booking-detail-page) > header {
 }
 .participant-event-card.is-unavailable {
   opacity: 0.68;
+}
+.participant-event-card.is-booked {
+  opacity: 1;
+}
+.participant-event-card-status.is-booked {
+  background: #111315;
+  color: #f7f5f0;
+}
+.participant-event-card-manage {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--participant-events-accent, #ff7a3d);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 .participant-event-card-hero {
   position: relative;
