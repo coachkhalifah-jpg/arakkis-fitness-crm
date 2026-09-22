@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import {
+  issueEventImageIntent,
   uploadDesignAsset,
   type DesignAssetActionState,
 } from "@/lib/services/design-assets-actions";
@@ -22,7 +23,30 @@ export function DesignAssetUploadForm({
   defaultAltText?: string;
   intentToken?: string;
 }) {
-  const [state, action] = useActionState(uploadDesignAsset, initialState);
+  const uploadWithFreshIntent = async (
+    previous: DesignAssetActionState,
+    formData: FormData,
+  ): Promise<DesignAssetActionState> => {
+    if (eventOnly && eventId) {
+      const freshIntent = await issueEventImageIntent(eventId);
+      if (!freshIntent) {
+        return {
+          error: "This Event image form is invalid or expired. Refresh the Event and try again.",
+        };
+      }
+      formData.set("eventImageIntent", freshIntent);
+      formData.set("assetType", "EVENT_IMAGE_DESKTOP");
+      formData.set("eventId", eventId);
+      formData.set("operation", "EVENT_IMAGE_REPLACEMENT");
+    }
+    return uploadDesignAsset(previous, formData);
+  };
+
+  const [state, action] = useActionState(
+    eventOnly ? uploadWithFreshIntent : uploadDesignAsset,
+    initialState,
+  );
+
   return (
     <form
       action={action}
@@ -35,34 +59,27 @@ export function DesignAssetUploadForm({
       {eventOnly ? <input type="hidden" name="eventId" value={eventId ?? ""} /> : null}
       {eventOnly ? <input type="hidden" name="operation" value="EVENT_IMAGE_REPLACEMENT" /> : null}
       {eventOnly ? <input type="hidden" name="eventImageIntent" value={intentToken ?? ""} /> : null}
-      <label className="design-assets-field">
-        Asset type
-        <select
-          name="assetType"
-          defaultValue={eventOnly ? "EVENT_IMAGE_DESKTOP" : "PUBLIC_BACKGROUND_DESKTOP"}
-          className="design-assets-control"
-        >
-          {eventOnly ? <option value="EVENT_IMAGE_DESKTOP">Event image</option> : null}
-          {!eventOnly ? (
-            <>
-              <option value="PUBLIC_BACKGROUND_DESKTOP">Public background · desktop</option>
-              <option value="PUBLIC_BACKGROUND_MOBILE">Public background · mobile</option>
-              <option value="EVENT_IMAGE_DESKTOP">Event image · desktop</option>
-              <option value="EVENT_IMAGE_MOBILE">Event image · mobile</option>
-              <option value="CATEGORY_IMAGE">Category fallback</option>
-            </>
-          ) : null}
-        </select>
-      </label>
+      {eventOnly ? <input type="hidden" name="assetType" value="EVENT_IMAGE_DESKTOP" /> : null}
+      {!eventOnly ? (
+        <label className="design-assets-field">
+          Asset type
+          <select
+            name="assetType"
+            defaultValue="PUBLIC_BACKGROUND_DESKTOP"
+            className="design-assets-control"
+          >
+            <option value="PUBLIC_BACKGROUND_DESKTOP">Public background · desktop</option>
+            <option value="PUBLIC_BACKGROUND_MOBILE">Public background · mobile</option>
+            <option value="EVENT_IMAGE_DESKTOP">Event image · desktop</option>
+            <option value="EVENT_IMAGE_MOBILE">Event image · mobile</option>
+            <option value="CATEGORY_IMAGE">Category fallback</option>
+          </select>
+        </label>
+      ) : null}
       {!eventOnly ? (
         <label className="design-assets-field">
           Event (event image only)
-          <select
-            name="eventId"
-            defaultValue=""
-            className="design-assets-control"
-            disabled={eventOnly}
-          >
+          <select name="eventId" defaultValue="" className="design-assets-control">
             <option value="">Not event-specific</option>
             {events.map((event) => (
               <option key={event.id} value={event.id}>

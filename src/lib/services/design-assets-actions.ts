@@ -6,7 +6,12 @@ import { z } from "zod";
 import { requireSystemAdmin } from "@/lib/authorization/server";
 import { createPrivilegedClient } from "@/lib/db/privileged";
 import { createClient } from "@/lib/db/server";
-import { EVENT_IMAGE_ASSET_TYPE, verifyEventImageIntent } from "@/lib/services/event-image-intent";
+import {
+  EVENT_IMAGE_ASSET_TYPE,
+  createEventImageIntent,
+  eventImageIntentErrorMessage,
+  inspectEventImageIntent,
+} from "@/lib/services/event-image-intent";
 import {
   designAssetFileBytes,
   mapDesignAssetUploadError,
@@ -85,20 +90,25 @@ export async function uploadDesignAsset(
     if ((categoryAsset && !categoryKey) || (!categoryAsset && categoryKey)) {
       return { error: "Choose a category only for a category fallback image." };
     }
-    if (
-      text(form, "operation") === "EVENT_IMAGE_REPLACEMENT" &&
-      (!eventId ||
-        input.assetType !== EVENT_IMAGE_ASSET_TYPE ||
-        !verifyEventImageIntent(
-          text(form, "eventImageIntent"),
+    if (text(form, "operation") === "EVENT_IMAGE_REPLACEMENT") {
+      if (!eventId || input.assetType !== EVENT_IMAGE_ASSET_TYPE) {
+        return {
+          error: "This Event image form is invalid or expired. Refresh the Event and try again.",
+        };
+      }
+      const intentCheck = inspectEventImageIntent(
+        text(form, "eventImageIntent"),
+        eventId,
+        admin.userId,
+        input.assetType,
+      );
+      if (!intentCheck.ok) {
+        console.error("[event-image-intent] replacement rejected", {
+          reason: intentCheck.reason,
           eventId,
-          admin.userId,
-          input.assetType,
-        ))
-    ) {
-      return {
-        error: "This Event image form is invalid or expired. Refresh the Event and try again.",
-      };
+        });
+        return { error: eventImageIntentErrorMessage(intentCheck.reason) };
+      }
     }
     const db = await createClient();
     const storage = createPrivilegedClient();
@@ -327,4 +337,14 @@ export async function retireDesignAsset(
   } catch (error) {
     return { error: errorMessage(error) };
   }
+}
+
+/** Mint a fresh Event-image replacement intent for the current System Admin. */
+export async function issueEventImageIntent(eventId: string): Promise<string | null> {
+  if (!z.string().uuid().safeParse(eventId).success) return null;
+  const admin = await requireSystemAdmin("/admin/design-assets");
+  const db = await createClient();
+  const { data: event } = await db.from("events").select("id").eq("id", eventId).maybeSingle();
+  if (!event) return null;
+  return createEventImageIntent(eventId, admin.userId, EVENT_IMAGE_ASSET_TYPE);
 }
