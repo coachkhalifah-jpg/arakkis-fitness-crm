@@ -12,8 +12,10 @@ export function ConfirmationRememberDevice({
   token,
   correlationId,
 }: ConfirmationRememberDeviceProps) {
-  const [state, action, pending] = useActionState(rememberDeviceOnConfirmation, {});
-
+  const [state, action, pending] = useActionState(
+    rememberDeviceOnConfirmation.bind(null, token, correlationId),
+    {},
+  );
   return (
     <form action={action} className="confirmation-remember-prompt">
       <input type="hidden" name="token" value={token} />

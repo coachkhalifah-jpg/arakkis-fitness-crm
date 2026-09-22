@@ -372,6 +372,8 @@ export type RememberDeviceConfirmationState = {
 };
 
 export async function rememberDeviceOnConfirmation(
+  confirmationToken: string,
+  correlationId: string,
   _state: RememberDeviceConfirmationState,
   form: FormData,
 ): Promise<RememberDeviceConfirmationState> {
@@ -380,13 +382,16 @@ export async function rememberDeviceOnConfirmation(
       error: "Check Remember this device to keep your classes available on this browser.",
     };
   }
-  const token = String(form.get("token") ?? "");
-  const correlationId = String(form.get("correlationId") || crypto.randomUUID());
+  // Prefer the bound confirmation token from the page; fall back to the form field.
+  const token = String(confirmationToken || form.get("token") || "").trim();
+  const resolvedCorrelationId = String(
+    correlationId || form.get("correlationId") || crypto.randomUUID(),
+  ).trim();
   if (!token) return { error: "This confirmation link is no longer available." };
-  const result = await rememberParticipantFromConfirmation(token, correlationId);
+  const result = await rememberParticipantFromConfirmation(token, resolvedCorrelationId);
   if (result?.error) return { error: result.error };
   redirect(
-    `/registration/confirmation?token=${encodeURIComponent(token)}&correlationId=${encodeURIComponent(correlationId)}`,
+    `/registration/confirmation?token=${encodeURIComponent(token)}&correlationId=${encodeURIComponent(resolvedCorrelationId)}`,
   );
 }
 
