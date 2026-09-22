@@ -12,6 +12,11 @@ import {
   runPostCommitRefresh,
 } from "@/lib/services/event-creation-lifecycle";
 import {
+  designAssetFileBytes,
+  mapDesignAssetUploadError,
+  uploadDesignAssetObject,
+} from "@/lib/services/design-asset-storage";
+import {
   audit,
   buildMultiScheduleOccurrences,
   eventSchema,
@@ -163,6 +168,7 @@ async function removeEventImagePaths(paths: string[], requestId: string, operati
 }
 
 async function uploadEventImages(
+  sessionClient: Awaited<ReturnType<typeof createClient>>,
   requestId: string,
   eventIds: string[],
   eventName: string,
@@ -172,19 +178,20 @@ async function uploadEventImages(
   const storage = createPrivilegedClient();
   const uploadedPaths: string[] = [];
   const assets: Array<Record<string, string | number>> = [];
-  const fileBytes = Buffer.from(await file.arrayBuffer());
+  const fileBytes = await designAssetFileBytes(file);
   const contentSha256 = createHash("sha256").update(fileBytes).digest("hex");
   try {
     for (const eventId of eventIds) {
       const path = `event_image_staging/${requestId}/${eventId}/${randomUUID()}${eventImageExtension(file)}`;
-      const { error: uploadError } = await storage.storage
-        .from("design-assets")
-        .upload(path, fileBytes, {
-          contentType: file.type,
-          cacheControl: "31536000",
-          upsert: false,
-        });
-      if (uploadError) throw new Phase3Error("conflict", "The event image could not be uploaded.");
+      const { error: uploadError } = await uploadDesignAssetObject(
+        sessionClient,
+        storage,
+        path,
+        fileBytes,
+        file.type,
+      );
+      if (uploadError)
+        throw new Phase3Error("conflict", mapDesignAssetUploadError(uploadError, "event image"));
       uploadedPaths.push(path);
       assets.push({
         event_id: eventId,
@@ -204,6 +211,7 @@ async function uploadEventImages(
 }
 
 async function uploadScheduleEventImage(
+  sessionClient: Awaited<ReturnType<typeof createClient>>,
   requestId: string,
   occurrenceCount: number,
   eventName: string,
@@ -213,19 +221,20 @@ async function uploadScheduleEventImage(
   const storage = createPrivilegedClient();
   const uploadedPaths: string[] = [];
   const assets: Array<Record<string, string | number>> = [];
-  const fileBytes = Buffer.from(await file.arrayBuffer());
+  const fileBytes = await designAssetFileBytes(file);
   const contentSha256 = createHash("sha256").update(fileBytes).digest("hex");
   try {
     for (let index = 0; index < occurrenceCount; index += 1) {
       const path = `event_image_staging/${requestId}/occurrence-${index + 1}/${randomUUID()}${eventImageExtension(file)}`;
-      const { error: uploadError } = await storage.storage
-        .from("design-assets")
-        .upload(path, fileBytes, {
-          contentType: file.type,
-          cacheControl: "31536000",
-          upsert: false,
-        });
-      if (uploadError) throw new Phase3Error("conflict", "The event image could not be uploaded.");
+      const { error: uploadError } = await uploadDesignAssetObject(
+        sessionClient,
+        storage,
+        path,
+        fileBytes,
+        file.type,
+      );
+      if (uploadError)
+        throw new Phase3Error("conflict", mapDesignAssetUploadError(uploadError, "event image"));
       uploadedPaths.push(path);
       assets.push({
         occurrence_index: index + 1,
@@ -595,8 +604,8 @@ export async function createEvent(
     const seriesId = recurrence.enabled ? randomUUID() : null;
     const requestId = value(form, "creationRequestId") || randomUUID();
     const uploaded = recurrence.enabled
-      ? await uploadScheduleEventImage(requestId, occurrences.length, input.name, imageFile)
-      : await uploadEventImages(requestId, eventIds, input.name, imageFile);
+      ? await uploadScheduleEventImage(db, requestId, occurrences.length, input.name, imageFile)
+      : await uploadEventImages(db, requestId, eventIds, input.name, imageFile);
     uploadedPaths = uploaded.paths;
     const rpcName = recurrence.enabled
       ? "phase3_create_multi_schedule_bundle"

@@ -7,6 +7,11 @@ import { requireSystemAdmin } from "@/lib/authorization/server";
 import { createPrivilegedClient } from "@/lib/db/privileged";
 import { createClient } from "@/lib/db/server";
 import { EVENT_IMAGE_ASSET_TYPE, verifyEventImageIntent } from "@/lib/services/event-image-intent";
+import {
+  designAssetFileBytes,
+  mapDesignAssetUploadError,
+  uploadDesignAssetObject,
+} from "@/lib/services/design-asset-storage";
 import { cleanupStoragePaths } from "@/lib/services/storage-cleanup";
 import { runReplacementLifecycle } from "@/lib/services/design-asset-replacement";
 
@@ -112,14 +117,15 @@ export async function uploadDesignAsset(
     }
     const path = `${input.assetType.toLowerCase()}/${randomUUID()}${extension(file)}`;
     uploadedPath = path;
-    const { error: uploadError } = await storage.storage
-      .from("design-assets")
-      .upload(path, await file.arrayBuffer(), {
-        contentType: file.type,
-        cacheControl: "31536000",
-        upsert: false,
-      });
-    if (uploadError) throw new Error("The image could not be uploaded.");
+    const fileBytes = await designAssetFileBytes(file);
+    const { error: uploadError } = await uploadDesignAssetObject(
+      db,
+      storage,
+      path,
+      fileBytes,
+      file.type,
+    );
+    if (uploadError) throw new Error(mapDesignAssetUploadError(uploadError));
     const { data: asset, error: insertError } = await db
       .from("design_assets")
       .insert({
