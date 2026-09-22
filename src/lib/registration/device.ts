@@ -1,11 +1,13 @@
 import "server-only";
 
 import { cookies } from "next/headers";
+import { createClient } from "@/lib/db/server";
 import { createPrivilegedClient } from "@/lib/db/privileged";
 import { logHostedAccessDiagnostic } from "@/lib/diagnostics/hosted-access";
 
 export const rememberedDeviceCookie = "fitness_remembered_device";
 const cookieMaxAge = 60 * 60 * 24 * 180;
+const confirmationTokenPattern = /^[A-Za-z0-9_-]{40,60}$/;
 
 export type RememberedParticipant = {
   device_id: string;
@@ -67,19 +69,55 @@ export async function resolveRememberedParticipant(
   return error || !data ? null : (data as RememberedParticipant);
 }
 
+function deviceIssueErrorMessage(errorMessage: string | undefined) {
+  const normalized = (errorMessage ?? "").toLowerCase();
+  if (
+    normalized.includes("permission") ||
+    normalized.includes("not authorized") ||
+    normalized.includes("42501") ||
+    normalized.includes("jwt")
+  ) {
+    return "Saving this device is temporarily unavailable. Please try again in a moment.";
+  }
+  return "This confirmation link is no longer available.";
+}
+
 export async function rememberParticipantFromConfirmation(
   confirmationToken: string,
   correlationId = crypto.randomUUID(),
 ) {
+  const token = confirmationToken.trim();
   logHostedAccessDiagnostic({
     correlation_id: correlationId,
     boundary: "registration_submission",
     device_rpc_attempted: true,
   });
-  const db = createPrivilegedClient();
-  const { data, error } = await db.rpc("phase10_issue_participant_device_token", {
-    p_confirmation_token: confirmationToken,
+  if (!confirmationTokenPattern.test(token)) {
+    logHostedAccessDiagnostic({
+      correlation_id: correlationId,
+      boundary: "registration_submission",
+      outcome_category: "data_state_failure",
+      device_rpc_status: "error",
+      cookie_set_attempted: false,
+    });
+    return { error: "This confirmation link is no longer available." };
+  }
+
+  // Prefer the request-scoped anon client first (confirmation bearer is the
+  // capability). Fall back to service-role if hosted grants differ.
+  const anon = await createClient();
+  let { data, error } = await anon.rpc("phase10_issue_participant_device_token", {
+    p_confirmation_token: token,
   } as never);
+  if (error || !data) {
+    const privileged = createPrivilegedClient();
+    const fallback = await privileged.rpc("phase10_issue_participant_device_token", {
+      p_confirmation_token: token,
+    } as never);
+    data = fallback.data;
+    error = fallback.error ?? error;
+  }
+
   if (error || !data) {
     logHostedAccessDiagnostic({
       correlation_id: correlationId,
@@ -88,7 +126,7 @@ export async function rememberParticipantFromConfirmation(
       device_rpc_status: "error",
       cookie_set_attempted: false,
     });
-    return { error: "This confirmation link is no longer available." };
+    return { error: deviceIssueErrorMessage(error?.message) };
   }
   logHostedAccessDiagnostic({
     correlation_id: correlationId,
@@ -112,14 +150,14 @@ export async function rememberParticipantFromConfirmation(
       outcome_category: "success",
       cookie_set_completed: true,
     });
-  } catch (error) {
+  } catch (cookieError) {
     logHostedAccessDiagnostic({
       correlation_id: correlationId,
       boundary: "registration_submission",
       outcome_category: "cookie_failure",
       cookie_set_completed: false,
     });
-    throw error;
+    throw cookieError;
   }
   return { firstName: result.first_name };
 }

@@ -220,9 +220,24 @@ async function executeRegistration(
     throw noReservedClassError(result.results);
   }
   confirmationToken = result.confirmation_token;
-  if (shouldRememberDevice)
-    await rememberParticipantFromConfirmation(confirmationToken, diagnosticCorrelationId);
-  else
+  if (shouldRememberDevice) {
+    const remembered = await rememberParticipantFromConfirmation(
+      confirmationToken,
+      diagnosticCorrelationId,
+    );
+    // Do not block confirmation on remember failure; the confirmation page still
+    // offers Save on this device. Log outcome for hosted diagnosis.
+    if (remembered && "error" in remembered && remembered.error) {
+      logHostedAccessDiagnostic({
+        correlation_id: diagnosticCorrelationId,
+        boundary: "registration_submission",
+        outcome_category: "rpc_failure",
+        device_rpc_status: "error",
+        cookie_set_attempted: true,
+        cookie_set_completed: false,
+      });
+    }
+  } else
     logHostedAccessDiagnostic({
       correlation_id: diagnosticCorrelationId,
       boundary: "registration_submission",
@@ -372,6 +387,8 @@ export type RememberDeviceConfirmationState = {
 };
 
 export async function rememberDeviceOnConfirmation(
+  confirmationToken: string,
+  correlationId: string,
   _state: RememberDeviceConfirmationState,
   form: FormData,
 ): Promise<RememberDeviceConfirmationState> {
@@ -380,13 +397,16 @@ export async function rememberDeviceOnConfirmation(
       error: "Check Remember this device to keep your classes available on this browser.",
     };
   }
-  const token = String(form.get("token") ?? "");
-  const correlationId = String(form.get("correlationId") || crypto.randomUUID());
+  // Prefer the bound confirmation token from the page; fall back to the form field.
+  const token = String(confirmationToken || form.get("token") || "").trim();
+  const resolvedCorrelationId = String(
+    correlationId || form.get("correlationId") || crypto.randomUUID(),
+  ).trim();
   if (!token) return { error: "This confirmation link is no longer available." };
-  const result = await rememberParticipantFromConfirmation(token, correlationId);
+  const result = await rememberParticipantFromConfirmation(token, resolvedCorrelationId);
   if (result?.error) return { error: result.error };
   redirect(
-    `/registration/confirmation?token=${encodeURIComponent(token)}&correlationId=${encodeURIComponent(correlationId)}`,
+    `/registration/confirmation?token=${encodeURIComponent(token)}&correlationId=${encodeURIComponent(resolvedCorrelationId)}`,
   );
 }
 

@@ -38,6 +38,7 @@ describe("foundation pages", () => {
       screen.getByRole("heading", { name: /connected to your bookings/i }),
     ).toBeInTheDocument();
     expect(screen.getByText(/saved confirmation or booking link/i)).toBeInTheDocument();
+    expect(screen.getByText("Bookings")).toBeInTheDocument();
     expect(screen.queryByText("404")).not.toBeInTheDocument();
     expect(screen.queryByText("NO LINK")).not.toBeInTheDocument();
     const recovery = screen.getByRole("main");
