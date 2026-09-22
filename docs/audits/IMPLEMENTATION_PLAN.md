@@ -1,6 +1,6 @@
 # Admin Events Implementation Plan (Coordinator)
 
-Status: `PHASE 2 COMPLETE` — UI Integration behind `adminEventsV2`. Next: Phase 3 Client-State.
+Status: `PHASES 1–4 COMPLETE` — Foundation, UI Integration, Client-State, and Validation landed behind feature flags (default `false`). Independent QA not started.
 
 Baseline: `fix/integration-and-ux` @ `5ab1907`  
 Canonical inputs: Findings Ledger + Product Decision Cycle 1 + PROJECT_CONTEXT.md

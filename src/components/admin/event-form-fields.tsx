@@ -2,6 +2,7 @@
 
 import { forwardRef, useEffect, useRef, useState, type SelectHTMLAttributes } from "react";
 import { features } from "@/lib/features";
+import { resolveDeadlineLocal, type DeadlinePreset } from "@/lib/schemas/event";
 
 type Organization = { id: string; name: string };
 export type Venue = { id: string; name: string; organization_id: string | null; timezone: string };
@@ -334,17 +335,50 @@ export function EventTimingFields({
       <div className="admin-schedule-deadline">
         <label>
           Registration deadline
-          <input
-            ref={deadlineRef}
-            name="registrationDeadlineLocal"
-            type="datetime-local"
-            required
-            defaultValue={deadlineValue}
-            className="mt-1 w-full rounded border p-2"
-            onChange={() => {
-              deadlineTouched.current = true;
-            }}
-          />
+          {features.adminEventsV2 ? (
+            <>
+              <select
+                name="deadlinePreset"
+                className="mt-1 w-full rounded border p-2"
+                defaultValue="AT_START"
+                onChange={(event) => {
+                  const preset = event.currentTarget.value as DeadlinePreset;
+                  deadlineTouched.current = preset === "CUSTOM";
+                  if (preset === "CUSTOM" || !deadlineRef.current || !start) return;
+                  deadlineRef.current.value = resolveDeadlineLocal(start, preset);
+                }}
+              >
+                <option value="AT_START">At class start</option>
+                <option value="MINUTES_30">30 minutes before</option>
+                <option value="HOURS_1">1 hour before</option>
+                <option value="HOURS_2">2 hours before</option>
+                <option value="CUSTOM">Custom date and time</option>
+              </select>
+              <input
+                ref={deadlineRef}
+                name="registrationDeadlineLocal"
+                type="datetime-local"
+                required
+                defaultValue={deadlineValue}
+                className="mt-2 w-full rounded border p-2"
+                onChange={() => {
+                  deadlineTouched.current = true;
+                }}
+              />
+            </>
+          ) : (
+            <input
+              ref={deadlineRef}
+              name="registrationDeadlineLocal"
+              type="datetime-local"
+              required
+              defaultValue={deadlineValue}
+              className="mt-1 w-full rounded border p-2"
+              onChange={() => {
+                deadlineTouched.current = true;
+              }}
+            />
+          )}
           <span className="mt-1 block text-xs text-slate-600">
             {features.adminEventsV2
               ? "Closes registration in Venue-local time. For recurring series, this offset from start is applied to each occurrence."

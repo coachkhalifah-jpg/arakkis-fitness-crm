@@ -16,6 +16,7 @@ import {
 import { eventCardAsset } from "@/lib/config/admin-visual-assets";
 import { designAssetPublicUrl } from "@/lib/config/design-assets";
 import { ActionForm } from "@/components/admin/action-form";
+import { CreateEventFormShell } from "@/components/admin/create-event-form-shell";
 import { randomUUID } from "node:crypto";
 import { OrganizationVenueFields, EventTimingFields } from "@/components/admin/event-form-fields";
 import { RecurringScheduleFields } from "@/components/admin/recurring-schedule-fields";
@@ -227,25 +228,9 @@ export default async function EventsPage({
             ) : null}
           </div>
           {admin.role === "SYSTEM_ADMIN" && mode === "create" ? (
-            <ActionForm
-              action={createEvent}
-              focusFirstError
-              submitOptions={
-                features.adminEventsV2
-                  ? [
-                      { label: "Save as Draft", value: "draft" },
-                      { label: "Review & Publish", value: "publish" },
-                    ]
-                  : [
-                      { label: "Create Draft", value: "draft" },
-                      { label: "Publish Event", value: "publish" },
-                    ]
-              }
-              className="admin-create-event-form"
-            >
-              <input type="hidden" name="creationRequestId" value={randomUUID()} />
-              {features.adminEventsV2 ? (
-                <>
+            features.adminEventsV2 ? (
+              <CreateEventFormShell action={createEvent}>
+                <input type="hidden" name="creationRequestId" value={randomUUID()} />
                   <ProgressiveDisclosureSection
                     id="event-offering"
                     number="01"
@@ -442,9 +427,18 @@ export default async function EventsPage({
                       </span>
                     </label>
                   </ProgressiveDisclosureSection>
-                </>
-              ) : (
-                <>
+              </CreateEventFormShell>
+            ) : (
+            <ActionForm
+              action={createEvent}
+              focusFirstError
+              submitOptions={[
+                { label: "Create Draft", value: "draft" },
+                { label: "Publish Event", value: "publish" },
+              ]}
+              className="admin-create-event-form"
+            >
+              <input type="hidden" name="creationRequestId" value={randomUUID()} />
                   <ProgressiveDisclosureSection
                     id="event-basics"
                     number="01"
@@ -628,9 +622,8 @@ export default async function EventsPage({
                       </span>
                     </label>
                   </ProgressiveDisclosureSection>
-                </>
-              )}
             </ActionForm>
+            )
           ) : null}
           {mode === "list" ? (
             <AdminEventsDiscovery
