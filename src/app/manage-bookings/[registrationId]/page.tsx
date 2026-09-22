@@ -52,13 +52,23 @@ export default async function ManageBookingPage({
       registration_match: false,
       booking_result: "not_found",
     });
+    const confirmationHref = confirmationToken
+      ? `/registration/confirmation?token=${encodeURIComponent(confirmationToken)}&correlationId=${encodeURIComponent(correlationId)}`
+      : "/manage-bookings";
     return (
       <PublicErrorState
-        code="404"
-        title="Booking could not be found."
-        message="This booking may no longer be available or the link may be invalid."
-        actionLabel="Back to bookings"
-        actionHref="/manage-bookings"
+        variant="recovery"
+        eyebrow="Bookings"
+        title="This booking could not be opened."
+        message={
+          confirmationToken
+            ? "Return to your confirmation page and try View booking again, or save this device first so you can manage all your classes here."
+            : "This booking may no longer be available, or this device is not connected yet. Browse events or use a saved confirmation link."
+        }
+        actionLabel={confirmationToken ? "Back to confirmation" : "Browse events"}
+        actionHref={confirmationHref === "/manage-bookings" ? "/events" : confirmationHref}
+        secondaryActionLabel={confirmationToken ? "Browse events" : "Return home"}
+        secondaryActionHref={confirmationToken ? "/events" : "/"}
       />
     );
   }

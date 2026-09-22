@@ -220,9 +220,24 @@ async function executeRegistration(
     throw noReservedClassError(result.results);
   }
   confirmationToken = result.confirmation_token;
-  if (shouldRememberDevice)
-    await rememberParticipantFromConfirmation(confirmationToken, diagnosticCorrelationId);
-  else
+  if (shouldRememberDevice) {
+    const remembered = await rememberParticipantFromConfirmation(
+      confirmationToken,
+      diagnosticCorrelationId,
+    );
+    // Do not block confirmation on remember failure; the confirmation page still
+    // offers Save on this device. Log outcome for hosted diagnosis.
+    if (remembered && "error" in remembered && remembered.error) {
+      logHostedAccessDiagnostic({
+        correlation_id: diagnosticCorrelationId,
+        boundary: "registration_submission",
+        outcome_category: "rpc_failure",
+        device_rpc_status: "error",
+        cookie_set_attempted: true,
+        cookie_set_completed: false,
+      });
+    }
+  } else
     logHostedAccessDiagnostic({
       correlation_id: diagnosticCorrelationId,
       boundary: "registration_submission",
