@@ -18,23 +18,29 @@ export type ParticipantEventCard = {
   imageUrl?: string;
   focalPosition?: string;
   titleColor?: string;
+  /** When set, the participant already holds an active booking for this event. */
+  manageHref?: string | null;
 };
 
 function EventCard({ event }: { event: ParticipantEventCard }) {
-  const available = event.spots > 0 && event.availability === "OPEN";
-  const status = available
-    ? "Open"
-    : event.availability === "LEGALLY_BLOCKED"
-      ? "Booking paused"
-      : event.spots > 0
-        ? event.availability.toLowerCase().replaceAll("_", " ")
-        : "Full";
+  const booked = Boolean(event.manageHref);
+  const available = !booked && event.spots > 0 && event.availability === "OPEN";
+  const status = booked
+    ? "Booked"
+    : available
+      ? "Open"
+      : event.availability === "LEGALLY_BLOCKED"
+        ? "Booking paused"
+        : event.spots > 0
+          ? event.availability.toLowerCase().replaceAll("_", " ")
+          : "Full";
+  const href = booked ? (event.manageHref as string) : event.href;
 
   return (
     <Link
-      href={event.href}
-      className={`event-card-shell event-card-public-link participant-event-card ${available ? "is-available" : "is-unavailable"}`}
-      aria-label={`${event.name}, ${event.date.weekday} ${event.date.month} ${event.date.day}, ${event.time}, ${event.venueName ?? "Venue"}, ${status}`}
+      href={href}
+      className={`event-card-shell event-card-public-link participant-event-card ${booked ? "is-booked" : available ? "is-available" : "is-unavailable"}`}
+      aria-label={`${event.name}, ${event.date.weekday} ${event.date.month} ${event.date.day}, ${event.time}, ${event.venueName ?? "Venue"}, ${status}${booked ? ", manage booking" : ""}`}
     >
       <span
         className="event-card-media participant-event-card-hero"
@@ -48,7 +54,7 @@ function EventCard({ event }: { event: ParticipantEventCard }) {
         }
       >
         <span
-          className={`event-card-status participant-event-card-status ${available ? "is-open" : ""}`}
+          className={`event-card-status participant-event-card-status ${booked ? "is-booked" : available ? "is-open" : ""}`}
         >
           {status}
         </span>
@@ -68,6 +74,7 @@ function EventCard({ event }: { event: ParticipantEventCard }) {
             <span className="event-card-location">
               <strong>{event.venueName ?? "Venue"}</strong>
             </span>
+            {booked ? <span className="participant-event-card-manage">Manage booking</span> : null}
           </span>
         </span>
       </span>

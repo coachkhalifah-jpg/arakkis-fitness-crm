@@ -10,6 +10,7 @@ import { eventCardAsset } from "@/lib/config/admin-visual-assets";
 import { designAssetPublicUrl } from "@/lib/config/design-assets";
 import { participantDisplayName } from "@/lib/registration/display";
 import { resolveRememberedParticipant } from "@/lib/registration/device";
+import { getManagedBookings } from "@/lib/registration/booking-management";
 import type { CSSProperties } from "react";
 
 type PublicEvent = {
@@ -41,6 +42,15 @@ export default async function EventsPage() {
       .in("asset_type", ["PUBLIC_BACKGROUND_DESKTOP", "PUBLIC_BACKGROUND_MOBILE"]),
     resolveRememberedParticipant(),
   ]);
+  const managed = remembered ? await getManagedBookings() : null;
+  const activeBookingByEventId = new Map(
+    (managed?.bookings ?? [])
+      .filter(
+        (booking) =>
+          booking.registration_status === "REGISTERED" && booking.registration_outcome === "ACTIVE",
+      )
+      .map((booking) => [booking.event_id, booking.registration_id]),
+  );
   const events = (data ?? []) as PublicEvent[];
   const { data: eventImageAssets } = events.length
     ? await db
@@ -81,6 +91,7 @@ export default async function EventsPage() {
       minute: "2-digit",
       timeZone: event.timezone,
     }).format(new Date(event.starts_at));
+    const registrationId = activeBookingByEventId.get(event.id);
     return {
       id: event.id,
       name: participantDisplayName(event.name),
@@ -99,6 +110,7 @@ export default async function EventsPage() {
       imageUrl: eventImageById.get(event.id) ?? eventCardAsset(event.name),
       focalPosition: eventImageFocalById.get(event.id) ?? "center",
       titleColor: event.event_title_color,
+      manageHref: registrationId ? `/manage-bookings/${encodeURIComponent(registrationId)}` : null,
     };
   });
   // Server-rendered grouping intentionally uses the current instant.

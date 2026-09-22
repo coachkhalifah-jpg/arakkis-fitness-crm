@@ -367,4 +367,27 @@ export async function submitSlugRegistration(
   );
 }
 
+export type RememberDeviceConfirmationState = {
+  error?: string;
+};
+
+export async function rememberDeviceOnConfirmation(
+  _state: RememberDeviceConfirmationState,
+  form: FormData,
+): Promise<RememberDeviceConfirmationState> {
+  if (form.get("rememberDevice") !== "on") {
+    return {
+      error: "Check Remember this device to keep your classes available on this browser.",
+    };
+  }
+  const token = String(form.get("token") ?? "");
+  const correlationId = String(form.get("correlationId") || crypto.randomUUID());
+  if (!token) return { error: "This confirmation link is no longer available." };
+  const result = await rememberParticipantFromConfirmation(token, correlationId);
+  if (result?.error) return { error: result.error };
+  redirect(
+    `/registration/confirmation?token=${encodeURIComponent(token)}&correlationId=${encodeURIComponent(correlationId)}`,
+  );
+}
+
 export { normalizeName };
