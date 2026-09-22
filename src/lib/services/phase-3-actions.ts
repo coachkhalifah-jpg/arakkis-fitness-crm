@@ -35,11 +35,19 @@ import {
 import { cleanupStoragePaths } from "@/lib/services/storage-cleanup";
 import { normalizePublicSlug } from "@/lib/services/phase-7";
 import { getServerEnv } from "@/lib/config/env";
+import { features } from "@/lib/features";
+import {
+  deadlinePresetSchema,
+  formatCreateEventFieldErrors,
+  resolveDeadlineLocal,
+  type DeadlinePreset,
+} from "@/lib/schemas/event";
 
 export type Phase3ActionState = {
   error?: string;
   errorAction?: string;
   errorCode?: string;
+  fieldErrors?: Array<{ field?: string; message: string }>;
   success?: string;
   createdEventId?: string;
   createdName?: string;
@@ -536,6 +544,31 @@ export async function createEvent(
   let uploadedPaths: string[] = [];
   try {
     const admin = await requireSystemAdmin();
+    const submittedVisibility = value(form, "visibility");
+    if (features.adminEventsV2 && submittedVisibility === "AFFILIATION_RESTRICTED") {
+      return {
+        error:
+          "Affiliation-restricted Events cannot be created here. Configure eligibility in Manage Event.",
+        errorCode: "CE013_CREATE_RESTRICTED",
+        fieldErrors: [
+          {
+            field: "visibility",
+            message:
+              "Affiliation-restricted is not available on Create Event. Use Manage Event after creation.",
+          },
+        ],
+      };
+    }
+    let registrationDeadlineLocal = value(form, "registrationDeadlineLocal");
+    const deadlinePresetRaw = value(form, "deadlinePreset");
+    if (deadlinePresetRaw) {
+      const preset = deadlinePresetSchema.parse(deadlinePresetRaw) as DeadlinePreset;
+      registrationDeadlineLocal = resolveDeadlineLocal(
+        value(form, "startLocal"),
+        preset,
+        registrationDeadlineLocal || undefined,
+      );
+    }
     const input = eventSchema.parse({
       hostOrganizationId: value(form, "hostOrganizationId"),
       venueId: value(form, "venueId"),
@@ -545,9 +578,9 @@ export async function createEvent(
       participantInstructions: value(form, "participantInstructions"),
       startLocal: value(form, "startLocal"),
       endLocal: value(form, "endLocal"),
-      registrationDeadlineLocal: value(form, "registrationDeadlineLocal"),
+      registrationDeadlineLocal,
       capacity: value(form, "capacity"),
-      visibility: value(form, "visibility"),
+      visibility: submittedVisibility,
       accessMode: value(form, "accessMode") || "PUBLIC",
       communicationUrl: value(form, "communicationUrl"),
       communicationLabel: value(form, "communicationLabel"),
@@ -755,9 +788,13 @@ export async function createEvent(
       await removeEventImagePaths(uploadedPaths, requestId, "unexpected-event-create-failure");
     }
     if (error instanceof z.ZodError) {
+      const fieldErrors = formatCreateEventFieldErrors(error);
       const issue = error.issues[0];
       const field = issue?.path.length ? `${issue.path.join(".")}: ` : "";
-      return { error: `${field}${issue?.message ?? "Check the event details."}` };
+      return {
+        error: `${field}${issue?.message ?? "Check the event details."}`,
+        fieldErrors,
+      };
     }
     console.error("[event-create] request failed", error);
     return { error: message(error) };

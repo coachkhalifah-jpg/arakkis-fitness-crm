@@ -8,8 +8,9 @@ import {
   hasSupabaseAuthTokenCookie,
   passwordResetRedirectTo,
   publicAppOrigin,
+  supabaseAuthCookieOptions,
 } from "@/lib/auth/session-cookies";
-import { getServerEnv } from "@/lib/config/env";
+import { getPublicEnv, getServerEnv } from "@/lib/config/env";
 
 export type AuthActionState = { error?: string; success?: string };
 const GENERIC_AUTH_ERROR = "Sign-in failed. Check your email and password and try again.";
@@ -96,9 +97,15 @@ export async function signOut() {
   // Remove every locally persisted auth-token chunk as well so Back/refresh
   // cannot reuse stale authentication state.
   const cookieStore = await cookies();
+  const cookieOptions = supabaseAuthCookieOptions(getPublicEnv().NEXT_PUBLIC_APP_URL);
   for (const cookie of cookieStore.getAll()) {
     if (cookie.name.startsWith("sb-") && cookie.name.includes("-auth-token")) {
-      cookieStore.delete(cookie.name);
+      cookieStore.delete({
+        name: cookie.name,
+        path: cookieOptions.path,
+        sameSite: cookieOptions.sameSite,
+        secure: cookieOptions.secure,
+      });
     }
   }
   redirect("/");

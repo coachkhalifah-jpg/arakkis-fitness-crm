@@ -16,6 +16,7 @@ import {
 import { eventCardAsset } from "@/lib/config/admin-visual-assets";
 import { designAssetPublicUrl } from "@/lib/config/design-assets";
 import { ActionForm } from "@/components/admin/action-form";
+import { CreateEventFormShell } from "@/components/admin/create-event-form-shell";
 import { randomUUID } from "node:crypto";
 import { OrganizationVenueFields, EventTimingFields } from "@/components/admin/event-form-fields";
 import { RecurringScheduleFields } from "@/components/admin/recurring-schedule-fields";
@@ -24,6 +25,7 @@ import { getAdminWorkspaceMenuItems } from "@/components/admin/admin-workspace-m
 import { ProgressiveDisclosureSection } from "@/components/admin/progressive-disclosure-section";
 import { CalendarUtility } from "@/components/admin/calendar-utility";
 import { getAuthorizedCalendarEvents } from "@/lib/services/admin-calendar";
+import { features } from "@/lib/features";
 
 export default async function EventsPage({
   searchParams,
@@ -226,6 +228,207 @@ export default async function EventsPage({
             ) : null}
           </div>
           {admin.role === "SYSTEM_ADMIN" && mode === "create" ? (
+            features.adminEventsV2 ? (
+              <CreateEventFormShell action={createEvent}>
+                <input type="hidden" name="creationRequestId" value={randomUUID()} />
+                  <ProgressiveDisclosureSection
+                    id="event-offering"
+                    number="01"
+                    title="Offering"
+                    defaultOpen
+                    errorKeywords={["name"]}
+                  >
+                    <label>
+                      Event name
+                      <input name="name" required className="mt-1 w-full rounded border p-2" />
+                    </label>
+                  </ProgressiveDisclosureSection>
+                  <ProgressiveDisclosureSection
+                    id="event-host"
+                    number="02"
+                    title="Organization and Venue"
+                    defaultOpen
+                    errorKeywords={["organization", "venue"]}
+                  >
+                    <OrganizationVenueFields
+                      organizations={organizations ?? []}
+                      venues={venues ?? []}
+                    />
+                  </ProgressiveDisclosureSection>
+                  <ProgressiveDisclosureSection
+                    id="event-schedule"
+                    number="03"
+                    title="Schedule"
+                    defaultOpen
+                    errorKeywords={["time", "deadline", "timezone", "start", "end"]}
+                  >
+                    <EventTimingFields
+                      venueTimezones={Object.fromEntries(
+                        (venues ?? []).map((venue) => [venue.id, venue.timezone]),
+                      )}
+                    />
+                    <p className="admin-create-guidance">
+                      Times are entered in the selected Venue’s local timezone. Registration deadline
+                      behavior is shown with the schedule fields.
+                    </p>
+                  </ProgressiveDisclosureSection>
+                  <ProgressiveDisclosureSection
+                    id="event-repeat"
+                    number="04"
+                    title="Series"
+                    autoOpenOnField="recurring"
+                    errorKeywords={["recurr", "weekly"]}
+                  >
+                    <label className="admin-create-checkbox-label">
+                      <input name="recurring" type="checkbox" className="h-5 w-5 accent-brand" />
+                      <span>Make this a recurring series</span>
+                    </label>
+                    <label>
+                      Frequency
+                      <select
+                        name="recurrenceFrequency"
+                        defaultValue="WEEKLY"
+                        className="mt-1 w-full rounded border bg-white p-2"
+                        disabled
+                      >
+                        <option value="WEEKLY">Every week</option>
+                      </select>
+                    </label>
+                    <label>
+                      End date
+                      <input
+                        name="recurrenceEndsOn"
+                        type="date"
+                        className="mt-1 w-full rounded border bg-white p-2"
+                        aria-describedby="recurrence-help"
+                      />
+                    </label>
+                    <RecurringScheduleFields />
+                    <p id="recurrence-help" className="admin-create-guidance">
+                      Dates Arakkis will create run through this end date (up to 104). The series
+                      link only opens participant selection for the next 14 days — that window is
+                      not the total number of dates created.
+                    </p>
+                  </ProgressiveDisclosureSection>
+                  <ProgressiveDisclosureSection
+                    id="event-registration"
+                    number="05"
+                    title="Registration"
+                    errorKeywords={["capacity", "access", "visibility", "invite", "public"]}
+                  >
+                    <label>
+                      Capacity per class
+                      <input
+                        name="capacity"
+                        type="number"
+                        min="1"
+                        required
+                        defaultValue="20"
+                        className="mt-1 w-full rounded border p-2"
+                        aria-describedby="capacity-help"
+                      />
+                      <span id="capacity-help" className="admin-create-guidance">
+                        Applies to each one-time Event or each generated series occurrence. Default
+                        is 20 — change it if this class needs a different ceiling.
+                      </span>
+                    </label>
+                    <input type="hidden" name="visibility" value="PUBLIC" />
+                    <label>
+                      Who can access this Event?
+                      <select
+                        name="accessMode"
+                        defaultValue="PUBLIC"
+                        className="mt-1 w-full rounded border p-2"
+                        aria-describedby="access-help"
+                      >
+                        <option value="PUBLIC">
+                          Public listing — discoverable on the public Events page
+                        </option>
+                        <option value="UNLISTED">
+                          Unlisted — reachable with the direct link only
+                        </option>
+                        <option value="INVITE_ONLY">
+                          Invite-only — a valid invitation link is required (not for recurring)
+                        </option>
+                      </select>
+                      <span id="access-help" className="admin-create-guidance">
+                        Create Event publishes publicly discoverable or link/invite gated Events.
+                        Affiliation-restricted Events are configured later in Manage Event after
+                        eligible Organizations are set.
+                      </span>
+                    </label>
+                  </ProgressiveDisclosureSection>
+                  <ProgressiveDisclosureSection
+                    id="event-participant-info"
+                    number="06"
+                    title="Participant information (optional)"
+                    errorKeywords={["description", "bring", "arrival", "participant"]}
+                  >
+                    <label>
+                      Description
+                      <textarea
+                        name="description"
+                        className="mt-1 min-h-20 w-full rounded border p-2"
+                      />
+                    </label>
+                    <label>
+                      What to bring and arrival notes
+                      <textarea
+                        name="participantInstructions"
+                        className="mt-1 min-h-20 w-full rounded border p-2"
+                        aria-describedby="participant-instructions-help"
+                      />
+                      <span id="participant-instructions-help" className="admin-create-guidance">
+                        Optional now — you can finish these in Manage Event. Use one plain-text item
+                        per line when provided.
+                      </span>
+                    </label>
+                  </ProgressiveDisclosureSection>
+                  <ProgressiveDisclosureSection
+                    id="event-communications"
+                    number="07"
+                    title="Communications (optional)"
+                    errorKeywords={["communication", "https"]}
+                  >
+                    <label>
+                      Communication link
+                      <input
+                        name="communicationUrl"
+                        type="url"
+                        placeholder="https://chat.whatsapp.com/..."
+                        className="mt-1 w-full rounded border p-2"
+                      />
+                    </label>
+                    <label>
+                      Link label
+                      <input
+                        name="communicationLabel"
+                        placeholder="Join the WhatsApp Group"
+                        className="mt-1 w-full rounded border p-2"
+                      />
+                    </label>
+                  </ProgressiveDisclosureSection>
+                  <ProgressiveDisclosureSection
+                    id="event-image"
+                    number="08"
+                    title="Event image (optional)"
+                    errorKeywords={["image", "jpeg", "png", "webp", "svg", "5 mib"]}
+                  >
+                    <label>
+                      Event card image
+                      <input
+                        name="eventImage"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                        className="mt-1 block w-full rounded border border-dashed p-3"
+                      />
+                      <span className="admin-create-guidance">
+                        Optional. JPEG, PNG, WebP, or SVG up to 5 MiB.
+                      </span>
+                    </label>
+                  </ProgressiveDisclosureSection>
+              </CreateEventFormShell>
+            ) : (
             <ActionForm
               action={createEvent}
               focusFirstError
@@ -236,190 +439,191 @@ export default async function EventsPage({
               className="admin-create-event-form"
             >
               <input type="hidden" name="creationRequestId" value={randomUUID()} />
-              <ProgressiveDisclosureSection
-                id="event-basics"
-                number="01"
-                title="Event basics"
-                defaultOpen
-                errorKeywords={["organization", "venue", "capacity", "name"]}
-              >
-                <label>
-                  Name
-                  <input name="name" required className="mt-1 w-full rounded border p-2" />
-                </label>
-                <OrganizationVenueFields
-                  organizations={organizations ?? []}
-                  venues={venues ?? []}
-                />
-                <label>
-                  Capacity
-                  <input
-                    name="capacity"
-                    type="number"
-                    min="1"
-                    required
-                    defaultValue="20"
-                    className="mt-1 w-full rounded border p-2"
-                  />
-                </label>
-              </ProgressiveDisclosureSection>
-              <ProgressiveDisclosureSection
-                id="event-schedule"
-                number="02"
-                title="Schedule"
-                defaultOpen
-                errorKeywords={["time", "deadline", "timezone", "start", "end"]}
-              >
-                <EventTimingFields
-                  venueTimezones={Object.fromEntries(
-                    (venues ?? []).map((venue) => [venue.id, venue.timezone]),
-                  )}
-                />
-                <p className="admin-create-guidance">
-                  Times are entered in the selected venue’s local timezone. Registration closes at
-                  or before the event start.
-                </p>
-              </ProgressiveDisclosureSection>
-              <ProgressiveDisclosureSection
-                id="event-repeat"
-                number="03"
-                title="Series"
-                autoOpenOnField="recurring"
-                errorKeywords={["recurr", "weekly"]}
-              >
-                <label className="admin-create-checkbox-label">
-                  <input name="recurring" type="checkbox" className="h-5 w-5 accent-brand" />
-                  <span>Make this event recurring</span>
-                </label>
-                <label>
-                  Frequency
-                  <select
-                    name="recurrenceFrequency"
-                    defaultValue="WEEKLY"
-                    className="mt-1 w-full rounded border bg-white p-2"
-                    disabled
+                  <ProgressiveDisclosureSection
+                    id="event-basics"
+                    number="01"
+                    title="Event basics"
+                    defaultOpen
+                    errorKeywords={["organization", "venue", "capacity", "name"]}
                   >
-                    <option value="WEEKLY">Every week</option>
-                  </select>
-                </label>
-                <label>
-                  End date
-                  <input
-                    name="recurrenceEndsOn"
-                    type="date"
-                    className="mt-1 w-full rounded border bg-white p-2"
-                    aria-describedby="recurrence-help"
-                  />
-                </label>
-                <RecurringScheduleFields />
-                <p id="recurrence-help" className="admin-create-guidance">
-                  Weekly dates are created through this end date. Participants can select dates only
-                  within the next 14 days from the series link.
-                </p>
-              </ProgressiveDisclosureSection>
-              <ProgressiveDisclosureSection
-                id="event-access"
-                number="04"
-                title="Visibility and access"
-                errorKeywords={["access", "visibility", "invite", "public"]}
-              >
-                <label>
-                  Visibility
-                  <select name="visibility" className="mt-1 w-full rounded border p-2">
-                    <option value="PUBLIC">Public</option>
-                    <option value="AFFILIATION_RESTRICTED">Affiliation restricted</option>
-                  </select>
-                </label>
-                <label>
-                  Who can access this Event?
-                  <select
-                    name="accessMode"
-                    defaultValue="PUBLIC"
-                    className="mt-1 w-full rounded border p-2"
+                    <label>
+                      Name
+                      <input name="name" required className="mt-1 w-full rounded border p-2" />
+                    </label>
+                    <OrganizationVenueFields
+                      organizations={organizations ?? []}
+                      venues={venues ?? []}
+                    />
+                    <label>
+                      Capacity
+                      <input
+                        name="capacity"
+                        type="number"
+                        min="1"
+                        required
+                        defaultValue="20"
+                        className="mt-1 w-full rounded border p-2"
+                      />
+                    </label>
+                  </ProgressiveDisclosureSection>
+                  <ProgressiveDisclosureSection
+                    id="event-schedule"
+                    number="02"
+                    title="Schedule"
+                    defaultOpen
+                    errorKeywords={["time", "deadline", "timezone", "start", "end"]}
                   >
-                    <option value="PUBLIC">Public — visible on the public Events page</option>
-                    <option value="UNLISTED">Unlisted — anyone with the direct link</option>
-                    <option value="INVITE_ONLY">
-                      Invite-only — a valid invitation link is required
-                    </option>
-                  </select>
-                </label>
-                <p className="admin-create-guidance">
-                  Visibility controls who sees the Event. Access mode controls whether a public
-                  listing, direct link, or invitation is required.
-                </p>
-              </ProgressiveDisclosureSection>
-              <ProgressiveDisclosureSection
-                id="event-participant-info"
-                number="05"
-                title="Participant information"
-                errorKeywords={["description", "bring", "arrival", "participant"]}
-              >
-                <label>
-                  Description
-                  <textarea
-                    name="description"
-                    className="mt-1 min-h-20 w-full rounded border p-2"
-                  />
-                </label>
-                <label>
-                  What to bring and arrival notes
-                  <textarea
-                    name="participantInstructions"
-                    className="mt-1 min-h-20 w-full rounded border p-2"
-                    aria-describedby="participant-instructions-help"
-                  />
-                  <span id="participant-instructions-help" className="admin-create-guidance">
-                    Use one plain-text item per line. These notes appear on the public event and
-                    booking confirmation.
-                  </span>
-                </label>
-              </ProgressiveDisclosureSection>
-              <ProgressiveDisclosureSection
-                id="event-communications"
-                number="06"
-                title="Communications"
-                errorKeywords={["communication", "https"]}
-              >
-                <label>
-                  Communication link
-                  <input
-                    name="communicationUrl"
-                    type="url"
-                    placeholder="https://chat.whatsapp.com/..."
-                    className="mt-1 w-full rounded border p-2"
-                  />
-                </label>
-                <label>
-                  Link label
-                  <input
-                    name="communicationLabel"
-                    placeholder="Join the WhatsApp Group"
-                    className="mt-1 w-full rounded border p-2"
-                  />
-                </label>
-              </ProgressiveDisclosureSection>
-              <ProgressiveDisclosureSection
-                id="event-image"
-                number="07"
-                title="Event image"
-                errorKeywords={["image", "jpeg", "png", "webp", "svg", "5 mib"]}
-              >
-                <label>
-                  Event card image
-                  <input
-                    name="eventImage"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/svg+xml"
-                    className="mt-1 block w-full rounded border border-dashed p-3"
-                  />
-                  <span className="admin-create-guidance">
-                    JPEG, PNG, WebP, or SVG up to 5 MiB. The existing preview and validation rules
-                    apply.
-                  </span>
-                </label>
-              </ProgressiveDisclosureSection>
+                    <EventTimingFields
+                      venueTimezones={Object.fromEntries(
+                        (venues ?? []).map((venue) => [venue.id, venue.timezone]),
+                      )}
+                    />
+                    <p className="admin-create-guidance">
+                      Times are entered in the selected venue’s local timezone. Registration closes
+                      at or before the event start.
+                    </p>
+                  </ProgressiveDisclosureSection>
+                  <ProgressiveDisclosureSection
+                    id="event-repeat"
+                    number="03"
+                    title="Series"
+                    autoOpenOnField="recurring"
+                    errorKeywords={["recurr", "weekly"]}
+                  >
+                    <label className="admin-create-checkbox-label">
+                      <input name="recurring" type="checkbox" className="h-5 w-5 accent-brand" />
+                      <span>Make this event recurring</span>
+                    </label>
+                    <label>
+                      Frequency
+                      <select
+                        name="recurrenceFrequency"
+                        defaultValue="WEEKLY"
+                        className="mt-1 w-full rounded border bg-white p-2"
+                        disabled
+                      >
+                        <option value="WEEKLY">Every week</option>
+                      </select>
+                    </label>
+                    <label>
+                      End date
+                      <input
+                        name="recurrenceEndsOn"
+                        type="date"
+                        className="mt-1 w-full rounded border bg-white p-2"
+                        aria-describedby="recurrence-help"
+                      />
+                    </label>
+                    <RecurringScheduleFields />
+                    <p id="recurrence-help" className="admin-create-guidance">
+                      Weekly dates are created through this end date. Participants can select dates
+                      only within the next 14 days from the series link.
+                    </p>
+                  </ProgressiveDisclosureSection>
+                  <ProgressiveDisclosureSection
+                    id="event-access"
+                    number="04"
+                    title="Visibility and access"
+                    errorKeywords={["access", "visibility", "invite", "public"]}
+                  >
+                    <label>
+                      Visibility
+                      <select name="visibility" className="mt-1 w-full rounded border p-2">
+                        <option value="PUBLIC">Public</option>
+                        <option value="AFFILIATION_RESTRICTED">Affiliation restricted</option>
+                      </select>
+                    </label>
+                    <label>
+                      Who can access this Event?
+                      <select
+                        name="accessMode"
+                        defaultValue="PUBLIC"
+                        className="mt-1 w-full rounded border p-2"
+                      >
+                        <option value="PUBLIC">Public — visible on the public Events page</option>
+                        <option value="UNLISTED">Unlisted — anyone with the direct link</option>
+                        <option value="INVITE_ONLY">
+                          Invite-only — a valid invitation link is required
+                        </option>
+                      </select>
+                    </label>
+                    <p className="admin-create-guidance">
+                      Visibility controls who sees the Event. Access mode controls whether a public
+                      listing, direct link, or invitation is required.
+                    </p>
+                  </ProgressiveDisclosureSection>
+                  <ProgressiveDisclosureSection
+                    id="event-participant-info"
+                    number="05"
+                    title="Participant information"
+                    errorKeywords={["description", "bring", "arrival", "participant"]}
+                  >
+                    <label>
+                      Description
+                      <textarea
+                        name="description"
+                        className="mt-1 min-h-20 w-full rounded border p-2"
+                      />
+                    </label>
+                    <label>
+                      What to bring and arrival notes
+                      <textarea
+                        name="participantInstructions"
+                        className="mt-1 min-h-20 w-full rounded border p-2"
+                        aria-describedby="participant-instructions-help"
+                      />
+                      <span id="participant-instructions-help" className="admin-create-guidance">
+                        Use one plain-text item per line. These notes appear on the public event and
+                        booking confirmation.
+                      </span>
+                    </label>
+                  </ProgressiveDisclosureSection>
+                  <ProgressiveDisclosureSection
+                    id="event-communications"
+                    number="06"
+                    title="Communications"
+                    errorKeywords={["communication", "https"]}
+                  >
+                    <label>
+                      Communication link
+                      <input
+                        name="communicationUrl"
+                        type="url"
+                        placeholder="https://chat.whatsapp.com/..."
+                        className="mt-1 w-full rounded border p-2"
+                      />
+                    </label>
+                    <label>
+                      Link label
+                      <input
+                        name="communicationLabel"
+                        placeholder="Join the WhatsApp Group"
+                        className="mt-1 w-full rounded border p-2"
+                      />
+                    </label>
+                  </ProgressiveDisclosureSection>
+                  <ProgressiveDisclosureSection
+                    id="event-image"
+                    number="07"
+                    title="Event image"
+                    errorKeywords={["image", "jpeg", "png", "webp", "svg", "5 mib"]}
+                  >
+                    <label>
+                      Event card image
+                      <input
+                        name="eventImage"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                        className="mt-1 block w-full rounded border border-dashed p-3"
+                      />
+                      <span className="admin-create-guidance">
+                        JPEG, PNG, WebP, or SVG up to 5 MiB. The existing preview and validation
+                        rules apply.
+                      </span>
+                    </label>
+                  </ProgressiveDisclosureSection>
             </ActionForm>
+            )
           ) : null}
           {mode === "list" ? (
             <AdminEventsDiscovery

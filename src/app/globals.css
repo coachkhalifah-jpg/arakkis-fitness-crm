@@ -7481,6 +7481,30 @@ body:has(.admin-manage-event-page) {
   color: var(--ink-soft);
   opacity: 0.7;
 }
+.ops-auth-password-field {
+  position: relative;
+  display: block;
+}
+.ops-auth-password-field input {
+  padding-right: 4.5rem;
+}
+.ops-auth-password-toggle {
+  position: absolute;
+  right: 0;
+  bottom: 0.55rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.ops-auth-password-toggle:hover,
+.ops-auth-password-toggle[aria-pressed="true"] {
+  color: var(--energy);
+}
 .ops-auth-error {
   padding: 0.8rem;
   border: 1px solid var(--danger);

@@ -1,6 +1,8 @@
 "use client";
 
 import { forwardRef, useEffect, useRef, useState, type SelectHTMLAttributes } from "react";
+import { features } from "@/lib/features";
+import { resolveDeadlineLocal, type DeadlinePreset } from "@/lib/schemas/event";
 
 type Organization = { id: string; name: string };
 export type Venue = { id: string; name: string; organization_id: string | null; timezone: string };
@@ -19,6 +21,7 @@ export function OrganizationVenueFields({
   const [selectedOrganization, setSelectedOrganization] = useState(organizationId);
   const venueRef = useRef<HTMLSelectElement>(null);
   const organization = organizations.find((item) => item.id === selectedOrganization);
+  const v2 = features.adminEventsV2;
 
   return (
     <>
@@ -29,6 +32,7 @@ export function OrganizationVenueFields({
           required
           defaultValue={organizationId}
           className="mt-1 w-full rounded border p-2"
+          aria-describedby={v2 ? "host-organization-help" : undefined}
           onChange={(event) => {
             const next = event.currentTarget.value;
             setSelectedOrganization(next);
@@ -51,6 +55,12 @@ export function OrganizationVenueFields({
             </option>
           ))}
         </select>
+        {v2 ? (
+          <span id="host-organization-help" className="admin-create-guidance">
+            Organization is the host/owner of this Event. Changing Organization clears a Venue that
+            no longer belongs to that host.
+          </span>
+        ) : null}
       </label>
       <label>
         Venue
@@ -63,7 +73,14 @@ export function OrganizationVenueFields({
           organizationId={selectedOrganization}
           organizationName={organization?.name}
           venues={venues}
+          aria-describedby={v2 ? "venue-help" : undefined}
         />
+        {v2 ? (
+          <span id="venue-help" className="admin-create-guidance">
+            Venue is where the Event happens and sets the timezone. Public Venues are reusable
+            locations not owned by the selected Organization.
+          </span>
+        ) : null}
         {selectedOrganization &&
         !venues.some(
           (venue) =>
@@ -318,19 +335,54 @@ export function EventTimingFields({
       <div className="admin-schedule-deadline">
         <label>
           Registration deadline
-          <input
-            ref={deadlineRef}
-            name="registrationDeadlineLocal"
-            type="datetime-local"
-            required
-            defaultValue={deadlineValue}
-            className="mt-1 w-full rounded border p-2"
-            onChange={() => {
-              deadlineTouched.current = true;
-            }}
-          />
+          {features.adminEventsV2 ? (
+            <>
+              <select
+                name="deadlinePreset"
+                className="mt-1 w-full rounded border p-2"
+                defaultValue="AT_START"
+                onChange={(event) => {
+                  const preset = event.currentTarget.value as DeadlinePreset;
+                  deadlineTouched.current = preset === "CUSTOM";
+                  if (preset === "CUSTOM" || !deadlineRef.current || !start) return;
+                  deadlineRef.current.value = resolveDeadlineLocal(start, preset);
+                }}
+              >
+                <option value="AT_START">At class start</option>
+                <option value="MINUTES_30">30 minutes before</option>
+                <option value="HOURS_1">1 hour before</option>
+                <option value="HOURS_2">2 hours before</option>
+                <option value="CUSTOM">Custom date and time</option>
+              </select>
+              <input
+                ref={deadlineRef}
+                name="registrationDeadlineLocal"
+                type="datetime-local"
+                required
+                defaultValue={deadlineValue}
+                className="mt-2 w-full rounded border p-2"
+                onChange={() => {
+                  deadlineTouched.current = true;
+                }}
+              />
+            </>
+          ) : (
+            <input
+              ref={deadlineRef}
+              name="registrationDeadlineLocal"
+              type="datetime-local"
+              required
+              defaultValue={deadlineValue}
+              className="mt-1 w-full rounded border p-2"
+              onChange={() => {
+                deadlineTouched.current = true;
+              }}
+            />
+          )}
           <span className="mt-1 block text-xs text-slate-600">
-            Availability closes at this local time. Defaults to the Event start until you change it.
+            {features.adminEventsV2
+              ? "Closes registration in Venue-local time. For recurring series, this offset from start is applied to each occurrence."
+              : "Availability closes at this local time. Defaults to the Event start until you change it."}
           </span>
         </label>
       </div>
@@ -338,8 +390,9 @@ export function EventTimingFields({
         <span className="admin-schedule-timezone-label">Venue timezone</span>
         <strong>{timezone || "Select a Venue to see its timezone"}</strong>
         <span>
-          Participants see the Event in Venue-local time. Daylight-saving validation is applied when
-          the Event is created.
+          {features.adminEventsV2
+            ? "Timezone comes from the Venue and cannot be edited here. Changing Venue recalculates the actual UTC instant, DST rules, recurrence, and deadline from the same local clock values."
+            : "Participants see the Event in Venue-local time. Daylight-saving validation is applied when the Event is created."}
         </span>
       </div>
       <div className="admin-schedule-summary" aria-live="polite">

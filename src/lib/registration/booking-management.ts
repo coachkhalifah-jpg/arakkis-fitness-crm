@@ -1,9 +1,14 @@
 import "server-only";
 
 import { cookies } from "next/headers";
+import { createClient } from "@/lib/db/server";
 import { createPrivilegedClient } from "@/lib/db/privileged";
 import { rememberedDeviceCookie } from "@/lib/registration/device";
 import { logHostedAccessDiagnostic } from "@/lib/diagnostics/hosted-access";
+import {
+  managedBookingFromConfirmationEvent,
+  type ConfirmationBookingEvent,
+} from "@/lib/registration/confirmation-booking";
 
 export type ManagedBooking = {
   registration_id: string;
@@ -128,6 +133,25 @@ export async function getConfirmationToken(registrationId: string) {
   return (data as { token?: string }).token ?? null;
 }
 
+async function bookingFromConfirmationFallback(
+  registrationId: string,
+  confirmationToken: string,
+): Promise<ManagedBooking | null> {
+  // Use the same anon-executable confirmation RPC that already rendered the
+  // confirmation page. This recovers View booking when the service-role scoped
+  // booking RPC is missing, ungranted, or otherwise unavailable on hosted.
+  const db = await createClient();
+  const { data, error } = await db.rpc("get_registration_confirmation", {
+    p_token: confirmationToken,
+  } as never);
+  if (error || !data) return null;
+  const events = ((data as { events?: ConfirmationBookingEvent[] }).events ?? []).filter(
+    (event) => event.success && event.registration_id === registrationId,
+  );
+  const match = events[0];
+  return match ? managedBookingFromConfirmationEvent(match) : null;
+}
+
 export async function getScopedBooking(
   registrationId: string,
   confirmationToken: string,
@@ -154,26 +178,39 @@ export async function getScopedBooking(
     p_confirmation_token: confirmationToken,
     p_registration_id: registrationId,
   } as never);
-  const bookingRpcStatus = error
-    ? /expired/i.test(error.message)
-      ? "expired"
-      : /token|invalid/i.test(error.message)
-        ? "invalid"
-        : /scope|registration/i.test(error.message)
-          ? "scope_mismatch"
-          : "error"
-    : data
-      ? "success"
+  if (!error && data) {
+    logHostedAccessDiagnostic({
+      correlation_id: correlationId,
+      boundary: "booking_management",
+      outcome_category: "success",
+      booking_rpc_status: "success",
+      registration_match: true,
+      booking_result: "resolved",
+    });
+    return data as ManagedBooking;
+  }
+
+  const fallback = await bookingFromConfirmationFallback(registrationId, confirmationToken);
+  const bookingRpcStatus = fallback
+    ? "success"
+    : error
+      ? /expired/i.test(error.message)
+        ? "expired"
+        : /token|invalid/i.test(error.message)
+          ? "invalid"
+          : /scope|registration/i.test(error.message)
+            ? "scope_mismatch"
+            : "error"
       : "not_found";
   logHostedAccessDiagnostic({
     correlation_id: correlationId,
     boundary: "booking_management",
-    outcome_category: error ? "rpc_failure" : data ? "success" : "data_state_failure",
+    outcome_category: fallback ? "success" : error ? "rpc_failure" : "data_state_failure",
     booking_rpc_status: bookingRpcStatus,
-    registration_match: Boolean(data),
-    booking_result: data ? "resolved" : error ? "error" : "not_found",
+    registration_match: Boolean(fallback),
+    booking_result: fallback ? "resolved" : error ? "error" : "not_found",
   });
-  return error || !data ? null : (data as ManagedBooking);
+  return fallback;
 }
 
 export async function getConfirmationParticipantId(
