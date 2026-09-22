@@ -2,7 +2,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { safeRecoveryRedirect } from "@/lib/auth/redirects";
-import { applySessionCookies, publicAppOrigin } from "@/lib/auth/session-cookies";
+import {
+  applySessionCacheHeaders,
+  applySessionCookies,
+  publicAppOrigin,
+  supabaseAuthCookieOptions,
+} from "@/lib/auth/session-cookies";
 import { getPublicEnv, getServerEnv } from "@/lib/config/env";
 
 /**
@@ -29,15 +34,17 @@ export async function GET(request: NextRequest) {
     publicEnv.NEXT_PUBLIC_SUPABASE_URL,
     publicEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
+      cookieOptions: supabaseAuthCookieOptions(publicEnv.NEXT_PUBLIC_APP_URL),
       cookies: {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet, headers) {
           cookiesToSet.forEach(({ name, value, options }) => {
             cookieStore.set(name, value, options);
           });
           applySessionCookies(redirectResponse, cookiesToSet);
+          applySessionCacheHeaders(redirectResponse, headers);
         },
       },
     },
