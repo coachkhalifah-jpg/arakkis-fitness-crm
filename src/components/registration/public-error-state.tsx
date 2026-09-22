@@ -8,7 +8,7 @@ type PublicErrorStateProps = {
   actionHref?: string;
   secondaryActionLabel?: string;
   secondaryActionHref?: string;
-  /** Calm recovery surfaces avoid HTTP-style dials (404 / EXPIRED / NO LINK). */
+  /** Calm recovery keeps the dial layout/animation without HTTP-style codes. */
   variant?: "error" | "recovery";
   eyebrow?: string;
 };
@@ -25,25 +25,22 @@ export function PublicErrorState({
   eyebrow,
 }: PublicErrorStateProps) {
   const recovery = variant === "recovery";
+  const dialLabel = recovery ? (eyebrow ?? "Arakkis") : code;
   return (
     <main
       className={`public-error-page${recovery ? " public-error-page-recovery" : ""}`}
       aria-labelledby="public-error-title"
     >
       <div className="public-error-content">
-        {recovery ? (
-          <p className="public-error-eyebrow">{eyebrow ?? "Arakkis"}</p>
-        ) : (
-          <div className="public-error-status">
-            {code === "404" ? (
-              <>
-                40<span className="public-error-status-dial">4</span>
-              </>
-            ) : (
-              <span className="public-error-status-dial">{code}</span>
-            )}
-          </div>
-        )}
+        <div className="public-error-status">
+          {!recovery && code === "404" ? (
+            <>
+              40<span className="public-error-status-dial">4</span>
+            </>
+          ) : (
+            <span className="public-error-status-dial">{dialLabel}</span>
+          )}
+        </div>
         <div className="public-error-divider" aria-hidden="true" />
         <div className="public-error-copy">
           <h1 id="public-error-title">{title}</h1>
