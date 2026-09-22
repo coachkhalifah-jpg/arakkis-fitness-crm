@@ -18,6 +18,12 @@ import {
   participantInputSchema,
 } from "@/lib/registration/normalization";
 import { logHostedAccessDiagnostic } from "@/lib/diagnostics/hosted-access";
+import {
+  actionErrorFromRegistrationFailure,
+  noReservedClassError,
+  successfulRegistrationResults,
+  type RegistrationResultItem,
+} from "@/lib/registration/result-outcomes";
 
 export type RegistrationField =
   | "selectedOccurrenceStartsAt"
@@ -190,7 +196,10 @@ async function executeRegistration(
     });
     throw new Error("registration unavailable");
   }
-  const result = data as { confirmation_token?: string };
+  const result = data as {
+    confirmation_token?: string;
+    results?: RegistrationResultItem[];
+  };
   if (!result.confirmation_token) {
     logHostedAccessDiagnostic({
       correlation_id: diagnosticCorrelationId,
@@ -198,6 +207,17 @@ async function executeRegistration(
       outcome_category: "data_state_failure",
     });
     throw new Error("submission already received");
+  }
+  // Confirmation bearer access requires at least one successful reservation
+  // (migration 0016). Keep the participant on the form with a calm recovery
+  // message instead of redirecting to an unavailable confirmation page.
+  if (!successfulRegistrationResults(result.results).length) {
+    logHostedAccessDiagnostic({
+      correlation_id: diagnosticCorrelationId,
+      boundary: "registration_submission",
+      outcome_category: "data_state_failure",
+    });
+    throw noReservedClassError(result.results);
   }
   confirmationToken = result.confirmation_token;
   if (shouldRememberDevice)
@@ -233,6 +253,8 @@ export async function submitRegistration(
       return phoneValidationState(form);
     if (error instanceof Error && error.message === "invalid email")
       return emailValidationState(form);
+    const outcomeError = actionErrorFromRegistrationFailure(error);
+    if (outcomeError) return preserveSubmittedState(form, { error: outcomeError });
     return { error: "The registration could not be completed. Please try again." };
   }
   redirect(
@@ -334,12 +356,37 @@ export async function submitSlugRegistration(
       return phoneValidationState(form);
     if (error instanceof Error && error.message === "invalid email")
       return emailValidationState(form);
+    const outcomeError = actionErrorFromRegistrationFailure(error);
+    if (outcomeError) return preserveSubmittedState(form, { error: outcomeError });
     return { error: "This event is unavailable or registration could not be completed." };
   }
   redirect(
     `/registration/confirmation?token=${encodeURIComponent(confirmationToken)}&correlationId=${encodeURIComponent(
       diagnosticCorrelationId!,
     )}`,
+  );
+}
+
+export type RememberDeviceConfirmationState = {
+  error?: string;
+};
+
+export async function rememberDeviceOnConfirmation(
+  _state: RememberDeviceConfirmationState,
+  form: FormData,
+): Promise<RememberDeviceConfirmationState> {
+  if (form.get("rememberDevice") !== "on") {
+    return {
+      error: "Check Remember this device to keep your classes available on this browser.",
+    };
+  }
+  const token = String(form.get("token") ?? "");
+  const correlationId = String(form.get("correlationId") || crypto.randomUUID());
+  if (!token) return { error: "This confirmation link is no longer available." };
+  const result = await rememberParticipantFromConfirmation(token, correlationId);
+  if (result?.error) return { error: result.error };
+  redirect(
+    `/registration/confirmation?token=${encodeURIComponent(token)}&correlationId=${encodeURIComponent(correlationId)}`,
   );
 }
 

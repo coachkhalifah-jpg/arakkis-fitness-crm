@@ -1,17 +1,20 @@
-import { redirect } from "next/navigation";
 import { PublicErrorState } from "@/components/registration/public-error-state";
 import { resolveRememberedParticipant } from "@/lib/registration/device";
+import { redirect } from "next/navigation";
 
 export default async function ManageBookingsPage() {
   if (await resolveRememberedParticipant()) redirect("/");
 
   return (
     <PublicErrorState
-      code="NO LINK"
-      title="This device is not connected to your bookings."
-      message="Use your saved confirmation or booking link to access a specific reservation."
+      variant="recovery"
+      eyebrow="Bookings"
+      title="This device isn’t connected to your bookings yet."
+      message="Use a saved confirmation or booking link to open a reservation. After you book, choose Remember this device so you can see and manage all your classes here."
       actionLabel="Browse events"
       actionHref="/events"
+      secondaryActionLabel="Return home"
+      secondaryActionHref="/"
     />
   );
 }

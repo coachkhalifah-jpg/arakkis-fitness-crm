@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/db/server";
 import { icsContent, type CalendarEvent } from "@/lib/registration/calendar";
+import { confirmationLookupStatus } from "@/lib/registration/confirmation-lookup";
 
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token") ?? "";
@@ -9,7 +10,12 @@ export async function GET(request: NextRequest) {
   const { data, error } = await db.rpc("get_registration_confirmation", {
     p_token: token,
   } as never);
-  if (error || !data) return new Response("Confirmation unavailable", { status: 404 });
+  if (error || !data) {
+    if (confirmationLookupStatus(error?.message) === "expired") {
+      return new Response("This confirmation link has expired.", { status: 410 });
+    }
+    return new Response("Confirmation unavailable", { status: 404 });
+  }
   const result = data as { events: Array<Record<string, unknown>> };
   const events = result.events
     .filter((event) => event.success && (!eventId || event.event_id === eventId))
