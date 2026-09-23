@@ -1,8 +1,15 @@
+import Link from "next/link";
 import { RegistrationForm } from "@/components/registration/registration-form";
 import { EventHero } from "@/components/registration/event-hero";
 import { createClient } from "@/lib/db/server";
 import { isProductionRegistrationBlocked } from "@/lib/config/env";
 import { resolveRememberedParticipant } from "@/lib/registration/device";
+import { getManagedBookings } from "@/lib/registration/booking-management";
+import {
+  activeRegistrationIdByEventId,
+  manageBookingHref,
+} from "@/lib/registration/active-bookings";
+import { isUnavailableEvent } from "@/lib/registration/availability";
 import { designAssetPublicUrl } from "@/lib/config/design-assets";
 import { legalDocuments } from "@/lib/legal/documents";
 import type { LegalPackage } from "@/lib/legal/package";
@@ -74,6 +81,8 @@ export default async function PublicEventPage({
     );
   const legallyBlocked = isProductionRegistrationBlocked();
   const remembered = await resolveRememberedParticipant();
+  const managed = remembered ? await getManagedBookings() : null;
+  const activeBookingByEventId = activeRegistrationIdByEventId(managed?.bookings);
   const { data: eventAssets } = await db
     .from("design_assets")
     .select("asset_type,storage_path,focal_position")
@@ -110,6 +119,32 @@ export default async function PublicEventPage({
         actionHref="/events"
       />
     );
+  const formEvents = registrationEvents.map((occurrence) => {
+    const registrationId = activeBookingByEventId.get(occurrence.id);
+    return {
+      id: occurrence.id,
+      name: occurrence.name,
+      starts_at: occurrence.starts_at,
+      ends_at: occurrence.ends_at,
+      timezone: occurrence.timezone,
+      venue_name: occurrence.venue_name ?? event.venue_name,
+      venue_street: occurrence.venue_street ?? event.venue_street,
+      venue_city: occurrence.venue_city ?? event.venue_city,
+      venue_state: occurrence.venue_state ?? event.venue_state,
+      venue_postal_code: occurrence.venue_postal_code ?? event.venue_postal_code,
+      host_organization_name: occurrence.host_organization_name ?? event.host_organization_name,
+      active_registration_count: occurrence.active_registration_count,
+      capacity: occurrence.capacity,
+      availability: occurrence.availability,
+      visibility: "PUBLIC" as const,
+      manageHref: registrationId ? manageBookingHref(registrationId) : null,
+    };
+  });
+  const openUnbooked = formEvents.filter(
+    (occurrence) => !occurrence.manageHref && !isUnavailableEvent(occurrence),
+  );
+  const firstBookedHref = formEvents.find((occurrence) => occurrence.manageHref)?.manageHref;
+  const onlyAlreadyBooked = Boolean(remembered && firstBookedHref && openUnbooked.length === 0);
   return (
     <section className="booking-environment registration-northstar mx-auto min-h-screen w-full max-w-[520px] pb-16 transition-colors duration-500">
       <EventHero
@@ -122,33 +157,36 @@ export default async function PublicEventPage({
       />
       <div className="public-registration-content px-4 pt-8 sm:px-5 sm:pt-10">
         <div className="mt-8">
-          <RegistrationForm
-            events={registrationEvents.map((occurrence) => ({
-              name: occurrence.name,
-              starts_at: occurrence.starts_at,
-              ends_at: occurrence.ends_at,
-              timezone: occurrence.timezone,
-              venue_name: occurrence.venue_name ?? event.venue_name,
-              venue_street: occurrence.venue_street ?? event.venue_street,
-              venue_city: occurrence.venue_city ?? event.venue_city,
-              venue_state: occurrence.venue_state ?? event.venue_state,
-              venue_postal_code: occurrence.venue_postal_code ?? event.venue_postal_code,
-              host_organization_name:
-                occurrence.host_organization_name ?? event.host_organization_name,
-              active_registration_count: occurrence.active_registration_count,
-              capacity: occurrence.capacity,
-              availability: occurrence.availability,
-              visibility: "PUBLIC",
-            }))}
-            legalPackage={registrationConfig.legal_package}
-            idempotencyKey={crypto.randomUUID()}
-            publicSlug={slug}
-            seriesMode={Boolean(event.series_slug)}
-            rememberedFirstName={remembered?.first_name ?? null}
-            rememberedGoals={remembered?.goals ?? null}
-            legalDocuments={legalDocuments}
-            eventInviteToken={invite ?? null}
-          />
+          {onlyAlreadyBooked ? (
+            <div className="registration-already-booked" role="status">
+              <p className="registration-already-booked-eyebrow">You’re booked</p>
+              <h2 className="registration-already-booked-title">This class is already yours.</h2>
+              <p className="registration-already-booked-copy">
+                You already have an active registration for every open occurrence here. Manage your
+                booking from this device, or browse other events.
+              </p>
+              <div className="registration-already-booked-actions">
+                <Link className="registration-reserve-button" href={firstBookedHref as string}>
+                  Manage booking <span aria-hidden="true">↗</span>
+                </Link>
+                <Link className="registration-already-booked-secondary" href="/events">
+                  Browse events
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <RegistrationForm
+              events={formEvents}
+              legalPackage={registrationConfig.legal_package}
+              idempotencyKey={crypto.randomUUID()}
+              publicSlug={slug}
+              seriesMode={Boolean(event.series_slug)}
+              rememberedFirstName={remembered?.first_name ?? null}
+              rememberedGoals={remembered?.goals ?? null}
+              legalDocuments={legalDocuments}
+              eventInviteToken={invite ?? null}
+            />
+          )}
         </div>
       </div>
     </section>

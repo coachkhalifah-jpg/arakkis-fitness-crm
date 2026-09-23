@@ -11,6 +11,10 @@ import { designAssetPublicUrl } from "@/lib/config/design-assets";
 import { participantDisplayName } from "@/lib/registration/display";
 import { resolveRememberedParticipant } from "@/lib/registration/device";
 import { getManagedBookings } from "@/lib/registration/booking-management";
+import {
+  activeRegistrationIdByEventId,
+  manageBookingHref,
+} from "@/lib/registration/active-bookings";
 import type { CSSProperties } from "react";
 
 type PublicEvent = {
@@ -43,14 +47,7 @@ export default async function EventsPage() {
     resolveRememberedParticipant(),
   ]);
   const managed = remembered ? await getManagedBookings() : null;
-  const activeBookingByEventId = new Map(
-    (managed?.bookings ?? [])
-      .filter(
-        (booking) =>
-          booking.registration_status === "REGISTERED" && booking.registration_outcome === "ACTIVE",
-      )
-      .map((booking) => [booking.event_id, booking.registration_id]),
-  );
+  const activeBookingByEventId = activeRegistrationIdByEventId(managed?.bookings);
   const events = (data ?? []) as PublicEvent[];
   const { data: eventImageAssets } = events.length
     ? await db
@@ -110,7 +107,7 @@ export default async function EventsPage() {
       imageUrl: eventImageById.get(event.id) ?? eventCardAsset(event.name),
       focalPosition: eventImageFocalById.get(event.id) ?? "center",
       titleColor: event.event_title_color,
-      manageHref: registrationId ? `/manage-bookings/${encodeURIComponent(registrationId)}` : null,
+      manageHref: registrationId ? manageBookingHref(registrationId) : null,
     };
   });
   // Server-rendered grouping intentionally uses the current instant.
