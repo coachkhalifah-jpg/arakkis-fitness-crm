@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useActionState } from "react";
 import { parsePhoneNumberFromString } from "libphonenumber-js/min";
@@ -51,6 +52,8 @@ type Event = {
   capacity: number;
   availability?: string;
   visibility: string;
+  /** When set, this remembered participant already holds an active booking. */
+  manageHref?: string | null;
 };
 type Acknowledgment = { id: string; text: string } | null;
 
@@ -113,7 +116,10 @@ export function RegistrationForm({
   const [showDetails, setShowDetails] = useState(!rememberedFirstName);
   const selectionValue = (event: Event) =>
     seriesMode ? event.starts_at : (publicSlug ?? event.id ?? event.name);
-  const eligibleEvents = events.filter((event) => !isUnavailableEvent(event));
+  const isBookedEvent = (event: Event) => Boolean(event.manageHref);
+  const eligibleEvents = events.filter(
+    (event) => !isUnavailableEvent(event) && !isBookedEvent(event),
+  );
   const [selected, setSelected] = useState<string[]>(() =>
     eligibleEvents.length > 0 && (eligibleEvents.length === 1 || seriesMode)
       ? [selectionValue(eligibleEvents[0])]
@@ -269,7 +275,8 @@ export function RegistrationForm({
         </div>
         <div className="registration-occurrence-list">
           {visibleEvents.map((event) => {
-            const full = isUnavailableEvent(event);
+            const booked = isBookedEvent(event);
+            const full = !booked && isUnavailableEvent(event);
             const value = selectionValue(event);
             const isSelected = selected.includes(value);
             const displayName = participantDisplayName(event.name);
@@ -298,15 +305,17 @@ export function RegistrationForm({
               minute: "2-digit",
               timeZone: event.timezone,
             }).format(new Date(event.starts_at));
-            const availabilityLabel = full
-              ? event.active_registration_count >= event.capacity || event.availability === "FULL"
-                ? "Full"
-                : "Unavailable"
-              : "Open";
+            const availabilityLabel = booked
+              ? "Booked"
+              : full
+                ? event.active_registration_count >= event.capacity || event.availability === "FULL"
+                  ? "Full"
+                  : "Unavailable"
+                : "Open";
             return (
               <label
                 key={value}
-                className={`registration-occurrence-option ${full ? "registration-occurrence-option-full" : ""} ${isSelected ? "registration-occurrence-option-selected" : ""}`}
+                className={`registration-occurrence-option ${full || booked ? "registration-occurrence-option-full" : ""} ${booked ? "registration-occurrence-option-booked" : ""} ${isSelected ? "registration-occurrence-option-selected" : ""}`}
               >
                 <input
                   type="checkbox"
@@ -319,7 +328,7 @@ export function RegistrationForm({
                         : "eventIds"
                   }
                   value={seriesMode ? event.starts_at : (publicSlug ?? event.id)}
-                  disabled={full}
+                  disabled={full || booked}
                   checked={isSelected}
                   onChange={(eventChange) =>
                     setSelected((current) =>
@@ -336,7 +345,11 @@ export function RegistrationForm({
                   <span>{month}</span>
                 </span>
                 <span className="registration-occurrence-time-group">
-                  {full ? (
+                  {booked ? (
+                    <span className="registration-occurrence-selected-label registration-occurrence-booked-label">
+                      You’re booked
+                    </span>
+                  ) : full ? (
                     <span className="registration-occurrence-selected-label registration-occurrence-full-label">
                       Full
                     </span>
@@ -344,13 +357,27 @@ export function RegistrationForm({
                     <span className="registration-occurrence-selected-label">Selected</span>
                   ) : null}
                   <span
-                    className={`registration-occurrence-time registration-time-pill ${isSelected ? "registration-time-pill-selected" : ""}`}
+                    className={`registration-occurrence-time registration-time-pill ${isSelected ? "registration-time-pill-selected" : ""} ${booked ? "registration-time-pill-booked" : ""}`}
                   >
                     {time}
                   </span>
                 </span>
                 <span className="registration-occurrence-meta">
-                  {full ? (
+                  {booked ? (
+                    event.manageHref ? (
+                      <Link
+                        href={event.manageHref}
+                        className="registration-occurrence-manage"
+                        onClick={(clickEvent) => clickEvent.stopPropagation()}
+                      >
+                        Manage
+                      </Link>
+                    ) : (
+                      <span className="registration-occurrence-full-mark" aria-hidden="true">
+                        ✓
+                      </span>
+                    )
+                  ) : full ? (
                     <span className="registration-occurrence-full-mark" aria-hidden="true">
                       ×
                     </span>
