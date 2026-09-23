@@ -729,9 +729,9 @@ export function RegistrationForm({
                 id="rememberDevice-description"
                 className="mt-1 block text-sm leading-6 text-slate-600"
               >
-                Confirmation links expire in 24 hours. We’ll securely remember this browser so you
-                can return and view or manage your upcoming classes here. You can forget this device
-                anytime. This is not an account login.
+                Applies when your booking succeeds. Confirmation links expire in 24 hours. We’ll
+                securely remember this browser so you can return and view or manage your upcoming
+                classes here. You can forget this device anytime. This is not an account login.
               </span>
             </span>
           </label>
@@ -742,6 +742,13 @@ export function RegistrationForm({
           <p role="alert" aria-live="assertive">
             {state.error}
           </p>
+          {state.showManageBookings ? (
+            <p className="mt-3">
+              <Link className="font-semibold underline" href="/manage-bookings">
+                Manage bookings <span aria-hidden="true">↗</span>
+              </Link>
+            </p>
+          ) : null}
           {Object.entries(fieldErrors).length ? (
             <ul className="mt-2 list-inside list-disc space-y-1 text-sm">
               {Object.entries(fieldErrors).map(([field, message]) => (

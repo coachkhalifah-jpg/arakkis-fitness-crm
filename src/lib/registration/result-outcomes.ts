@@ -8,12 +8,16 @@ const reasonText: Record<string, string> = {
   FULL: "This class filled before your selection could be reserved.",
   CLOSED: "Registration closed before your selection could be reserved.",
   ALREADY_REGISTERED:
-    "You already have an active registration for this class. Open Manage bookings if this device is remembered, or use a saved confirmation or booking link.",
+    "You already have an active registration for this class. Use a saved confirmation or booking link if this browser is not remembered.",
   INELIGIBLE: "You are not eligible for this class.",
   NOT_FOUND: "This class is no longer available.",
 };
 
 export const NO_RESERVED_CLASS_ERROR = "registration completed without a reserved class";
+
+export function isAlreadyRegisteredOutcome(message: string | null | undefined): boolean {
+  return Boolean(message?.includes("already have an active registration"));
+}
 
 export function successfulRegistrationResults(results: RegistrationResultItem[] | undefined) {
   return (results ?? []).filter((item) => item.success);
