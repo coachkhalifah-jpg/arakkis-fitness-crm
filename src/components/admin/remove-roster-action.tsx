@@ -3,24 +3,23 @@
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ConfirmSubmit } from "@/components/admin/confirm-submit";
-import type { Phase3ActionState } from "@/lib/services/phase-3-actions";
-
-type RemoveAction = (state: Phase3ActionState, formData: FormData) => Promise<Phase3ActionState>;
+import { removeRegistrationFromRoster } from "@/lib/services/phase-5-actions";
 
 export function RemoveRosterAction({
-  action,
   eventId,
   eventName,
   registrationId,
   participantName,
 }: {
-  action: RemoveAction;
   eventId: string;
   eventName: string;
   registrationId: string;
   participantName: string;
 }) {
-  const [state, formAction] = useActionState(action, {});
+  // Import the server action in this module — do not pass it through discovery/card
+  // prop trees. Prop-drilled actions can lose their Next.js action id and 500 with
+  // "Failed to find Server Action".
+  const [state, formAction] = useActionState(removeRegistrationFromRoster, {});
   const router = useRouter();
   useEffect(() => {
     if (state.success) router.refresh();

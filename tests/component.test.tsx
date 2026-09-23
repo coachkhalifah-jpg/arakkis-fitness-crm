@@ -21,6 +21,12 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
   usePathname: () => "/admin",
 }));
+
+vi.mock("@/lib/services/phase-5-actions", () => ({
+  removeRegistrationFromRoster: vi.fn(async () => ({ success: "removed" })),
+  saveAttendanceChanges: vi.fn(async () => ({})),
+}));
+
 import { Button } from "@/components/ui/button";
 import { FloatingBackButton } from "@/components/registration/floating-back-button";
 import { RosterStatusCarousel } from "@/components/admin/roster-status-carousel";
@@ -112,7 +118,6 @@ describe("presentation controls", () => {
         capacity={20}
         canEdit
         checkInAction={action}
-        removeRegistrationAction={removeAction}
         canRemoveRegistration
       />,
     );
@@ -397,10 +402,8 @@ describe("presentation controls", () => {
   it("keeps roster removal subordinate and identifies the participant and event", async () => {
     const { userEvent } = await import("@testing-library/user-event");
     const user = userEvent.setup();
-    const action = vi.fn(async () => ({ success: "removed" }));
     render(
       <RemoveRosterAction
-        action={action}
         eventId="event-a"
         eventName="Morning Flow"
         registrationId="registration-a"

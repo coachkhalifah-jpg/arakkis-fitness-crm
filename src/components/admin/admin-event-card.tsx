@@ -9,7 +9,6 @@ import { useAdminEventCardRail } from "@/components/admin/admin-event-card-rail"
 import { RemoveRosterAction } from "@/components/admin/remove-roster-action";
 import { DisclosureToggle } from "@/components/ui/disclosure-toggle";
 import { getDialogFocusableElements } from "@/components/admin/dialog-focus";
-import type { Phase3ActionState } from "@/lib/services/phase-3-actions";
 import { attendancePresentation } from "@/lib/services/attendance-presentation";
 
 type EventPerson = {
@@ -45,7 +44,6 @@ export function AdminEventCard({
   canViewPhone,
   canCheckIn,
   checkInAction,
-  removeRegistrationAction,
   canRemoveRegistration,
   actions,
   cancelAction,
@@ -72,10 +70,6 @@ export function AdminEventCard({
   canViewPhone: boolean;
   canCheckIn: boolean;
   checkInAction: CheckInAction;
-  removeRegistrationAction: (
-    state: Phase3ActionState,
-    formData: FormData,
-  ) => Promise<Phase3ActionState>;
   canRemoveRegistration: boolean;
   actions: ReactNode;
   cancelAction?: ReactNode;
@@ -326,7 +320,6 @@ export function AdminEventCard({
                             <td className="p-3 pr-0 text-right">
                               {canRemoveRegistration ? (
                                 <RemoveRosterAction
-                                  action={removeRegistrationAction}
                                   eventId={event.id}
                                   eventName={event.name}
                                   registrationId={person.id}
@@ -410,7 +403,6 @@ export function AdminEventCard({
                             </div>
                             {canRemoveRegistration ? (
                               <RemoveRosterAction
-                                action={removeRegistrationAction}
                                 eventId={event.id}
                                 eventName={event.name}
                                 registrationId={person.id}
