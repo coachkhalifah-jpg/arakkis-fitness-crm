@@ -120,7 +120,7 @@ export default async function ConfirmationPage({
           variant="recovery"
           eyebrow="Confirmation"
           title="This confirmation link has expired."
-          message="Confirmation links are valid for 24 hours. If you remembered this device, you can still view and manage your upcoming classes. Otherwise browse events or use a saved booking link."
+          message="Confirmation links are valid for 24 hours. If you chose Remember this device on this browser, open View your bookings to see upcoming classes. Otherwise browse events, or use a booking link you saved earlier."
           actionLabel={rememberedParticipant ? "View your bookings" : "Browse events"}
           actionHref={rememberedParticipant ? "/manage-bookings" : "/events"}
           secondaryActionLabel={rememberedParticipant ? "Browse events" : "Return home"}
@@ -250,7 +250,7 @@ export default async function ConfirmationPage({
             Your place is held. Here’s everything you need for a smooth arrival and a good session.
           </p>
           {successful.length > 0 && !isRememberedParticipant ? (
-            <div className="confirmation-access-alert" aria-label="Remember this device">
+            <div className="confirmation-access-alert" aria-label="Save your booking link">
               <ConfirmationRememberDevice token={token} correlationId={correlationId} />
             </div>
           ) : null}
@@ -441,8 +441,9 @@ export default async function ConfirmationPage({
                     bookings.
                   </p>
                 </div>
-              ) : null}
-              <p className="confirmation-booking-access-heading">Keep your booking handy</p>
+              ) : (
+                <p className="confirmation-booking-access-heading">Save your booking link</p>
+              )}
               <div className="confirmation-booking-access-list">
                 {successful.map((event) => {
                   const bookingHref = bookingManagementHref(

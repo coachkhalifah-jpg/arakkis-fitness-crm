@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CancelBookingDialog } from "@/components/registration/cancel-booking-dialog";
+import { ForgetDevice } from "@/components/registration/forget-device";
 import type { ManagedBooking } from "@/lib/registration/booking-management";
 import { getManagedBookings } from "@/lib/registration/booking-management";
 import { resolveRememberedParticipant } from "@/lib/registration/device";
@@ -49,7 +50,7 @@ function PublicLandingPage() {
                 Browse Events <span aria-hidden="true">↗</span>
               </Link>
               <Link className="home-secondary" href="/manage-bookings">
-                Manage your booking <span aria-hidden="true">↗</span>
+                Have a booking link? <span aria-hidden="true">↗</span>
               </Link>
             </div>
           </div>
@@ -85,7 +86,7 @@ function PublicLandingPage() {
           </h2>
           <p>
             Browse upcoming classes and community gatherings, choose a time that works, and keep
-            your booking close. Start with Events, or manage a booking you already made.
+            your booking close. Start with Events, or open a reservation with a saved booking link.
           </p>
         </section>
       </main>
@@ -165,6 +166,7 @@ function ReturningLandingPage({
                 ? "Your next session is ready when you are."
                 : "Choose another class to keep your rhythm moving."}
             </p>
+            <ForgetDevice className="mt-3 inline-flex text-sm font-semibold text-slate-600 underline underline-offset-4 disabled:opacity-60" />
           </div>
           <div className="returning-badge">
             <ScrollTurningLine />

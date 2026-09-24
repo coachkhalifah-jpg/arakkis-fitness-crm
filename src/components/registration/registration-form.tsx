@@ -695,16 +695,14 @@ export function RegistrationForm({
               className="mt-1 h-5 w-5 shrink-0 accent-brand"
             />
             <span>
-              <span className="block font-semibold text-ink">
-                Remember this device to see all your classes
-              </span>
+              <span className="block font-semibold text-ink">Remember this device</span>
               <span
                 id="rememberDevice-description"
                 className="mt-1 block text-sm leading-6 text-slate-600"
               >
-                Applies when your booking succeeds. Confirmation links expire in 24 hours. We’ll
-                securely remember this browser so you can return and view or manage your upcoming
-                classes here. You can forget this device anytime. This is not an account login.
+                Optional. Confirmation links expire in 24 hours. We’ll securely remember this
+                browser so you can return and view or manage your upcoming classes here. You can
+                forget this device anytime. This is not an account login.
               </span>
             </span>
           </label>
