@@ -162,8 +162,7 @@ export default async function PublicEventPage({
               <p className="registration-already-booked-eyebrow">You’re booked</p>
               <h2 className="registration-already-booked-title">This class is already yours.</h2>
               <p className="registration-already-booked-copy">
-                You already have an active registration for every open occurrence here. Manage your
-                booking from this device, or browse other events.
+                You’re registered for this class. Manage your booking here, or see what else is on.
               </p>
               <div className="registration-already-booked-actions">
                 <Link className="registration-reserve-button" href={firstBookedHref as string}>
