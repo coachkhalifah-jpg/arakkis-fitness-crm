@@ -92,13 +92,32 @@ async function token(correlationId?: string) {
   }
 }
 
+async function rpcWithDeviceCapabilityFallback<T>(
+  rpcName: string,
+  args: Record<string, unknown>,
+): Promise<{ data: T | null; error: { message: string } | null }> {
+  // Device cookie token is the capability (migration 0074). Prefer anon, then
+  // service-role, matching confirmation-bearer device issue (0073).
+  const anon = await createClient();
+  const primary = await anon.rpc(rpcName, args as never);
+  if (!primary.error && primary.data) {
+    return { data: primary.data as T, error: null };
+  }
+  const privileged = createPrivilegedClient();
+  const fallback = await privileged.rpc(rpcName, args as never);
+  return {
+    data: (fallback.data as T | null) ?? null,
+    error: fallback.error ?? primary.error,
+  };
+}
+
 export async function getManagedBookings(correlationId = crypto.randomUUID()) {
   const raw = await token(correlationId);
   if (!raw) return null;
-  const db = createPrivilegedClient();
-  const { data, error } = await db.rpc("get_participant_upcoming_bookings", {
-    p_token: raw,
-  } as never);
+  const { data, error } = await rpcWithDeviceCapabilityFallback<{
+    participant_id: string;
+    bookings: ManagedBooking[];
+  }>("get_participant_upcoming_bookings", { p_token: raw });
   logHostedAccessDiagnostic({
     correlation_id: correlationId,
     boundary: "booking_management",
@@ -107,30 +126,28 @@ export async function getManagedBookings(correlationId = crypto.randomUUID()) {
     booking_rpc_status: error ? "error" : data ? "success" : "not_found",
     booking_result: data ? "resolved" : error ? "error" : "not_found",
   });
-  return error || !data ? null : (data as { participant_id: string; bookings: ManagedBooking[] });
+  return error || !data ? null : data;
 }
 
 export async function getBookingAlternatives(registrationId: string, accessToken?: string) {
   const raw = accessToken ?? (await token());
   if (!raw) return null;
-  const db = createPrivilegedClient();
-  const { data, error } = await db.rpc("get_participant_booking_alternatives", {
-    p_token: raw,
-    p_registration_id: registrationId,
-  } as never);
-  return error || !data ? null : (data as BookingAlternative[]);
+  const { data, error } = await rpcWithDeviceCapabilityFallback<BookingAlternative[]>(
+    "get_participant_booking_alternatives",
+    { p_token: raw, p_registration_id: registrationId },
+  );
+  return error || !data ? null : data;
 }
 
 export async function getConfirmationToken(registrationId: string) {
   const raw = await token();
   if (!raw) return null;
-  const db = createPrivilegedClient();
-  const { data, error } = await db.rpc("phase10_issue_participant_confirmation_token", {
-    p_token: raw,
-    p_registration_id: registrationId,
-  } as never);
+  const { data, error } = await rpcWithDeviceCapabilityFallback<{ token?: string }>(
+    "phase10_issue_participant_confirmation_token",
+    { p_token: raw, p_registration_id: registrationId },
+  );
   if (error || !data) return null;
-  return (data as { token?: string }).token ?? null;
+  return data.token ?? null;
 }
 
 async function bookingFromConfirmationFallback(
@@ -243,13 +260,15 @@ export async function manageBooking(
     return {
       error: "Your booking access has expired. Save this device again from a confirmation page.",
     };
-  const db = createPrivilegedClient();
-  const { data, error } = await db.rpc("manage_participant_booking", {
-    p_token: raw,
-    p_action: action,
-    p_registration_id: registrationId,
-    p_target_event_id: targetEventId ?? null,
-  } as never);
+  const { data, error } = await rpcWithDeviceCapabilityFallback<Record<string, unknown>>(
+    "manage_participant_booking",
+    {
+      p_token: raw,
+      p_action: action,
+      p_registration_id: registrationId,
+      p_target_event_id: targetEventId ?? null,
+    },
+  );
   if (error || !data) return { error: mapBookingError(error?.message ?? "") };
-  return data as Record<string, unknown>;
+  return data;
 }
