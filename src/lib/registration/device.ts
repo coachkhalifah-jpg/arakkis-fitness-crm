@@ -173,6 +173,47 @@ export async function rememberParticipantFromConfirmation(
   return { firstName: result.first_name };
 }
 
+export async function setRememberedDeviceCookie(token: string) {
+  (await cookies()).set(rememberedDeviceCookie, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: cookieMaxAge,
+  });
+}
+
+export async function consumeParticipantManageRecovery(token: string) {
+  const raw = token.trim();
+  if (!/^[A-Za-z0-9_-]{40,80}$/.test(raw)) {
+    return { error: "invalid" as const };
+  }
+
+  const anon = await createClient();
+  let { data, error } = await anon.rpc("consume_participant_manage_recovery_link", {
+    p_token: raw,
+  } as never);
+  if (error || !data) {
+    const privileged = createPrivilegedClient();
+    const fallback = await privileged.rpc("consume_participant_manage_recovery_link", {
+      p_token: raw,
+    } as never);
+    data = fallback.data;
+    error = fallback.error ?? error;
+  }
+
+  if (error || !data) {
+    return { error: "invalid" as const };
+  }
+
+  const result = data as { token: string; first_name: string; participant_id: string };
+  await setRememberedDeviceCookie(result.token);
+  return {
+    firstName: result.first_name,
+    participantId: result.participant_id,
+  };
+}
+
 export async function forgetRememberedParticipant() {
   const jar = await cookies();
   const token = jar.get(rememberedDeviceCookie)?.value;
