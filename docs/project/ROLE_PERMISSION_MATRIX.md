@@ -10,6 +10,7 @@ Canonical roles are `SYSTEM_ADMIN`, `HOST_ADMIN`, and unauthenticated public Par
 | Events | System Admin global; Host assigned Events | System Admin global; Host assigned host Organization | System Admin creation/core edits; scoped Host operational actions | Event host Organization scope |
 | Design Assets | System Admin only | System Admin only | System Admin only | RLS and server-only Storage access |
 | Participants/CRM/follow-up | System Admin only except event-operational Host projections | System Admin global; Host scoped event projections | System Admin global; Host approved event operations | RLS/data-layer scope |
+| Participant manage/recovery link (DEC-059) | System Admin on participant CRM detail only | System Admin participant detail; Host/anon denied | Issue/regenerate/revoke System Admin only (server + service-role RPC) | Hash-only storage; consume via security-definer RPC; no anon table reads |
 | Registration | Public | Public routes subject to availability/legal rules | Validated public RPC/action | Narrow public projection and RPC |
 
 Navigation never grants access. Every direct route, server action, RPC, Storage operation, export, search, and aggregate must repeat the relevant server/data-layer scope. Manipulated Organization, Venue, Event, asset, actor, and token identifiers must not expand access.

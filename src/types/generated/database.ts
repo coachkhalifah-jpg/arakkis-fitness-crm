@@ -209,7 +209,6 @@ export type Database = {
       host_organization_id: string
       venue_id: string
       name: string
-      event_title_color: string
       description: string | null
       participant_instructions: string | null
       starts_at: string
@@ -222,8 +221,6 @@ export type Database = {
       whatsapp_group_invite_url: string | null
       whatsapp_invitation_message: string | null
       attendance_processing_state: Database["public"]["Enums"]["attendance_processing_state"]
-      schedule_rule_id: string | null
-      generated_local_date: string | null
       created_by_admin_id: string
       created_at: string
       updated_at: string
@@ -234,7 +231,6 @@ export type Database = {
       host_organization_id: string
       venue_id: string
       name: string
-      event_title_color?: string
       description?: string
       participant_instructions?: string
       starts_at: string
@@ -247,8 +243,6 @@ export type Database = {
       whatsapp_group_invite_url?: string
       whatsapp_invitation_message?: string
       attendance_processing_state?: Database["public"]["Enums"]["attendance_processing_state"]
-      schedule_rule_id?: string
-      generated_local_date?: string
       created_by_admin_id: string
       created_at?: string
       updated_at?: string
@@ -259,7 +253,6 @@ export type Database = {
       host_organization_id: string
       venue_id: string
       name: string
-      event_title_color?: string
       description?: string
       participant_instructions?: string
       starts_at: string
@@ -272,8 +265,6 @@ export type Database = {
       whatsapp_group_invite_url?: string
       whatsapp_invitation_message?: string
       attendance_processing_state?: Database["public"]["Enums"]["attendance_processing_state"]
-      schedule_rule_id?: string
-      generated_local_date?: string
       created_by_admin_id: string
       created_at?: string
       updated_at?: string
@@ -296,7 +287,6 @@ export type Database = {
       primary_affiliation_organization_id: string | null
       affiliation_other_text: string | null
       fitness_experience: string | null
-      goals: string | null
       status: Database["public"]["Enums"]["participant_status"]
       created_at: string
       updated_at: string
@@ -316,7 +306,6 @@ export type Database = {
       primary_affiliation_organization_id?: string
       affiliation_other_text?: string
       fitness_experience?: string
-      goals?: string
       status?: Database["public"]["Enums"]["participant_status"]
       created_at?: string
       updated_at?: string
@@ -336,7 +325,6 @@ export type Database = {
       primary_affiliation_organization_id?: string
       affiliation_other_text?: string
       fitness_experience?: string
-      goals?: string
       status?: Database["public"]["Enums"]["participant_status"]
       created_at?: string
       updated_at?: string
@@ -426,8 +414,8 @@ export type Database = {
       submission_source: Database["public"]["Enums"]["submission_source"]
       participation_acknowledgment_version_id: string
       participation_acknowledged_at: string
-      data_use_acknowledgment_version_id: string | null
-      data_use_acknowledged_at: string | null
+      data_use_acknowledgment_version_id: string
+      data_use_acknowledged_at: string
       submitted_at: string
       created_by_admin_id: string | null
       idempotency_key: string | null
@@ -438,8 +426,8 @@ export type Database = {
       submission_source: Database["public"]["Enums"]["submission_source"]
       participation_acknowledgment_version_id: string
       participation_acknowledged_at: string
-      data_use_acknowledgment_version_id?: string | null
-      data_use_acknowledged_at?: string | null
+      data_use_acknowledgment_version_id: string
+      data_use_acknowledged_at: string
       submitted_at?: string
       created_by_admin_id?: string
       idempotency_key?: string
@@ -450,8 +438,8 @@ export type Database = {
       submission_source: Database["public"]["Enums"]["submission_source"]
       participation_acknowledgment_version_id: string
       participation_acknowledged_at: string
-      data_use_acknowledgment_version_id?: string | null
-      data_use_acknowledged_at?: string | null
+      data_use_acknowledgment_version_id: string
+      data_use_acknowledged_at: string
       submitted_at?: string
       created_by_admin_id?: string
       idempotency_key?: string
@@ -1283,48 +1271,6 @@ export type Database = {
         };
         Relationships: [];
       };
-      event_series_schedule_rules: {
-        Row: {
-      id: string
-      event_series_id: string
-      weekday: number
-      local_start_time: string
-      local_end_time: string
-      effective_start_date: string
-      effective_end_date: string | null
-      created_by_admin_id: string
-      supersedes_rule_id: string | null
-      created_at: string
-      updated_at: string
-        };
-        Insert: {
-      id?: string
-      event_series_id: string
-      weekday: number
-      local_start_time: string
-      local_end_time: string
-      effective_start_date: string
-      effective_end_date?: string
-      created_by_admin_id: string
-      supersedes_rule_id?: string
-      created_at?: string
-      updated_at?: string
-        };
-        Update: {
-      id?: string
-      event_series_id?: string
-      weekday?: number
-      local_start_time?: string
-      local_end_time?: string
-      effective_start_date?: string
-      effective_end_date?: string
-      created_by_admin_id?: string
-      supersedes_rule_id?: string
-      created_at?: string
-      updated_at?: string
-        };
-        Relationships: [];
-      };
       participant_remembered_devices: {
         Row: {
       id: string
@@ -1679,6 +1625,90 @@ export type Database = {
         };
         Relationships: [];
       };
+      event_series_schedule_rules: {
+        Row: {
+      id: string
+      event_series_id: string
+      weekday: number
+      local_start_time: unknown
+      local_end_time: unknown
+      effective_start_date: string
+      effective_end_date: string | null
+      created_by_admin_id: string
+      supersedes_rule_id: string | null
+      created_at: string
+      updated_at: string
+        };
+        Insert: {
+      id?: string
+      event_series_id: string
+      weekday: number
+      local_start_time: unknown
+      local_end_time: unknown
+      effective_start_date: string
+      effective_end_date?: string
+      created_by_admin_id: string
+      supersedes_rule_id?: string
+      created_at?: string
+      updated_at?: string
+        };
+        Update: {
+      id?: string
+      event_series_id: string
+      weekday: number
+      local_start_time: unknown
+      local_end_time: unknown
+      effective_start_date: string
+      effective_end_date?: string
+      created_by_admin_id: string
+      supersedes_rule_id?: string
+      created_at?: string
+      updated_at?: string
+        };
+        Relationships: [];
+      };
+      participant_manage_recovery_links: {
+        Row: {
+      id: string
+      participant_id: string
+      token_hash: string
+      status: Database["public"]["Enums"]["participant_manage_recovery_status"]
+      issued_by_admin_id: string
+      issued_at: string
+      expires_at: string
+      consumed_at: string | null
+      revoked_at: string | null
+      replaced_by_link_id: string | null
+      consumed_device_id: string | null
+        };
+        Insert: {
+      id?: string
+      participant_id: string
+      token_hash: string
+      status?: Database["public"]["Enums"]["participant_manage_recovery_status"]
+      issued_by_admin_id: string
+      issued_at?: string
+      expires_at: string
+      consumed_at?: string
+      revoked_at?: string
+      replaced_by_link_id?: string
+      consumed_device_id?: string
+        };
+        Update: {
+      id?: string
+      participant_id: string
+      token_hash: string
+      status?: Database["public"]["Enums"]["participant_manage_recovery_status"]
+      issued_by_admin_id: string
+      issued_at?: string
+      expires_at: string
+      consumed_at?: string
+      revoked_at?: string
+      replaced_by_link_id?: string
+      consumed_device_id?: string
+        };
+        Relationships: [];
+      };
     };
     Views: {
       public_event_schedule: { Row: Record<string, unknown>; Relationships: []; };
@@ -1707,7 +1737,7 @@ export type Database = {
       cancellation_type: "PERMANENT" | "RESCHEDULING_PLANNED" | "REPLACEMENT_DATE_TO_BE_ANNOUNCED";
       cancellation_template_type: "PERMANENT_CANCELLATION" | "REPLACEMENT_DATE_PENDING" | "REPLACEMENT_EVENT_AVAILABLE";
       template_status: "DRAFT" | "PUBLISHED" | "RETIRED";
-      acknowledgment_type: "PARTICIPATION_RISK" | "DATA_USE" | "WHATSAPP_DISCLOSURE" | "EOKE_PARTICIPATION_WAIVER";
+      acknowledgment_type: "PARTICIPATION_RISK" | "DATA_USE" | "WHATSAPP_DISCLOSURE";
       legal_status: "DRAFT" | "PROVISIONAL" | "APPROVED" | "RETIRED" | "REVOKED";
       invitation_status: "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED" | "REPLACED";
       duplicate_case_status: "OPEN" | "MERGED" | "DISMISSED";
@@ -1718,6 +1748,7 @@ export type Database = {
       event_recurrence_frequency: "WEEKLY";
       registration_referral_source: "FRIEND_OR_FAMILY" | "WHATSAPP_OR_GROUP_CHAT" | "INSTAGRAM_OR_SOCIAL_MEDIA" | "FLYER_OR_QR_CODE" | "VENUE_ANNOUNCEMENT" | "PREVIOUS_CLASS" | "OTHER";
       group_chat_reminder_type: "CLASS_PREVIEW" | "ATTENDANCE_CHECK_IN" | "POST_CLASS_REFLECTION" | "WELCOME_FIRST_TIME" | "THIRD_CLASS_MILESTONE" | "TENTH_CLASS_MILESTONE" | "WEEKLY_CHALLENGE" | "WEEKLY_TIP" | "COMMUNITY_POLL" | "INACTIVE_GROUP" | "ORGANIZER_CANCELLATION";
+      participant_manage_recovery_status: "PENDING" | "CONSUMED" | "REVOKED" | "REPLACED";
     };
     CompositeTypes: {};
   };

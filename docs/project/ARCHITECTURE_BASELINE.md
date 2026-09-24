@@ -4,7 +4,7 @@
 
 Next.js App Router server components render public and admin pages. Client components provide forms, loading states, focus behavior, and other presentation controls. Server actions validate FormData and resolve the current authenticated administrator independently.
 
-Major routes include `/events`, `/register/[slug]`, `/registration`, `/registration/confirmation`, `/manage-bookings`, `/admin`, `/admin/events`, `/admin/organizations`, `/admin/venues`, `/admin/invitations`, `/admin/participants`, `/admin/follow-ups`, `/admin/design-assets`, and protected detail/QR routes.
+Major routes include `/events`, `/register/[slug]`, `/registration`, `/registration/confirmation`, `/manage-bookings`, `/manage-bookings/recover`, `/admin`, `/admin/events`, `/admin/organizations`, `/admin/venues`, `/admin/invitations`, `/admin/participants`, `/admin/follow-ups`, `/admin/design-assets`, and protected detail/QR routes.
 
 ## Service and action structure
 
@@ -12,6 +12,7 @@ Major routes include `/events`, `/register/[slug]`, `/registration`, `/registrat
 - `src/lib/services/phase-3-actions.ts` owns Organization, Venue, and Event actions.
 - `src/lib/services/phase-5-actions.ts` owns attendance and roster operations.
 - `src/lib/services/phase-6-actions.ts` owns CRM/follow-up operations.
+- `src/lib/services/participant-manage-recovery-actions.ts` owns System Admin participant manage/recovery link issue/revoke (DEC-059).
 - `src/lib/services/phase-7-actions.ts` owns publishing, links, QR, and invitations.
 - `src/lib/services/design-assets-actions.ts` owns System Admin design-asset uploads/replacements.
 - `src/lib/services/event-creation-lifecycle.ts` and `design-asset-replacement.ts` isolate retry/rollback boundaries.

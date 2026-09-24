@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSystemAdmin } from "@/lib/authorization/server";
 import { signOut } from "@/lib/auth/session-actions";
@@ -7,6 +6,7 @@ import { ContextualBack } from "@/components/admin/contextual-back";
 import { AdminWorkspaceMenu } from "@/components/admin/admin-workspace-menu";
 import { getAdminWorkspaceMenuItems } from "@/components/admin/admin-workspace-menu-items";
 import { ParticipantContactCorrectionForm } from "@/components/admin/participant-contact-correction-form";
+import { ParticipantManageRecoveryPanel } from "@/components/admin/participant-manage-recovery-panel";
 import {
   isQualifyingRegistration,
   organizationAffiliationLabel,
@@ -59,12 +59,20 @@ export default async function ParticipantProfilePage({
   ]);
   const eventById = new Map((events ?? []).map((event) => [event.id, event]));
   const registrationIds = (registrations ?? []).map((r) => r.id);
-  const { data: attendance } = registrationIds.length
-    ? await db
-        .from("attendance")
-        .select("registration_id,status,finalized_at")
-        .in("registration_id", registrationIds)
-    : { data: [] };
+  const [{ data: attendance }, { data: pendingRecovery }] = await Promise.all([
+    registrationIds.length
+      ? db
+          .from("attendance")
+          .select("registration_id,status,finalized_at")
+          .in("registration_id", registrationIds)
+      : Promise.resolve({ data: [] }),
+    db
+      .from("participant_manage_recovery_links")
+      .select("id,expires_at,issued_at,status")
+      .eq("participant_id", id)
+      .eq("status", "PENDING")
+      .maybeSingle(),
+  ]);
   const attendanceByRegistration = new Map((attendance ?? []).map((a) => [a.registration_id, a]));
   return (
     <>
@@ -108,6 +116,11 @@ export default async function ParticipantProfilePage({
             <p>{participantHistoryLabel(qualifyingRegistrationCount)}</p>
           </div>
           <ParticipantContactCorrectionForm participant={participant} />
+          <ParticipantManageRecoveryPanel
+            participantId={participant.id}
+            displayPhone={participant.display_phone}
+            pendingLink={pendingRecovery}
+          />
           <div className="mt-8 rounded border bg-white p-6">
             <h2 className="text-xl font-semibold">Goals</h2>
             <p className="mt-2 whitespace-pre-wrap text-slate-700">
