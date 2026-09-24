@@ -11,4 +11,5 @@
 - Separate bugs, workflow improvements, and UI/UX changes.
 - Use targeted regression first and broader regression only when risk justifies it.
 - UI/UX standards should be reusable across components and pages, not solved page by page.
+- Confirmation “Add to calendar” cards must reuse the shared participant EventCard shell (`event-card-shell` / `participant-event-card`), not a one-off confirmation-calendar card language (UAT-010).
 - Keep stable project context in canonical documents instead of repeatedly embedding it in prompts.

@@ -6058,63 +6058,23 @@ body:has(.admin-manage-event-page) {
 .confirmation-calendar-session-list.is-single {
   justify-content: center;
 }
-.confirmation-calendar-session-card {
-  display: flex;
-  flex: 0 0 43%;
-  min-height: 14rem;
-  flex-direction: column;
-  justify-content: space-between;
-  aspect-ratio: 165 / 240;
-  padding: 0.875rem 0.75rem;
-  scroll-snap-align: start;
-}
-.confirmation-calendar-session-card .confirmation-calendar-actions {
-  margin-top: auto;
-}
-.confirmation-calendar-event-card {
-  border: 2px solid #000;
-  border-radius: 1.5rem;
-  background: var(--admin-surface);
-  box-shadow:
-    0 7px 0 #000,
-    0 11px 18px rgb(0 0 0 / 18%);
-}
-.confirmation-calendar-event-card:hover {
-  box-shadow:
-    0 9px 0 #000,
-    0 13px 20px rgb(0 0 0 / 18%);
-}
-.confirmation-calendar-event-card {
+.confirmation-calendar-session-list > .participant-event-card,
+.confirmation-calendar-session-card.participant-event-card {
   flex: 0 0 clamp(13.75rem, 30vw, 15rem);
+  width: min(240px, calc(100vw - 3rem));
+  max-width: 240px;
   min-width: 0;
   min-height: 0;
   aspect-ratio: auto;
   padding: 0;
-  overflow: hidden;
+  scroll-snap-align: start;
 }
-.confirmation-calendar-event-card .event-card-media {
-  aspect-ratio: 1 / 1;
-  background-position: center;
-  background-size: cover;
-}
-.confirmation-event-art-0 .event-card-media {
-  background: linear-gradient(135deg, #174c68, #2e8f88 55%, #d7a779);
-}
-.confirmation-event-art-1 .event-card-media {
-  background: linear-gradient(135deg, #d66d55, #e8b26e 55%, #4b3a66);
-}
-.confirmation-event-art-2 .event-card-media {
-  background: linear-gradient(135deg, #24345d, #6875b8 55%, #d7e0d7);
-}
-.confirmation-calendar-event-card .event-card-caption {
-  min-height: 6.25rem;
-  padding: 1rem 1rem 1.1rem;
-  background: var(--surface);
-}
-.confirmation-booked-pill {
-  border: 1px solid color-mix(in srgb, var(--success) 65%, white);
-  background: #dff2df;
-  color: #245c35;
+.confirmation-calendar-session-card .confirmation-calendar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.45rem;
 }
 .confirmation-calendar-carousel-control {
   position: absolute;
@@ -7866,142 +7826,11 @@ body:has(.admin-manage-event-page) {
   background: #1b1e22;
   box-shadow: none;
 }
-.confirmation-page .confirmation-calendar-event-card {
-  width: min(300px, calc(100vw - 2rem));
-  flex: 0 0 min(300px, calc(100vw - 2rem));
-  border: 2px solid #08090a;
-  border-radius: 24px;
-  box-shadow:
-    0 8px 0 #08090a,
-    0 14px 24px rgb(0 0 0 / 22%);
-  overflow: hidden;
-  background: #2c3138;
-  color: #17191c;
-  text-align: left;
-  transition:
-    transform 0.35s cubic-bezier(0.15, 1, 0.25, 1),
-    box-shadow 0.35s ease;
-}
-.confirmation-page .confirmation-calendar-event-card:hover {
-  transform: translateY(-4px);
-  box-shadow:
-    0 11px 0 #08090a,
-    0 18px 26px rgb(0 0 0 / 25%);
-}
-.confirmation-page .confirmation-calendar-card-media {
-  position: relative;
-  display: block;
-  flex: none;
-  min-height: 0;
-  aspect-ratio: 1 / 1;
-  overflow: hidden;
-  background: linear-gradient(180deg, rgb(4 5 7 / 8%), rgb(4 5 7 / 90%));
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
-}
-.confirmation-page .confirmation-event-art-0 .confirmation-calendar-card-media {
-  background-image:
-    linear-gradient(180deg, rgb(4 5 7 / 8%), rgb(4 5 7 / 90%)),
-    url("/admin-assets/event-cards/strength.svg");
-}
-.confirmation-page .confirmation-event-art-1 .confirmation-calendar-card-media {
-  background-image: linear-gradient(135deg, #d66d55, #e8b26e 55%, #4b3a66);
-}
-.confirmation-page .confirmation-event-art-2 .confirmation-calendar-card-media {
-  background-image: linear-gradient(135deg, #24345d, #6875b8 55%, #d7e0d7);
-}
-.confirmation-page .confirmation-booked-pill {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  padding: 0.38rem 0.65rem;
-  border: 1px solid rgb(199 243 107 / 70%);
-  border-radius: 999px;
-  background: rgb(23 25 28 / 82%);
-  color: #c7f36b;
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-.confirmation-page .confirmation-calendar-card-title {
-  position: absolute;
-  right: 1rem;
-  bottom: 1rem;
-  left: 1rem;
-  display: block;
-  max-width: 16ch;
-  color: #f7f5f0;
-  font-family:
-    "SF Pro Heavy",
-    "SF Pro Display",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Helvetica Neue",
-    Arial,
-    sans-serif;
-  font-size: clamp(1.8rem, 3vw, 3rem);
-  font-weight: 900;
-  letter-spacing: -0.07em;
-  line-height: 0.82;
-  text-transform: uppercase;
-}
-.confirmation-page .confirmation-calendar-card-caption {
-  min-height: 7.4rem;
-  padding: 1rem 1rem 1.1rem;
-  background: #1b1e22;
-}
-.confirmation-page .confirmation-calendar-date-time {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-.confirmation-page .confirmation-calendar-date {
-  display: grid;
-  gap: 0.22rem;
-  text-transform: uppercase;
-}
-.confirmation-page .confirmation-calendar-date > span {
-  color: #ff7a3d;
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-}
-.confirmation-page .confirmation-calendar-date strong {
-  color: #f7f5f0;
-  font-size: 1.45rem;
-  letter-spacing: -0.06em;
-  line-height: 0.82;
-}
-.confirmation-page .confirmation-calendar-time {
-  color: #f7f5f0;
-  font-size: 1.25rem;
-  font-weight: 900;
-  letter-spacing: -0.05em;
-  text-align: right;
-}
-.confirmation-page .confirmation-calendar-venue {
-  margin-top: 0.6rem;
-  color: #aeb3bb;
-  font-size: 0.62rem;
-  text-transform: uppercase;
-}
-.confirmation-page .confirmation-calendar-organization {
-  margin-top: 0.35rem;
-  color: #aeb3bb;
-  font-size: 0.62rem;
-  text-transform: uppercase;
-}
 .confirmation-page .confirmation-calendar-actions {
-  justify-content: center;
+  justify-content: flex-start;
 }
-.confirmation-page .confirmation-calendar-actions-arrow {
-  margin-left: 0.5rem;
-  color: #c7f36b;
-  font-size: 1.3rem;
-  line-height: 1;
+.confirmation-page .participant-event-card .event-card-caption {
+  min-height: auto;
 }
 .confirmation-page .confirmation-booking-access {
   margin-top: 0;
@@ -11002,30 +10831,30 @@ body:has(.manage-booking-detail-page) > header {
   flex: none;
   min-height: 5rem;
 }
-.participant-events-page .event-card-metadata-grid {
+.participant-event-card .event-card-metadata-grid {
   display: grid;
   grid-template-columns: 3.6rem minmax(0, 1fr);
   grid-template-rows: auto auto;
   align-items: center;
   gap: 0.45rem 0.7rem;
 }
-.participant-events-page .event-card-date-block {
+.participant-event-card .event-card-date-block {
   display: block;
   text-align: left;
 }
-.participant-events-page .event-card-date-weekday,
-.participant-events-page .event-card-date-month {
+.participant-event-card .event-card-date-weekday,
+.participant-event-card .event-card-date-month {
   display: block;
   color: #ff7a3d;
 }
-.participant-events-page .event-card-date-weekday {
+.participant-event-card .event-card-date-weekday {
   display: block;
   font-size: 1.05rem;
   font-weight: 900;
   letter-spacing: -0.05em;
   line-height: 0.85;
 }
-.participant-events-page .event-card-date-day {
+.participant-event-card .event-card-date-day {
   display: block;
   color: #f7f5f0;
   font-size: 2.35rem;
@@ -11033,18 +10862,18 @@ body:has(.manage-booking-detail-page) > header {
   letter-spacing: -0.08em;
   line-height: 0.8;
 }
-.participant-events-page .event-card-date-month {
+.participant-event-card .event-card-date-month {
   display: block;
   font-size: 0.55rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   line-height: 1;
 }
-.participant-events-page .event-card-details {
+.participant-event-card .event-card-details {
   min-width: 7.25rem;
   text-align: left;
 }
-.participant-events-page .event-card-time {
+.participant-event-card .event-card-time {
   display: block;
   color: #f7f5f0;
   font-family:
@@ -11061,7 +10890,7 @@ body:has(.manage-booking-detail-page) > header {
   text-transform: uppercase;
   white-space: nowrap;
 }
-.participant-events-page .event-card-location {
+.participant-event-card .event-card-location {
   display: block;
   margin-top: 0.12rem;
   overflow: hidden;
@@ -11069,7 +10898,7 @@ body:has(.manage-booking-detail-page) > header {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.participant-events-page .event-card-location strong {
+.participant-event-card .event-card-location strong {
   color: #c7f36b;
   font-size: 0.68rem;
   font-weight: 400;

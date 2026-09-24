@@ -8,6 +8,7 @@ import { WhatToBring } from "@/components/registration/what-to-bring";
 import { CopyDirections } from "@/components/registration/copy-directions";
 import { ArakkisCard } from "@/components/registration/arakkis-card";
 import { ConfirmationCalendarCarousel } from "@/components/registration/confirmation-calendar-carousel";
+import { ParticipantEventCard } from "@/components/events/participant-event-card";
 import { googleMapsDirectionsUrl } from "@/lib/registration/maps";
 import { CopyBookingLink } from "@/components/registration/copy-booking-link";
 import { getConfirmationParticipantId } from "@/lib/registration/booking-management";
@@ -15,6 +16,7 @@ import { resolveRememberedParticipant } from "@/lib/registration/device";
 import { eventCardAsset } from "@/lib/config/admin-visual-assets";
 import { designAssetPublicUrl } from "@/lib/config/design-assets";
 import { bookingManagementHref } from "@/lib/registration/booking-links";
+import { participantDisplayName } from "@/lib/registration/display";
 import {
   isHostedAccessCorrelationId,
   logHostedAccessDiagnostic,
@@ -297,76 +299,57 @@ export default async function ConfirmationPage({
                 </span>
               </h2>
               <ConfirmationCalendarCarousel>
-                {successful.map((event, index) => (
-                  <ArakkisCard
-                    key={event.event_id}
-                    className={`confirmation-calendar-row confirmation-calendar-session-card confirmation-calendar-card confirmation-calendar-event-card confirmation-event-art-${index % 3}`}
-                  >
-                    <span
-                      className="confirmation-calendar-card-media"
-                      style={{
-                        backgroundImage: `linear-gradient(135deg, rgba(22,34,30,.14), rgba(22,34,30,.48)), url(${eventImageById.get(event.event_id) ?? eventCardAsset(event.name)})`,
-                        backgroundPosition: eventImageFocalById.get(event.event_id) ?? "center",
+                {successful.map((event) => {
+                  const dateParts = new Intl.DateTimeFormat("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    timeZone: event.timezone,
+                  }).formatToParts(new Date(event.starts_at));
+                  return (
+                    <ParticipantEventCard
+                      key={event.event_id}
+                      className="confirmation-calendar-row confirmation-calendar-session-card"
+                      booked
+                      asLink={false}
+                      event={{
+                        id: event.event_id,
+                        name: bookingTitle(event.name).title,
+                        date: {
+                          weekday: dateParts.find((part) => part.type === "weekday")?.value ?? "",
+                          day: dateParts.find((part) => part.type === "day")?.value ?? "",
+                          month: dateParts.find((part) => part.type === "month")?.value ?? "",
+                        },
+                        time: timeFormatter(event.timezone).format(new Date(event.starts_at)),
+                        organizationName: participantDisplayName(event.host_organization_name),
+                        venueName: participantDisplayName(event.venue_name),
+                        spots: 0,
+                        availability: "OPEN",
+                        imageUrl: eventImageById.get(event.event_id) ?? eventCardAsset(event.name),
+                        focalPosition: eventImageFocalById.get(event.event_id) ?? "center",
+                        titleColor: event.event_title_color ?? "#f7f5f0",
                       }}
-                    >
-                      <span className="confirmation-booked-pill">BOOKED</span>
-                      <span
-                        className="confirmation-calendar-card-title"
-                        style={{ color: event.event_title_color ?? "#FFFFFF" }}
-                      >
-                        {bookingTitle(event.name).title}
-                      </span>
-                    </span>
-                    <span className="confirmation-calendar-card-caption">
-                      <span className="confirmation-calendar-date-time">
-                        <span className="confirmation-calendar-date">
-                          <span>
-                            {new Intl.DateTimeFormat("en-US", {
-                              weekday: "short",
-                              timeZone: event.timezone,
-                            }).format(new Date(event.starts_at))}
-                          </span>
-                          <strong>
-                            {new Intl.DateTimeFormat("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              timeZone: event.timezone,
-                            }).format(new Date(event.starts_at))}
-                          </strong>
+                      footer={
+                        <span className="confirmation-calendar-actions">
+                          <a
+                            className="confirmation-calendar-link confirmation-calendar-link-primary"
+                            href={googleCalendarUrl(toCalendarEvent(event))}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Google Calendar
+                          </a>
+                          <Link
+                            className="confirmation-calendar-link confirmation-calendar-link-secondary"
+                            href={`/registration/confirmation/ics?token=${encodeURIComponent(token)}&event=${encodeURIComponent(event.event_id)}`}
+                          >
+                            iCal
+                          </Link>
                         </span>
-                        <strong className="confirmation-calendar-time">
-                          {timeFormatter(event.timezone).format(new Date(event.starts_at))}
-                        </strong>
-                      </span>
-                      <span className="confirmation-calendar-organization block">
-                        {event.host_organization_name}
-                      </span>
-                      <span className="confirmation-calendar-venue block">{event.venue_name}</span>
-                      <span className="confirmation-calendar-actions">
-                        <a
-                          className="confirmation-calendar-link confirmation-calendar-link-primary"
-                          href={googleCalendarUrl(toCalendarEvent(event))}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Google Calendar
-                        </a>
-                        <Link
-                          className="confirmation-calendar-link confirmation-calendar-link-secondary"
-                          href={`/registration/confirmation/ics?token=${encodeURIComponent(token)}&event=${encodeURIComponent(event.event_id)}`}
-                        >
-                          iCal
-                        </Link>
-                        <span
-                          className="confirmation-calendar-actions-arrow arakkis-arrow-icon"
-                          aria-hidden="true"
-                        >
-                          ←
-                        </span>
-                      </span>
-                    </span>
-                  </ArakkisCard>
-                ))}
+                      }
+                    />
+                  );
+                })}
               </ConfirmationCalendarCarousel>
             </section>
           ) : null}
