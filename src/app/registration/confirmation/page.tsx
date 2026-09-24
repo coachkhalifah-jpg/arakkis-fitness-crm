@@ -3,6 +3,12 @@ import { Card } from "@/components/ui/card";
 import { PublicErrorState } from "@/components/registration/public-error-state";
 import { ConfirmationRememberDevice } from "@/components/registration/confirmation-remember-device";
 import { createClient } from "@/lib/db/server";
+import {
+  formatInTimezone,
+  formatToPartsInTimezone,
+  safeDate,
+  safeTimezone,
+} from "@/lib/registration/datetime";
 import { googleCalendarUrl, type CalendarEvent } from "@/lib/registration/calendar";
 import { participantInstructionLines, WhatToBring } from "@/components/registration/what-to-bring";
 import { CopyDirections } from "@/components/registration/copy-directions";
@@ -50,31 +56,6 @@ const reasonText: Record<string, string> = {
   INELIGIBLE: "You are not eligible for this class.",
   NOT_FOUND: "This class is no longer available.",
 };
-
-function safeTimezone(timezone: string | null | undefined) {
-  const candidate = timezone?.trim() || "UTC";
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone: candidate }).format(new Date(0));
-    return candidate;
-  } catch {
-    return "UTC";
-  }
-}
-
-const dateFormatter = (timezone: string | null | undefined) =>
-  new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-    timeZone: safeTimezone(timezone),
-  });
-
-const timeFormatter = (timezone: string | null | undefined) =>
-  new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: safeTimezone(timezone),
-  });
 
 function addressFor(event: ConfirmationEvent) {
   const street = event.venue_street?.trim();
@@ -177,9 +158,17 @@ export default async function ConfirmationPage({
     remember_resolution: rememberedParticipant ? "matched" : "missing",
   });
   const events = result.events ?? [];
-  const successful = events.filter((event) => event.success);
-  const { data: eventImageAssets } = successful.length
-    ? await db
+  const successful = events.filter(
+    (event) => event.success && Boolean(event.event_id) && Boolean(event.registration_id),
+  );
+  let eventImageAssets: {
+    event_id: string;
+    storage_path: string;
+    focal_position: string | null;
+  }[] = [];
+  if (successful.length) {
+    try {
+      const imageQuery = await db
         .from("design_assets")
         .select("event_id,storage_path,focal_position")
         .eq("asset_type", "EVENT_IMAGE_DESKTOP")
@@ -187,16 +176,19 @@ export default async function ConfirmationPage({
         .in(
           "event_id",
           successful.map((event) => event.event_id),
-        )
-    : { data: [] };
+        );
+      eventImageAssets = imageQuery.data ?? [];
+    } catch {
+      eventImageAssets = [];
+    }
+  }
   const eventImageById = new Map(
-    (eventImageAssets ?? []).map((asset) => [
-      asset.event_id,
-      designAssetPublicUrl(asset.storage_path),
-    ]),
+    eventImageAssets
+      .filter((asset) => asset.event_id && asset.storage_path)
+      .map((asset) => [asset.event_id, designAssetPublicUrl(asset.storage_path)]),
   );
   const eventImageFocalById = new Map(
-    (eventImageAssets ?? []).map((asset) => [asset.event_id, asset.focal_position ?? "center"]),
+    eventImageAssets.map((asset) => [asset.event_id, asset.focal_position ?? "center"]),
   );
   const instructions = Array.from(
     new Set(
@@ -212,14 +204,17 @@ export default async function ConfirmationPage({
       ]),
     ).values(),
   );
-  const firstName = (result.participant_name ?? "").trim().split(/\s+/)[0] || "there";
+  const firstName =
+    String(result.participant_name ?? "")
+      .trim()
+      .split(/\s+/)[0] || "there";
   const toCalendarEvent = (event: ConfirmationEvent): CalendarEvent => ({
     eventId: event.event_id,
     name: bookingTitle(event.name).title,
     description: event.description,
     participantInstructions: event.participant_instructions,
-    startsAt: event.starts_at ?? new Date(0).toISOString(),
-    endsAt: event.ends_at ?? new Date(0).toISOString(),
+    startsAt: safeDate(event.starts_at).toISOString(),
+    endsAt: safeDate(event.ends_at).toISOString(),
     timezone: safeTimezone(event.timezone),
     venueName: event.venue_name ?? "",
     venueStreet: event.venue_street ?? "",
@@ -308,12 +303,11 @@ export default async function ConfirmationPage({
                 {successful.map((event) => {
                   const timezone = safeTimezone(event.timezone);
                   const eventName = bookingTitle(event.name).title;
-                  const dateParts = new Intl.DateTimeFormat("en-US", {
+                  const dateParts = formatToPartsInTimezone(event.starts_at, timezone, {
                     weekday: "short",
                     month: "short",
                     day: "numeric",
-                    timeZone: timezone,
-                  }).formatToParts(new Date(event.starts_at ?? 0));
+                  });
                   return (
                     <ParticipantEventCard
                       key={event.event_id}
@@ -328,7 +322,10 @@ export default async function ConfirmationPage({
                           day: dateParts.find((part) => part.type === "day")?.value ?? "",
                           month: dateParts.find((part) => part.type === "month")?.value ?? "",
                         },
-                        time: timeFormatter(timezone).format(new Date(event.starts_at ?? 0)),
+                        time: formatInTimezone(event.starts_at, timezone, {
+                          hour: "numeric",
+                          minute: "2-digit",
+                        }),
                         organizationName: participantDisplayName(event.host_organization_name),
                         venueName: participantDisplayName(event.venue_name),
                         spots: 0,
@@ -415,7 +412,11 @@ export default async function ConfirmationPage({
                   <div key={`${event.event_id}-directions`}>
                     {directions.length > 1 ? (
                       <p className="confirmation-calendar-date text-sm text-[var(--confirmation-text)]">
-                        {dateFormatter(event.timezone).format(new Date(event.starts_at ?? 0))}
+                        {formatInTimezone(event.starts_at, event.timezone, {
+                          weekday: "long",
+                          month: "short",
+                          day: "numeric",
+                        })}
                       </p>
                     ) : null}
                     <ArakkisCard interactive className="confirmation-address-block">
@@ -481,16 +482,12 @@ export default async function ConfirmationPage({
                     >
                       <span className="confirmation-booking-access-event">
                         <span className="confirmation-booking-access-date">
-                          {new Intl.DateTimeFormat("en-US", {
-                            weekday: "short",
-                            timeZone: safeTimezone(event.timezone),
-                          }).format(new Date(event.starts_at ?? 0))}
+                          {formatInTimezone(event.starts_at, event.timezone, { weekday: "short" })}
                           <span aria-hidden="true"> · </span>
-                          {new Intl.DateTimeFormat("en-US", {
+                          {formatInTimezone(event.starts_at, event.timezone, {
                             month: "short",
                             day: "numeric",
-                            timeZone: safeTimezone(event.timezone),
-                          }).format(new Date(event.starts_at ?? 0))}
+                          })}
                         </span>
                         <span>{bookingTitle(event.name).title}</span>
                       </span>

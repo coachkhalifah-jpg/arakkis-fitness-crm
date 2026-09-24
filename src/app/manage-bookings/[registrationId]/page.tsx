@@ -13,14 +13,7 @@ import {
   isHostedAccessCorrelationId,
   logHostedAccessDiagnostic,
 } from "@/lib/diagnostics/hosted-access";
-
-function formatTime(value: string, timezone: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: timezone,
-  }).format(new Date(value));
-}
+import { formatInTimezone } from "@/lib/registration/datetime";
 
 export default async function ManageBookingPage({
   params,
@@ -80,15 +73,18 @@ export default async function ManageBookingPage({
     registration_match: true,
     booking_result: "resolved",
   });
-  const dateLabel = new Intl.DateTimeFormat("en-US", {
+  const dateLabel = formatInTimezone(booking.starts_at, booking.timezone, {
     weekday: "short",
     month: "short",
     day: "numeric",
-    timeZone: booking.timezone,
-  })
-    .format(new Date(booking.starts_at))
-    .replace(",", " ·");
-  const address = `${booking.venue_street}, ${booking.venue_city}, ${booking.venue_state} ${booking.venue_postal_code}`;
+  }).replace(",", " ·");
+  const address =
+    booking.venue_street?.trim() &&
+    booking.venue_city?.trim() &&
+    booking.venue_state?.trim() &&
+    booking.venue_postal_code?.trim()
+      ? `${booking.venue_street}, ${booking.venue_city}, ${booking.venue_state} ${booking.venue_postal_code}`
+      : null;
   const directionsUrl = googleMapsDirectionsUrl(address);
   const correlationQuery = `&correlationId=${encodeURIComponent(correlationId)}`;
   const confirmationHref = confirmationToken
@@ -109,18 +105,29 @@ export default async function ManageBookingPage({
       </header>
 
       <section className="manage-booking-detail-hero" aria-labelledby="manage-booking-detail-title">
-        <p className="manage-booking-detail-organization">{booking.host_organization_name}</p>
+        <p className="manage-booking-detail-organization">
+          {booking.host_organization_name || "Organization"}
+        </p>
         <h1 id="manage-booking-detail-title">{booking.name}</h1>
         <p className="manage-booking-detail-status">Confirmed booking</p>
       </section>
 
       <section className="manage-booking-detail-facts" aria-label="Booking details">
         <p>{dateLabel}</p>
-        <p>{formatTime(booking.starts_at, booking.timezone)}</p>
+        <p>
+          {formatInTimezone(booking.starts_at, booking.timezone, {
+            hour: "numeric",
+            minute: "2-digit",
+          })}
+        </p>
         <p className="manage-booking-detail-venue">
-          {booking.venue_name}
-          <br />
-          {booking.venue_street}, {booking.venue_city}, {booking.venue_state}
+          {booking.venue_name || "Venue"}
+          {booking.venue_street ? (
+            <>
+              <br />
+              {booking.venue_street}, {booking.venue_city}, {booking.venue_state}
+            </>
+          ) : null}
         </p>
         {booking.location_updated ? (
           <p className="manage-booking-detail-location-note">

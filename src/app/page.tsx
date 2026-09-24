@@ -8,11 +8,10 @@ import { resolveRememberedParticipant } from "@/lib/registration/device";
 import { splitManagedBookings } from "@/lib/registration/booking-presentation";
 import { ScrollTurningLine } from "@/components/home/scroll-turning-line";
 import { PublicLandingGooeyTitle } from "@/components/home/public-landing-gooey-title";
+import { formatInTimezone } from "@/lib/registration/datetime";
 
 function formatDate(value: string, timezone: string, options: Intl.DateTimeFormatOptions) {
-  return new Intl.DateTimeFormat("en-US", { ...options, timeZone: timezone }).format(
-    new Date(value),
-  );
+  return formatInTimezone(value, timezone, options);
 }
 
 function formatTime(value: string, timezone: string) {

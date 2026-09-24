@@ -34,7 +34,9 @@ export function googleCalendarUrl(event: CalendarEvent) {
 }
 
 function icsDate(value: string) {
-  return new Date(value)
+  const date = new Date(value);
+  const safe = Number.isNaN(date.getTime()) ? new Date(0) : date;
+  return safe
     .toISOString()
     .replace(/[-:]/g, "")
     .replace(/\.\d{3}Z$/, "Z");

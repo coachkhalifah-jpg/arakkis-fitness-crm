@@ -9,6 +9,7 @@ import {
   managedBookingFromConfirmationEvent,
   type ConfirmationBookingEvent,
 } from "@/lib/registration/confirmation-booking";
+import { safeDate, safeTimezone } from "@/lib/registration/datetime";
 
 export type ManagedBooking = {
   registration_id: string;
@@ -53,6 +54,38 @@ export type BookingAlternative = {
 export type BookingActionError = {
   error: string;
 };
+
+/** Normalize RPC booking payloads so UI date/venue formatting cannot throw. */
+export function normalizeManagedBooking(
+  booking: Partial<ManagedBooking> &
+    Pick<
+      ManagedBooking,
+      "registration_id" | "event_id" | "registration_status" | "registration_outcome"
+    >,
+): ManagedBooking {
+  return {
+    registration_id: booking.registration_id,
+    event_id: booking.event_id,
+    name: booking.name?.trim() || "Class",
+    description: booking.description ?? null,
+    participant_instructions: booking.participant_instructions ?? null,
+    starts_at: safeDate(booking.starts_at).toISOString(),
+    ends_at: safeDate(booking.ends_at).toISOString(),
+    timezone: safeTimezone(booking.timezone),
+    venue_name: booking.venue_name ?? "",
+    venue_street: booking.venue_street ?? "",
+    venue_city: booking.venue_city ?? "",
+    venue_state: booking.venue_state ?? "",
+    venue_postal_code: booking.venue_postal_code ?? "",
+    host_organization_name: booking.host_organization_name ?? "",
+    location_updated: Boolean(booking.location_updated),
+    registration_status: booking.registration_status,
+    registration_outcome: booking.registration_outcome,
+    series_slug: booking.series_slug ?? null,
+    communication_url: booking.communication_url ?? null,
+    communication_label: booking.communication_label ?? null,
+  };
+}
 
 export function mapBookingError(message: string) {
   const normalized = message.toLowerCase();
@@ -126,7 +159,14 @@ export async function getManagedBookings(correlationId = crypto.randomUUID()) {
     booking_rpc_status: error ? "error" : data ? "success" : "not_found",
     booking_result: data ? "resolved" : error ? "error" : "not_found",
   });
-  return error || !data ? null : data;
+  return error || !data
+    ? null
+    : {
+        participant_id: data.participant_id,
+        bookings: (data.bookings ?? []).map((booking) =>
+          normalizeManagedBooking(booking as ManagedBooking),
+        ),
+      };
 }
 
 export async function getBookingAlternatives(registrationId: string, accessToken?: string) {
@@ -204,7 +244,7 @@ export async function getScopedBooking(
       registration_match: true,
       booking_result: "resolved",
     });
-    return data as ManagedBooking;
+    return normalizeManagedBooking(data as ManagedBooking);
   }
 
   const fallback = await bookingFromConfirmationFallback(registrationId, confirmationToken);
@@ -227,7 +267,7 @@ export async function getScopedBooking(
     registration_match: Boolean(fallback),
     booking_result: fallback ? "resolved" : error ? "error" : "not_found",
   });
-  return fallback;
+  return fallback ? normalizeManagedBooking(fallback) : null;
 }
 
 export async function getConfirmationParticipantId(
@@ -235,18 +275,28 @@ export async function getConfirmationParticipantId(
   correlationId = crypto.randomUUID(),
 ) {
   if (!confirmationToken) return null;
-  const db = createPrivilegedClient();
-  const { data, error } = await db.rpc("get_confirmation_participant_id", {
-    p_token: confirmationToken,
-  } as never);
-  if (error || !data) {
+  try {
+    const db = createPrivilegedClient();
+    const { data, error } = await db.rpc("get_confirmation_participant_id", {
+      p_token: confirmationToken,
+    } as never);
+    if (error || !data) {
+      logHostedAccessDiagnostic({
+        correlation_id: correlationId,
+        boundary: "confirmation_route",
+        outcome_category: error ? "rpc_failure" : "data_state_failure",
+      });
+      return null;
+    }
+    return String(data);
+  } catch {
     logHostedAccessDiagnostic({
       correlation_id: correlationId,
       boundary: "confirmation_route",
-      outcome_category: error ? "rpc_failure" : "data_state_failure",
+      outcome_category: "rpc_failure",
     });
+    return null;
   }
-  return error || !data ? null : String(data);
 }
 
 export async function manageBooking(
