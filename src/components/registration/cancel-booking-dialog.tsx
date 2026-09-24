@@ -4,22 +4,21 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import type { ManagedBooking } from "@/lib/registration/booking-management";
 import { cancelBookingAction } from "@/lib/registration/booking-actions";
 import type { BookingActionError } from "@/lib/registration/booking-management";
+import { formatInTimezone } from "@/lib/registration/datetime";
 
 function formatDate(value: string, timezone: string) {
-  return new Intl.DateTimeFormat("en-US", {
+  return formatInTimezone(value, timezone, {
     weekday: "long",
     month: "long",
     day: "numeric",
-    timeZone: timezone,
-  }).format(new Date(value));
+  });
 }
 
 function formatTime(value: string, timezone: string) {
-  return new Intl.DateTimeFormat("en-US", {
+  return formatInTimezone(value, timezone, {
     hour: "numeric",
     minute: "2-digit",
-    timeZone: timezone,
-  }).format(new Date(value));
+  });
 }
 
 export function CancelBookingDialog({
