@@ -1,10 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
-import {
-  participantInstructionLines,
-  WhatToBring,
-} from "@/components/registration/what-to-bring";
+import { afterEach, describe, expect, it } from "vitest";
+import { participantInstructionLines, WhatToBring } from "@/components/registration/what-to-bring";
+
+afterEach(() => cleanup());
 
 describe("participantInstructionLines", () => {
   it("preserves non-empty instruction lines from participant_instructions text", () => {
@@ -39,13 +38,7 @@ describe("Before you arrive prep chrome", () => {
 
   it("collapses and expands the shared prep disclosure", async () => {
     const user = userEvent.setup();
-    render(
-      <WhatToBring
-        eventId="prep-toggle"
-        instructions={["Wraps"]}
-        variant="northstar"
-      />,
-    );
+    render(<WhatToBring eventId="prep-toggle" instructions={["Wraps"]} variant="northstar" />);
 
     const trigger = screen.getByRole("button", { name: "Before you arrive" });
     expect(trigger).toHaveAttribute("aria-expanded", "true");

@@ -4,10 +4,7 @@ import { PublicErrorState } from "@/components/registration/public-error-state";
 import { ConfirmationRememberDevice } from "@/components/registration/confirmation-remember-device";
 import { createClient } from "@/lib/db/server";
 import { googleCalendarUrl, type CalendarEvent } from "@/lib/registration/calendar";
-import {
-  participantInstructionLines,
-  WhatToBring,
-} from "@/components/registration/what-to-bring";
+import { participantInstructionLines, WhatToBring } from "@/components/registration/what-to-bring";
 import { CopyDirections } from "@/components/registration/copy-directions";
 import { ArakkisCard } from "@/components/registration/arakkis-card";
 import { ConfirmationCalendarCarousel } from "@/components/registration/confirmation-calendar-carousel";

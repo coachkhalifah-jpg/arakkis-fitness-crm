@@ -7,10 +7,7 @@ import {
 import { CancelBookingDialog } from "@/components/registration/cancel-booking-dialog";
 import { TransferBookingDialog } from "@/components/registration/transfer-booking-dialog";
 import { PublicErrorState } from "@/components/registration/public-error-state";
-import {
-  participantInstructionLines,
-  WhatToBring,
-} from "@/components/registration/what-to-bring";
+import { participantInstructionLines, WhatToBring } from "@/components/registration/what-to-bring";
 import { googleMapsDirectionsUrl } from "@/lib/registration/maps";
 import {
   isHostedAccessCorrelationId,
