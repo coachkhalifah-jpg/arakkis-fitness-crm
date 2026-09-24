@@ -7746,7 +7746,8 @@ body:has(.admin-manage-event-page) {
   letter-spacing: -0.02em;
   line-height: 1.25;
 }
-.confirmation-page .confirmation-prep {
+.confirmation-page .confirmation-prep,
+.manage-booking-detail-page .confirmation-prep {
   width: 100%;
   margin: 2rem 0 0;
   border: 1px solid #41474e;
@@ -7755,16 +7756,22 @@ body:has(.admin-manage-event-page) {
   padding: 0;
   text-align: left;
 }
-.confirmation-page .confirmation-prep:hover {
+.manage-booking-detail-page .confirmation-prep {
+  margin: 0;
+}
+.confirmation-page .confirmation-prep:hover,
+.manage-booking-detail-page .confirmation-prep:hover {
   border-color: #ff7a3d;
   padding-left: 0.75rem;
 }
-.confirmation-page .confirmation-prep-content {
+.confirmation-page .confirmation-prep-content,
+.manage-booking-detail-page .confirmation-prep-content {
   display: grid;
   grid-template-rows: 0fr;
   transition: grid-template-rows 0.48s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.confirmation-page .confirmation-prep-content > p {
+.confirmation-page .confirmation-prep-content > .confirmation-prep-list,
+.manage-booking-detail-page .confirmation-prep-content > .confirmation-prep-list {
   min-height: 0;
   overflow: hidden;
   opacity: 0;
@@ -7773,14 +7780,20 @@ body:has(.admin-manage-event-page) {
     opacity 0.32s ease,
     transform 0.48s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.confirmation-page .confirmation-prep.is-expanded .confirmation-prep-content {
+.confirmation-page .confirmation-prep.is-expanded .confirmation-prep-content,
+.manage-booking-detail-page .confirmation-prep.is-expanded .confirmation-prep-content {
   grid-template-rows: 1fr;
 }
-.confirmation-page .confirmation-prep.is-expanded .confirmation-prep-content > p {
+.confirmation-page .confirmation-prep.is-expanded .confirmation-prep-content > .confirmation-prep-list,
+.manage-booking-detail-page
+  .confirmation-prep.is-expanded
+  .confirmation-prep-content
+  > .confirmation-prep-list {
   opacity: 1;
   transform: translateY(0);
 }
-.confirmation-page .confirmation-prep-toggle {
+.confirmation-page .confirmation-prep-toggle,
+.manage-booking-detail-page .confirmation-prep-toggle {
   position: relative;
   display: flex;
   width: 100%;
@@ -7796,25 +7809,33 @@ body:has(.admin-manage-event-page) {
   text-transform: uppercase;
   transition: padding-left 0.35s ease;
 }
-.confirmation-page .confirmation-prep-toggle .arakkis-disclosure-toggle-icon {
+.confirmation-page .confirmation-prep-toggle .arakkis-disclosure-toggle-icon,
+.manage-booking-detail-page .confirmation-prep-toggle .arakkis-disclosure-toggle-icon {
   position: absolute;
   right: 1.15rem;
   color: #ff7a3d;
   font-size: 1.2rem;
   font-weight: 400;
 }
-.confirmation-page .confirmation-prep p {
+.confirmation-page .confirmation-prep-list,
+.manage-booking-detail-page .confirmation-prep-list {
   margin: 0;
   padding: 0 1.15rem 1.15rem;
+  list-style: none;
   color: #aeb3bb;
   font-size: 0.9rem;
   line-height: 1.2;
   text-align: center;
-  white-space: pre-wrap;
+}
+.confirmation-page .confirmation-prep-list li + li,
+.manage-booking-detail-page .confirmation-prep-list li + li {
+  margin-top: 0.65rem;
 }
 @media (prefers-reduced-motion: reduce) {
   .confirmation-page .confirmation-prep-content,
-  .confirmation-page .confirmation-prep-content > p {
+  .confirmation-page .confirmation-prep-content > .confirmation-prep-list,
+  .manage-booking-detail-page .confirmation-prep-content,
+  .manage-booking-detail-page .confirmation-prep-content > .confirmation-prep-list {
     transition: none;
   }
 }
@@ -8754,29 +8775,6 @@ body:has(.manage-booking-detail-page) > header {
 .manage-booking-detail-prep {
   border-bottom: 1px solid #59616b;
   padding: 2rem 0 2.25rem;
-}
-.manage-booking-detail-prep h2 {
-  margin: 0;
-  color: #f7f5f0;
-  font-size: 0.65rem;
-  font-weight: 400;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-.manage-booking-detail-prep p {
-  max-width: 38rem;
-  margin: 1.75rem 0 0;
-  color: #f7f5f0;
-  font-family:
-    "SF Pro Display",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Helvetica Neue",
-    Arial,
-    sans-serif;
-  font-size: 1rem;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
 }
 .manage-booking-detail-actions {
   display: grid;

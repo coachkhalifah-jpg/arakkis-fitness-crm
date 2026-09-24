@@ -7,6 +7,10 @@ import {
 import { CancelBookingDialog } from "@/components/registration/cancel-booking-dialog";
 import { TransferBookingDialog } from "@/components/registration/transfer-booking-dialog";
 import { PublicErrorState } from "@/components/registration/public-error-state";
+import {
+  participantInstructionLines,
+  WhatToBring,
+} from "@/components/registration/what-to-bring";
 import { googleMapsDirectionsUrl } from "@/lib/registration/maps";
 import {
   isHostedAccessCorrelationId,
@@ -97,6 +101,7 @@ export default async function ManageBookingPage({
     booking.registration_status === "REGISTERED" && booking.registration_outcome === "ACTIVE"
       ? await getBookingAlternatives(registrationId, confirmationToken || undefined)
       : null;
+  const prepInstructions = participantInstructionLines(booking.participant_instructions);
   return (
     <main className="manage-booking-detail-page">
       <header className="manage-booking-detail-header">
@@ -127,13 +132,13 @@ export default async function ManageBookingPage({
         ) : null}
       </section>
 
-      {booking.participant_instructions ? (
-        <section
-          className="manage-booking-detail-prep"
-          aria-labelledby="manage-booking-detail-prep-title"
-        >
-          <h2 id="manage-booking-detail-prep-title">Before you arrive</h2>
-          <p>{booking.participant_instructions}</p>
+      {prepInstructions.length > 0 ? (
+        <section className="manage-booking-detail-prep" aria-label="Before you arrive">
+          <WhatToBring
+            eventId={booking.registration_id}
+            instructions={prepInstructions}
+            variant="northstar"
+          />
         </section>
       ) : null}
 

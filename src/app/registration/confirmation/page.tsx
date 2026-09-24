@@ -4,7 +4,10 @@ import { PublicErrorState } from "@/components/registration/public-error-state";
 import { ConfirmationRememberDevice } from "@/components/registration/confirmation-remember-device";
 import { createClient } from "@/lib/db/server";
 import { googleCalendarUrl, type CalendarEvent } from "@/lib/registration/calendar";
-import { WhatToBring } from "@/components/registration/what-to-bring";
+import {
+  participantInstructionLines,
+  WhatToBring,
+} from "@/components/registration/what-to-bring";
 import { CopyDirections } from "@/components/registration/copy-directions";
 import { ArakkisCard } from "@/components/registration/arakkis-card";
 import { ConfirmationCalendarCarousel } from "@/components/registration/confirmation-calendar-carousel";
@@ -65,13 +68,6 @@ const timeFormatter = (timezone: string) =>
     minute: "2-digit",
     timeZone: timezone,
   });
-
-function instructionLines(instructions: string | null | undefined) {
-  return (instructions ?? "")
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-}
 
 function addressFor(event: ConfirmationEvent) {
   const street = event.venue_street?.trim();
@@ -195,7 +191,9 @@ export default async function ConfirmationPage({
     (eventImageAssets ?? []).map((asset) => [asset.event_id, asset.focal_position ?? "center"]),
   );
   const instructions = Array.from(
-    new Set(successful.flatMap((event) => instructionLines(event.participant_instructions))),
+    new Set(
+      successful.flatMap((event) => participantInstructionLines(event.participant_instructions)),
+    ),
   );
   const communicationEvent = successful.find((event) => event.communication_url);
   const directions = Array.from(
