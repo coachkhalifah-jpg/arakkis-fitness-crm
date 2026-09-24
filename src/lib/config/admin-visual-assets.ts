@@ -20,8 +20,8 @@ export const adminVisualAssets = {
 
 export type AdminPageBackground = keyof typeof adminVisualAssets.pageBackgrounds;
 
-export function eventCardAsset(name: string) {
-  const normalized = name.toLowerCase();
+export function eventCardAsset(name: string | null | undefined) {
+  const normalized = (name ?? "").toLowerCase();
   if (normalized.includes("box")) return adminVisualAssets.eventCards.boxing;
   if (normalized.includes("strength") || normalized.includes("lift")) {
     return adminVisualAssets.eventCards.strength;

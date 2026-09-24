@@ -29,15 +29,15 @@ type ConfirmationEvent = CalendarEvent & {
   event_title_color?: string | null;
   success: boolean;
   reason?: string | null;
-  venue_name: string;
-  venue_street: string;
-  venue_city: string;
-  venue_state: string;
-  venue_postal_code: string;
-  starts_at: string;
-  ends_at: string;
+  venue_name: string | null;
+  venue_street: string | null;
+  venue_city: string | null;
+  venue_state: string | null;
+  venue_postal_code: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
   participant_instructions?: string | null;
-  host_organization_name: string;
+  host_organization_name: string | null;
   communication_url?: string | null;
   communication_label?: string | null;
 };
@@ -51,19 +51,29 @@ const reasonText: Record<string, string> = {
   NOT_FOUND: "This class is no longer available.",
 };
 
-const dateFormatter = (timezone: string) =>
+function safeTimezone(timezone: string | null | undefined) {
+  const candidate = timezone?.trim() || "UTC";
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: candidate }).format(new Date(0));
+    return candidate;
+  } catch {
+    return "UTC";
+  }
+}
+
+const dateFormatter = (timezone: string | null | undefined) =>
   new Intl.DateTimeFormat("en-US", {
     weekday: "long",
     month: "short",
     day: "numeric",
-    timeZone: timezone,
+    timeZone: safeTimezone(timezone),
   });
 
-const timeFormatter = (timezone: string) =>
+const timeFormatter = (timezone: string | null | undefined) =>
   new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "2-digit",
-    timeZone: timezone,
+    timeZone: safeTimezone(timezone),
   });
 
 function addressFor(event: ConfirmationEvent) {
@@ -75,10 +85,11 @@ function addressFor(event: ConfirmationEvent) {
   return `${street}, ${city}, ${state} ${postalCode}`;
 }
 
-function bookingTitle(name: string) {
-  const match = name.match(/^(.*?)(?:\s+—\s+(This Week|Next Week))$/);
+function bookingTitle(name: string | null | undefined) {
+  const value = name?.trim() || "Class";
+  const match = value.match(/^(.*?)(?:\s+—\s+(This Week|Next Week))$/);
   return {
-    title: match?.[1] ?? name,
+    title: match?.[1] ?? value,
     week: match?.[2] ?? null,
   };
 }
@@ -201,20 +212,20 @@ export default async function ConfirmationPage({
       ]),
     ).values(),
   );
-  const firstName = result.participant_name.trim().split(/\s+/)[0] || "there";
+  const firstName = (result.participant_name ?? "").trim().split(/\s+/)[0] || "there";
   const toCalendarEvent = (event: ConfirmationEvent): CalendarEvent => ({
     eventId: event.event_id,
-    name: event.name,
+    name: bookingTitle(event.name).title,
     description: event.description,
     participantInstructions: event.participant_instructions,
-    startsAt: event.starts_at,
-    endsAt: event.ends_at,
-    timezone: event.timezone,
-    venueName: event.venue_name,
-    venueStreet: event.venue_street,
-    venueCity: event.venue_city,
-    venueState: event.venue_state,
-    venuePostalCode: event.venue_postal_code,
+    startsAt: event.starts_at ?? new Date(0).toISOString(),
+    endsAt: event.ends_at ?? new Date(0).toISOString(),
+    timezone: safeTimezone(event.timezone),
+    venueName: event.venue_name ?? "",
+    venueStreet: event.venue_street ?? "",
+    venueCity: event.venue_city ?? "",
+    venueState: event.venue_state ?? "",
+    venuePostalCode: event.venue_postal_code ?? "",
   });
 
   return (
@@ -295,12 +306,14 @@ export default async function ConfirmationPage({
               </h2>
               <ConfirmationCalendarCarousel>
                 {successful.map((event) => {
+                  const timezone = safeTimezone(event.timezone);
+                  const eventName = bookingTitle(event.name).title;
                   const dateParts = new Intl.DateTimeFormat("en-US", {
                     weekday: "short",
                     month: "short",
                     day: "numeric",
-                    timeZone: event.timezone,
-                  }).formatToParts(new Date(event.starts_at));
+                    timeZone: timezone,
+                  }).formatToParts(new Date(event.starts_at ?? 0));
                   return (
                     <ParticipantEventCard
                       key={event.event_id}
@@ -309,18 +322,18 @@ export default async function ConfirmationPage({
                       asLink={false}
                       event={{
                         id: event.event_id,
-                        name: bookingTitle(event.name).title,
+                        name: eventName,
                         date: {
                           weekday: dateParts.find((part) => part.type === "weekday")?.value ?? "",
                           day: dateParts.find((part) => part.type === "day")?.value ?? "",
                           month: dateParts.find((part) => part.type === "month")?.value ?? "",
                         },
-                        time: timeFormatter(event.timezone).format(new Date(event.starts_at)),
+                        time: timeFormatter(timezone).format(new Date(event.starts_at ?? 0)),
                         organizationName: participantDisplayName(event.host_organization_name),
                         venueName: participantDisplayName(event.venue_name),
                         spots: 0,
                         availability: "OPEN",
-                        imageUrl: eventImageById.get(event.event_id) ?? eventCardAsset(event.name),
+                        imageUrl: eventImageById.get(event.event_id) ?? eventCardAsset(eventName),
                         focalPosition: eventImageFocalById.get(event.event_id) ?? "center",
                         titleColor: event.event_title_color ?? "#f7f5f0",
                       }}
@@ -402,12 +415,14 @@ export default async function ConfirmationPage({
                   <div key={`${event.event_id}-directions`}>
                     {directions.length > 1 ? (
                       <p className="confirmation-calendar-date text-sm text-[var(--confirmation-text)]">
-                        {dateFormatter(event.timezone).format(new Date(event.starts_at))}
+                        {dateFormatter(event.timezone).format(new Date(event.starts_at ?? 0))}
                       </p>
                     ) : null}
                     <ArakkisCard interactive className="confirmation-address-block">
                       <p className="confirmation-direction-venue-label">Venue</p>
-                      <h3 className="confirmation-direction-venue">{event.venue_name}</h3>
+                      <h3 className="confirmation-direction-venue">
+                        {participantDisplayName(event.venue_name) || "Venue"}
+                      </h3>
                       <p className="confirmation-direction-address">{address}</p>
                       {address ? <CopyDirections directions={address} /> : null}
                       {googleMapsDirectionsUrl(address) ? (
@@ -468,14 +483,14 @@ export default async function ConfirmationPage({
                         <span className="confirmation-booking-access-date">
                           {new Intl.DateTimeFormat("en-US", {
                             weekday: "short",
-                            timeZone: event.timezone,
-                          }).format(new Date(event.starts_at))}
+                            timeZone: safeTimezone(event.timezone),
+                          }).format(new Date(event.starts_at ?? 0))}
                           <span aria-hidden="true"> · </span>
                           {new Intl.DateTimeFormat("en-US", {
                             month: "short",
                             day: "numeric",
-                            timeZone: event.timezone,
-                          }).format(new Date(event.starts_at))}
+                            timeZone: safeTimezone(event.timezone),
+                          }).format(new Date(event.starts_at ?? 0))}
                         </span>
                         <span>{bookingTitle(event.name).title}</span>
                       </span>
