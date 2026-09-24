@@ -228,7 +228,7 @@ test("registers multiple dates, exports only successful events, and scopes the a
     "jose@example.test",
   );
   await expect(page).toHaveURL(/\/registration\/confirmation\?token=/, { timeout: 15000 });
-  await expect(page.getByRole("heading", { name: "You're in!" })).toBeVisible();
+  await expect(page.locator(".confirmation-affirmation")).toHaveText(/You're in .+/);
   await expect(page.getByText(/We’re looking forward to seeing you, José\./)).toBeVisible();
   await expect(page.getByRole("link", { name: "Google Calendar" })).toHaveCount(2);
   await expect(page.getByRole("link", { name: "iCal" })).toHaveCount(2);
@@ -278,7 +278,8 @@ test("generates URL-safe confirmation tokens that resolve after query transport"
       `/registration/confirmation?token=${encodeURIComponent(token)}`,
     );
     expect(confirmation.status()).toBe(200);
-    expect(await confirmation.text()).toContain("You're in!");
+    expect(await confirmation.text()).toContain("You're in");
+    expect(await confirmation.text()).not.toContain("You're in!");
   }
 });
 
@@ -341,7 +342,8 @@ test("excludes archived participants and agrees with canonical Unicode whitespac
     `/registration/confirmation?token=${encodeURIComponent((registration.data as { confirmation_token: string }).confirmation_token)}`,
   );
   expect(confirmation.status()).toBe(200);
-  expect(await confirmation.text()).toContain("You're in!");
+  expect(await confirmation.text()).toContain("You're in");
+  expect(await confirmation.text()).not.toContain("You're in!");
 });
 
 test("serializes final-spot registration through the public RPC without orphaned success records", async ({

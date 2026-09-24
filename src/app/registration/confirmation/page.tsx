@@ -243,7 +243,7 @@ export default async function ConfirmationPage({
           </div>
           <p className="confirmation-kicker">04 / Booking confirmed</p>
           <p className="confirmation-affirmation" aria-hidden="true">
-            You&apos;re in! {firstName}
+            You&apos;re in {firstName}!
           </p>
           <h1 className="confirmation-hero-title mt-5">
             <span>See you</span>
