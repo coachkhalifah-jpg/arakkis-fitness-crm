@@ -20,10 +20,12 @@ import {
 import { logHostedAccessDiagnostic } from "@/lib/diagnostics/hosted-access";
 import {
   actionErrorFromRegistrationFailure,
+  isAlreadyRegisteredOutcome,
   noReservedClassError,
   successfulRegistrationResults,
   type RegistrationResultItem,
 } from "@/lib/registration/result-outcomes";
+import { rethrowNextControlFlow } from "@/lib/navigation/rethrow-next";
 
 export type RegistrationField =
   | "selectedOccurrenceStartsAt"
@@ -46,6 +48,8 @@ export type RegistrationActionState = {
   selectedValues?: string[];
   legalPackageAcknowledged?: boolean;
   rememberDevice?: boolean;
+  /** When true, show Manage bookings CTA (device already remembered). */
+  showManageBookings?: boolean;
 };
 export type RegistrationAction = (
   state: RegistrationActionState,
@@ -75,6 +79,18 @@ function preserveSubmittedState(
     legalPackageAcknowledged: form.get("legalPackageAcknowledged") === "on",
     rememberDevice: form.get("rememberDevice") === "on",
   };
+}
+
+async function registrationFailureState(
+  form: FormData,
+  outcomeError: string,
+): Promise<RegistrationActionState> {
+  const alreadyRegistered = isAlreadyRegisteredOutcome(outcomeError);
+  const remembered = alreadyRegistered ? await resolveRememberedParticipant() : null;
+  return preserveSubmittedState(form, {
+    error: outcomeError,
+    showManageBookings: Boolean(alreadyRegistered && remembered),
+  });
 }
 
 function fieldErrorsFromZod(error: ZodError, form: FormData): RegistrationActionState {
@@ -269,7 +285,7 @@ export async function submitRegistration(
     if (error instanceof Error && error.message === "invalid email")
       return emailValidationState(form);
     const outcomeError = actionErrorFromRegistrationFailure(error);
-    if (outcomeError) return preserveSubmittedState(form, { error: outcomeError });
+    if (outcomeError) return registrationFailureState(form, outcomeError);
     return { error: "The registration could not be completed. Please try again." };
   }
   redirect(
@@ -372,7 +388,7 @@ export async function submitSlugRegistration(
     if (error instanceof Error && error.message === "invalid email")
       return emailValidationState(form);
     const outcomeError = actionErrorFromRegistrationFailure(error);
-    if (outcomeError) return preserveSubmittedState(form, { error: outcomeError });
+    if (outcomeError) return registrationFailureState(form, outcomeError);
     return { error: "This event is unavailable or registration could not be completed." };
   }
   redirect(

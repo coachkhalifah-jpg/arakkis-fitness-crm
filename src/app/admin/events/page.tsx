@@ -7,7 +7,6 @@ import {
   createEvent,
   markAttendanceSubmit,
 } from "@/lib/services/phase-3-actions";
-import { removeRegistrationFromRoster } from "@/lib/services/phase-5-actions";
 import { SegmentedNavigation } from "@/components/admin/segmented-navigation";
 import {
   AdminEventsDiscovery,
@@ -482,7 +481,6 @@ export default async function EventsPage({
                     (event.attendance_processing_state === "OPEN" ||
                       event.attendance_processing_state === "REOPENED"),
                   checkInAction: markAttendanceSubmit,
-                  removeRegistrationAction: removeRegistrationFromRoster,
                   canRemoveRegistration:
                     event.status !== "CANCELLED" &&
                     event.attendance_processing_state !== "FINALIZED",

@@ -44,7 +44,6 @@ export function RegistrationRoster({
   requiresReason,
   context,
   checkInAction,
-  removeRegistrationAction,
   canRemoveRegistration = false,
 }: {
   eventId: string;
@@ -62,10 +61,6 @@ export function RegistrationRoster({
     capacity: number;
   };
   checkInAction?: (formData: FormData) => Promise<void>;
-  removeRegistrationAction?: (
-    state: Phase3ActionState,
-    formData: FormData,
-  ) => Promise<Phase3ActionState>;
   canRemoveRegistration?: boolean;
 }) {
   const [draft, setDraft] = useState<Record<string, string>>({});
@@ -157,9 +152,8 @@ export function RegistrationRoster({
   };
 
   const renderSecondaryAction = (row: RegistrationRosterRow) =>
-    canRemoveRegistration && removeRegistrationAction ? (
+    canRemoveRegistration ? (
       <RemoveRosterAction
-        action={removeRegistrationAction}
         eventId={eventId}
         eventName={eventName}
         registrationId={row.id}

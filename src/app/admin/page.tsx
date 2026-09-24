@@ -3,6 +3,7 @@ import { requireActiveAdmin } from "@/lib/authorization/server";
 import Link from "next/link";
 import { createClient } from "@/lib/db/server";
 import { eventCardAsset } from "@/lib/config/admin-visual-assets";
+import { designAssetPublicUrl } from "@/lib/config/design-assets";
 import { AdminWorkspaceMenu } from "@/components/admin/admin-workspace-menu";
 import { getAdminWorkspaceMenuItems } from "@/components/admin/admin-workspace-menu-items";
 import { CalendarUtility } from "@/components/admin/calendar-utility";
@@ -27,6 +28,8 @@ type HostWorkspaceData = {
   organizationNames: Map<string, string>;
   venueNames: Map<string, string>;
   registrations: Map<string, number>;
+  eventImageById: Map<string, string>;
+  eventImageFocalById: Map<string, string>;
 };
 
 async function getWorkspaceData(admin: Awaited<ReturnType<typeof requireActiveAdmin>>) {
@@ -84,6 +87,17 @@ async function getWorkspaceData(admin: Awaited<ReturnType<typeof requireActiveAd
     : { data: [], error: null };
   if (registrationError) return null;
 
+  const eventIds = events.map((event) => event.id);
+  const { data: eventImageAssets, error: eventImageError } = eventIds.length
+    ? await db
+        .from("design_assets")
+        .select("event_id,storage_path,focal_position")
+        .eq("asset_type", "EVENT_IMAGE_DESKTOP")
+        .eq("active", true)
+        .in("event_id", eventIds)
+    : { data: [], error: null };
+  if (eventImageError) return null;
+
   return {
     events,
     organizationNames: new Map(
@@ -94,6 +108,15 @@ async function getWorkspaceData(admin: Awaited<ReturnType<typeof requireActiveAd
       counts.set(row.event_id, (counts.get(row.event_id) ?? 0) + 1);
       return counts;
     }, new Map<string, number>()),
+    eventImageById: new Map(
+      (eventImageAssets ?? []).map((asset) => [
+        asset.event_id,
+        designAssetPublicUrl(asset.storage_path),
+      ]),
+    ),
+    eventImageFocalById: new Map(
+      (eventImageAssets ?? []).map((asset) => [asset.event_id, asset.focal_position ?? "center"]),
+    ),
   } satisfies HostWorkspaceData;
 }
 
@@ -141,13 +164,16 @@ function HostWorkspace({
     const venueName = event.venue_id ? data.venueNames.get(event.venue_id) : null;
     const organizationName = data.organizationNames.get(event.host_organization_id);
     const status = eventStatusLabel(event, booked);
+    const imageUrl = data.eventImageById.get(event.id) ?? eventCardAsset(event.name);
+    const focalPosition = data.eventImageFocalById.get(event.id) ?? "center";
     if (priority) {
       return (
         <div
           className="ops-priority-card"
           key={event.id}
           style={{
-            backgroundImage: `linear-gradient(180deg, rgb(17 19 21 / .18), rgb(17 19 21 / .94)), url(${eventCardAsset(event.name)})`,
+            backgroundImage: `linear-gradient(180deg, rgb(17 19 21 / .18), rgb(17 19 21 / .94)), url(${imageUrl})`,
+            backgroundPosition: focalPosition,
           }}
         >
           <Link

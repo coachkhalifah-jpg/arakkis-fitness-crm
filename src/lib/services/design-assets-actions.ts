@@ -20,6 +20,8 @@ import {
 import { cleanupStoragePaths } from "@/lib/services/storage-cleanup";
 import { runReplacementLifecycle } from "@/lib/services/design-asset-replacement";
 
+import { rethrowNextControlFlow } from "@/lib/navigation/rethrow-next";
+
 const MAX_BYTES = 5 * 1024 * 1024;
 const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"] as const;
 const assetTypes = [
@@ -112,9 +114,15 @@ export async function uploadDesignAsset(
     }
     const db = await createClient();
     const storage = createPrivilegedClient();
+    let eventPublicSlug: string | null = null;
     if (eventId) {
-      const { data: event } = await db.from("events").select("id").eq("id", eventId).maybeSingle();
+      const { data: event } = await db
+        .from("events")
+        .select("id,public_slug")
+        .eq("id", eventId)
+        .maybeSingle();
       if (!event) return { error: "The selected event was not found." };
+      eventPublicSlug = event.public_slug ?? null;
     }
     if (eventId && input.assetType === "EVENT_IMAGE_DESKTOP") {
       const { data: previousAsset } = await db
@@ -245,8 +253,11 @@ export async function uploadDesignAsset(
       },
       refresh: () => {
         revalidatePath("/admin/design-assets");
+        revalidatePath("/admin");
+        revalidatePath("/admin/events");
         revalidatePath("/events");
-        if (eventId) revalidatePath(`/register/${eventId}`);
+        if (eventId) revalidatePath(`/admin/events/${eventId}`);
+        if (eventPublicSlug) revalidatePath(`/register/${eventPublicSlug}`);
       },
     });
     replacementCommitted = lifecycle.committed;
@@ -259,6 +270,7 @@ export async function uploadDesignAsset(
           : "Design asset uploaded and activated.",
     };
   } catch (error) {
+    rethrowNextControlFlow(error);
     if (replacementCommitted) {
       console.error("[design-asset-refresh] replacement committed but refresh failed", error);
       return { success: "Design asset uploaded and activated. Refresh the page to see it." };
@@ -332,9 +344,21 @@ export async function retireDesignAsset(
     if (storageError)
       return { error: "The asset was retired, but its storage object could not be removed." };
     revalidatePath("/admin/design-assets");
+    revalidatePath("/admin");
+    revalidatePath("/admin/events");
     revalidatePath("/events");
+    if (asset.event_id) {
+      revalidatePath(`/admin/events/${asset.event_id}`);
+      const { data: event } = await db
+        .from("events")
+        .select("public_slug")
+        .eq("id", asset.event_id)
+        .maybeSingle();
+      if (event?.public_slug) revalidatePath(`/register/${event.public_slug}`);
+    }
     return { success: "Design asset retired." };
   } catch (error) {
+    rethrowNextControlFlow(error);
     return { error: errorMessage(error) };
   }
 }

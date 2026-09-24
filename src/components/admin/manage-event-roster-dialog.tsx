@@ -4,12 +4,10 @@ import { useCallback, useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import type { RegistrationRosterRow } from "@/components/admin/registration-roster";
 import { RemoveRosterAction } from "@/components/admin/remove-roster-action";
-import type { Phase3ActionState } from "@/lib/services/phase-3-actions";
 import { getDialogFocusableElements } from "@/components/admin/dialog-focus";
 import { attendancePresentation } from "@/lib/services/attendance-presentation";
 
 type ServerAction = (formData: FormData) => Promise<void>;
-type RosterAction = (state: Phase3ActionState, formData: FormData) => Promise<Phase3ActionState>;
 
 export type ManageEventRosterDialogProps = {
   eventId: string;
@@ -23,7 +21,6 @@ export type ManageEventRosterDialogProps = {
   capacity: number;
   canEdit: boolean;
   checkInAction: ServerAction;
-  removeRegistrationAction: RosterAction;
   canRemoveRegistration: boolean;
 };
 
@@ -41,7 +38,6 @@ export function ManageEventRosterDialog({
   capacity,
   canEdit,
   checkInAction,
-  removeRegistrationAction,
   canRemoveRegistration,
 }: ManageEventRosterDialogProps & { open: boolean; onClose: () => void }) {
   const modalRef = useRef<HTMLDivElement>(null);
@@ -175,7 +171,6 @@ export function ManageEventRosterDialog({
                     )}
                     {canRemoveRegistration ? (
                       <RemoveRosterAction
-                        action={removeRegistrationAction}
                         eventId={eventId}
                         eventName={eventName}
                         registrationId={row.id}

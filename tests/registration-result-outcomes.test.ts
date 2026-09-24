@@ -26,7 +26,7 @@ describe("registration result outcomes", () => {
       /already have an active registration/i,
     );
     expect(registrationOutcomeMessage([{ success: false, reason: "ALREADY_REGISTERED" }])).toMatch(
-      /manage bookings|saved confirmation or booking link/i,
+      /saved confirmation or booking link/i,
     );
     expect(
       registrationOutcomeMessage([

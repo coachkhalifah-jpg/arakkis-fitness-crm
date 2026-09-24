@@ -44,7 +44,7 @@ const reasonText: Record<string, string> = {
   FULL: "This class filled before your selection could be reserved.",
   CLOSED: "Registration closed before your selection could be reserved.",
   ALREADY_REGISTERED:
-    "You already have an active registration for this class. Open Manage bookings if this device is remembered, or use a saved confirmation or booking link.",
+    "You already have an active registration for this class. Use a saved confirmation or booking link if this browser is not remembered.",
   INELIGIBLE: "You are not eligible for this class.",
   NOT_FOUND: "This class is no longer available.",
 };

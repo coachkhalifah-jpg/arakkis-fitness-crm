@@ -7,6 +7,7 @@ import { requireActiveAdmin } from "@/lib/authorization/server";
 import { normalizeEmail, normalizeName, normalizePhone } from "@/lib/registration/normalization";
 import type { Phase3ActionState } from "@/lib/services/phase-3-actions";
 import { mapAttendanceError } from "@/lib/services/attendance-errors";
+import { rethrowNextControlFlow } from "@/lib/navigation/rethrow-next";
 
 const value = (form: FormData, key: string) => String(form.get(key) ?? "").trim();
 
@@ -22,6 +23,7 @@ async function invoke(form: FormData, rpc: string, args: Record<string, unknown>
   const { error } = await db.rpc(rpc, args as never);
   if (error) throw new Error(error.message);
   revalidatePath(`/admin/events/${id}`);
+  revalidatePath("/admin/events");
   return { success };
 }
 
@@ -37,6 +39,7 @@ export async function openAttendance(
       "Check-in is open.",
     );
   } catch (error) {
+    rethrowNextControlFlow(error);
     return errorState(error);
   }
 }
@@ -53,6 +56,7 @@ export async function finalizeAttendance(
       "Attendance finalized.",
     );
   } catch (error) {
+    rethrowNextControlFlow(error);
     return errorState(error);
   }
 }
@@ -69,6 +73,7 @@ export async function reopenAttendance(
       "Attendance reopened for correction.",
     );
   } catch (error) {
+    rethrowNextControlFlow(error);
     return errorState(error);
   }
 }
@@ -92,6 +97,7 @@ export async function markAttendance(
       "Attendance updated.",
     );
   } catch (error) {
+    rethrowNextControlFlow(error);
     return errorState(error);
   }
 }
@@ -136,6 +142,7 @@ export async function createWalkIn(
     revalidatePath(`/admin/events/${eventId}`);
     return { success: "Walk-in checked in." };
   } catch (error) {
+    rethrowNextControlFlow(error);
     if (process.env.NODE_ENV !== "production") {
       console.error("[attendance] walk-in action failed", {
         code: typeof error === "object" && error !== null && "code" in error ? error.code : null,
@@ -170,6 +177,7 @@ export async function saveAttendanceChanges(
     revalidatePath(`/admin/events/${eventId}`);
     return { success: "Attendance changes saved." };
   } catch (error) {
+    rethrowNextControlFlow(error);
     return errorState(error);
   }
 }
@@ -202,8 +210,10 @@ export async function removeRegistrationFromRoster(
     if (error) throw error;
     revalidatePath("/admin/events");
     revalidatePath(`/admin/events/${eventId}`);
+    revalidatePath("/admin");
     return { success: "Registration removed from roster." };
   } catch (error) {
+    rethrowNextControlFlow(error);
     return errorState(error);
   }
 }
