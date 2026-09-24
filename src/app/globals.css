@@ -7784,7 +7784,10 @@ body:has(.admin-manage-event-page) {
 .manage-booking-detail-page .confirmation-prep.is-expanded .confirmation-prep-content {
   grid-template-rows: 1fr;
 }
-.confirmation-page .confirmation-prep.is-expanded .confirmation-prep-content > .confirmation-prep-list,
+.confirmation-page
+  .confirmation-prep.is-expanded
+  .confirmation-prep-content
+  > .confirmation-prep-list,
 .manage-booking-detail-page
   .confirmation-prep.is-expanded
   .confirmation-prep-content
