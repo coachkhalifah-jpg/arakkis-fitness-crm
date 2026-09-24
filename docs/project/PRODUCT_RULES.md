@@ -16,6 +16,8 @@ Events belong to a host Organization and Venue. Event creation validates capacit
 
 Participants may select multiple Event dates; each successful selection creates a separate Registration. Capacity, deadlines, duplicate active registration, and partial success are evaluated per Event.
 
+Public registration no longer collects Goals (DEC-060 / UAT-011). Optional fields on the public form remain limited to email, fitness experience, and referral source. Historical `participants.goals` values may still appear read-only on System Admin participant detail; the column stays nullable and is not dropped in this slice.
+
 ## Legal and participant data
 
 Participation acknowledgment remains PROVISIONAL until legal approval. Production registration is fail-closed unless the approved legal configuration is present. Participants have no login in MVP. Global participant history, notes, participant search, and follow-up are System Admin-only; Host Admin data is event-operational and organization-scoped.

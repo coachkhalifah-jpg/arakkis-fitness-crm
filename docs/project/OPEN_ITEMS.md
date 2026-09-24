@@ -11,6 +11,7 @@ Only unresolved, deferred, accepted, or decision-pending items are listed here. 
 
 - Legacy permission documents conflict with the validated assigned-Organization Host Admin Venue create/update model. Canonical documents record the current model; formal synchronization of the legacy documents remains pending.
 - Local Playwright uses a shared synthetic database and one worker; parallel workers are not supported by the current fixture design.
+- After DEC-060, `participants.goals` remains nullable for historical CRM rows; a destructive column drop is deferred until an approved decision.
 
 ## UI / UX
 
