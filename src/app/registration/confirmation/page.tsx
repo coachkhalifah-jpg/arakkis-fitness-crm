@@ -10,7 +10,8 @@ import {
   safeTimezone,
 } from "@/lib/registration/datetime";
 import { googleCalendarUrl, type CalendarEvent } from "@/lib/registration/calendar";
-import { participantInstructionLines, WhatToBring } from "@/components/registration/what-to-bring";
+import { WhatToBring } from "@/components/registration/what-to-bring";
+import { participantInstructionLines } from "@/lib/registration/participant-instructions";
 import { CopyDirections } from "@/components/registration/copy-directions";
 import { ArakkisCard } from "@/components/registration/arakkis-card";
 import { ConfirmationCalendarCarousel } from "@/components/registration/confirmation-calendar-carousel";

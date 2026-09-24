@@ -1,7 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
-import { participantInstructionLines, WhatToBring } from "@/components/registration/what-to-bring";
+import { WhatToBring } from "@/components/registration/what-to-bring";
+import { participantInstructionLines } from "@/lib/registration/participant-instructions";
 
 afterEach(() => cleanup());
 
