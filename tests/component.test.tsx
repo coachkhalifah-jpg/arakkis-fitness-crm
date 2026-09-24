@@ -309,7 +309,6 @@ describe("presentation controls", () => {
         idempotencyKey="idempotency-a"
         publicSlug="demo-recurring"
         rememberedFirstName="Maya"
-        rememberedGoals="Build consistency"
         legalDocuments={legalDocuments}
         legalPackage={{
           id: "package-a",

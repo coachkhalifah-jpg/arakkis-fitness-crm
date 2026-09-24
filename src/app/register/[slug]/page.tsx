@@ -181,7 +181,6 @@ export default async function PublicEventPage({
               publicSlug={slug}
               seriesMode={Boolean(event.series_slug)}
               rememberedFirstName={remembered?.first_name ?? null}
-              rememberedGoals={remembered?.goals ?? null}
               legalDocuments={legalDocuments}
               eventInviteToken={invite ?? null}
             />
