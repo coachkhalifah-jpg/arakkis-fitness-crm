@@ -20,10 +20,11 @@ export function ConfirmationRememberDevice({
     <form action={action} className="confirmation-remember-prompt">
       <input type="hidden" name="token" value={token} />
       <input type="hidden" name="correlationId" value={correlationId} />
-      <p className="confirmation-access-alert-title">Keep your classes on this device</p>
+      <p className="confirmation-access-alert-title">Save your booking link</p>
       <p>
-        Confirmation links expire in 24 hours. Remember this device so you can return and see all
-        your upcoming classes without saving the link.
+        Confirmation links expire in 24 hours. Copy a booking link below to keep this reservation
+        handy on any device. Remember this device is optional — it only helps on this browser so you
+        can return without the link.
       </p>
       <label className="confirmation-remember-label flex min-h-12 items-start gap-3">
         <input
@@ -55,7 +56,7 @@ export function ConfirmationRememberDevice({
         className="confirmation-pill-button confirmation-pill-button-primary confirmation-action-button"
         disabled={pending}
       >
-        {pending ? "Saving…" : "Save on this device"}
+        {pending ? "Saving…" : "Remember this device"}
       </button>
     </form>
   );

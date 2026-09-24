@@ -35,9 +35,9 @@ describe("foundation pages", () => {
   it("renders truthful booking recovery for an unremembered participant", async () => {
     render(await ManageBookingsPage());
     expect(
-      screen.getByRole("heading", { name: /connected to your bookings/i }),
+      screen.getByRole("heading", { name: /open a booking with a saved link/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/saved confirmation or booking link/i)).toBeInTheDocument();
+    expect(screen.getByText(/confirmation or booking link you already have/i)).toBeInTheDocument();
     expect(screen.getByText("Bookings")).toBeInTheDocument();
     expect(screen.queryByText("404")).not.toBeInTheDocument();
     expect(screen.queryByText("NO LINK")).not.toBeInTheDocument();

@@ -9,8 +9,8 @@ export default async function ManageBookingsPage() {
     <PublicErrorState
       variant="recovery"
       eyebrow="Bookings"
-      title="This device isn’t connected to your bookings yet."
-      message="Use a saved confirmation or booking link to open a reservation. After you book, choose Remember this device so you can see and manage all your classes here."
+      title="Open a booking with a saved link."
+      message="This page opens a reservation from a confirmation or booking link you already have. After you book, you can also choose Remember this device on that browser so your upcoming classes appear here. Browse events to book, or return home if you need to find a saved link."
       actionLabel="Browse events"
       actionHref="/events"
       secondaryActionLabel="Return home"

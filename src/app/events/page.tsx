@@ -4,6 +4,7 @@ import {
   ParticipantEventsView,
   type ParticipantEventCard,
 } from "@/components/events/participant-events-view";
+import { ForgetDevice } from "@/components/registration/forget-device";
 import { createClient } from "@/lib/db/server";
 import { publicBrand } from "@/lib/config/branding";
 import { eventCardAsset } from "@/lib/config/admin-visual-assets";
@@ -154,6 +155,7 @@ export default async function EventsPage() {
         {remembered ? (
           <div className="participant-events-returning">
             <span>Welcome back, {remembered.first_name}</span>
+            <ForgetDevice className="text-sm font-semibold normal-case tracking-normal text-[var(--participant-events-muted)] underline underline-offset-4 disabled:opacity-60" />
           </div>
         ) : null}
         <section className="participant-events-heading" aria-labelledby="participant-events-title">
