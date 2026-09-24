@@ -55,10 +55,21 @@ export async function resolveRememberedParticipant(
     });
     return null;
   }
-  const db = createPrivilegedClient();
-  const { data, error } = await db.rpc("phase10_resolve_participant_device_token", {
+  // Prefer the request-scoped anon client first (device cookie token is the
+  // capability). Fall back to service-role if hosted grants differ — same
+  // pattern as phase10_issue_participant_device_token / migration 0073–0074.
+  const anon = await createClient();
+  let { data, error } = await anon.rpc("phase10_resolve_participant_device_token", {
     p_token: raw,
   } as never);
+  if (error || !data) {
+    const privileged = createPrivilegedClient();
+    const fallback = await privileged.rpc("phase10_resolve_participant_device_token", {
+      p_token: raw,
+    } as never);
+    data = fallback.data;
+    error = fallback.error ?? error;
+  }
   logHostedAccessDiagnostic({
     correlation_id: correlationId,
     boundary: "registration_submission",
@@ -166,8 +177,14 @@ export async function forgetRememberedParticipant() {
   const jar = await cookies();
   const token = jar.get(rememberedDeviceCookie)?.value;
   if (token) {
-    const db = createPrivilegedClient();
-    await db.rpc("phase10_revoke_participant_device", { p_token: token } as never);
+    const anon = await createClient();
+    const { error } = await anon.rpc("phase10_revoke_participant_device", {
+      p_token: token,
+    } as never);
+    if (error) {
+      const privileged = createPrivilegedClient();
+      await privileged.rpc("phase10_revoke_participant_device", { p_token: token } as never);
+    }
   }
   const expiredCookie = { httpOnly: true, expires: new Date(0), path: "/" };
   jar.set(rememberedDeviceCookie, "", expiredCookie);
