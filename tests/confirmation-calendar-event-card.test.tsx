@@ -46,7 +46,9 @@ describe("ParticipantEventCard confirmation calendar parity", () => {
       />,
     );
 
-    const card = container.querySelector("article.event-card-shell.participant-event-card.is-booked");
+    const card = container.querySelector(
+      "article.event-card-shell.participant-event-card.is-booked",
+    );
     expect(card).toBeTruthy();
     expect(card).toHaveClass("confirmation-calendar-session-card");
     expect(screen.getByText("Booked")).toBeInTheDocument();
@@ -56,9 +58,6 @@ describe("ParticipantEventCard confirmation calendar parity", () => {
     const google = screen.getByRole("link", { name: "Google Calendar" });
     expect(google).toHaveAttribute("href", expect.stringContaining("calendar.google.com"));
     const ical = screen.getByRole("link", { name: "iCal" });
-    expect(ical).toHaveAttribute(
-      "href",
-      "/registration/confirmation/ics?token=tok&event=event-1",
-    );
+    expect(ical).toHaveAttribute("href", "/registration/confirmation/ics?token=tok&event=event-1");
   });
 });

@@ -49,7 +49,8 @@ export function ParticipantEventCard({
         : event.spots > 0
           ? event.availability.toLowerCase().replaceAll("_", " ")
           : "Full";
-  const resolvedHref = href ?? (booked ? (event.manageHref as string | null | undefined) : event.href);
+  const resolvedHref =
+    href ?? (booked ? (event.manageHref as string | null | undefined) : event.href);
   const link = asLink ?? Boolean(resolvedHref);
   const shellClassName = [
     "event-card-shell",

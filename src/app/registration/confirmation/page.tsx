@@ -325,8 +325,7 @@ export default async function ConfirmationPage({
                         venueName: participantDisplayName(event.venue_name),
                         spots: 0,
                         availability: "OPEN",
-                        imageUrl:
-                          eventImageById.get(event.event_id) ?? eventCardAsset(event.name),
+                        imageUrl: eventImageById.get(event.event_id) ?? eventCardAsset(event.name),
                         focalPosition: eventImageFocalById.get(event.event_id) ?? "center",
                         titleColor: event.event_title_color ?? "#f7f5f0",
                       }}
