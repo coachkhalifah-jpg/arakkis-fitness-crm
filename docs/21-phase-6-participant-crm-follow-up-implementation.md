@@ -8,7 +8,7 @@ Explicit exclusions remain participant accounts, participant merging, broad prof
 
 ## Participant CRM and visibility
 
-System Admins may search active participants by normalized first/last name, normalized E.164 phone, or normalized email using a minimum two-character query and a bounded limit of 50. The profile shows approved contact details, current affiliation, upcoming and prior registrations, attendance results, first/last attendance, attendance/no-show/cancellation counts, and follow-up history. Contact fields are read-only in this phase.
+System Admins may browse ACTIVE participants in a paginated People directory (DEC-063 / UAT-015: page size 25, max 50 via `phase6_list_participants`) and may search by normalized first/last name, normalized E.164 phone, or normalized email using a minimum two-character query and a bounded limit of 50 (`phase6_search_participants`). Directory rows open the full participant profile. The profile shows approved contact details, current affiliation, upcoming and prior registrations, attendance results, first/last attendance, attendance/no-show/cancellation counts, and follow-up history.
 
 Host Admins do not receive the global directory or global CRM profile. Existing event roster access remains scoped by `Event.host_organization_id`; any host-specific participant view must contain only registrations and attendance tied to assigned organizations. Participant affiliation never grants access to another organization’s history. Anonymous, inactive, unassigned, and non-admin users are denied.
 

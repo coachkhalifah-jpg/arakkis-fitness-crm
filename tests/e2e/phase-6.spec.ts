@@ -57,10 +57,14 @@ test.beforeAll(async () => {
   expect(noShowTaskId).toMatch(/^[0-9a-f-]{36}$/);
 });
 
-test("System Admin can search and inspect participant CRM history", async ({ page }) => {
+test("System Admin can browse, search, and open participant CRM profiles", async ({ page }) => {
   await signInSystem(page, "/admin/participants");
+  await expect(
+    page.getByRole("link", { name: new RegExp(`CRM Attended ${fixture.suffix}`) }),
+  ).toBeVisible();
   await page.getByPlaceholder("Name, phone, or email").fill("CRM Attended");
   await page.getByRole("button", { name: "Search" }).click();
+  await expect(page).toHaveURL(/q=CRM/);
   await expect(
     page.getByRole("link", { name: new RegExp(`CRM Attended ${fixture.suffix}`) }),
   ).toBeVisible();
