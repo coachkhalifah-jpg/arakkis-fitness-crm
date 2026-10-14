@@ -16,6 +16,8 @@ Events belong to a host Organization and Venue. Event creation validates capacit
 
 Participants may select multiple Event dates; each successful selection creates a separate Registration. Capacity, deadlines, duplicate active registration, and partial success are evaluated per Event.
 
+Automatic participant matching uses ACTIVE normalized phone alone (DEC-062 / BR-071). A phone match attaches the booking or walk-in to the existing participant without overwriting stored name/contact; System Admin contact correction is the recovery path.
+
 Public registration no longer collects Goals (DEC-060 / UAT-011). Optional fields on the public form remain limited to email, fitness experience, and referral source. Historical `participants.goals` values may still appear read-only on System Admin participant detail; the column stays nullable and is not dropped in this slice.
 
 ## Legal and participant data

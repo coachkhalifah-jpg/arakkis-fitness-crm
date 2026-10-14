@@ -85,7 +85,7 @@
 - BR-068: WhatsApp exports contain only opted-in participants for an authorized event; Host Admin exports remain assigned-event scoped.
 - BR-069: Invitation-message text is copyable and manually sent; MVP does not automatically send invitations.
 - BR-070: Normalize participant first name, last name, phone, and email before matching.
-- BR-071: Automatic participant matching requires normalized E.164 phone plus normalized first and last name; no single-field or conflicting match may auto-merge.
+- BR-071: Automatic participant matching uses normalized E.164 phone for ACTIVE participants (DEC-062 / UAT-014). A phone match attaches the registration or walk-in to the existing participant and does not overwrite stored name/contact fields (System Admin contact correction is the recovery path). Email-only and name-only matches still do not auto-merge. If multiple ACTIVE rows share a phone, the oldest row wins.
 - BR-072: Ambiguous matches become possible-duplicate cases for System Admin review; shared household contact information never overwrites records.
 - BR-073: Only System Admin may manually merge Participants. The survivor receives migrated registrations, attendance, follow-ups, notes, and history; audit data is preserved, duplicate active registrations are prevented, and the duplicate is archived.
 - BR-074: Phone normalization uses a libphonenumber-compatible parser, defaults to United States (+1), supports another selected country, and stores display/original phone, E.164 phone, and country. Email comparison trims/lowercases and validates format without Gmail/provider transformations; email is never an automatic merge key.

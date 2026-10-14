@@ -200,11 +200,19 @@ test("walk-in reuses exact matches, creates new records transactionally, and pre
     "+15185550101",
   );
   expect(phoneOnly.error).toBeNull();
+  expect((phoneOnly.data as { participant_id: string }).participant_id).toBe(
+    existing.participantId,
+  );
   expect(
     localQuery(
       `select count(distinct p.id) from public.participants p join public.registrations r on r.participant_id=p.id where r.event_id=${JSON.stringify(event.id)} and p.normalized_phone='+15185550101'`,
     ),
-  ).toBe("2");
+  ).toBe("1");
+  expect(
+    localQuery(
+      `select first_name || ' ' || last_name from public.participants where id=${JSON.stringify(existing.participantId)}`,
+    ),
+  ).toBe(`Exact Match ${fixture.suffix}`);
   const emailOnly = await invokeWalkIn(
     client,
     event.id,

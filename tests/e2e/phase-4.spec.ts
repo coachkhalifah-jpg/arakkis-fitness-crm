@@ -312,6 +312,34 @@ test("reuses an exact normalized participant match and rejects an altered token"
   await expect(page.getByText("This confirmation link isn’t available.")).toBeVisible();
 });
 
+test("reuses an ACTIVE participant on phone-only match when last name spelling differs", async () => {
+  const participantId = randomUUID();
+  localSql(`insert into public.participants (id, first_name, last_name, normalized_first_name, normalized_last_name, display_phone, normalized_phone, phone_country, email, normalized_email)
+    values (${sql(participantId)}, 'Jane', 'Doe', 'jane', 'doe', '+17035551299', '+17035551299', 'US', 'jane.doe@example.test', 'jane.doe@example.test');`);
+  const registration = await submitPublicRegistration(
+    fixture.eventA,
+    "Jane",
+    "Doee",
+    "+17035551299",
+  );
+  expect(registration.error).toBeNull();
+  expect(
+    localQuery(
+      `select count(*) from public.participants where normalized_phone='+17035551299' and status='ACTIVE'`,
+    ),
+  ).toBe("1");
+  expect(
+    localQuery(
+      `select count(*) from public.registrations where participant_id=${sql(participantId)} and event_id=${sql(fixture.eventA)} and registration_status='REGISTERED'`,
+    ),
+  ).toBe("1");
+  expect(
+    localQuery(
+      `select first_name || '|' || last_name from public.participants where id=${sql(participantId)}`,
+    ),
+  ).toBe("Jane|Doe");
+});
+
 test("excludes archived participants and agrees with canonical Unicode whitespace normalization", async ({
   page,
 }) => {
