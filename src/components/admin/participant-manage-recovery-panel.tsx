@@ -49,35 +49,31 @@ export function ParticipantManageRecoveryPanel({
 
   return (
     <section
-      className="mt-8 rounded border bg-white p-6"
+      className="admin-resource-panel ops-venue-edit-panel"
       aria-labelledby="manage-recovery-title"
       data-testid="participant-manage-recovery"
     >
-      <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
-        System Admin only
-      </p>
-      <h2 id="manage-recovery-title" className="mt-1 text-xl font-semibold">
-        Manage / recovery link
-      </h2>
-      <p className="mt-2 text-sm text-slate-600">
+      <p className="ops-kicker orange">System Admin only</p>
+      <h2 id="manage-recovery-title">Manage / recovery link</h2>
+      <p className="ops-people-profile-copy">
         Send the participant a temporary link so they can view and manage upcoming bookings on a
         browser that is not remembered yet.
       </p>
-      <p className="mt-3 text-sm">
-        <span className="text-slate-500">Text or WhatsApp to:</span>{" "}
+      <p className="ops-people-profile-copy">
+        <span className="ops-label">Text or WhatsApp to</span>{" "}
         <strong data-testid="manage-recovery-phone">{displayPhone}</strong>
       </p>
 
       {pendingLink ? (
-        <p className="mt-3 text-sm text-slate-600" data-testid="manage-recovery-pending">
+        <p className="ops-people-profile-copy" data-testid="manage-recovery-pending">
           Active link pending · expires {new Date(pendingLink.expires_at).toLocaleString()} · issued{" "}
           {new Date(pendingLink.issued_at).toLocaleString()}
         </p>
       ) : (
-        <p className="mt-3 text-sm text-slate-600">No active manage link.</p>
+        <p className="ops-people-profile-copy">No active manage link.</p>
       )}
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="ops-people-profile-actions">
         <Button
           type="button"
           disabled={pending}
@@ -101,7 +97,7 @@ export function ParticipantManageRecoveryPanel({
 
       {oneTimeUrl ? (
         <div
-          className="ops-invitation-result mt-4"
+          className="ops-invitation-result ops-people-profile-recovery-result"
           role="status"
           data-testid="manage-recovery-result"
         >
