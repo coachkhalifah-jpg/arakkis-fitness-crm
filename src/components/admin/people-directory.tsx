@@ -68,7 +68,9 @@ export function PeopleDirectory({
   }
 
   const hasQuery = query.length >= 2;
-  const searchError = error ? "The directory is temporarily unavailable. Try again in a moment." : "";
+  const searchError = error
+    ? "The directory is temporarily unavailable. Try again in a moment."
+    : "";
   const resultHeading = hasQuery
     ? `${totalCount} ${totalCount === 1 ? "match" : "matches"}`
     : totalCount
@@ -197,7 +199,10 @@ export function PeopleDirectory({
               ))}
             </div>
             {totalPages > 1 ? (
-              <nav className="ops-org-pagination people-directory-pagination" aria-label="People pages">
+              <nav
+                className="ops-org-pagination people-directory-pagination"
+                aria-label="People pages"
+              >
                 {page > 1 ? (
                   <Link
                     className="ops-org-pagination-button"
