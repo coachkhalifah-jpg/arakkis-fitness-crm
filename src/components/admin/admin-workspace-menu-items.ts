@@ -21,6 +21,7 @@ export function getAdminWorkspaceMenuItems(isSystemAdmin = true): AdminWorkspace
           { href: "/admin/invitations", label: "Invitations" },
           { href: "/admin/community", label: "Community" },
           { href: "/admin/design-assets", label: "Design" },
+          { href: "/admin/workouts", label: "Workouts" },
         ]
       : []),
   ];
