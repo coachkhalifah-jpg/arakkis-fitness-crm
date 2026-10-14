@@ -49,31 +49,31 @@ export function ParticipantManageRecoveryPanel({
 
   return (
     <section
-      className="people-profile-panel"
+      className="admin-resource-panel ops-venue-edit-panel"
       aria-labelledby="manage-recovery-title"
       data-testid="participant-manage-recovery"
     >
-      <p className="people-profile-panel-kicker">System Admin only</p>
+      <p className="ops-kicker orange">System Admin only</p>
       <h2 id="manage-recovery-title">Manage / recovery link</h2>
-      <p className="people-profile-panel-lede">
+      <p className="ops-people-profile-copy">
         Send the participant a temporary link so they can view and manage upcoming bookings on a
         browser that is not remembered yet.
       </p>
-      <p className="people-profile-panel-body">
-        <span className="people-profile-muted">Text or WhatsApp to:</span>{" "}
+      <p className="ops-people-profile-copy">
+        <span className="ops-label">Text or WhatsApp to</span>{" "}
         <strong data-testid="manage-recovery-phone">{displayPhone}</strong>
       </p>
 
       {pendingLink ? (
-        <p className="people-profile-panel-body" data-testid="manage-recovery-pending">
+        <p className="ops-people-profile-copy" data-testid="manage-recovery-pending">
           Active link pending · expires {new Date(pendingLink.expires_at).toLocaleString()} · issued{" "}
           {new Date(pendingLink.issued_at).toLocaleString()}
         </p>
       ) : (
-        <p className="people-profile-panel-body">No active manage link.</p>
+        <p className="ops-people-profile-copy">No active manage link.</p>
       )}
 
-      <div className="people-profile-actions">
+      <div className="ops-people-profile-actions">
         <Button
           type="button"
           disabled={pending}
@@ -97,7 +97,7 @@ export function ParticipantManageRecoveryPanel({
 
       {oneTimeUrl ? (
         <div
-          className="ops-invitation-result people-profile-recovery-result"
+          className="ops-invitation-result ops-people-profile-recovery-result"
           role="status"
           data-testid="manage-recovery-result"
         >

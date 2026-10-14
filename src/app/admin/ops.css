@@ -1595,6 +1595,142 @@
   }
 }
 
+/* People profile detail — reuse Venues/Organizations ops chrome. */
+.ops-people-profile-page .ops-venue-page-head h1 {
+  max-width: 18ch;
+  overflow-wrap: anywhere;
+}
+.ops-people-profile-page .ops-people-profile-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.ops-people-profile-page .ops-people-profile-copy {
+  max-width: 42rem;
+  margin: 1rem 0 0;
+  color: #aeb3bb;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.ops-people-profile-page .ops-people-profile-copy .ops-label {
+  display: inline;
+  margin-right: 0.35rem;
+}
+.ops-people-profile-page .ops-people-profile-copy strong {
+  color: #f7f5f0;
+  font-weight: 700;
+}
+.ops-people-profile-page .ops-venue-edit-panel {
+  border: 0;
+  border-top: 1px solid #59616b;
+  background: transparent;
+  padding: 1rem 0 0;
+}
+.ops-people-profile-page .admin-create-event-form,
+.ops-people-profile-page .admin-create-event-form label {
+  color: #aeb3bb;
+}
+.ops-people-profile-page .admin-create-event-form input,
+.ops-people-profile-page .admin-create-event-form textarea,
+.ops-people-profile-page .admin-create-event-form select {
+  min-height: 44px;
+  border-color: #59616b;
+  border-radius: 0;
+  background: #2c3137;
+  color: #f7f5f0;
+}
+.ops-people-profile-page .admin-create-event-form textarea {
+  min-height: 6rem;
+  resize: vertical;
+}
+.ops-people-profile-page .ops-people-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+.ops-people-profile-page .ui-button {
+  border-radius: 0;
+  border: 1px solid #ff7a3d;
+  background: #ff7a3d;
+  box-shadow: none;
+  color: #17191c;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.ops-people-profile-page .ui-button:not(:disabled):hover,
+.ops-people-profile-page .ui-button:not(:disabled):focus-visible {
+  transform: none;
+  border-color: #ff7a3d;
+  background: transparent;
+  color: #ff7a3d;
+}
+.ops-people-profile-page .ui-button-secondary {
+  border-color: #59616b;
+  background: transparent;
+  color: #f7f5f0;
+}
+.ops-people-profile-page .ui-button-secondary:not(:disabled):hover,
+.ops-people-profile-page .ui-button-secondary:not(:disabled):focus-visible {
+  border-color: #ff7a3d;
+  background: transparent;
+  color: #ff7a3d;
+}
+.ops-people-profile-page .ops-people-profile-message {
+  margin: 1rem 0 0;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+.ops-people-profile-page .ops-people-profile-message.is-error {
+  color: #ff9c8f;
+}
+.ops-people-profile-page .ops-people-profile-message.is-success {
+  color: #c7f36b;
+}
+.ops-people-profile-page .ops-people-profile-list-row {
+  display: grid;
+  min-width: 0;
+  gap: 0.3rem;
+  border-bottom: 1px solid #59616b;
+  padding: 1rem 0;
+  color: #f7f5f0;
+}
+.ops-people-profile-page .ops-people-profile-list-row strong,
+.ops-people-profile-page .ops-people-profile-list-row span {
+  overflow-wrap: anywhere;
+}
+.ops-people-profile-page .ops-people-profile-list-row span {
+  color: #aeb3bb;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+.ops-people-profile-page .ops-empty {
+  padding: 1.25rem;
+}
+.ops-people-profile-page .ops-empty strong {
+  display: block;
+  color: #f7f5f0;
+  font-size: 1.4rem;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+}
+.ops-people-profile-page .ops-empty p {
+  margin: 0.5rem 0 0;
+  color: #aeb3bb;
+}
+.ops-people-profile-page .ops-people-profile-recovery-result {
+  margin-top: 1.5rem;
+  max-width: none;
+}
+@media (max-width: 900px) {
+  .ops-people-profile-page .ops-people-profile-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .ops-venue-page .admin-venue-org-tools {
   display: flex;
   justify-content: flex-end;
