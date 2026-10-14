@@ -74,6 +74,13 @@ export default async function ParticipantProfilePage({
       .maybeSingle(),
   ]);
   const attendanceByRegistration = new Map((attendance ?? []).map((a) => [a.registration_id, a]));
+  const attendedCount = (attendance ?? []).filter(
+    (a) => a.status === "ATTENDED" && a.finalized_at,
+  ).length;
+  const noShowCount = (attendance ?? []).filter(
+    (a) => a.status === "NO_SHOW" && a.finalized_at,
+  ).length;
+
   return (
     <>
       <AdminWorkspaceMenu
@@ -82,98 +89,121 @@ export default async function ParticipantProfilePage({
         signOutAction={signOut}
         items={getAdminWorkspaceMenuItems()}
       />
-      <section className="admin-shell px-5 py-10 sm:px-8 sm:py-14">
-        <div className="relative mx-auto max-w-3xl pt-8">
+      <main className="people-profile-page">
+        <div className="people-profile-shell">
           <ContextualBack href="/admin/participants" label="People" />
-          <div className="admin-page-header">
-            <h1>
-              {participant.first_name} {participant.last_name}
-            </h1>
-            <p>
-              {participant.display_phone} · {participant.email ?? "No email"}
-            </p>
-          </div>
-          <div className="mt-6 grid gap-4 sm:grid-cols-3">
-            <div className="rounded border bg-white p-4">
-              <p className="text-sm text-slate-500">Affiliation</p>
-              <p>{affiliationLabel}</p>
-            </div>
-            <div className="rounded border bg-white p-4">
-              <p className="text-sm text-slate-500">Attended</p>
-              <p>
-                {(attendance ?? []).filter((a) => a.status === "ATTENDED" && a.finalized_at).length}
+          <header className="people-profile-header">
+            <div>
+              <p className="people-directory-kicker">People profile</p>
+              <h1>
+                {participant.first_name} {participant.last_name}
+              </h1>
+              <p className="people-profile-lede">
+                {participant.display_phone}
+                <span aria-hidden="true"> · </span>
+                {participant.email ?? "No email"}
               </p>
             </div>
-            <div className="rounded border bg-white p-4">
-              <p className="text-sm text-slate-500">No-shows</p>
-              <p>
-                {(attendance ?? []).filter((a) => a.status === "NO_SHOW" && a.finalized_at).length}
-              </p>
+            <div className="people-directory-scope" aria-label="People profile scope">
+              <span>System Admin</span>
+              <strong>All organizations</strong>
             </div>
-          </div>
-          <div className="mt-4 rounded border bg-white p-4">
-            <p className="text-sm text-slate-500">Participant history</p>
-            <p>{participantHistoryLabel(qualifyingRegistrationCount)}</p>
-          </div>
+          </header>
+
+          <section className="people-profile-stats" aria-label="Participant snapshot">
+            <article className="people-profile-stat">
+              <span>Affiliation</span>
+              <strong>{affiliationLabel}</strong>
+            </article>
+            <article className="people-profile-stat">
+              <span>Attended</span>
+              <strong>{attendedCount}</strong>
+            </article>
+            <article className="people-profile-stat">
+              <span>No-shows</span>
+              <strong>{noShowCount}</strong>
+            </article>
+            <article className="people-profile-stat people-profile-stat-wide">
+              <span>Participant history</span>
+              <strong>{participantHistoryLabel(qualifyingRegistrationCount)}</strong>
+            </article>
+          </section>
+
           <ParticipantContactCorrectionForm participant={participant} />
           <ParticipantManageRecoveryPanel
             participantId={participant.id}
             displayPhone={participant.display_phone}
             pendingLink={pendingRecovery}
           />
-          <div className="mt-8 rounded border bg-white p-6">
-            <h2 className="text-xl font-semibold">Goals</h2>
-            <p className="mt-2 whitespace-pre-wrap text-slate-700">
-              {participant.goals ?? "No goals provided."}
+
+          <section className="people-profile-panel" aria-labelledby="goals-title">
+            <p className="people-profile-panel-kicker">Historical</p>
+            <h2 id="goals-title">Goals</h2>
+            <p className="people-profile-panel-body">
+              {participant.goals?.trim()
+                ? participant.goals
+                : "No goals on file. Public registration no longer collects goals."}
             </p>
-          </div>
-          <div className="mt-8 rounded border bg-white p-6">
-            <h2 className="text-xl font-semibold">Registration and attendance history</h2>
-            <div className="mt-4 divide-y">
-              {(registrations ?? []).map((r) => {
-                const event = eventById.get(r.event_id);
-                const a = attendanceByRegistration.get(r.id);
-                return (
-                  <div key={r.id} className="py-3">
-                    <p className="font-medium">{event?.name ?? "Event unavailable"}</p>
-                    <p className="text-sm text-slate-600">
-                      {event
-                        ? new Intl.DateTimeFormat("en-US", {
-                            dateStyle: "medium",
-                            timeStyle: "short",
-                            timeZone: event.timezone,
-                          }).format(new Date(event.starts_at))
-                        : "—"}{" "}
-                      · Registration {r.registration_status} · Attendance{" "}
-                      {a?.status ?? "NOT_RECORDED"}
+          </section>
+
+          <section className="people-profile-panel" aria-labelledby="registration-attendance-title">
+            <p className="people-profile-panel-kicker">History</p>
+            <h2 id="registration-attendance-title">Registration and attendance</h2>
+            <div className="people-profile-list">
+              {(registrations ?? []).length === 0 ? (
+                <p className="people-profile-empty">No registrations yet.</p>
+              ) : (
+                (registrations ?? []).map((r) => {
+                  const event = eventById.get(r.event_id);
+                  const a = attendanceByRegistration.get(r.id);
+                  return (
+                    <article key={r.id} className="people-profile-list-item">
+                      <strong>{event?.name ?? "Event unavailable"}</strong>
+                      <p>
+                        {event
+                          ? new Intl.DateTimeFormat("en-US", {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                              timeZone: event.timezone,
+                            }).format(new Date(event.starts_at))
+                          : "—"}{" "}
+                        · Registration {r.registration_status} · Attendance{" "}
+                        {a?.status ?? "NOT_RECORDED"}
+                      </p>
+                    </article>
+                  );
+                })
+              )}
+            </div>
+          </section>
+
+          <section className="people-profile-panel" aria-labelledby="follow-up-history-title">
+            <p className="people-profile-panel-kicker">Follow-up</p>
+            <h2 id="follow-up-history-title">Follow-up history</h2>
+            <div className="people-profile-list">
+              {(tasks ?? []).length === 0 ? (
+                <p className="people-profile-empty">No follow-up tasks.</p>
+              ) : (
+                (tasks ?? []).map((task) => (
+                  <article key={task.id} className="people-profile-list-item">
+                    <strong>
+                      {task.task_title} · {task.status}
+                    </strong>
+                    <p>
+                      Due{" "}
+                      {new Intl.DateTimeFormat("en-US", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      }).format(new Date(task.due_at))}{" "}
+                      · {eventById.get(task.event_id ?? "")?.name ?? "Event unavailable"}
                     </p>
-                  </div>
-                );
-              })}
+                  </article>
+                ))
+              )}
             </div>
-          </div>
-          <div className="mt-8 rounded border bg-white p-6">
-            <h2 className="text-xl font-semibold">Follow-up history</h2>
-            <div className="mt-4 divide-y">
-              {(tasks ?? []).map((task) => (
-                <div key={task.id} className="py-3">
-                  <p className="font-medium">
-                    {task.task_title} · {task.status}
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    Due{" "}
-                    {new Intl.DateTimeFormat("en-US", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    }).format(new Date(task.due_at))}{" "}
-                    · {eventById.get(task.event_id ?? "")?.name ?? "Event unavailable"}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
+          </section>
         </div>
-      </section>
+      </main>
     </>
   );
 }

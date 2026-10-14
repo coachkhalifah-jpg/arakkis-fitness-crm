@@ -23,53 +23,27 @@ export function ParticipantContactCorrectionForm({ participant }: { participant:
   );
 
   return (
-    <section
-      className="mt-8 rounded border bg-white p-6"
-      aria-labelledby="contact-correction-title"
-    >
-      <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
-        System Admin only
-      </p>
-      <h2 id="contact-correction-title" className="mt-1 text-xl font-semibold">
-        Correct contact details
-      </h2>
-      <p className="mt-2 text-sm text-slate-600">
+    <section className="people-profile-panel" aria-labelledby="contact-correction-title">
+      <p className="people-profile-panel-kicker">System Admin only</p>
+      <h2 id="contact-correction-title">Correct contact details</h2>
+      <p className="people-profile-panel-lede">
         Name, phone, and email only. Participant ID and all registration, attendance, legal,
         notification, and follow-up history stay unchanged. A matching identity is sent to review
         instead of being merged.
       </p>
-      <form
-        action={action}
-        className="mt-5 grid gap-4 sm:grid-cols-2"
-        data-testid="participant-contact-form"
-      >
+      <form action={action} className="people-profile-form" data-testid="participant-contact-form">
         <input type="hidden" name="participantId" value={participant.id} />
         <label>
           First name
-          <input
-            name="firstName"
-            required
-            defaultValue={participant.first_name}
-            className="mt-1 w-full rounded border p-2"
-          />
+          <input name="firstName" required defaultValue={participant.first_name} />
         </label>
         <label>
           Last name
-          <input
-            name="lastName"
-            required
-            defaultValue={participant.last_name}
-            className="mt-1 w-full rounded border p-2"
-          />
+          <input name="lastName" required defaultValue={participant.last_name} />
         </label>
         <label>
           Phone
-          <input
-            name="phone"
-            required
-            defaultValue={participant.display_phone}
-            className="mt-1 w-full rounded border p-2"
-          />
+          <input name="phone" required defaultValue={participant.display_phone} />
         </label>
         <label>
           Phone country
@@ -78,39 +52,28 @@ export function ParticipantContactCorrectionForm({ participant }: { participant:
             required
             defaultValue={participant.phone_country}
             maxLength={3}
-            className="mt-1 w-full rounded border p-2 uppercase"
+            className="people-profile-input-uppercase"
           />
         </label>
-        <label className="sm:col-span-2">
+        <label className="people-profile-form-wide">
           Email
-          <input
-            name="email"
-            type="email"
-            defaultValue={participant.email ?? ""}
-            className="mt-1 w-full rounded border p-2"
-          />
+          <input name="email" type="email" defaultValue={participant.email ?? ""} />
         </label>
-        <label className="sm:col-span-2">
+        <label className="people-profile-form-wide">
           Reason for correction
-          <textarea
-            name="reason"
-            required
-            maxLength={500}
-            rows={3}
-            className="mt-1 w-full rounded border p-2"
-          />
+          <textarea name="reason" required maxLength={500} rows={3} />
         </label>
-        <div className="sm:col-span-2">
+        <div className="people-profile-form-wide">
           <SubmitButton>Save contact correction</SubmitButton>
         </div>
         {state.error ? (
-          <p role="alert" className="sm:col-span-2 text-sm text-red-700">
+          <p role="alert" className="people-profile-form-wide people-profile-message is-error">
             {state.error}
             {state.reviewCaseId ? ` Review case: ${state.reviewCaseId}.` : null}
           </p>
         ) : null}
         {state.success ? (
-          <p role="status" className="sm:col-span-2 text-sm text-emerald-700">
+          <p role="status" className="people-profile-form-wide people-profile-message is-success">
             {state.success}
           </p>
         ) : null}
