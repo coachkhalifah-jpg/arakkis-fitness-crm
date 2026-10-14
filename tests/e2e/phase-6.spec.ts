@@ -175,6 +175,7 @@ test("System Admin can correct contact details without changing the participant 
   page,
 }) => {
   await signInSystem(page, `/admin/participants/${noShowParticipant.participantId}`);
+  await page.getByTestId("participant-edit-contact").click();
   const form = page.getByTestId("participant-contact-form");
   await expect(form).toBeVisible();
   await form.getByLabel("First name").fill("  CRM   Updated ");

@@ -3,6 +3,7 @@ import { googleCalendarUrl, icsContent } from "@/lib/registration/calendar";
 import {
   normalizeEmail,
   normalizeName,
+  formatParticipantPhoneDisplay,
   normalizePhone,
   participantInputSchema,
 } from "@/lib/registration/normalization";
@@ -31,6 +32,12 @@ describe("Phase 4 registration normalization", () => {
     expect(normalizePhone("(703) 555-1212", "US").e164).toBe("+17035551212");
     expect(normalizePhone("020 7946 0018", "GB").e164).toBe("+442079460018");
     expect(normalizePhone("+44 20 7946 0018", "US").e164).toBe("+442079460018");
+  });
+
+  it("formats participant phones for admin display without changing storage", () => {
+    expect(formatParticipantPhoneDisplay("12023558887", "US")).toBe("(202) 355-8887");
+    expect(formatParticipantPhoneDisplay("+12023558887", "US")).toBe("(202) 355-8887");
+    expect(formatParticipantPhoneDisplay("+44 20 7946 0018", "GB")).toBe("+44 20 7946 0018");
   });
 
   it("trims and lowercases optional email", () => {

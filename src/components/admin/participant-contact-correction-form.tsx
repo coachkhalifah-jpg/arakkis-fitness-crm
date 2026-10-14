@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useCallback, useEffect, useRef, useState, useActionState } from "react";
+import { useRouter } from "next/navigation";
 import { SubmitButton } from "@/components/admin/submit-button";
-import { ProgressiveDisclosureSection } from "@/components/admin/progressive-disclosure-section";
 import {
   correctParticipantContact,
   type ParticipantContactActionState,
@@ -18,116 +18,179 @@ type Participant = {
 };
 
 export function ParticipantContactCorrectionForm({ participant }: { participant: Participant }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const closeTimer = useRef<number | null>(null);
   const [state, action] = useActionState<ParticipantContactActionState, FormData>(
     correctParticipantContact,
     {},
   );
 
+  const close = useCallback(() => {
+    if (!open || closing) return;
+    setClosing(true);
+    closeTimer.current = window.setTimeout(() => {
+      setOpen(false);
+      setClosing(false);
+      closeTimer.current = null;
+    }, 750);
+  }, [closing, open]);
+
+  useEffect(
+    () => () => {
+      if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") close();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [close, open]);
+
+  useEffect(() => {
+    if (!state.success || !open) return;
+    router.refresh();
+  }, [open, router, state.success]);
+
   return (
-    <section
-      className="admin-resource-panel ops-venue-edit-panel"
-      aria-labelledby="contact-correction-title"
-    >
-      <p className="ops-kicker orange">System Admin only</p>
-      <h2 id="contact-correction-title">Correct contact details</h2>
+    <section className="ops-venue-edit-panel" aria-labelledby="contact-correction-heading">
+      <div className="ops-section-head">
+        <span className="ops-kicker" id="contact-correction-heading">
+          Contact
+        </span>
+        <button
+          type="button"
+          className="ops-org-add-link"
+          data-testid="participant-edit-contact"
+          onClick={() => {
+            setClosing(false);
+            setOpen(true);
+          }}
+        >
+          EDIT CONTACT{" "}
+          <span className="arakkis-arrow-icon" aria-hidden="true">
+            ↗
+          </span>
+        </button>
+      </div>
       <p className="ops-people-profile-copy">
-        Name, phone, and email only. Participant ID and all registration, attendance, legal,
-        notification, and follow-up history stay unchanged. A matching identity is sent to review
-        instead of being merged.
+        Name, phone, and email only. Participant ID and history stay unchanged. A matching identity
+        is sent to review instead of being merged.
       </p>
-      <form
-        action={action}
-        className="admin-create-event-form admin-resource-form"
-        data-testid="participant-contact-form"
-      >
-        <input type="hidden" name="participantId" value={participant.id} />
-        <ProgressiveDisclosureSection
-          id="participant-contact-identity"
-          number="01"
-          title="Contact identity"
-          defaultOpen
-          errorKeywords={["name", "phone", "email", "contact"]}
-        >
-          <label>
-            First name
-            <input
-              name="firstName"
-              required
-              defaultValue={participant.first_name}
-              className="mt-1 w-full rounded border p-2"
-            />
-          </label>
-          <label>
-            Last name
-            <input
-              name="lastName"
-              required
-              defaultValue={participant.last_name}
-              className="mt-1 w-full rounded border p-2"
-            />
-          </label>
-          <label>
-            Phone
-            <input
-              name="phone"
-              required
-              defaultValue={participant.display_phone}
-              className="mt-1 w-full rounded border p-2"
-            />
-          </label>
-          <label>
-            Phone country
-            <input
-              name="phoneCountry"
-              required
-              defaultValue={participant.phone_country}
-              maxLength={3}
-              className="mt-1 w-full rounded border p-2 uppercase"
-            />
-          </label>
-          <label>
-            Email
-            <input
-              name="email"
-              type="email"
-              defaultValue={participant.email ?? ""}
-              className="mt-1 w-full rounded border p-2"
-            />
-          </label>
-        </ProgressiveDisclosureSection>
-        <ProgressiveDisclosureSection
-          id="participant-contact-reason"
-          number="02"
-          title="Reason for correction"
-          defaultOpen
-          errorKeywords={["reason"]}
-        >
-          <label>
-            Reason for correction
-            <textarea
-              name="reason"
-              required
-              maxLength={500}
-              rows={3}
-              className="mt-1 w-full rounded border p-2"
-            />
-          </label>
-        </ProgressiveDisclosureSection>
-        <div className="admin-action-form-buttons">
-          <SubmitButton>Save contact correction</SubmitButton>
+
+      {open ? (
+        <div className="admin-events-page admin-organization-create-shell">
+          <div
+            className={`admin-events-filter-overlay${closing ? " is-closing" : ""}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="participant-edit-contact-title"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) close();
+            }}
+          >
+            <form
+              action={action}
+              className="admin-events-filter-sheet"
+              data-testid="participant-contact-form"
+            >
+              <div className="admin-events-filter-sheet-top">
+                <div>
+                  <p className="admin-events-filter-kicker">People profile</p>
+                  <h2 id="participant-edit-contact-title">Edit contact.</h2>
+                </div>
+                <button
+                  type="button"
+                  className="admin-events-filter-close"
+                  onClick={close}
+                  aria-label="Close contact editor"
+                >
+                  ×
+                </button>
+              </div>
+              <input type="hidden" name="participantId" value={participant.id} />
+              <div className="admin-events-filter-form">
+                <label>
+                  First name
+                  <input
+                    name="firstName"
+                    required
+                    maxLength={100}
+                    defaultValue={participant.first_name}
+                    autoFocus
+                  />
+                </label>
+                <label>
+                  Last name
+                  <input
+                    name="lastName"
+                    required
+                    maxLength={100}
+                    defaultValue={participant.last_name}
+                  />
+                </label>
+                <label>
+                  Phone
+                  <input
+                    name="phone"
+                    required
+                    maxLength={40}
+                    defaultValue={participant.display_phone}
+                  />
+                </label>
+                <label>
+                  Phone country
+                  <input
+                    name="phoneCountry"
+                    required
+                    maxLength={3}
+                    defaultValue={participant.phone_country}
+                    className="uppercase"
+                  />
+                </label>
+                <label>
+                  Email
+                  <input
+                    name="email"
+                    type="email"
+                    maxLength={254}
+                    defaultValue={participant.email ?? ""}
+                  />
+                </label>
+                <label>
+                  Reason for correction
+                  <textarea name="reason" required maxLength={500} rows={3} />
+                </label>
+              </div>
+              <div className="admin-events-filter-actions">
+                <SubmitButton className="admin-events-filter-apply">
+                  Save contact correction
+                </SubmitButton>
+                <button type="button" className="admin-events-filter-clear" onClick={close}>
+                  Cancel
+                </button>
+              </div>
+              {state.error ? (
+                <p role="alert" className="ops-people-profile-message is-error">
+                  {state.error}
+                  {state.reviewCaseId ? ` Review case: ${state.reviewCaseId}.` : null}
+                </p>
+              ) : null}
+              {state.success ? (
+                <p role="status" className="ops-people-profile-message is-success">
+                  {state.success}
+                </p>
+              ) : null}
+            </form>
+          </div>
         </div>
-        {state.error ? (
-          <p role="alert" className="ops-people-profile-message is-error">
-            {state.error}
-            {state.reviewCaseId ? ` Review case: ${state.reviewCaseId}.` : null}
-          </p>
-        ) : null}
-        {state.success ? (
-          <p role="status" className="ops-people-profile-message is-success">
-            {state.success}
-          </p>
-        ) : null}
-      </form>
+      ) : null}
     </section>
   );
 }

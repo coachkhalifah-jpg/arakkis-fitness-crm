@@ -12,6 +12,7 @@ import {
   organizationAffiliationLabel,
   participantHistoryLabel,
 } from "@/lib/participants/history";
+import { formatParticipantPhoneDisplay } from "@/lib/registration/normalization";
 
 export default async function ParticipantProfilePage({
   params,
@@ -81,6 +82,10 @@ export default async function ParticipantProfilePage({
     (a) => a.status === "NO_SHOW" && a.finalized_at,
   ).length;
   const fullName = `${participant.first_name} ${participant.last_name}`;
+  const formattedPhone = formatParticipantPhoneDisplay(
+    participant.display_phone,
+    participant.phone_country,
+  );
 
   return (
     <>
@@ -101,7 +106,7 @@ export default async function ParticipantProfilePage({
             <span className="ops-label">Current scope</span>
             <strong>All organizations</strong>
             <span className="ops-label">
-              {participant.display_phone} · {participant.email ?? "No email"}
+              {formattedPhone} · {participant.email ?? "No email"}
             </span>
           </div>
         </div>
@@ -113,7 +118,7 @@ export default async function ParticipantProfilePage({
                 <p className="ops-kicker orange">Participant identity</p>
                 <h2>{fullName}</h2>
                 <p>
-                  {participant.display_phone} · {participant.email ?? "No email"}
+                  {formattedPhone} · {participant.email ?? "No email"}
                 </p>
               </div>
               <span className="ops-status">Active</span>
@@ -149,6 +154,7 @@ export default async function ParticipantProfilePage({
           <ParticipantManageRecoveryPanel
             participantId={participant.id}
             displayPhone={participant.display_phone}
+            phoneCountry={participant.phone_country}
             pendingLink={pendingRecovery}
           />
 

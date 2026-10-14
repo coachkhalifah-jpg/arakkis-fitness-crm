@@ -1625,6 +1625,34 @@
   background: transparent;
   padding: 1rem 0 0;
 }
+.ops-people-profile-page .ops-org-add-link {
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  padding: 0.65rem 0;
+  color: #ff7a3d;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.66rem;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.ops-people-profile-page .ops-org-add-link:hover,
+.ops-people-profile-page .ops-org-add-link:focus-visible {
+  color: #c7f36b;
+}
+.ops-people-profile-page .admin-events-filter-form textarea {
+  min-height: 6rem;
+  width: 100%;
+  border: 1px solid #59616b;
+  border-radius: 0;
+  background: #2c3137;
+  padding: 0.8rem 1rem;
+  color: #f7f5f0;
+  font: inherit;
+  resize: vertical;
+}
 .ops-people-profile-page .admin-create-event-form,
 .ops-people-profile-page .admin-create-event-form label {
   color: #aeb3bb;
