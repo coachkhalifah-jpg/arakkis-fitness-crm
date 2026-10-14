@@ -20,7 +20,7 @@ Public registration no longer collects Goals (DEC-060 / UAT-011). Optional field
 
 ## Legal and participant data
 
-Participation acknowledgment remains PROVISIONAL until legal approval. Production registration is fail-closed unless the approved legal configuration is present. Participants have no login in MVP. Global participant history, notes, participant search, and follow-up are System Admin-only; Host Admin data is event-operational and organization-scoped.
+Participation acknowledgment remains PROVISIONAL until legal approval. Production registration is fail-closed unless the approved legal configuration is present. Participants have no login in MVP. Global participant history, notes, People directory browse/search, and follow-up are System Admin-only; Host Admin data is event-operational and organization-scoped. The People directory lists ACTIVE participants by default with org-style pagination (DEC-063 / UAT-015); row selection opens the full participant profile.
 
 ## Attendance and follow-up
 

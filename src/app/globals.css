@@ -12667,10 +12667,60 @@ body:has(.people-directory-page) .ops-template-overlay-nav {
   color: inherit;
   cursor: pointer;
   text-align: left;
+  text-decoration: none;
   transition:
     padding 0.25s cubic-bezier(0.15, 1, 0.25, 1),
     background 0.25s,
     border-color 0.25s;
+}
+.people-directory-pagination {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  border-top: 1px solid #41474e;
+  padding-top: 1.5rem;
+}
+.people-directory-pagination .ops-org-pagination-button {
+  display: inline-flex;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #505861;
+  border-radius: 50%;
+  background: transparent;
+  color: #f7f5f0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 17.6px;
+  line-height: 1;
+  text-decoration: none;
+  transition:
+    background-color 180ms ease-out,
+    color 180ms ease-out,
+    border-color 180ms ease-out;
+}
+.people-directory-pagination .ops-org-pagination-button:hover,
+.people-directory-pagination .ops-org-pagination-button:focus-visible {
+  border-color: #ff7a3d;
+  background: #ff7a3d;
+  color: #101315;
+}
+.people-directory-pagination .ops-org-pagination-button.is-disabled {
+  border-color: #505861;
+  color: #f7f5f0;
+  opacity: 0.35;
+}
+.people-directory-pagination .ops-org-pagination-label {
+  color: #aeb3bb;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.62rem;
+  line-height: normal;
+  text-align: center;
+  text-transform: uppercase;
 }
 .people-directory-row:hover,
 .people-directory-row:focus-visible {

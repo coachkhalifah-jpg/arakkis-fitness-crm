@@ -10,13 +10,16 @@ import {
   participantHistoryLabel,
 } from "@/lib/participants/history";
 
-type SearchParticipant = {
+const PEOPLE_PAGE_SIZE = 25;
+
+type DirectoryParticipant = {
   id: string;
   first_name: string;
   last_name: string;
   display_phone: string;
   email: string | null;
   primary_affiliation_organization_id: string | null;
+  total_count?: number | string;
 };
 
 function formatEventDate(value: string, timezone: string) {
@@ -30,16 +33,73 @@ function formatEventDate(value: string, timezone: string) {
 export default async function ParticipantsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; page?: string }>;
 }) {
   await requireSystemAdmin("/admin/participants");
-  const q = (await searchParams).q?.trim() ?? "";
+  const params = await searchParams;
+  const q = params.q?.trim() ?? "";
+  const hasQuery = q.length >= 2;
+  const requestedPage = Number.parseInt(params.page ?? "1", 10);
+  const page = Math.max(1, Number.isFinite(requestedPage) ? requestedPage : 1);
   const db = await createClient();
-  const { data: rawParticipants, error } =
-    q.length >= 2
-      ? await db.rpc("phase6_search_participants", { p_query: q, p_limit: 50 } as never)
-      : { data: [], error: null };
-  const participants = (rawParticipants ?? []) as SearchParticipant[];
+
+  let participants: DirectoryParticipant[] = [];
+  let error: { message: string } | null = null;
+  let totalCount = 0;
+
+  let currentPage = page;
+
+  if (hasQuery) {
+    const result = await db.rpc("phase6_search_participants", {
+      p_query: q,
+      p_limit: 50,
+    } as never);
+    error = result.error;
+    const matches = (result.data ?? []) as DirectoryParticipant[];
+    totalCount = matches.length;
+    const searchPages = Math.max(1, Math.ceil(totalCount / PEOPLE_PAGE_SIZE) || 1);
+    currentPage = Math.min(page, searchPages);
+    participants = matches.slice(
+      (currentPage - 1) * PEOPLE_PAGE_SIZE,
+      currentPage * PEOPLE_PAGE_SIZE,
+    );
+  } else {
+    const result = await db.rpc("phase6_list_participants", {
+      p_page: page,
+      p_page_size: PEOPLE_PAGE_SIZE,
+    } as never);
+    error = result.error;
+    participants = (result.data ?? []) as DirectoryParticipant[];
+    totalCount = Number(participants[0]?.total_count ?? 0);
+
+    // Window totals only appear on returned rows; clamp when the page is past the end.
+    if (!error && !participants.length && page > 1) {
+      const firstPage = await db.rpc("phase6_list_participants", {
+        p_page: 1,
+        p_page_size: PEOPLE_PAGE_SIZE,
+      } as never);
+      error = firstPage.error;
+      const firstRows = (firstPage.data ?? []) as DirectoryParticipant[];
+      totalCount = Number(firstRows[0]?.total_count ?? 0);
+      const listPages = Math.max(1, Math.ceil(totalCount / PEOPLE_PAGE_SIZE) || 1);
+      currentPage = Math.min(page, listPages);
+      if (totalCount > 0 && currentPage !== 1) {
+        const clamped = await db.rpc("phase6_list_participants", {
+          p_page: currentPage,
+          p_page_size: PEOPLE_PAGE_SIZE,
+        } as never);
+        error = clamped.error;
+        participants = (clamped.data ?? []) as DirectoryParticipant[];
+        totalCount = Number(participants[0]?.total_count ?? totalCount);
+      } else {
+        participants = firstRows;
+        currentPage = 1;
+      }
+    }
+  }
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PEOPLE_PAGE_SIZE) || 1);
+  currentPage = Math.min(currentPage, totalPages);
   const participantIds = participants.map((participant) => participant.id);
   const organizationIds = participants
     .map((participant) => participant.primary_affiliation_organization_id)
@@ -140,7 +200,15 @@ export default async function ParticipantsPage({
         signOutAction={signOut}
         items={getAdminWorkspaceMenuItems()}
       />
-      <PeopleDirectory key={q} query={q} people={records} error={error?.message} />
+      <PeopleDirectory
+        key={`${q}:${currentPage}`}
+        query={q}
+        people={records}
+        page={currentPage}
+        totalPages={totalPages}
+        totalCount={totalCount}
+        error={error?.message}
+      />
     </>
   );
 }
