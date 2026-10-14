@@ -93,6 +93,7 @@ export function RegistrationForm({
   eventInviteToken = null,
   seriesMode = false,
   rememberedFirstName = null,
+  rememberedGoals = null,
   legalDocuments = [],
   legalPackage,
 }: {
@@ -102,6 +103,7 @@ export function RegistrationForm({
   eventInviteToken?: string | null;
   seriesMode?: boolean;
   rememberedFirstName?: string | null;
+  rememberedGoals?: string | null;
   legalDocuments?: LegalDocument[];
   legalPackage: LegalPackage | null;
 }) {
@@ -130,6 +132,7 @@ export function RegistrationForm({
     phone: "",
     email: "",
     fitnessExperience: "",
+    goals: rememberedGoals ?? "",
     referralSource: "",
     referralSourceOther: "",
   });
@@ -166,6 +169,7 @@ export function RegistrationForm({
     const optionalFocusField = [
       "email",
       "fitnessExperience",
+      "goals",
       "referralSource",
       "referralSourceOther",
     ].includes(state.focusField);
@@ -592,6 +596,29 @@ export function RegistrationForm({
                     role="alert"
                   >
                     {errorFor("fitnessExperience")}
+                  </p>
+                ) : null}
+              </label>
+              <RegistrationQuestion
+                question="What are you working toward?"
+                subtext="Share anything that would help your coach support you."
+                as="h3"
+              />
+              <label className="registration-field-label">
+                <span className="registration-field-title">Goals</span>
+                <textarea
+                  id="goals"
+                  name="goals"
+                  maxLength={500}
+                  placeholder="What would you like to get from class?"
+                  value={values.goals}
+                  onChange={(event) => updateValue("goals", event.target.value)}
+                  {...fieldProps("goals")}
+                  className="registration-field-control mt-2 w-full px-3 py-3 outline-none transition"
+                />
+                {errorFor("goals") ? (
+                  <p id="goals-error" className="mt-1 text-sm text-red-700" role="alert">
+                    {errorFor("goals")}
                   </p>
                 ) : null}
               </label>
