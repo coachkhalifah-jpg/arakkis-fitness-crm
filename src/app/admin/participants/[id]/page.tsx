@@ -166,9 +166,7 @@ export default async function ParticipantProfilePage({
               <span className="ops-label">Read-only</span>
             </div>
             <p className="ops-people-profile-copy">
-              {participant.goals?.trim()
-                ? participant.goals
-                : "No goals on file. Public registration no longer collects goals."}
+              {participant.goals?.trim() ? participant.goals : "No goals on file."}
             </p>
           </section>
 
