@@ -54,3 +54,24 @@ export function normalizePhone(value: string, country: string) {
     throw new Error("Enter a valid phone number for the selected country.");
   return { e164: parsed.number, country: parsed.country ?? country.toUpperCase() };
 }
+
+/** Display-only phone formatting for admin surfaces (storage stays E.164 / display_phone). */
+export function formatParticipantPhoneDisplay(value: string, country = "US") {
+  const trimmed = value.trim();
+  if (!trimmed) return value;
+  const defaultCountry = country.toUpperCase() as never;
+  const parsed =
+    parsePhoneNumberFromString(trimmed, defaultCountry) ??
+    parsePhoneNumberFromString(
+      trimmed.startsWith("+") ? trimmed : `+${trimmed.replace(/\D/g, "")}`,
+    );
+  if (parsed?.isValid()) {
+    return parsed.country === "US" ? parsed.formatNational() : parsed.formatInternational();
+  }
+  const digits = trimmed.replace(/\D/g, "");
+  const national = digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
+  if (national.length === 10) {
+    return `(${national.slice(0, 3)}) ${national.slice(3, 6)}-${national.slice(6)}`;
+  }
+  return trimmed;
+}

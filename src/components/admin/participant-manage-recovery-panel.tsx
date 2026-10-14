@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { formatParticipantPhoneDisplay } from "@/lib/registration/normalization";
 import {
   issueParticipantManageRecoveryLink,
   revokeParticipantManageRecoveryLink,
@@ -17,15 +18,18 @@ type PendingLink = {
 export function ParticipantManageRecoveryPanel({
   participantId,
   displayPhone,
+  phoneCountry = "US",
   pendingLink,
 }: {
   participantId: string;
   displayPhone: string;
+  phoneCountry?: string;
   pendingLink: PendingLink | null;
 }) {
   const [message, setMessage] = useState<{ kind: "status" | "error"; text: string } | null>(null);
   const [oneTimeUrl, setOneTimeUrl] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const formattedPhone = formatParticipantPhoneDisplay(displayPhone, phoneCountry);
 
   const run = (
     operation: () => Promise<{
@@ -61,7 +65,7 @@ export function ParticipantManageRecoveryPanel({
       </p>
       <p className="ops-people-profile-copy">
         <span className="ops-label">Text or WhatsApp to</span>{" "}
-        <strong data-testid="manage-recovery-phone">{displayPhone}</strong>
+        <strong data-testid="manage-recovery-phone">{formattedPhone}</strong>
       </p>
 
       {pendingLink ? (
