@@ -36,6 +36,7 @@ export type RegistrationField =
   | "phoneCountry"
   | "email"
   | "fitnessExperience"
+  | "goals"
   | "referralSource"
   | "referralSourceOther"
   | "legalPackageAcknowledged";
@@ -152,6 +153,7 @@ async function executeRegistration(
     phoneCountry: remembered?.phone_country ?? form.get("phoneCountry"),
     email: remembered?.email ?? form.get("email") ?? "",
     fitnessExperience: remembered?.fitness_experience ?? form.get("fitnessExperience") ?? "",
+    goals: remembered?.goals ?? form.get("goals") ?? "",
     referralSource: form.get("referralSource") ?? "",
     referralSourceOther: form.get("referralSourceOther") ?? "",
     eventIds: selectedEventIds,
@@ -185,9 +187,9 @@ async function executeRegistration(
       email: normalizedEmail,
       normalized_email: normalizedEmail,
       fitness_experience: input.fitnessExperience || null,
-      // Public registration no longer collects goals (DEC-060). Pass null so
-      // existing CRM goals stay untouched (RPC updates only when p_goals is set).
-      goals: null,
+      // Optional Goals (DEC-061 / UAT-016). Null when empty so existing CRM goals
+      // stay untouched (RPC updates only when p_goals is set).
+      goals: input.goals || null,
       event_ids: input.eventIds,
       event_access_token: String(form.get("eventInviteToken") || ""),
       participation_acknowledgment_version_id: String(form.get("participationVersionId")),
