@@ -24,9 +24,18 @@ describe("remember and access UX (UAT-009)", () => {
 
   it("gates the confirmation Remember prompt on isRememberedParticipant", () => {
     expect(confirmationPage).toContain("successful.length > 0 && !isRememberedParticipant");
+    expect(confirmationPage).toContain("deviceJustRemembered");
+    expect(confirmationPage).toContain('remembered === "1"');
     expect(confirmationPage).toContain('aria-label="Save your booking link"');
     expect(confirmationPage).toContain("<ConfirmationRememberDevice");
     expect(confirmationPage).toMatch(/isRememberedParticipant[\s\S]*ConfirmationRememberDevice/);
+  });
+
+  it("redirects with remembered=1 after a successful registration remember (UAT-009)", () => {
+    const actions = readFileSync(resolve(process.cwd(), "src/lib/registration/actions.ts"), "utf8");
+    expect(actions).toContain("confirmationRedirectHref");
+    expect(actions).toContain('params.set("remembered", "1")');
+    expect(actions).toContain("deviceRemembered");
   });
 
   it("leads non-rememberers with Save your booking link and CopyBookingLink", () => {

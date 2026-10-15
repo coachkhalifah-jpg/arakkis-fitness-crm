@@ -79,10 +79,11 @@ function bookingTitle(name: string | null | undefined) {
 export default async function ConfirmationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ token?: string; correlationId?: string }>;
+  searchParams: Promise<{ token?: string; correlationId?: string; remembered?: string }>;
 }) {
   const routeSearchParams = await searchParams;
   const token = routeSearchParams.token ?? "";
+  const deviceJustRemembered = routeSearchParams.remembered === "1";
   const correlationId = isHostedAccessCorrelationId(routeSearchParams.correlationId)
     ? routeSearchParams.correlationId
     : crypto.randomUUID();
@@ -149,14 +150,24 @@ export default async function ConfirmationPage({
     resolveRememberedParticipant(undefined, correlationId),
     getConfirmationParticipantId(token, correlationId),
   ]);
+  // UAT-009: hide Remember UI when this browser was just remembered for this
+  // booking, when the cookie matches the confirmation participant, or when the
+  // cookie resolves and the identity RPC is unavailable (avoid duplicate prompt).
   const isRememberedParticipant =
-    rememberedParticipant?.participant_id === confirmationParticipantId;
+    deviceJustRemembered ||
+    (Boolean(rememberedParticipant?.participant_id) &&
+      (confirmationParticipantId == null ||
+        rememberedParticipant?.participant_id === confirmationParticipantId));
   logHostedAccessDiagnostic({
     correlation_id: correlationId,
     boundary: "confirmation_route",
     outcome_category: "success",
     participant_match: isRememberedParticipant,
-    remember_resolution: rememberedParticipant ? "matched" : "missing",
+    remember_resolution: rememberedParticipant
+      ? "matched"
+      : deviceJustRemembered
+        ? "matched"
+        : "missing",
   });
   const events = result.events ?? [];
   const successful = events.filter(
