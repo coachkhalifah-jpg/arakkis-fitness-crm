@@ -27,4 +27,5 @@ This is a concise handoff log; the durable source records remain in `docs/DECISI
 | 2026-10-15 / DEC-068 | Public Events hub: next occurrence **per series weekday**, not one card for the whole series. | Multi-day series visible on `/events` without changing 14-day register window. |
 | 2026-10-15 / hosted 0080 | Coach applied DEC-068 migration **0080** on hosted; public `/events` weekday cards PASS. | Tip SQL was already correct; missing hosted apply was the gap. |
 | 2026-10-15 / timer migration | Take-home workout timer stream uses migration **0081** (draft #33’s `0076` collided with phone-match). | Preserve ordered migrations; supersede #33 numbering. |
-| 2026-10-15 / DEC-069 | System Admin **Remove from People** soft-archives ACTIVE participants (migration 0082); no hard delete. | Directory clutter reduction; preserve history; block if upcoming bookings. |
+| 2026-10-15 / DEC-069 | System Admin **Remove from People** soft-archives ACTIVE participants (migration 0082). | Directory clutter reduction; preserve history; block if upcoming bookings. |
+| 2026-10-15 / DEC-070 | System Admin **Delete permanently** only when lean / no durable history (migration 0083). | Keeps DB lean for junk/test rows; refuse when history exists → use archive. |

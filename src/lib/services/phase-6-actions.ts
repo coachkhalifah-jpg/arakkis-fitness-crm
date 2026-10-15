@@ -49,6 +49,9 @@ function safeError(error: unknown) {
   if (/cancel upcoming bookings/i.test(message)) {
     return "Cancel upcoming bookings before removing this person from People.";
   }
+  if (/cannot permanently delete/i.test(message)) {
+    return "This person has history on file. Use Remove from People (archive) instead of permanent delete.";
+  }
   if (/message is required/i.test(message)) return "A message is required.";
   if (/message is too long/i.test(message)) return "The message is too long.";
   if (/invalid snooze date/i.test(message)) return "Choose a future snooze date.";
@@ -82,6 +85,32 @@ export async function archiveParticipant(
     revalidatePath(`/admin/participants/${input.participantId}`);
   } catch (error) {
     if (error instanceof ZodError) return { error: "A removal reason is required." };
+    return { error: safeError(error) };
+  }
+  redirect("/admin/participants");
+}
+
+export async function deleteLeanParticipant(
+  _state: ParticipantArchiveActionState,
+  form: FormData,
+): Promise<ParticipantArchiveActionState> {
+  const participantId = value(form, "participantId");
+  await requireSystemAdmin(`/admin/participants/${participantId}`);
+  try {
+    const input = participantArchiveSchema.parse({
+      participantId,
+      reason: value(form, "reason"),
+    });
+    const db = await createClient();
+    const { error } = await db.rpc("phase6_delete_lean_participant", {
+      p_participant_id: input.participantId,
+      p_reason: input.reason,
+    } as never);
+    if (error) throw new Error(error.message);
+    revalidatePath("/admin/participants");
+    revalidatePath(`/admin/participants/${input.participantId}`);
+  } catch (error) {
+    if (error instanceof ZodError) return { error: "A deletion reason is required." };
     return { error: safeError(error) };
   }
   redirect("/admin/participants");

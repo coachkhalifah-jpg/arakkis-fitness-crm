@@ -8,6 +8,7 @@ import { AdminWorkspaceMenu } from "@/components/admin/admin-workspace-menu";
 import { getAdminWorkspaceMenuItems } from "@/components/admin/admin-workspace-menu-items";
 import { ParticipantArchiveForm } from "@/components/admin/participant-archive-form";
 import { ParticipantContactCorrectionForm } from "@/components/admin/participant-contact-correction-form";
+import { ParticipantDeleteLeanForm } from "@/components/admin/participant-delete-lean-form";
 import { ParticipantManageRecoveryPanel } from "@/components/admin/participant-manage-recovery-panel";
 import {
   isCancellationRegistration,
@@ -321,13 +322,18 @@ export default async function ParticipantProfilePage({
               <span className="ops-kicker" id="remove-person-title">
                 Remove from People
               </span>
-              <span className="ops-label">Archive</span>
+              <span className="ops-label">Archive or delete</span>
             </div>
             <p className="ops-people-profile-copy">
-              Removes this person from the ACTIVE People directory to reduce clutter. History,
-              notes, and past registrations stay on file. Cancel any upcoming bookings first.
+              <strong>Remove from People</strong> archives the record (leaves the directory; history
+              stays). Cancel any upcoming bookings first.
             </p>
             <ParticipantArchiveForm participantId={participant.id} />
+            <p className="ops-people-profile-copy">
+              <strong>Delete permanently</strong> is only for lean test/junk rows with no bookings,
+              notes, follow-ups, or legal history. Prefer archive when history exists.
+            </p>
+            <ParticipantDeleteLeanForm participantId={participant.id} />
           </section>
 
           <ParticipantManageRecoveryPanel
