@@ -1714,6 +1714,7 @@ export type Database = {
           id: string;
           slug: string;
           title: string;
+          theme: string | null;
           steps: Json;
           active: boolean;
           created_by_admin_id: string;
@@ -1724,6 +1725,7 @@ export type Database = {
           id?: string;
           slug: string;
           title: string;
+          theme?: string | null;
           steps: Json;
           active?: boolean;
           created_by_admin_id: string;
@@ -1734,6 +1736,7 @@ export type Database = {
           id?: string;
           slug?: string;
           title?: string;
+          theme?: string | null;
           steps?: Json;
           active?: boolean;
           created_by_admin_id?: string;

@@ -1,7 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { WorkoutStep } from "@/lib/workouts/csv";
+import { playWorkoutTone } from "@/lib/workouts/audio";
+import "./workout-timer.css";
+
+const MUTE_STORAGE_KEY = "arakkis.workout.preferences.muted";
+const mutedListeners = new Set<() => void>();
 
 function formatClock(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60);
@@ -9,8 +14,15 @@ function formatClock(totalSeconds: number) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-const kindLabel: Record<WorkoutStep["kind"], string> = {
+const kindLabelFull: Record<WorkoutStep["kind"], string> = {
   prepare: "Get ready",
+  work: "Work",
+  rest: "Rest",
+  done: "Done",
+};
+
+const kindLabelShort: Record<WorkoutStep["kind"], string> = {
+  prepare: "Prep",
   work: "Work",
   rest: "Rest",
   done: "Done",
@@ -32,11 +44,68 @@ function initialState(ordered: WorkoutStep[]): TimerState {
   };
 }
 
-export function WorkoutTimer({ title, steps }: { title: string; steps: WorkoutStep[] }) {
+function readMutedPreference(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    const stored = window.localStorage.getItem(MUTE_STORAGE_KEY);
+    if (stored === null) return true;
+    return stored !== "false";
+  } catch {
+    return true;
+  }
+}
+
+function subscribeMuted(listener: () => void) {
+  mutedListeners.add(listener);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === MUTE_STORAGE_KEY || event.key === null) listener();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    mutedListeners.delete(listener);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+function writeMutedPreference(nextMuted: boolean) {
+  try {
+    window.localStorage.setItem(MUTE_STORAGE_KEY, nextMuted ? "true" : "false");
+  } catch {
+    // Ignore quota / private-mode failures; in-memory mute still works via emit.
+  }
+  for (const listener of mutedListeners) listener();
+}
+
+export function WorkoutTimer({
+  title,
+  theme,
+  steps,
+}: {
+  title: string;
+  theme?: string;
+  steps: WorkoutStep[];
+}) {
   const ordered = useMemo(() => [...steps].sort((a, b) => a.order - b.order), [steps]);
   const [state, setState] = useState<TimerState>(() => initialState(ordered));
+  const muted = useSyncExternalStore(subscribeMuted, readMutedPreference, () => true);
+  const [stepsOpen, setStepsOpen] = useState(false);
+  const stepsListId = useId();
   const { index, remaining, running, finished } = state;
   const current = ordered[index];
+  const prevRef = useRef<{ index: number; remaining: number; running: boolean; finished: boolean }>(
+    {
+      index: 0,
+      remaining: ordered[0]?.durationSeconds ?? 0,
+      running: false,
+      finished: false,
+    },
+  );
+  const warnPlayedRef = useRef<number | null>(null);
+  const mutedRef = useRef(muted);
+
+  useEffect(() => {
+    mutedRef.current = muted;
+  }, [muted]);
 
   useEffect(() => {
     if (!running || finished) return;
@@ -60,82 +129,194 @@ export function WorkoutTimer({ title, steps }: { title: string; steps: WorkoutSt
     return () => window.clearInterval(id);
   }, [running, finished, ordered]);
 
+  useEffect(() => {
+    const prev = prevRef.current;
+    const toneMuted = mutedRef.current;
+
+    if (!toneMuted) {
+      const advanced = state.index !== prev.index;
+      const startedFromIdle =
+        state.running &&
+        !prev.running &&
+        !state.finished &&
+        state.remaining === (current?.durationSeconds ?? 0);
+      const completedLast = state.finished && !prev.finished && state.index === ordered.length - 1;
+
+      if (advanced && !state.finished) {
+        playWorkoutTone("end");
+        playWorkoutTone("begin");
+        warnPlayedRef.current = null;
+      } else if (startedFromIdle) {
+        playWorkoutTone("begin");
+        warnPlayedRef.current = null;
+      } else if (completedLast) {
+        playWorkoutTone("end");
+      }
+
+      if (
+        state.running &&
+        !state.finished &&
+        state.remaining <= 3 &&
+        state.remaining >= 1 &&
+        warnPlayedRef.current !== state.remaining
+      ) {
+        playWorkoutTone("warn");
+        warnPlayedRef.current = state.remaining;
+      }
+    }
+
+    prevRef.current = {
+      index: state.index,
+      remaining: state.remaining,
+      running: state.running,
+      finished: state.finished,
+    };
+  }, [state, current?.durationSeconds, ordered.length]);
+
   if (!current) {
-    return <p className="text-sm text-slate-600">This workout has no steps.</p>;
+    return (
+      <div className="workout-stage">
+        <div className="workout-stage__inner">
+          <p className="workout-stage__theme">This workout has no steps.</p>
+        </div>
+      </div>
+    );
   }
 
+  const warn = !finished && remaining <= 3 && remaining >= 0 && current.kind !== "done";
+  const stepTitle = finished ? "Workout complete" : current.title;
+  const cue = !finished && current.cue?.trim() ? current.cue.trim() : "";
+  const block = !finished && current.block?.trim() ? current.block.trim() : "";
+  const kindFull = finished ? kindLabelFull.done : kindLabelFull[current.kind];
+  const kindShort = finished ? kindLabelShort.done : kindLabelShort[current.kind];
+  const progressParts = [
+    `Step ${Math.min(index + 1, ordered.length)} of ${ordered.length}`,
+    kindShort,
+    block,
+  ].filter(Boolean);
+
   return (
-    <div className="workout-timer mx-auto flex w-full max-w-lg flex-col items-center gap-6 px-4 py-10 text-center">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-        Take-home workout
-      </p>
-      <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">{title}</h1>
-      <p className="text-sm text-slate-500">
-        Step {Math.min(index + 1, ordered.length)} of {ordered.length}
-        {!finished ? ` · ${kindLabel[current.kind]}` : ""}
-      </p>
-      <p className="min-h-[3.5rem] text-3xl font-semibold text-slate-900 sm:text-4xl">
-        {finished ? "Workout complete" : current.title}
-      </p>
-      <p
-        className="font-mono text-7xl font-semibold tabular-nums tracking-tight text-slate-900 sm:text-8xl"
-        aria-live="polite"
-      >
-        {formatClock(finished ? 0 : remaining)}
-      </p>
-      <div className="flex flex-wrap items-center justify-center gap-3">
-        <button
-          type="button"
-          className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white disabled:opacity-40"
-          onClick={() => setState((prev) => ({ ...prev, running: !prev.running }))}
-          disabled={finished}
-        >
-          {running ? "Pause" : "Start"}
-        </button>
-        <button
-          type="button"
-          className="rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-800 disabled:opacity-40"
-          onClick={() => {
-            setState((prev) => {
-              if (prev.index >= ordered.length - 1) {
-                return { ...prev, running: false, finished: true, remaining: 0 };
-              }
-              const nextIndex = prev.index + 1;
-              return {
-                ...prev,
-                index: nextIndex,
-                remaining: ordered[nextIndex]?.durationSeconds ?? 0,
-                finished: false,
-              };
-            });
-          }}
-          disabled={finished}
-        >
-          Next
-        </button>
-        <button
-          type="button"
-          className="rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-800"
-          onClick={() => setState(initialState(ordered))}
-        >
-          Restart
-        </button>
-      </div>
-      <ol className="mt-4 w-full max-w-md space-y-2 text-left text-sm text-slate-600">
-        {ordered.map((step, stepIndex) => (
-          <li
-            key={`${step.order}-${step.title}`}
-            className={
-              stepIndex === index && !finished
-                ? "rounded-lg bg-slate-100 px-3 py-2 font-medium text-slate-900"
-                : "px-3 py-1"
-            }
+    <div className="workout-stage">
+      <div className="workout-stage__inner">
+        <header className="workout-stage__meta">
+          <p className="workout-stage__title">{title}</p>
+          {theme?.trim() ? <p className="workout-stage__theme">{theme.trim()}</p> : null}
+          <p className="workout-stage__progress">
+            <span className="sm:hidden">{progressParts.join(" · ")}</span>
+            <span className="hidden sm:inline">
+              {`Step ${Math.min(index + 1, ordered.length)} of ${ordered.length}`}
+              {!finished ? ` · ${kindFull}` : ""}
+              {block ? ` · ${block}` : ""}
+            </span>
+          </p>
+        </header>
+
+        <div className="workout-stage__hero">
+          <h1 className={`workout-stage__step-title${warn ? " is-warn" : ""}`}>{stepTitle}</h1>
+          {cue ? <p className="workout-stage__cue">{cue}</p> : null}
+          <p
+            className={`workout-stage__clock${warn ? " is-warn" : ""}`}
+            aria-live="polite"
+            aria-atomic="true"
           >
-            {step.order}. {step.title}{" "}
-            <span className="text-slate-400">({formatClock(step.durationSeconds)})</span>
-          </li>
-        ))}
-      </ol>
+            {formatClock(finished ? 0 : remaining)}
+          </p>
+          <p className={`workout-stage__kind${warn ? " is-warn" : ""}`}>
+            <span className="sm:hidden">{kindShort}</span>
+            <span className="hidden sm:inline">{kindFull}</span>
+          </p>
+        </div>
+
+        <div className="workout-stage__controls">
+          <button
+            type="button"
+            className="workout-stage__btn workout-stage__btn--primary"
+            onClick={() => setState((prev) => ({ ...prev, running: !prev.running }))}
+            disabled={finished}
+          >
+            {running ? "Pause" : "Start"}
+          </button>
+          <button
+            type="button"
+            className="workout-stage__btn"
+            onClick={() => {
+              setState((prev) => {
+                if (prev.index >= ordered.length - 1) {
+                  return { ...prev, running: false, finished: true, remaining: 0 };
+                }
+                const nextIndex = prev.index + 1;
+                return {
+                  ...prev,
+                  index: nextIndex,
+                  remaining: ordered[nextIndex]?.durationSeconds ?? 0,
+                  finished: false,
+                };
+              });
+              warnPlayedRef.current = null;
+            }}
+            disabled={finished}
+          >
+            Next
+          </button>
+          <button
+            type="button"
+            className="workout-stage__btn"
+            onClick={() => {
+              setState(initialState(ordered));
+              warnPlayedRef.current = null;
+            }}
+          >
+            Restart
+          </button>
+        </div>
+
+        <div className="workout-stage__preferences">
+          <button
+            type="button"
+            className="workout-stage__mute"
+            aria-pressed={muted}
+            aria-label={muted ? "Sound muted. Activate to unmute." : "Sound on. Activate to mute."}
+            onClick={() => writeMutedPreference(!muted)}
+          >
+            {muted ? "Muted" : "Sound on"}
+          </button>
+        </div>
+
+        <section className="workout-stage__steps" aria-label="Step list">
+          <button
+            type="button"
+            className="workout-stage__steps-toggle"
+            aria-expanded={stepsOpen}
+            aria-controls={stepsListId}
+            onClick={() => setStepsOpen((prev) => !prev)}
+          >
+            {stepsOpen ? "Hide steps" : "Show steps"}
+          </button>
+          <ol
+            id={stepsListId}
+            className={`workout-stage__step-list${stepsOpen ? "" : " is-collapsed"}`}
+          >
+            {ordered.map((step, stepIndex) => (
+              <li
+                key={`${step.order}-${step.title}`}
+                className={[
+                  "workout-stage__step-item",
+                  stepIndex === index && !finished ? "is-current" : "",
+                  finished || stepIndex < index ? "is-done-row" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                <span>
+                  {step.order}. {step.title}
+                  {step.block?.trim() ? ` · ${step.block.trim()}` : ""}
+                </span>
+                <span>{formatClock(step.durationSeconds)}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      </div>
     </div>
   );
 }

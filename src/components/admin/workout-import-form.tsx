@@ -11,7 +11,7 @@ export function WorkoutImportForm() {
   return (
     <form action={action} className="grid gap-4">
       <label className="grid gap-2 text-sm">
-        Workout CSV
+        CSV file
         <input
           name="csv"
           type="file"
@@ -19,22 +19,28 @@ export function WorkoutImportForm() {
           accept=".csv,text/csv,text/plain"
           className="rounded border border-dashed p-3"
         />
-        <span className="text-slate-600">
-          Use columns workout_slug, workout_title, step_order, step_title, duration_seconds,
-          step_kind. Template:{" "}
-          <a className="underline" href="/templates/take-home-workout-timer.csv" download>
+        <span className="admin-workout-help">
+          Accepts coach SlipL exports or flat step CSV. Required step columns: step_title,
+          duration_seconds, step_kind. Optional: workout_title, workout_theme, workout_slug,
+          step_order (row order used if omitted), cue, block. Prefer setting slug/title/theme in the
+          Workout editor. Template:{" "}
+          <a
+            className="admin-workout-open-link"
+            href="/templates/take-home-workout-timer.csv"
+            download
+          >
             take-home-workout-timer.csv
           </a>
         </span>
       </label>
       <SubmitButton>Import workouts</SubmitButton>
       {state.error ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="admin-workout-error">
           {state.error}
         </p>
       ) : null}
       {state.success ? (
-        <p role="status" className="text-sm text-emerald-800">
+        <p role="status" className="admin-workout-status">
           {state.success}
         </p>
       ) : null}

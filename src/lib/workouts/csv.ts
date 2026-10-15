@@ -1,3 +1,5 @@
+import { slugifyWorkoutTitle } from "@/lib/workouts/slip-sheet";
+
 export type WorkoutStepKind = "prepare" | "work" | "rest" | "done";
 
 export type WorkoutStep = {
@@ -5,24 +7,22 @@ export type WorkoutStep = {
   title: string;
   durationSeconds: number;
   kind: WorkoutStepKind;
+  cue?: string;
+  block?: string;
 };
 
 export type ParsedWorkout = {
   slug: string;
   title: string;
+  theme?: string;
   steps: WorkoutStep[];
 };
 
 const STEP_KINDS = new Set<WorkoutStepKind>(["prepare", "work", "rest", "done"]);
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const REQUIRED_HEADERS = [
-  "workout_slug",
-  "workout_title",
-  "step_order",
-  "step_title",
-  "duration_seconds",
-  "step_kind",
-] as const;
+/** Slug is authored on the Workout editor page; optional in flat CSV. */
+/** Identity (slug/title/theme) and step_order live on the Workout editor; optional in CSV. */
+const REQUIRED_HEADERS = ["step_title", "duration_seconds", "step_kind"] as const;
 
 function splitCsvLine(line: string): string[] {
   const cells: string[] = [];
@@ -57,6 +57,23 @@ function normalizeHeader(value: string) {
     .toLowerCase();
 }
 
+function optionalText(value: string | undefined, max: number): string | undefined {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return undefined;
+  if (trimmed.length > max) return undefined;
+  return trimmed;
+}
+
+export function looksLikeCoachSlipSheet(raw: string): boolean {
+  const sample = raw.slice(0, 4000).toLowerCase();
+  return (
+    sample.includes("time,exercise") ||
+    sample.includes("repeat once") ||
+    /theme:\s*/.test(sample) ||
+    sample.includes("at-home")
+  );
+}
+
 export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error?: string } {
   const text = raw.replace(/^\uFEFF/, "").trim();
   if (!text) return { workouts: [], error: "The CSV file is empty." };
@@ -72,50 +89,84 @@ export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error
     if (!headers.includes(required)) {
       return {
         workouts: [],
-        error: `Missing required column "${required}". Use the take-home workout CSV template.`,
+        error: `Missing required column "${required}". Use the take-home workout CSV template, or load a coach SlipL sheet in the Workout editor.`,
       };
     }
   }
 
   const index = Object.fromEntries(headers.map((header, i) => [header, i])) as Record<
-    (typeof REQUIRED_HEADERS)[number],
+    string,
     number
   >;
+  const hasSlug = headers.includes("workout_slug");
+  const hasTitle = headers.includes("workout_title");
+  const hasTheme = headers.includes("workout_theme");
+  const hasOrder = headers.includes("step_order");
+  const hasCue = headers.includes("cue");
+  const hasBlock = headers.includes("block");
+
+  if (!hasTitle && !hasSlug) {
+    return {
+      workouts: [],
+      error:
+        "Flat CSV needs workout_title or workout_slug to group steps, or load a coach SlipL sheet in the Workout editor (set slug/title/theme there).",
+    };
+  }
 
   type Draft = {
     slug: string;
     title: string;
+    theme?: string;
     steps: WorkoutStep[];
+    nextOrder: number;
   };
   const drafts = new Map<string, Draft>();
 
   for (let rowNumber = 2; rowNumber <= lines.length; rowNumber += 1) {
     const cells = splitCsvLine(lines[rowNumber - 1]);
-    const slug = (cells[index.workout_slug] ?? "").toLowerCase();
-    const title = cells[index.workout_title] ?? "";
-    const orderRaw = cells[index.step_order] ?? "";
+    const title = hasTitle ? (cells[index.workout_title] ?? "").trim() : "";
+    const slugRaw = hasSlug ? (cells[index.workout_slug] ?? "").trim().toLowerCase() : "";
+    const slug = slugRaw || slugifyWorkoutTitle(title);
+    const orderRaw = hasOrder ? (cells[index.step_order] ?? "").trim() : "";
     const stepTitle = cells[index.step_title] ?? "";
     const durationRaw = cells[index.duration_seconds] ?? "";
     const kindRaw = (cells[index.step_kind] ?? "").toLowerCase() as WorkoutStepKind;
+    const themeRaw = hasTheme ? (cells[index.workout_theme] ?? "") : "";
+    const cueRaw = hasCue ? (cells[index.cue] ?? "") : "";
+    const blockRaw = hasBlock ? (cells[index.block] ?? "") : "";
 
-    if (!SLUG_PATTERN.test(slug)) {
-      return {
-        workouts: [],
-        error: `Row ${rowNumber}: workout_slug must be lowercase kebab-case (e.g. home-core-15).`,
-      };
-    }
-    if (!title || title.length > 160) {
+    if (hasTitle && (!title || title.length > 160)) {
       return {
         workouts: [],
         error: `Row ${rowNumber}: workout_title must be 1–160 characters.`,
       };
     }
-    const order = Number(orderRaw);
-    if (!Number.isInteger(order) || order < 1 || order > 200) {
+    if (!SLUG_PATTERN.test(slug)) {
       return {
         workouts: [],
-        error: `Row ${rowNumber}: step_order must be an integer from 1 to 200.`,
+        error: slugRaw
+          ? `Row ${rowNumber}: workout_slug must be lowercase kebab-case (e.g. home-core-15).`
+          : `Row ${rowNumber}: could not derive a kebab-case slug. Set slug/title on the Workout editor.`,
       };
+    }
+    if (hasTheme && themeRaw.trim().length > 160) {
+      return {
+        workouts: [],
+        error: `Row ${rowNumber}: workout_theme must be at most 160 characters.`,
+      };
+    }
+    let order: number;
+    if (orderRaw) {
+      order = Number(orderRaw);
+      if (!Number.isInteger(order) || order < 1 || order > 200) {
+        return {
+          workouts: [],
+          error: `Row ${rowNumber}: step_order must be an integer from 1 to 200.`,
+        };
+      }
+    } else {
+      const existingForOrder = drafts.get(slug);
+      order = existingForOrder?.nextOrder ?? 1;
     }
     if (!stepTitle || stepTitle.length > 120) {
       return {
@@ -136,28 +187,69 @@ export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error
         error: `Row ${rowNumber}: step_kind must be prepare, work, rest, or done.`,
       };
     }
+    if (hasCue && cueRaw.trim().length > 200) {
+      return {
+        workouts: [],
+        error: `Row ${rowNumber}: cue must be at most 200 characters.`,
+      };
+    }
+    if (hasBlock && blockRaw.trim().length > 80) {
+      return {
+        workouts: [],
+        error: `Row ${rowNumber}: block must be at most 80 characters.`,
+      };
+    }
+
+    const theme = optionalText(themeRaw, 160);
+    const cue = optionalText(cueRaw, 200);
+    const block = optionalText(blockRaw, 80);
+    const resolvedTitle = title || slug;
 
     const existing = drafts.get(slug);
-    if (existing && existing.title !== title) {
+    if (existing && hasTitle && existing.title !== resolvedTitle) {
       return {
         workouts: [],
         error: `Row ${rowNumber}: workout_title for slug "${slug}" does not match earlier rows.`,
       };
     }
-    const draft = existing ?? { slug, title, steps: [] };
+    if (existing && (existing.theme ?? "") !== (theme ?? "")) {
+      return {
+        workouts: [],
+        error: `Row ${rowNumber}: workout_theme for slug "${slug}" does not match earlier rows.`,
+      };
+    }
+    const draft =
+      existing ??
+      ({
+        slug,
+        title: resolvedTitle,
+        theme,
+        steps: [],
+        nextOrder: 1,
+      } satisfies Draft);
+    if (!existing && theme) draft.theme = theme;
     if (draft.steps.some((step) => step.order === order)) {
       return {
         workouts: [],
         error: `Row ${rowNumber}: duplicate step_order ${order} for slug "${slug}".`,
       };
     }
-    draft.steps.push({ order, title: stepTitle, durationSeconds, kind: kindRaw });
+    draft.steps.push({
+      order,
+      title: stepTitle,
+      durationSeconds,
+      kind: kindRaw,
+      ...(cue ? { cue } : {}),
+      ...(block ? { block } : {}),
+    });
+    draft.nextOrder = Math.max(draft.nextOrder, order + 1);
     drafts.set(slug, draft);
   }
 
   const workouts = [...drafts.values()].map((draft) => ({
     slug: draft.slug,
     title: draft.title,
+    ...(draft.theme ? { theme: draft.theme } : {}),
     steps: draft.steps.sort((a, b) => a.order - b.order),
   }));
 
