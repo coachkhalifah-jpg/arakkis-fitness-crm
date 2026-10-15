@@ -217,6 +217,14 @@ export default async function ParticipantProfilePage({
         </div>
 
         <section className="ops-venue-detail-layout">
+          <div
+            className="ops-org-detail-status-actions ops-people-profile-status-actions"
+            data-testid="participant-profile-status-actions"
+          >
+            <span className="ops-status">Active</span>
+            <ParticipantContactCorrectionForm participant={participant} />
+          </div>
+
           <section className="ops-org-detail">
             <div className="ops-org-detail-head">
               <div>
@@ -225,10 +233,6 @@ export default async function ParticipantProfilePage({
                 <p className="ops-people-profile-copy">
                   Finalized attendance and qualifying registration standing for coaching context.
                 </p>
-              </div>
-              <div className="ops-org-detail-status-actions">
-                <span className="ops-status">Active</span>
-                <ParticipantContactCorrectionForm participant={participant} />
               </div>
             </div>
             <div
