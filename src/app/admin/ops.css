@@ -1715,6 +1715,58 @@
   gap: 0.75rem;
   margin-top: 1.5rem;
 }
+.ops-people-profile-page .ops-people-profile-disclosure-toggle {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  box-sizing: border-box;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid #59616b;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 0 0.75rem;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ops-people-profile-page .ops-people-profile-disclosure-toggle:hover,
+.ops-people-profile-page .ops-people-profile-disclosure-toggle:focus-visible {
+  color: #ff7a3d;
+  outline: none;
+}
+.ops-people-profile-page .ops-people-profile-disclosure-head {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.ops-people-profile-page .ops-people-profile-disclosure-content {
+  padding-top: 1rem;
+}
+.ops-people-profile-page .ops-people-profile-disclosure-tools {
+  margin-bottom: 0.85rem;
+}
+.ops-people-profile-page .ops-people-profile-system-admin > .ops-section-head {
+  margin-bottom: 1rem;
+}
+.ops-people-profile-page .ops-people-profile-recovery-embedded {
+  margin-bottom: 1.5rem;
+}
+.ops-people-profile-page .ops-people-profile-recovery-embedded h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+  letter-spacing: -0.04em;
+}
+.ops-people-profile-page .ops-people-profile-system-admin .ops-people-profile-disclosure {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #59616b;
+}
 .ops-people-profile-page .ops-people-profile-archive {
   display: grid;
   gap: 0.85rem;

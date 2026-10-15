@@ -14,6 +14,10 @@ const recoveryPanel = readFileSync(
   resolve(process.cwd(), "src/components/admin/participant-manage-recovery-panel.tsx"),
   "utf8",
 );
+const disclosure = readFileSync(
+  resolve(process.cwd(), "src/components/admin/people-profile-disclosure.tsx"),
+  "utf8",
+);
 
 describe("admin People profile UX IA contract", () => {
   it("deep-links registrations to admin Event detail and follow-ups to the community queue", () => {
@@ -25,8 +29,8 @@ describe("admin People profile UX IA contract", () => {
   });
 
   it("splits Upcoming from History and surfaces attendance summary fields", () => {
-    expect(profilePage).toContain('id="upcoming-title"');
-    expect(profilePage).toContain('id="history-title"');
+    expect(profilePage).toContain('id="upcoming"');
+    expect(profilePage).toContain('id="history"');
     expect(profilePage).toContain("First attended");
     expect(profilePage).toContain("Last attended");
     expect(profilePage).toContain("Cancellations");
@@ -37,18 +41,9 @@ describe("admin People profile UX IA contract", () => {
   it("uses clickable contact links and always shows the Goals section", () => {
     expect(profilePage).toContain("telHref(");
     expect(profilePage).toContain("mailto:");
-    expect(profilePage).toContain('id="goals-title"');
+    expect(profilePage).toContain('id="goals"');
     expect(profilePage).toContain("No goals on file.");
     expect(profilePage).toContain("Fitness experience");
-  });
-
-  it("places manage recovery near Upcoming and clarifies the 72-hour window", () => {
-    const recoveryIndex = profilePage.indexOf("<ParticipantManageRecoveryPanel");
-    const upcomingIndex = profilePage.indexOf('id="upcoming-title"');
-    expect(recoveryIndex).toBeGreaterThan(-1);
-    expect(upcomingIndex).toBeGreaterThan(recoveryIndex);
-    expect(recoveryPanel).toContain("72 hours");
-    expect(recoveryPanel).toContain("expire 72 hours after issue");
   });
 
   it("places EDIT CONTACT above Active, right-aligned above Participation snapshot", () => {
@@ -72,21 +67,42 @@ describe("admin People profile UX IA contract", () => {
     expect(contactForm).not.toContain(">Contact<");
   });
 
-  it("places Goals above System Admin–only manage recovery", () => {
-    const goalsIndex = profilePage.indexOf('id="goals-title"');
-    const recoveryIndex = profilePage.indexOf("<ParticipantManageRecoveryPanel");
-    expect(goalsIndex).toBeGreaterThan(-1);
-    expect(recoveryIndex).toBeGreaterThan(goalsIndex);
-    expect(recoveryPanel).toContain("System Admin only");
+  it("uses collapsible sections defaulting collapsed (UAT-027)", () => {
+    expect(disclosure).toContain("DisclosureToggle");
+    expect(disclosure).toContain("defaultOpen = false");
+    expect(profilePage).toContain('<PeopleProfileDisclosure id="goals"');
+    expect(profilePage).toContain('<PeopleProfileDisclosure\n            id="upcoming"');
+    expect(profilePage).toContain('<PeopleProfileDisclosure\n            id="history"');
+    expect(profilePage).toContain('<PeopleProfileDisclosure\n            id="follow-up-history"');
+    expect(profilePage).toContain('id="remove-person"');
+    expect(profilePage).not.toMatch(/PeopleProfileDisclosure[^>]*defaultOpen=\{true\}/);
   });
 
-  it("offers Remove from People archive above manage recovery (DEC-069)", () => {
-    const removeIndex = profilePage.indexOf('id="remove-person-title"');
-    const archiveFormIndex = profilePage.indexOf("<ParticipantArchiveForm");
+  it("orders Goals → Upcoming → History → Follow-up → System Admin only (UAT-027)", () => {
+    const goalsIndex = profilePage.indexOf('id="goals"');
+    const upcomingIndex = profilePage.indexOf('id="upcoming"');
+    const historyIndex = profilePage.indexOf('id="history"');
+    const followUpIndex = profilePage.indexOf('id="follow-up-history"');
+    const systemAdminIndex = profilePage.indexOf('data-testid="participant-system-admin-only"');
     const recoveryIndex = profilePage.indexOf("<ParticipantManageRecoveryPanel");
-    expect(removeIndex).toBeGreaterThan(-1);
-    expect(archiveFormIndex).toBeGreaterThan(removeIndex);
-    expect(recoveryIndex).toBeGreaterThan(archiveFormIndex);
+    const removeIndex = profilePage.indexOf('id="remove-person"');
+    expect(goalsIndex).toBeGreaterThan(-1);
+    expect(upcomingIndex).toBeGreaterThan(goalsIndex);
+    expect(historyIndex).toBeGreaterThan(upcomingIndex);
+    expect(followUpIndex).toBeGreaterThan(historyIndex);
+    expect(systemAdminIndex).toBeGreaterThan(followUpIndex);
+    expect(recoveryIndex).toBeGreaterThan(systemAdminIndex);
+    expect(removeIndex).toBeGreaterThan(recoveryIndex);
+    expect(profilePage).toContain("System Admin only");
+    expect(recoveryPanel).toContain("embedded");
+  });
+
+  it("places Remove from People under manage recovery inside System Admin only (UAT-027)", () => {
+    expect(profilePage).toContain("<ParticipantArchiveForm");
+    expect(profilePage).toContain("<ParticipantDeleteLeanForm");
     expect(profilePage).toContain("Remove from People");
+    expect(profilePage).toContain("embedded");
+    expect(recoveryPanel).toContain("System Admin only");
+    expect(profilePage).not.toContain("ParticipantForceDeleteForm");
   });
 });

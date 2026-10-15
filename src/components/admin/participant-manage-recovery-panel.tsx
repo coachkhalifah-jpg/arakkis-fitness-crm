@@ -20,11 +20,14 @@ export function ParticipantManageRecoveryPanel({
   displayPhone,
   phoneCountry = "US",
   pendingLink,
+  embedded = false,
 }: {
   participantId: string;
   displayPhone: string;
   phoneCountry?: string;
   pendingLink: PendingLink | null;
+  /** When true, omit the outer “System Admin only” kicker (parent section provides it). */
+  embedded?: boolean;
 }) {
   const [message, setMessage] = useState<{ kind: "status" | "error"; text: string } | null>(null);
   const [oneTimeUrl, setOneTimeUrl] = useState<string | null>(null);
@@ -53,11 +56,15 @@ export function ParticipantManageRecoveryPanel({
 
   return (
     <section
-      className="admin-resource-panel ops-venue-edit-panel"
+      className={
+        embedded
+          ? "ops-people-profile-recovery-embedded"
+          : "admin-resource-panel ops-venue-edit-panel"
+      }
       aria-labelledby="manage-recovery-title"
       data-testid="participant-manage-recovery"
     >
-      <p className="ops-kicker orange">System Admin only</p>
+      {embedded ? null : <p className="ops-kicker orange">System Admin only</p>}
       <h2 id="manage-recovery-title">Manage / recovery link</h2>
       <p className="ops-people-profile-copy">
         Issue a single-use link (valid for 72 hours) so the participant can open upcoming bookings
