@@ -20,8 +20,8 @@ export function WorkoutImportForm() {
           className="rounded border border-dashed p-3"
         />
         <span className="text-slate-600">
-          Use columns workout_slug, workout_title, step_order, step_title, duration_seconds,
-          step_kind. Template:{" "}
+          Required: workout_slug, workout_title, step_order, step_title, duration_seconds,
+          step_kind. Optional: workout_theme, cue, block. Template:{" "}
           <a className="underline" href="/templates/take-home-workout-timer.csv" download>
             take-home-workout-timer.csv
           </a>

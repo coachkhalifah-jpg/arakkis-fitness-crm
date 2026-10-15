@@ -1,12 +1,12 @@
-workout_slug,workout_title,step_order,step_title,duration_seconds,step_kind
-home-core-15,15-Minute Core Finisher,1,Get ready,10,prepare
-home-core-15,15-Minute Core Finisher,2,Dead bug,40,work
-home-core-15,15-Minute Core Finisher,3,Rest,20,rest
-home-core-15,15-Minute Core Finisher,4,Side plank (left),40,work
-home-core-15,15-Minute Core Finisher,5,Rest,20,rest
-home-core-15,15-Minute Core Finisher,6,Side plank (right),40,work
-home-core-15,15-Minute Core Finisher,7,Rest,20,rest
-home-core-15,15-Minute Core Finisher,8,Glute bridge,40,work
-home-core-15,15-Minute Core Finisher,9,Rest,20,rest
-home-core-15,15-Minute Core Finisher,10,Bird dog,40,work
-home-core-15,15-Minute Core Finisher,11,Done,5,done
+workout_slug,workout_title,workout_theme,step_order,step_title,duration_seconds,step_kind,cue,block
+home-core-15,15-Minute Core Finisher,Core finisher at home,1,Get ready,10,prepare,,Warmup
+home-core-15,15-Minute Core Finisher,Core finisher at home,2,Dead bug,40,work,Slow and controlled,Circuit
+home-core-15,15-Minute Core Finisher,Core finisher at home,3,Rest,20,rest,,Circuit
+home-core-15,15-Minute Core Finisher,Core finisher at home,4,Side plank (left),40,work,Stack hips,Circuit
+home-core-15,15-Minute Core Finisher,Core finisher at home,5,Rest,20,rest,,Circuit
+home-core-15,15-Minute Core Finisher,Core finisher at home,6,Side plank (right),40,work,Stack hips,Circuit
+home-core-15,15-Minute Core Finisher,Core finisher at home,7,Rest,20,rest,,Circuit
+home-core-15,15-Minute Core Finisher,Core finisher at home,8,Glute bridge,40,work,Squeeze at the top,Circuit
+home-core-15,15-Minute Core Finisher,Core finisher at home,9,Rest,20,rest,,Circuit
+home-core-15,15-Minute Core Finisher,Core finisher at home,10,Bird dog,40,work,Long reach,Circuit
+home-core-15,15-Minute Core Finisher,Core finisher at home,11,Done,5,done,,

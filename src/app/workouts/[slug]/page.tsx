@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/db/server";
 import { WorkoutTimer } from "@/components/workouts/workout-timer";
@@ -9,6 +8,8 @@ type StoredStep = {
   title?: string;
   duration_seconds?: number;
   kind?: WorkoutStepKind;
+  cue?: string;
+  block?: string;
 };
 
 function toSteps(value: unknown): WorkoutStep[] {
@@ -27,11 +28,15 @@ function toSteps(value: unknown): WorkoutStep[] {
       ) {
         return null;
       }
+      const cue = typeof step.cue === "string" ? step.cue.trim() : "";
+      const block = typeof step.block === "string" ? step.block.trim() : "";
       return {
         order: step.order,
         title: step.title,
         durationSeconds: step.duration_seconds,
         kind: step.kind,
+        ...(cue ? { cue } : {}),
+        ...(block ? { block } : {}),
       } satisfies WorkoutStep;
     })
     .filter((step): step is WorkoutStep => step !== null)
@@ -49,7 +54,7 @@ export default async function TakeHomeWorkoutPage({
   const db = await createClient();
   const { data: workout } = await db
     .from("take_home_workouts")
-    .select("slug,title,steps")
+    .select("slug,title,theme,steps")
     .eq("slug", slug)
     .eq("active", true)
     .maybeSingle();
@@ -57,15 +62,16 @@ export default async function TakeHomeWorkoutPage({
   if (!workout) notFound();
   const steps = toSteps(workout.steps);
   if (!steps.length) notFound();
+  const theme = typeof workout.theme === "string" ? workout.theme.trim() : "";
 
   return (
-    <main className="min-h-screen bg-stone-50 text-slate-900">
-      <div className="mx-auto max-w-3xl px-4 pt-6">
-        <Link href="/events" className="text-sm font-semibold text-slate-600 underline">
-          Back to events
-        </Link>
-      </div>
-      <WorkoutTimer key={workout.slug} title={workout.title} steps={steps} />
+    <main>
+      <WorkoutTimer
+        key={workout.slug}
+        title={workout.title}
+        theme={theme || undefined}
+        steps={steps}
+      />
     </main>
   );
 }

@@ -1,0 +1,282 @@
+.workout-stage {
+  --wt-bg: #0b0b0c;
+  --wt-fg: #f5f5f5;
+  --wt-muted: #a3a3a8;
+  --wt-accent: #e10600;
+  --wt-line: rgba(245, 245, 245, 0.12);
+  --wt-panel: rgba(255, 255, 255, 0.04);
+  --wt-display: var(--font-oswald), "Arial Narrow", sans-serif;
+  --wt-ui: var(--font-display), "Segoe UI", sans-serif;
+
+  min-height: 100svh;
+  color: var(--wt-fg);
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(225, 6, 0, 0.18), transparent 55%),
+    radial-gradient(90% 60% at 100% 100%, rgba(255, 255, 255, 0.05), transparent 50%),
+    linear-gradient(180deg, #121214 0%, var(--wt-bg) 42%, #070708 100%);
+  font-family: var(--wt-ui);
+}
+
+.workout-stage__inner {
+  width: min(42rem, 100%);
+  margin: 0 auto;
+  padding: 1.25rem 1.25rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-height: 100svh;
+}
+
+.workout-stage__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-align: center;
+}
+
+.workout-stage__title {
+  margin: 0;
+  font-size: clamp(0.95rem, 2.4vw, 1.15rem);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--wt-muted);
+}
+
+.workout-stage__theme {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--wt-muted);
+}
+
+.workout-stage__progress {
+  align-self: center;
+  margin: 0;
+  padding: 0.2rem 0.65rem;
+  border: 1px solid var(--wt-line);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wt-muted);
+}
+
+.workout-stage__hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  text-align: center;
+  padding: 0.5rem 0 1rem;
+}
+
+.workout-stage__step-title {
+  margin: 0;
+  max-width: 20ch;
+  font-family: var(--wt-display);
+  font-size: clamp(2.4rem, 9vw, 4.25rem);
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--wt-fg);
+  transition: color 160ms ease;
+}
+
+.workout-stage__step-title.is-warn {
+  color: var(--wt-accent);
+}
+
+.workout-stage__cue {
+  margin: 0;
+  max-width: 32ch;
+  font-size: 1rem;
+  color: var(--wt-muted);
+}
+
+.workout-stage__clock {
+  margin: 0.35rem 0 0;
+  font-family: var(--wt-display);
+  font-size: clamp(5.5rem, 22vw, 8.5rem);
+  font-weight: 300;
+  line-height: 0.95;
+  letter-spacing: 0.04em;
+  tabular-nums: lining-nums;
+  font-variant-numeric: tabular-nums;
+  color: var(--wt-fg);
+  transition: color 160ms ease;
+}
+
+.workout-stage__clock.is-warn {
+  color: var(--wt-accent);
+}
+
+.workout-stage__kind {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--wt-muted);
+}
+
+.workout-stage__kind.is-warn {
+  color: var(--wt-accent);
+}
+
+.workout-stage__controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.65rem;
+}
+
+.workout-stage__btn {
+  appearance: none;
+  border: 1px solid var(--wt-line);
+  background: var(--wt-panel);
+  color: var(--wt-fg);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.85rem 1.35rem;
+  min-width: 7.5rem;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.workout-stage__btn:hover:not(:disabled) {
+  border-color: rgba(245, 245, 245, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.workout-stage__btn:focus-visible {
+  outline: 2px solid var(--wt-fg);
+  outline-offset: 3px;
+}
+
+.workout-stage__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.workout-stage__btn--primary {
+  background: var(--wt-fg);
+  color: var(--wt-bg);
+  border-color: var(--wt-fg);
+}
+
+.workout-stage__btn--primary:hover:not(:disabled) {
+  background: #ffffff;
+  color: var(--wt-bg);
+}
+
+.workout-stage__preferences {
+  display: flex;
+  justify-content: center;
+}
+
+.workout-stage__mute {
+  appearance: none;
+  border: 1px solid var(--wt-line);
+  background: transparent;
+  color: var(--wt-muted);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+}
+
+.workout-stage__mute[aria-pressed="false"] {
+  color: var(--wt-fg);
+  border-color: rgba(245, 245, 245, 0.35);
+}
+
+.workout-stage__mute:focus-visible {
+  outline: 2px solid var(--wt-fg);
+  outline-offset: 3px;
+}
+
+.workout-stage__steps {
+  border-top: 1px solid var(--wt-line);
+  padding-top: 0.75rem;
+}
+
+.workout-stage__steps-toggle {
+  width: 100%;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--wt-muted);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 0.5rem 0;
+  cursor: pointer;
+}
+
+.workout-stage__steps-toggle:focus-visible {
+  outline: 2px solid var(--wt-fg);
+  outline-offset: 3px;
+}
+
+.workout-stage__step-list {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.workout-stage__step-list.is-collapsed {
+  display: none;
+}
+
+.workout-stage__step-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0.55rem;
+  color: var(--wt-muted);
+  font-size: 0.9rem;
+}
+
+.workout-stage__step-item.is-current {
+  background: var(--wt-panel);
+  color: var(--wt-fg);
+}
+
+.workout-stage__step-item.is-done-row {
+  opacity: 0.55;
+}
+
+@media (min-width: 720px) {
+  .workout-stage__steps-toggle {
+    display: none;
+  }
+
+  .workout-stage__step-list.is-collapsed {
+    display: grid;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workout-stage__step-title,
+  .workout-stage__clock,
+  .workout-stage__btn {
+    transition: none;
+  }
+}

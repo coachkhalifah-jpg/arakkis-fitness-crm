@@ -41,7 +41,10 @@ export async function importTakeHomeWorkouts(
         title: step.title,
         duration_seconds: step.durationSeconds,
         kind: step.kind,
+        ...(step.cue ? { cue: step.cue } : {}),
+        ...(step.block ? { block: step.block } : {}),
       }));
+      const theme = workout.theme?.trim() || null;
       const { data: existing } = await db
         .from("take_home_workouts")
         .select("id")
@@ -54,6 +57,7 @@ export async function importTakeHomeWorkouts(
           .from("take_home_workouts")
           .update({
             title: workout.title,
+            theme,
             steps,
             updated_at: new Date().toISOString(),
           })
@@ -63,6 +67,7 @@ export async function importTakeHomeWorkouts(
         const { error } = await db.from("take_home_workouts").insert({
           slug: workout.slug,
           title: workout.title,
+          theme,
           steps,
           active: true,
           created_by_admin_id: admin.userId,

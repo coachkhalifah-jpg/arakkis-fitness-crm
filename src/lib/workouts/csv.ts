@@ -5,11 +5,14 @@ export type WorkoutStep = {
   title: string;
   durationSeconds: number;
   kind: WorkoutStepKind;
+  cue?: string;
+  block?: string;
 };
 
 export type ParsedWorkout = {
   slug: string;
   title: string;
+  theme?: string;
   steps: WorkoutStep[];
 };
 
@@ -23,7 +26,6 @@ const REQUIRED_HEADERS = [
   "duration_seconds",
   "step_kind",
 ] as const;
-
 function splitCsvLine(line: string): string[] {
   const cells: string[] = [];
   let current = "";
@@ -57,6 +59,13 @@ function normalizeHeader(value: string) {
     .toLowerCase();
 }
 
+function optionalText(value: string | undefined, max: number): string | undefined {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return undefined;
+  if (trimmed.length > max) return undefined;
+  return trimmed;
+}
+
 export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error?: string } {
   const text = raw.replace(/^\uFEFF/, "").trim();
   if (!text) return { workouts: [], error: "The CSV file is empty." };
@@ -77,14 +86,15 @@ export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error
     }
   }
 
-  const index = Object.fromEntries(headers.map((header, i) => [header, i])) as Record<
-    (typeof REQUIRED_HEADERS)[number],
-    number
-  >;
+  const index = Object.fromEntries(headers.map((header, i) => [header, i])) as Record<string, number>;
+  const hasTheme = headers.includes("workout_theme");
+  const hasCue = headers.includes("cue");
+  const hasBlock = headers.includes("block");
 
   type Draft = {
     slug: string;
     title: string;
+    theme?: string;
     steps: WorkoutStep[];
   };
   const drafts = new Map<string, Draft>();
@@ -97,6 +107,9 @@ export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error
     const stepTitle = cells[index.step_title] ?? "";
     const durationRaw = cells[index.duration_seconds] ?? "";
     const kindRaw = (cells[index.step_kind] ?? "").toLowerCase() as WorkoutStepKind;
+    const themeRaw = hasTheme ? (cells[index.workout_theme] ?? "") : "";
+    const cueRaw = hasCue ? (cells[index.cue] ?? "") : "";
+    const blockRaw = hasBlock ? (cells[index.block] ?? "") : "";
 
     if (!SLUG_PATTERN.test(slug)) {
       return {
@@ -108,6 +121,12 @@ export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error
       return {
         workouts: [],
         error: `Row ${rowNumber}: workout_title must be 1–160 characters.`,
+      };
+    }
+    if (hasTheme && themeRaw.trim().length > 160) {
+      return {
+        workouts: [],
+        error: `Row ${rowNumber}: workout_theme must be at most 160 characters.`,
       };
     }
     const order = Number(orderRaw);
@@ -136,6 +155,22 @@ export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error
         error: `Row ${rowNumber}: step_kind must be prepare, work, rest, or done.`,
       };
     }
+    if (hasCue && cueRaw.trim().length > 200) {
+      return {
+        workouts: [],
+        error: `Row ${rowNumber}: cue must be at most 200 characters.`,
+      };
+    }
+    if (hasBlock && blockRaw.trim().length > 80) {
+      return {
+        workouts: [],
+        error: `Row ${rowNumber}: block must be at most 80 characters.`,
+      };
+    }
+
+    const theme = optionalText(themeRaw, 160);
+    const cue = optionalText(cueRaw, 200);
+    const block = optionalText(blockRaw, 80);
 
     const existing = drafts.get(slug);
     if (existing && existing.title !== title) {
@@ -144,20 +179,35 @@ export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error
         error: `Row ${rowNumber}: workout_title for slug "${slug}" does not match earlier rows.`,
       };
     }
-    const draft = existing ?? { slug, title, steps: [] };
+    if (existing && (existing.theme ?? "") !== (theme ?? "")) {
+      return {
+        workouts: [],
+        error: `Row ${rowNumber}: workout_theme for slug "${slug}" does not match earlier rows.`,
+      };
+    }
+    const draft = existing ?? { slug, title, theme, steps: [] };
+    if (!existing && theme) draft.theme = theme;
     if (draft.steps.some((step) => step.order === order)) {
       return {
         workouts: [],
         error: `Row ${rowNumber}: duplicate step_order ${order} for slug "${slug}".`,
       };
     }
-    draft.steps.push({ order, title: stepTitle, durationSeconds, kind: kindRaw });
+    draft.steps.push({
+      order,
+      title: stepTitle,
+      durationSeconds,
+      kind: kindRaw,
+      ...(cue ? { cue } : {}),
+      ...(block ? { block } : {}),
+    });
     drafts.set(slug, draft);
   }
 
   const workouts = [...drafts.values()].map((draft) => ({
     slug: draft.slug,
     title: draft.title,
+    ...(draft.theme ? { theme: draft.theme } : {}),
     steps: draft.steps.sort((a, b) => a.order - b.order),
   }));
 
