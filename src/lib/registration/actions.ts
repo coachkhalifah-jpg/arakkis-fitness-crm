@@ -238,6 +238,7 @@ async function executeRegistration(
     throw noReservedClassError(result.results);
   }
   confirmationToken = result.confirmation_token;
+  let deviceRemembered = false;
   if (shouldRememberDevice) {
     const remembered = await rememberParticipantFromConfirmation(
       confirmationToken,
@@ -254,6 +255,8 @@ async function executeRegistration(
         cookie_set_attempted: true,
         cookie_set_completed: false,
       });
+    } else if (remembered && "firstName" in remembered) {
+      deviceRemembered = true;
     }
   } else
     logHostedAccessDiagnostic({
@@ -263,7 +266,21 @@ async function executeRegistration(
       device_rpc_attempted: false,
       cookie_set_attempted: false,
     });
-  return { confirmationToken, diagnosticCorrelationId };
+  return { confirmationToken, diagnosticCorrelationId, deviceRemembered };
+}
+
+/** Confirmation URL after booking; `remembered=1` hides the duplicate Remember UI (UAT-009). */
+function confirmationRedirectHref(
+  confirmationToken: string,
+  diagnosticCorrelationId: string,
+  deviceRemembered: boolean,
+) {
+  const params = new URLSearchParams({
+    token: confirmationToken,
+    correlationId: diagnosticCorrelationId,
+  });
+  if (deviceRemembered) params.set("remembered", "1");
+  return `/registration/confirmation?${params.toString()}`;
 }
 
 export async function submitRegistration(
@@ -272,6 +289,7 @@ export async function submitRegistration(
 ): Promise<RegistrationActionState> {
   let confirmationToken: string | undefined;
   let diagnosticCorrelationId: string | undefined;
+  let deviceRemembered = false;
   try {
     if (isProductionRegistrationBlocked())
       return { error: "Registration is temporarily unavailable while legal approval is pending." };
@@ -280,6 +298,7 @@ export async function submitRegistration(
     ]);
     confirmationToken = result.confirmationToken;
     diagnosticCorrelationId = result.diagnosticCorrelationId;
+    deviceRemembered = result.deviceRemembered;
   } catch (error) {
     if (error instanceof ZodError) return fieldErrorsFromZod(error, form);
     if (error instanceof Error && error.message.includes("valid phone"))
@@ -291,9 +310,7 @@ export async function submitRegistration(
     return { error: "The registration could not be completed. Please try again." };
   }
   redirect(
-    `/registration/confirmation?token=${encodeURIComponent(confirmationToken!)}&correlationId=${encodeURIComponent(
-      diagnosticCorrelationId!,
-    )}`,
+    confirmationRedirectHref(confirmationToken!, diagnosticCorrelationId!, deviceRemembered),
   );
 }
 
@@ -303,6 +320,7 @@ export async function submitSlugRegistration(
 ): Promise<RegistrationActionState> {
   let confirmationToken: string;
   let diagnosticCorrelationId: string;
+  let deviceRemembered = false;
   try {
     diagnosticCorrelationId = crypto.randomUUID();
     if (isProductionRegistrationBlocked())
@@ -356,6 +374,7 @@ export async function submitSlugRegistration(
       }
       const result = await executeRegistration(form, selected, diagnosticCorrelationId);
       confirmationToken = result.confirmationToken;
+      deviceRemembered = result.deviceRemembered;
     } else {
       const privileged = createPrivilegedClient();
       const { data: eventId, error: eventError } = await privileged.rpc("phase7_event_id_by_slug", {
@@ -382,6 +401,7 @@ export async function submitSlugRegistration(
       }
       const result = await executeRegistration(form, [eventId], diagnosticCorrelationId);
       confirmationToken = result.confirmationToken;
+      deviceRemembered = result.deviceRemembered;
     }
   } catch (error) {
     if (error instanceof ZodError) return fieldErrorsFromZod(error, form);
@@ -393,11 +413,7 @@ export async function submitSlugRegistration(
     if (outcomeError) return registrationFailureState(form, outcomeError);
     return { error: "This event is unavailable or registration could not be completed." };
   }
-  redirect(
-    `/registration/confirmation?token=${encodeURIComponent(confirmationToken)}&correlationId=${encodeURIComponent(
-      diagnosticCorrelationId!,
-    )}`,
-  );
+  redirect(confirmationRedirectHref(confirmationToken, diagnosticCorrelationId!, deviceRemembered));
 }
 
 export type RememberDeviceConfirmationState = {
@@ -423,9 +439,7 @@ export async function rememberDeviceOnConfirmation(
   if (!token) return { error: "This confirmation link is no longer available." };
   const result = await rememberParticipantFromConfirmation(token, resolvedCorrelationId);
   if (result?.error) return { error: result.error };
-  redirect(
-    `/registration/confirmation?token=${encodeURIComponent(token)}&correlationId=${encodeURIComponent(resolvedCorrelationId)}`,
-  );
+  redirect(confirmationRedirectHref(token, resolvedCorrelationId, true));
 }
 
 export { normalizeName };
