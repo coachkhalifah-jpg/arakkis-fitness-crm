@@ -794,12 +794,12 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(/\/admin$/);
     await page.goto("/admin/invitations?mode=invite");
-    await page.getByLabel("Email").fill(`keyboard-${fixture.slug}@example.test`);
+    await page.getByLabel("Recipient email").fill(`keyboard-${fixture.slug}@example.test`);
     await page.locator('select[name="organizationIds"]:visible').focus();
     await page
       .locator('select[name="organizationIds"]:visible')
       .selectOption(fixture.organizationId);
-    await page.getByRole("button", { name: "Create invitation" }).click();
+    await page.getByRole("button", { name: "Send invitation" }).click();
     await expect(page.getByRole("textbox", { name: "New invitation link" })).toBeVisible();
     await page.getByRole("button", { name: "Copy link" }).press("Enter");
     await expect(page.getByText("Invitation link copied.", { exact: true })).toBeVisible();
@@ -814,9 +814,9 @@ test("System Admin can create and list a one-time invitation link", async ({ pag
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/admin$/);
   await page.goto("/admin/invitations?mode=invite");
-  await page.getByLabel("Email").fill(`invited-${fixture.slug}@example.test`);
-  await page.getByLabel("Organization").selectOption(fixture.organizationId);
-  await page.getByRole("button", { name: "Create invitation" }).click();
+  await page.getByLabel("Recipient email").fill(`invited-${fixture.slug}@example.test`);
+  await page.getByLabel("Organization scope").selectOption(fixture.organizationId);
+  await page.getByRole("button", { name: "Send invitation" }).click();
   await expect(page.getByRole("textbox", { name: "New invitation link" })).toBeVisible({
     timeout: 15000,
   });

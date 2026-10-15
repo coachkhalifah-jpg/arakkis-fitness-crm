@@ -5,6 +5,10 @@ import { createClient } from "@/lib/db/server";
 import { getServerEnv } from "@/lib/config/env";
 import { requireSystemAdmin } from "@/lib/authorization/server";
 import { createInvitationToken, hashInvitationToken } from "@/lib/auth/tokens";
+import {
+  logInvitationCreateFailure,
+  mapInvitationCreateError,
+} from "@/lib/auth/invitation-create-errors";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -38,11 +42,17 @@ export async function createHostInvitation(formData: FormData) {
       p_organization_ids: organizationIds,
     },
   );
-  if (invitationError || !invitation) return { error: "Invitation could not be created." };
+  if (invitationError || !invitation) {
+    logInvitationCreateFailure(invitationError, {
+      organizationCount: organizationIds.length,
+      hasEmail: Boolean(email),
+    });
+    return { error: mapInvitationCreateError(invitationError) };
+  }
 
   const env = getServerEnv();
   return {
-    inviteUrl: `${env.NEXT_PUBLIC_APP_URL}/admin/invitations/accept?token=${encodeURIComponent(token)}`,
+    inviteUrl: `${env.APP_BASE_URL || env.NEXT_PUBLIC_APP_URL}/admin/invitations/accept?token=${encodeURIComponent(token)}`,
   };
 }
 
