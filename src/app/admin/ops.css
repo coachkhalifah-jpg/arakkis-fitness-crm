@@ -1715,6 +1715,28 @@
   gap: 0.75rem;
   margin-top: 1.5rem;
 }
+.ops-people-profile-page .ops-people-profile-archive {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1.25rem;
+  max-width: 28rem;
+}
+.ops-people-profile-page .ops-people-profile-archive-reason {
+  display: grid;
+  gap: 0.35rem;
+  color: #aeb3bb;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-size: 0.85rem;
+}
+.ops-people-profile-page .ops-people-profile-archive-reason input {
+  min-height: 44px;
+  border: 1px solid #59616b;
+  border-radius: 0;
+  background: #2c3137;
+  padding: 0.65rem 0.85rem;
+  color: #f7f5f0;
+  font: inherit;
+}
 .ops-people-profile-page .ui-button {
   border-radius: 0;
   border: 1px solid #ff7a3d;

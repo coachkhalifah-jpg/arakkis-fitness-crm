@@ -79,4 +79,14 @@ describe("admin People profile UX IA contract", () => {
     expect(recoveryIndex).toBeGreaterThan(goalsIndex);
     expect(recoveryPanel).toContain("System Admin only");
   });
+
+  it("offers Remove from People archive above manage recovery (DEC-069)", () => {
+    const removeIndex = profilePage.indexOf('id="remove-person-title"');
+    const archiveFormIndex = profilePage.indexOf("<ParticipantArchiveForm");
+    const recoveryIndex = profilePage.indexOf("<ParticipantManageRecoveryPanel");
+    expect(removeIndex).toBeGreaterThan(-1);
+    expect(archiveFormIndex).toBeGreaterThan(removeIndex);
+    expect(recoveryIndex).toBeGreaterThan(archiveFormIndex);
+    expect(profilePage).toContain("Remove from People");
+  });
 });
