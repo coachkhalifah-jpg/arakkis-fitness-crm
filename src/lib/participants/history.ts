@@ -36,11 +36,6 @@ export function organizationAffiliationLabel(
   return organization?.active_status === "ACTIVE" ? organization.name : "Organization unavailable";
 }
 
-export type RegistrationWithEvent = {
-  registration: ParticipantRegistrationHistory & { id: string; event_id: string };
-  event: { id: string; starts_at: string } | null | undefined;
-};
-
 /** Active bookings whose Event has not started yet. */
 export function isUpcomingRegistration(
   registration: ParticipantRegistrationHistory,
