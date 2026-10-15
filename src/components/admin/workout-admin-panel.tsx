@@ -6,6 +6,7 @@ import type { WorkoutStep, WorkoutStepKind } from "@/lib/workouts/csv";
 import { WorkoutEditor, type EditableWorkout } from "@/components/admin/workout-editor";
 import { WorkoutImportForm } from "@/components/admin/workout-import-form";
 import { retireTakeHomeWorkout } from "@/lib/workouts/actions";
+import { ProgressiveDisclosureSection } from "@/components/admin/progressive-disclosure-section";
 
 type StoredStep = {
   order?: number;
@@ -70,88 +71,82 @@ export function WorkoutAdminPanel({ workouts }: { workouts: AdminWorkoutListItem
   const [editorKey, setEditorKey] = useState(0);
 
   return (
-    <div className="mt-8 grid gap-10">
+    <div className="admin-workout-panel">
+      <div className="admin-workout-panel-toolbar">
+        <button
+          type="button"
+          className="admin-workout-secondary-btn"
+          onClick={() => {
+            setEditing(null);
+            setEditorKey((value) => value + 1);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        >
+          New blank workout
+        </button>
+      </div>
+
       <WorkoutEditor key={editorKey} initialWorkout={editing} />
 
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">Active workouts</h2>
-            <p className="text-sm text-slate-600">
-              Open the run page, load into the editor, or retire.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="text-sm font-semibold underline"
-            onClick={() => {
-              setEditing(null);
-              setEditorKey((value) => value + 1);
-            }}
-          >
-            New blank workout
-          </button>
-        </div>
-        {workouts.length === 0 ? (
-          <p className="text-sm text-slate-600">No take-home workouts saved yet.</p>
-        ) : (
-          <ul className="space-y-3">
-            {workouts.map((workout) => {
-              const stepCount = Array.isArray(workout.steps) ? workout.steps.length : 0;
-              return (
-                <li
-                  key={workout.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3"
-                >
-                  <div>
-                    <p className="font-semibold text-slate-900">{workout.title}</p>
-                    <p className="text-sm text-slate-600">
-                      /workouts/{workout.slug} · {stepCount} steps
-                      {workout.theme ? ` · ${workout.theme}` : ""}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      className="text-sm font-semibold underline"
-                      onClick={() => {
-                        setEditing(toEditable(workout));
-                        setEditorKey((value) => value + 1);
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }}
-                    >
-                      Edit
-                    </button>
-                    <Link
-                      href={`/workouts/${workout.slug}`}
-                      className="text-sm font-semibold underline"
-                    >
-                      Open page
-                    </Link>
-                    <form action={retireTakeHomeWorkout}>
-                      <input type="hidden" name="slug" value={workout.slug} />
-                      <button type="submit" className="text-sm font-semibold text-red-700">
-                        Retire
+      <div className="admin-create-event-form admin-workout-list-form">
+        <ProgressiveDisclosureSection
+          id="workout-active"
+          number="04"
+          title="Active workouts"
+          defaultOpen
+        >
+          {workouts.length === 0 ? (
+            <p className="admin-workout-help">No take-home workouts saved yet.</p>
+          ) : (
+            <ul className="admin-workout-list">
+              {workouts.map((workout) => {
+                const stepCount = Array.isArray(workout.steps) ? workout.steps.length : 0;
+                return (
+                  <li key={workout.id} className="admin-workout-list-item">
+                    <div>
+                      <strong>{workout.title}</strong>
+                      <p>
+                        /workouts/{workout.slug} · {stepCount} steps
+                        {workout.theme ? ` · ${workout.theme}` : ""}
+                      </p>
+                    </div>
+                    <div className="admin-workout-list-actions">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditing(toEditable(workout));
+                          setEditorKey((value) => value + 1);
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                      >
+                        Edit
                       </button>
-                    </form>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
+                      <Link href={`/workouts/${workout.slug}`}>Open page</Link>
+                      <form action={retireTakeHomeWorkout}>
+                        <input type="hidden" name="slug" value={workout.slug} />
+                        <button type="submit">Retire</button>
+                      </form>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </ProgressiveDisclosureSection>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 className="text-lg font-semibold text-slate-900">Bulk flat CSV import</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Optional shortcut for already-flat timer CSVs (multiple workouts). Prefer the Workout
-          editor above for SlipL coach sheets.
-        </p>
-        <div className="mt-4">
+        <ProgressiveDisclosureSection
+          id="workout-bulk"
+          number="05"
+          title="Bulk flat CSV"
+          defaultOpen={false}
+        >
+          <p className="admin-workout-help">
+            Power-user shortcut. Prefer the editor above for SlipL sheets. Slug / title / theme /
+            step order are optional in CSV when identity is set on the editor path.
+          </p>
           <WorkoutImportForm />
-        </div>
-      </section>
+        </ProgressiveDisclosureSection>
+      </div>
     </div>
   );
 }

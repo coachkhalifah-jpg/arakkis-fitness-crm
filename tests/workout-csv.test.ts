@@ -48,6 +48,16 @@ slip-a,Slip Ladder A,Outside Slip + Pendulum,2,Jab slip,30,work,Stay tall,Round 
     expect(result.workouts[0].steps[0].cue).toBeUndefined();
   });
 
+  it("derives slug from title and step order from row order", () => {
+    const result = parseWorkoutCsv(`workout_title,step_title,duration_seconds,step_kind
+SlipL - A,Get ready,10,prepare
+SlipL - A,Jab,30,work
+`);
+    expect(result.error).toBeUndefined();
+    expect(result.workouts[0]?.slug).toBe("slipl-a");
+    expect(result.workouts[0]?.steps.map((step) => step.order)).toEqual([1, 2]);
+  });
+
   it("rejects mismatched theme rows for the same slug", () => {
     const result =
       parseWorkoutCsv(`workout_slug,workout_title,workout_theme,step_order,step_title,duration_seconds,step_kind
@@ -57,16 +67,7 @@ slip-a,Slip Ladder A,Theme B,2,Work,30,work
     expect(result.error).toMatch(/workout_theme/);
   });
 
-  it("derives slug from title when workout_slug is omitted", () => {
-    const result = parseWorkoutCsv(`workout_title,step_order,step_title,duration_seconds,step_kind
-SlipL - A,1,Get ready,10,prepare
-SlipL - A,2,Jab,30,work
-`);
-    expect(result.error).toBeUndefined();
-    expect(result.workouts[0]?.slug).toBe("slipl-a");
-  });
-
-  it("rejects missing columns and bad explicit slugs", () => {
+  it("rejects missing step columns and bad explicit slugs", () => {
     expect(parseWorkoutCsv("a,b\n1,2").error).toMatch(/Missing required column/);
     expect(
       parseWorkoutCsv(

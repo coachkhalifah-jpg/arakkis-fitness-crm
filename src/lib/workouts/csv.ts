@@ -21,13 +21,8 @@ export type ParsedWorkout = {
 const STEP_KINDS = new Set<WorkoutStepKind>(["prepare", "work", "rest", "done"]);
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 /** Slug is authored on the Workout editor page; optional in flat CSV. */
-const REQUIRED_HEADERS = [
-  "workout_title",
-  "step_order",
-  "step_title",
-  "duration_seconds",
-  "step_kind",
-] as const;
+/** Identity (slug/title/theme) and step_order live on the Workout editor; optional in CSV. */
+const REQUIRED_HEADERS = ["step_title", "duration_seconds", "step_kind"] as const;
 
 function splitCsvLine(line: string): string[] {
   const cells: string[] = [];
@@ -104,24 +99,35 @@ export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error
     number
   >;
   const hasSlug = headers.includes("workout_slug");
+  const hasTitle = headers.includes("workout_title");
   const hasTheme = headers.includes("workout_theme");
+  const hasOrder = headers.includes("step_order");
   const hasCue = headers.includes("cue");
   const hasBlock = headers.includes("block");
+
+  if (!hasTitle && !hasSlug) {
+    return {
+      workouts: [],
+      error:
+        "Flat CSV needs workout_title or workout_slug to group steps, or load a coach SlipL sheet in the Workout editor (set slug/title/theme there).",
+    };
+  }
 
   type Draft = {
     slug: string;
     title: string;
     theme?: string;
     steps: WorkoutStep[];
+    nextOrder: number;
   };
   const drafts = new Map<string, Draft>();
 
   for (let rowNumber = 2; rowNumber <= lines.length; rowNumber += 1) {
     const cells = splitCsvLine(lines[rowNumber - 1]);
-    const title = cells[index.workout_title] ?? "";
+    const title = hasTitle ? (cells[index.workout_title] ?? "").trim() : "";
     const slugRaw = hasSlug ? (cells[index.workout_slug] ?? "").trim().toLowerCase() : "";
     const slug = slugRaw || slugifyWorkoutTitle(title);
-    const orderRaw = cells[index.step_order] ?? "";
+    const orderRaw = hasOrder ? (cells[index.step_order] ?? "").trim() : "";
     const stepTitle = cells[index.step_title] ?? "";
     const durationRaw = cells[index.duration_seconds] ?? "";
     const kindRaw = (cells[index.step_kind] ?? "").toLowerCase() as WorkoutStepKind;
@@ -129,7 +135,7 @@ export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error
     const cueRaw = hasCue ? (cells[index.cue] ?? "") : "";
     const blockRaw = hasBlock ? (cells[index.block] ?? "") : "";
 
-    if (!title || title.length > 160) {
+    if (hasTitle && (!title || title.length > 160)) {
       return {
         workouts: [],
         error: `Row ${rowNumber}: workout_title must be 1–160 characters.`,
@@ -140,7 +146,7 @@ export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error
         workouts: [],
         error: slugRaw
           ? `Row ${rowNumber}: workout_slug must be lowercase kebab-case (e.g. home-core-15).`
-          : `Row ${rowNumber}: could not derive a kebab-case slug from the title. Set slug in the Workout editor, or add an optional workout_slug column.`,
+          : `Row ${rowNumber}: could not derive a kebab-case slug. Set slug/title on the Workout editor.`,
       };
     }
     if (hasTheme && themeRaw.trim().length > 160) {
@@ -149,12 +155,18 @@ export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error
         error: `Row ${rowNumber}: workout_theme must be at most 160 characters.`,
       };
     }
-    const order = Number(orderRaw);
-    if (!Number.isInteger(order) || order < 1 || order > 200) {
-      return {
-        workouts: [],
-        error: `Row ${rowNumber}: step_order must be an integer from 1 to 200.`,
-      };
+    let order: number;
+    if (orderRaw) {
+      order = Number(orderRaw);
+      if (!Number.isInteger(order) || order < 1 || order > 200) {
+        return {
+          workouts: [],
+          error: `Row ${rowNumber}: step_order must be an integer from 1 to 200.`,
+        };
+      }
+    } else {
+      const existingForOrder = drafts.get(slug);
+      order = existingForOrder?.nextOrder ?? 1;
     }
     if (!stepTitle || stepTitle.length > 120) {
       return {
@@ -191,9 +203,10 @@ export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error
     const theme = optionalText(themeRaw, 160);
     const cue = optionalText(cueRaw, 200);
     const block = optionalText(blockRaw, 80);
+    const resolvedTitle = title || slug;
 
     const existing = drafts.get(slug);
-    if (existing && existing.title !== title) {
+    if (existing && hasTitle && existing.title !== resolvedTitle) {
       return {
         workouts: [],
         error: `Row ${rowNumber}: workout_title for slug "${slug}" does not match earlier rows.`,
@@ -205,7 +218,15 @@ export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error
         error: `Row ${rowNumber}: workout_theme for slug "${slug}" does not match earlier rows.`,
       };
     }
-    const draft = existing ?? { slug, title, theme, steps: [] };
+    const draft =
+      existing ??
+      ({
+        slug,
+        title: resolvedTitle,
+        theme,
+        steps: [],
+        nextOrder: 1,
+      } satisfies Draft);
     if (!existing && theme) draft.theme = theme;
     if (draft.steps.some((step) => step.order === order)) {
       return {
@@ -221,6 +242,7 @@ export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error
       ...(cue ? { cue } : {}),
       ...(block ? { block } : {}),
     });
+    draft.nextOrder = Math.max(draft.nextOrder, order + 1);
     drafts.set(slug, draft);
   }
 

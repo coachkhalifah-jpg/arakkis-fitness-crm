@@ -5,6 +5,7 @@ import { saveTakeHomeWorkout, type WorkoutEditorState } from "@/lib/workouts/act
 import type { WorkoutStep, WorkoutStepKind } from "@/lib/workouts/csv";
 import { convertSlipSheet, slugifyWorkoutTitle } from "@/lib/workouts/slip-sheet";
 import { parseWorkoutCsv } from "@/lib/workouts/csv";
+import { ProgressiveDisclosureSection } from "@/components/admin/progressive-disclosure-section";
 import { SubmitButton } from "@/components/admin/submit-button";
 
 type EditorStep = {
@@ -103,12 +104,15 @@ export function WorkoutEditor({ initialWorkout = null }: Props) {
     theme?: string;
     steps: WorkoutStep[];
   }) {
-    setSlug(next.slug);
-    setTitle(next.title);
-    setTheme(next.theme ?? "");
+    // Keep identity already set on the editor; sheet fills gaps + replaces steps.
+    setSlug((prev) => prev.trim() || next.slug);
+    setTitle((prev) => prev.trim() || next.title);
+    setTheme((prev) => prev.trim() || next.theme || "");
     setSteps(toEditorSteps(next.steps));
     setLoadError(null);
-    setLoadMessage(`Loaded ${next.steps.length} steps into the Workout editor. Review, then save.`);
+    setLoadMessage(
+      `Loaded ${next.steps.length} steps. Row order is the step order. Review identity, then save.`,
+    );
   }
 
   function loadCoachSheet(raw: string) {
@@ -133,70 +137,77 @@ export function WorkoutEditor({ initialWorkout = null }: Props) {
     }
     if (parsed.workouts.length > 1) {
       setLoadMessage(null);
-      setLoadError("Flat CSV has multiple workouts. Import those with Bulk CSV import below.");
+      setLoadError(
+        "Flat CSV has multiple workouts. Use bulk import in Active workouts, or split the file.",
+      );
       return;
     }
     applyConverted(parsed.workouts[0]);
   }
 
   return (
-    <div className="grid gap-8">
-      <section className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-5">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-900">Workout editor</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Author identity once, then steps. Load a coach SlipL sheet or flat CSV into the editor,
-            review, and save. This does not touch Events or People.
-          </p>
-        </div>
+    <form action={action} className="admin-create-event-form admin-workout-editor-form">
+      <input type="hidden" name="payload" value={payload} />
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="grid gap-1 text-sm sm:col-span-1">
-            Slug
-            <input
-              className="rounded border border-slate-300 px-3 py-2"
-              value={slug}
-              onChange={(event) => setSlug(event.target.value.toLowerCase())}
-              placeholder="slipl-a"
-              autoComplete="off"
-            />
-          </label>
-          <label className="grid gap-1 text-sm sm:col-span-1">
-            Title
-            <input
-              className="rounded border border-slate-300 px-3 py-2"
-              value={title}
-              onChange={(event) => {
-                const next = event.target.value;
-                setTitle(next);
-                if (!slug || slug === slugifyWorkoutTitle(title)) {
-                  setSlug(slugifyWorkoutTitle(next));
-                }
-              }}
-              placeholder="SlipL - A"
-            />
-          </label>
-          <label className="grid gap-1 text-sm sm:col-span-2">
-            Theme <span className="text-slate-500">(optional)</span>
-            <input
-              className="rounded border border-slate-300 px-3 py-2"
-              value={theme}
-              onChange={(event) => setTheme(event.target.value)}
-              placeholder="Outside Slip + Pendulum Footwork"
-            />
-          </label>
-        </div>
-      </section>
+      <ProgressiveDisclosureSection
+        id="workout-identity"
+        number="01"
+        title="Workout identity"
+        defaultOpen
+        errorKeywords={["slug", "title", "theme"]}
+      >
+        <p className="admin-workout-help">
+          Slug, title, and theme are set here — not as required CSV columns. Step order follows the
+          table row order below.
+        </p>
+        <label>
+          Title
+          <input
+            value={title}
+            onChange={(event) => {
+              const next = event.target.value;
+              setTitle(next);
+              if (!slug || slug === slugifyWorkoutTitle(title)) {
+                setSlug(slugifyWorkoutTitle(next));
+              }
+            }}
+            placeholder="SlipL - A"
+            required
+          />
+        </label>
+        <label>
+          Slug
+          <input
+            value={slug}
+            onChange={(event) => setSlug(event.target.value.toLowerCase())}
+            placeholder="slipl-a"
+            autoComplete="off"
+            required
+            pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+          />
+        </label>
+        <label>
+          Theme <span>(optional)</span>
+          <input
+            value={theme}
+            onChange={(event) => setTheme(event.target.value)}
+            placeholder="Outside Slip + Pendulum Footwork"
+          />
+        </label>
+      </ProgressiveDisclosureSection>
 
-      <section className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-5">
-        <div>
-          <h3 className="text-base font-semibold text-slate-900">Load from coach sheet</h3>
-          <p className="mt-1 text-sm text-slate-600">
-            Paste a Google Sheets export (Time / Exercise / Notes, Repeat once). Converts into the
-            editor — does not save until you click Save workout.
-          </p>
-        </div>
-        <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+      <ProgressiveDisclosureSection
+        id="workout-import"
+        number="02"
+        title="Load coach sheet"
+        defaultOpen
+        errorKeywords={["sheet", "csv", "convert"]}
+      >
+        <p className="admin-workout-help">
+          Paste or upload a SlipL Google Sheets export. Converts into the step table — does not
+          publish until you save.
+        </p>
+        <label className="admin-create-checkbox-label">
           <input
             type="checkbox"
             checked={addBookends}
@@ -204,21 +215,23 @@ export function WorkoutEditor({ initialWorkout = null }: Props) {
           />
           Add Prepare / Done bookends when the sheet omits them
         </label>
-        <textarea
-          className="min-h-40 rounded border border-slate-300 px-3 py-2 font-mono text-xs"
-          value={sheetText}
-          onChange={(event) => setSheetText(event.target.value)}
-          placeholder="Paste SlipL sheet CSV export here…"
-        />
-        <div className="flex flex-wrap gap-3">
+        <label>
+          Coach sheet
+          <textarea
+            value={sheetText}
+            onChange={(event) => setSheetText(event.target.value)}
+            placeholder="Paste SlipL sheet CSV export here…"
+          />
+        </label>
+        <div className="admin-workout-actions">
           <button
             type="button"
-            className="rounded bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+            className="admin-workout-secondary-btn"
             onClick={() => loadCoachSheet(sheetText)}
           >
-            Convert into editor
+            Convert into steps
           </button>
-          <label className="cursor-pointer rounded border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">
+          <label className="admin-workout-file-btn">
             Upload sheet CSV
             <input
               type="file"
@@ -234,8 +247,8 @@ export function WorkoutEditor({ initialWorkout = null }: Props) {
               }}
             />
           </label>
-          <label className="cursor-pointer rounded border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">
-            Load flat timer CSV
+          <label className="admin-workout-file-btn">
+            Load flat CSV
             <input
               type="file"
               accept=".csv,text/csv,text/plain"
@@ -250,49 +263,56 @@ export function WorkoutEditor({ initialWorkout = null }: Props) {
           </label>
         </div>
         {loadError ? (
-          <p role="alert" className="text-sm text-red-700">
+          <p role="alert" className="admin-workout-error">
             {loadError}
           </p>
         ) : null}
         {loadMessage ? (
-          <p role="status" className="text-sm text-emerald-800">
+          <p role="status" className="admin-workout-status">
             {loadMessage}
           </p>
         ) : null}
-      </section>
+      </ProgressiveDisclosureSection>
 
-      <section className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-base font-semibold text-slate-900">Steps ({steps.length})</h3>
+      <ProgressiveDisclosureSection
+        id="workout-steps"
+        number="03"
+        title={`Steps (${steps.length})`}
+        defaultOpen
+        errorKeywords={["step", "duration", "kind"]}
+      >
+        <div className="admin-workout-steps-toolbar">
+          <p className="admin-workout-help">
+            # is row order (saved as step order). Edit title, seconds, kind, cue, and block.
+          </p>
           <button
             type="button"
-            className="text-sm font-semibold underline"
+            className="admin-workout-secondary-btn"
             onClick={() => setSteps((prev) => [...prev, emptyStep(prev.at(-1)?.block ?? "")])}
           >
             Add step
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full border-collapse text-left text-sm">
+        <div className="admin-workout-steps-scroll">
+          <table className="admin-workout-steps-table">
             <thead>
-              <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
-                <th className="px-2 py-2">#</th>
-                <th className="px-2 py-2">Title</th>
-                <th className="px-2 py-2">Sec</th>
-                <th className="px-2 py-2">Kind</th>
-                <th className="px-2 py-2">Cue</th>
-                <th className="px-2 py-2">Block</th>
-                <th className="px-2 py-2" />
+              <tr>
+                <th>#</th>
+                <th>Title</th>
+                <th>Sec</th>
+                <th>Kind</th>
+                <th>Cue</th>
+                <th>Block</th>
+                <th />
               </tr>
             </thead>
             <tbody>
               {steps.map((step, index) => (
-                <tr key={step.key} className="border-b border-slate-100 align-top">
-                  <td className="px-2 py-2 text-slate-500">{index + 1}</td>
-                  <td className="px-2 py-2">
+                <tr key={step.key}>
+                  <td>{index + 1}</td>
+                  <td>
                     <input
-                      className="w-40 rounded border border-slate-300 px-2 py-1 sm:w-52"
                       value={step.title}
                       onChange={(event) =>
                         setSteps((prev) =>
@@ -301,14 +321,14 @@ export function WorkoutEditor({ initialWorkout = null }: Props) {
                           ),
                         )
                       }
+                      required
                     />
                   </td>
-                  <td className="px-2 py-2">
+                  <td>
                     <input
                       type="number"
                       min={1}
                       max={3600}
-                      className="w-20 rounded border border-slate-300 px-2 py-1"
                       value={step.durationSeconds}
                       onChange={(event) =>
                         setSteps((prev) =>
@@ -319,11 +339,11 @@ export function WorkoutEditor({ initialWorkout = null }: Props) {
                           ),
                         )
                       }
+                      required
                     />
                   </td>
-                  <td className="px-2 py-2">
+                  <td>
                     <select
-                      className="rounded border border-slate-300 px-2 py-1"
                       value={step.kind}
                       onChange={(event) =>
                         setSteps((prev) =>
@@ -342,9 +362,8 @@ export function WorkoutEditor({ initialWorkout = null }: Props) {
                       ))}
                     </select>
                   </td>
-                  <td className="px-2 py-2">
+                  <td>
                     <input
-                      className="w-36 rounded border border-slate-300 px-2 py-1 sm:w-44"
                       value={step.cue}
                       onChange={(event) =>
                         setSteps((prev) =>
@@ -355,9 +374,8 @@ export function WorkoutEditor({ initialWorkout = null }: Props) {
                       }
                     />
                   </td>
-                  <td className="px-2 py-2">
+                  <td>
                     <input
-                      className="w-32 rounded border border-slate-300 px-2 py-1 sm:w-40"
                       value={step.block}
                       onChange={(event) =>
                         setSteps((prev) =>
@@ -368,10 +386,10 @@ export function WorkoutEditor({ initialWorkout = null }: Props) {
                       }
                     />
                   </td>
-                  <td className="px-2 py-2">
+                  <td>
                     <button
                       type="button"
-                      className="text-xs font-semibold text-red-700"
+                      className="admin-workout-remove"
                       onClick={() =>
                         setSteps((prev) =>
                           prev.length <= 1 ? prev : prev.filter((row) => row.key !== step.key),
@@ -386,27 +404,31 @@ export function WorkoutEditor({ initialWorkout = null }: Props) {
             </tbody>
           </table>
         </div>
+      </ProgressiveDisclosureSection>
 
-        <form action={action} className="grid gap-3">
-          <input type="hidden" name="payload" value={payload} />
-          <SubmitButton>Save workout</SubmitButton>
-          {state.error ? (
-            <p role="alert" className="text-sm text-red-700">
-              {state.error}
-            </p>
+      <div className="admin-workout-save-row">
+        <SubmitButton>Save workout</SubmitButton>
+        {slug ? (
+          <a className="admin-workout-open-link" href={`/workouts/${slug}`}>
+            Open run page
+          </a>
+        ) : null}
+      </div>
+      {state.error ? (
+        <p role="alert" className="admin-workout-error">
+          {state.error}
+        </p>
+      ) : null}
+      {state.success ? (
+        <p role="status" className="admin-workout-status">
+          {state.success}{" "}
+          {state.slug ? (
+            <a className="admin-workout-open-link" href={`/workouts/${state.slug}`}>
+              Open run page
+            </a>
           ) : null}
-          {state.success ? (
-            <p role="status" className="text-sm text-emerald-800">
-              {state.success}{" "}
-              {state.slug ? (
-                <a className="underline" href={`/workouts/${state.slug}`}>
-                  Open run page
-                </a>
-              ) : null}
-            </p>
-          ) : null}
-        </form>
-      </section>
-    </div>
+        </p>
+      ) : null}
+    </form>
   );
 }

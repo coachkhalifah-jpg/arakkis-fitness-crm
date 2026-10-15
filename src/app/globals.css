@@ -13353,3 +13353,176 @@ body:has(.people-directory-page) .ops-template-overlay-nav {
     transition: none;
   }
 }
+
+/* Take-home Workout editor — aligns with Create Event admin chrome */
+.admin-workouts-page .admin-workout-panel {
+  margin-top: 2rem;
+}
+.admin-workouts-page .admin-workout-panel-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+.admin-workouts-page .admin-workout-editor-form,
+.admin-workouts-page .admin-workout-list-form {
+  max-width: 960px;
+}
+.admin-workouts-page .admin-workout-help {
+  margin: 0 0 1rem;
+  color: #aeb3bb;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.admin-workouts-page .admin-workout-actions,
+.admin-workouts-page .admin-workout-steps-toolbar,
+.admin-workouts-page .admin-workout-save-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.admin-workouts-page .admin-workout-secondary-btn,
+.admin-workouts-page .admin-workout-file-btn {
+  appearance: none;
+  border: 1px solid #41474e;
+  background: transparent;
+  color: #f7f5f0;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+}
+.admin-workouts-page .admin-workout-file-btn {
+  display: inline-flex;
+  align-items: center;
+}
+.admin-workouts-page .admin-workout-secondary-btn:hover,
+.admin-workouts-page .admin-workout-file-btn:hover {
+  border-color: #ff7a3d;
+  color: #ff7a3d;
+}
+.admin-workouts-page .admin-workout-steps-scroll {
+  overflow-x: auto;
+  margin-top: 0.75rem;
+}
+.admin-workouts-page .admin-workout-steps-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.admin-workouts-page .admin-workout-steps-table th {
+  padding: 0.45rem 0.35rem;
+  color: #aeb3bb;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+  border-bottom: 1px solid #41474e;
+}
+.admin-workouts-page .admin-workout-steps-table td {
+  padding: 0.35rem;
+  vertical-align: top;
+  border-bottom: 1px solid rgb(65 71 78 / 45%);
+  color: #aeb3bb;
+}
+.admin-workouts-page .admin-workout-steps-table input,
+.admin-workouts-page .admin-workout-steps-table select {
+  width: 100%;
+  min-width: 4.5rem;
+  border: 1px solid #41474e;
+  border-radius: 0;
+  background: #17191c;
+  padding: 0.55rem;
+  color: #f7f5f0;
+  font: inherit;
+  font-size: 0.85rem;
+}
+.admin-workouts-page .admin-workout-remove {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #ff7a3d;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.admin-workouts-page .admin-workout-error {
+  color: #ff8d8d;
+  font-size: 0.85rem;
+}
+.admin-workouts-page .admin-workout-status {
+  color: #9ddea8;
+  font-size: 0.85rem;
+}
+.admin-workouts-page .admin-workout-open-link {
+  color: #ff7a3d;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: underline;
+}
+.admin-workouts-page .admin-workout-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+.admin-workouts-page .admin-workout-list-item {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid #41474e;
+  padding: 0.9rem 1rem;
+}
+.admin-workouts-page .admin-workout-list-item strong {
+  display: block;
+  color: #f7f5f0;
+  font-family: var(--admin-events-header-font);
+  font-size: 1.15rem;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+}
+.admin-workouts-page .admin-workout-list-item p {
+  margin: 0.25rem 0 0;
+  color: #aeb3bb;
+  font-size: 0.8rem;
+}
+.admin-workouts-page .admin-workout-list-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.admin-workouts-page .admin-workout-list-actions button,
+.admin-workouts-page .admin-workout-list-actions a {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #ff7a3d;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+.admin-workouts-page .admin-workout-list-form .admin-create-event-form,
+.admin-workouts-page .admin-workout-list-form form {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+}

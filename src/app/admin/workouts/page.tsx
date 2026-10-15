@@ -1,13 +1,12 @@
 import { requireSystemAdmin } from "@/lib/authorization/server";
 import { createClient } from "@/lib/db/server";
 import { signOut } from "@/lib/auth/session-actions";
-import { ContextualBack } from "@/components/admin/contextual-back";
 import { AdminWorkspaceMenu } from "@/components/admin/admin-workspace-menu";
 import { getAdminWorkspaceMenuItems } from "@/components/admin/admin-workspace-menu-items";
 import { WorkoutAdminPanel } from "@/components/admin/workout-admin-panel";
 
 export default async function AdminWorkoutsPage() {
-  await requireSystemAdmin("/admin/workouts");
+  const admin = await requireSystemAdmin("/admin/workouts");
   const db = await createClient();
   const { data: workouts } = await db
     .from("take_home_workouts")
@@ -17,28 +16,32 @@ export default async function AdminWorkoutsPage() {
 
   return (
     <>
-      <AdminWorkspaceMenu roleLabel="System Admin" items={getAdminWorkspaceMenuItems()} />
-      <section className="admin-shell mx-auto max-w-5xl px-4 py-8">
-        <ContextualBack href="/admin" label="Admin home" />
-        <header className="mt-4 space-y-2">
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
-            System Admin / Take-home
-          </p>
-          <h1 className="text-3xl font-semibold text-slate-900">Workout timers</h1>
-          <p className="max-w-2xl text-sm text-slate-600">
-            Use the <strong>Workout editor</strong> below: set slug / title / theme, load a coach
-            SlipL sheet or flat CSV into the step table, then save. Separate from Events and
-            registration.
-          </p>
-        </header>
+      <AdminWorkspaceMenu
+        roleLabel="System Admin"
+        scopeLabel={
+          admin.role === "SYSTEM_ADMIN" ? "All organizations" : admin.organizationNames.join(" · ")
+        }
+        signOutAction={signOut}
+        items={getAdminWorkspaceMenuItems()}
+      />
+      <section className="admin-shell admin-events-page admin-create-event-page admin-workouts-page">
+        <div className="admin-events-page-shell">
+          <div className="admin-events-head">
+            <div className="admin-page-header">
+              <p className="admin-events-kicker">System Admin / Take-home</p>
+              <h1>
+                <span>Build the</span>
+                <em>timer.</em>
+              </h1>
+              <p className="admin-events-subtext">
+                Set slug, title, and theme here. Load a coach sheet into steps, then save a public
+                run page — separate from Events and People.
+              </p>
+            </div>
+          </div>
 
-        <WorkoutAdminPanel workouts={workouts ?? []} />
-
-        <form action={signOut} className="mt-10">
-          <button type="submit" className="text-sm font-semibold underline">
-            Sign out
-          </button>
-        </form>
+          <WorkoutAdminPanel workouts={workouts ?? []} />
+        </div>
       </section>
     </>
   );
