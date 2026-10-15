@@ -426,17 +426,10 @@ export default async function ParticipantProfilePage({
                 history stays). Cancel any upcoming bookings first.
               </p>
               <ParticipantArchiveForm participantId={participant.id} />
-              <p className="ops-people-profile-copy">
-                <strong>Delete permanently</strong> is only for lean test/junk rows with no
-                bookings, notes, follow-ups, or legal history. Prefer archive when history exists.
-              </p>
-              <ParticipantDeleteLeanForm participantId={participant.id} />
-              <p className="ops-people-profile-copy">
-                <strong>Force delete with history</strong> permanently wipes the person and all
-                related bookings, notes, follow-ups, and legal evidence. Use only for test/junk
-                cleanup when archive is not enough. Prefer archive for real people.
-              </p>
-              <ParticipantForceDeleteForm participantId={participant.id} />
+              <div className="ops-people-profile-destructive-actions">
+                <ParticipantDeleteLeanForm participantId={participant.id} />
+                <ParticipantForceDeleteForm participantId={participant.id} />
+              </div>
             </PeopleProfileDisclosure>
           </section>
         </section>
