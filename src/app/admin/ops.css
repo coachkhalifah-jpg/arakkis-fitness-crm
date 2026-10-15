@@ -1761,6 +1761,17 @@
   background: transparent;
   color: #f7f5f0;
 }
+.ops-people-profile-page .ui-button-destructive {
+  border-color: #ff9c8f;
+  background: transparent;
+  color: #ff9c8f;
+}
+.ops-people-profile-page .ui-button-destructive:not(:disabled):hover,
+.ops-people-profile-page .ui-button-destructive:not(:disabled):focus-visible {
+  border-color: #ff9c8f;
+  background: transparent;
+  color: #ffc2ba;
+}
 .ops-people-profile-page .ui-button-secondary:not(:disabled):hover,
 .ops-people-profile-page .ui-button-secondary:not(:disabled):focus-visible {
   border-color: #ff7a3d;
