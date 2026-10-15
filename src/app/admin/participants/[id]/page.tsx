@@ -10,6 +10,7 @@ import { ParticipantArchiveForm } from "@/components/admin/participant-archive-f
 import { ParticipantContactCorrectionForm } from "@/components/admin/participant-contact-correction-form";
 import { ParticipantDeleteLeanForm } from "@/components/admin/participant-delete-lean-form";
 import { ParticipantManageRecoveryPanel } from "@/components/admin/participant-manage-recovery-panel";
+import { PeopleProfileDisclosure } from "@/components/admin/people-profile-disclosure";
 import {
   isCancellationRegistration,
   isQualifyingRegistration,
@@ -297,13 +298,7 @@ export default async function ParticipantProfilePage({
             </div>
           </section>
 
-          <section className="ops-venue-events-panel" aria-labelledby="goals-title">
-            <div className="ops-section-head">
-              <span className="ops-kicker" id="goals-title">
-                Goals
-              </span>
-              <span className="ops-label">Read-only</span>
-            </div>
+          <PeopleProfileDisclosure id="goals" title="Goals" meta="Read-only">
             <div className="ops-people-profile-context-block">
               <p className="ops-people-profile-copy" data-testid="participant-goals">
                 {goalsText ? goalsText : "No goals on file."}
@@ -315,41 +310,17 @@ export default async function ParticipantProfilePage({
                 <p className="ops-people-profile-copy">{fitnessExperience}</p>
               </div>
             ) : null}
-          </section>
+          </PeopleProfileDisclosure>
 
-          <section className="ops-venue-events-panel" aria-labelledby="remove-person-title">
-            <div className="ops-section-head">
-              <span className="ops-kicker" id="remove-person-title">
-                Remove from People
-              </span>
-              <span className="ops-label">Archive or delete</span>
-            </div>
-            <p className="ops-people-profile-copy">
-              <strong>Remove from People</strong> archives the record (leaves the directory; history
-              stays). Cancel any upcoming bookings first.
-            </p>
-            <ParticipantArchiveForm participantId={participant.id} />
-            <p className="ops-people-profile-copy">
-              <strong>Delete permanently</strong> is only for lean test/junk rows with no bookings,
-              notes, follow-ups, or legal history. Prefer archive when history exists.
-            </p>
-            <ParticipantDeleteLeanForm participantId={participant.id} />
-          </section>
-
-          <ParticipantManageRecoveryPanel
-            participantId={participant.id}
-            displayPhone={participant.display_phone}
-            phoneCountry={participant.phone_country}
-            pendingLink={pendingRecovery}
-          />
-
-          <section className="ops-venue-events-panel" aria-labelledby="upcoming-title">
-            <div className="ops-section-head">
-              <span className="ops-kicker" id="upcoming-title">
-                Upcoming
-              </span>
-              <span className="ops-label">Active bookings</span>
-            </div>
+          <PeopleProfileDisclosure
+            id="upcoming"
+            title="Upcoming"
+            meta={
+              upcomingRegistrations.length
+                ? `${upcomingRegistrations.length} active`
+                : "No bookings"
+            }
+          >
             {upcomingRegistrations.length ? (
               <div className="ops-venue-related-list">
                 {upcomingRegistrations.map(renderRegistrationRow)}
@@ -360,15 +331,13 @@ export default async function ParticipantProfilePage({
                 <p>This participant is not registered for a future Event.</p>
               </div>
             )}
-          </section>
+          </PeopleProfileDisclosure>
 
-          <section className="ops-venue-events-panel" aria-labelledby="history-title">
-            <div className="ops-section-head">
-              <span className="ops-kicker" id="history-title">
-                History
-              </span>
-              <span className="ops-label">Past and cancelled</span>
-            </div>
+          <PeopleProfileDisclosure
+            id="history"
+            title="History"
+            meta={historyRegistrations.length ? `${historyRegistrations.length} past` : "None yet"}
+          >
             {historyRegistrations.length ? (
               <div className="ops-venue-related-list">
                 {historyRegistrations.map(renderRegistrationRow)}
@@ -379,13 +348,14 @@ export default async function ParticipantProfilePage({
                 <p>Past registrations and cancelled bookings will appear here.</p>
               </div>
             )}
-          </section>
+          </PeopleProfileDisclosure>
 
-          <section className="ops-venue-events-panel" aria-labelledby="follow-up-history-title">
-            <div className="ops-section-head">
-              <span className="ops-kicker" id="follow-up-history-title">
-                Follow-up history
-              </span>
+          <PeopleProfileDisclosure
+            id="follow-up-history"
+            title="Follow-up history"
+            meta={(tasks ?? []).length ? `${(tasks ?? []).length} tasks` : "None"}
+          >
+            <div className="ops-people-profile-disclosure-tools">
               <Link className="text-button" href="/admin/community?status=ALL">
                 Open follow-ups queue
               </Link>
@@ -425,6 +395,42 @@ export default async function ParticipantProfilePage({
                 <p>No follow-up history is on file for this participant.</p>
               </div>
             )}
+          </PeopleProfileDisclosure>
+
+          <section
+            className="ops-venue-events-panel ops-people-profile-system-admin"
+            aria-labelledby="system-admin-only-title"
+            data-testid="participant-system-admin-only"
+          >
+            <div className="ops-section-head">
+              <span className="ops-kicker orange" id="system-admin-only-title">
+                System Admin only
+              </span>
+              <span className="ops-label">Recovery and remove</span>
+            </div>
+            <ParticipantManageRecoveryPanel
+              participantId={participant.id}
+              displayPhone={participant.display_phone}
+              phoneCountry={participant.phone_country}
+              pendingLink={pendingRecovery}
+              embedded
+            />
+            <PeopleProfileDisclosure
+              id="remove-person"
+              title="Remove from People"
+              meta="Archive or delete"
+            >
+              <p className="ops-people-profile-copy">
+                <strong>Remove from People</strong> archives the record (leaves the directory;
+                history stays). Cancel any upcoming bookings first.
+              </p>
+              <ParticipantArchiveForm participantId={participant.id} />
+              <p className="ops-people-profile-copy">
+                <strong>Delete permanently</strong> is only for lean test/junk rows with no
+                bookings, notes, follow-ups, or legal history. Prefer archive when history exists.
+              </p>
+              <ParticipantDeleteLeanForm participantId={participant.id} />
+            </PeopleProfileDisclosure>
           </section>
         </section>
       </main>
