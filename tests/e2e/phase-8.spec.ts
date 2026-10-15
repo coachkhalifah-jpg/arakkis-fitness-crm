@@ -139,8 +139,13 @@ test.describe("Phase 8 participant productization", () => {
     await expect(page.getByRole("heading", { name: "Make it yours." })).toBeVisible();
     await page.getByRole("button", { name: /Help us help you/i }).click();
     await expect(page.getByRole("heading", { name: "Tell us a little about you." })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "What are you working toward?" })).toBeVisible();
     await expect(page.getByLabel("Goals")).toBeVisible();
+    await expect(
+      page.getByPlaceholder("Share anything that would help your coach support you."),
+    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "What are you working toward?" })).toHaveCount(
+      0,
+    );
     await expect(page.getByRole("heading", { name: "What to bring" })).toHaveCount(0);
     await expect(page.getByText("Bring water.", { exact: true })).toHaveCount(0);
     await expect(page.getByText("Class details")).toHaveCount(0);
