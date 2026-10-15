@@ -6,6 +6,7 @@ import { createClient } from "@/lib/db/server";
 import { ContextualBack } from "@/components/admin/contextual-back";
 import { AdminWorkspaceMenu } from "@/components/admin/admin-workspace-menu";
 import { getAdminWorkspaceMenuItems } from "@/components/admin/admin-workspace-menu-items";
+import { ParticipantArchiveForm } from "@/components/admin/participant-archive-form";
 import { ParticipantContactCorrectionForm } from "@/components/admin/participant-contact-correction-form";
 import { ParticipantManageRecoveryPanel } from "@/components/admin/participant-manage-recovery-panel";
 import {
@@ -313,6 +314,20 @@ export default async function ParticipantProfilePage({
                 <p className="ops-people-profile-copy">{fitnessExperience}</p>
               </div>
             ) : null}
+          </section>
+
+          <section className="ops-venue-events-panel" aria-labelledby="remove-person-title">
+            <div className="ops-section-head">
+              <span className="ops-kicker" id="remove-person-title">
+                Remove from People
+              </span>
+              <span className="ops-label">Archive</span>
+            </div>
+            <p className="ops-people-profile-copy">
+              Removes this person from the ACTIVE People directory to reduce clutter. History,
+              notes, and past registrations stay on file. Cancel any upcoming bookings first.
+            </p>
+            <ParticipantArchiveForm participantId={participant.id} />
           </section>
 
           <ParticipantManageRecoveryPanel

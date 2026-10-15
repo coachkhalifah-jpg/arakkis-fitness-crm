@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/db/server";
 import { requireSystemAdmin } from "@/lib/authorization/server";
 import { ZodError, z } from "zod";
@@ -17,6 +18,10 @@ export type ParticipantContactActionState = {
   error?: string;
   success?: string;
   reviewCaseId?: string;
+};
+
+export type ParticipantArchiveActionState = {
+  error?: string;
 };
 
 const participantContactSchema = z.object({
@@ -39,11 +44,47 @@ function safeError(error: unknown) {
   if (/phone|correction input/i.test(message)) return "Enter valid participant contact details.";
   if (/unchanged/i.test(message)) return "Change at least one contact detail before saving.";
   if (/reason is required/i.test(message)) return "A reason is required.";
+  if (/reason is too long/i.test(message)) return "Keep the reason to 500 characters or fewer.";
+  if (/already archived/i.test(message)) return "This person is already removed from People.";
+  if (/cancel upcoming bookings/i.test(message)) {
+    return "Cancel upcoming bookings before removing this person from People.";
+  }
   if (/message is required/i.test(message)) return "A message is required.";
   if (/message is too long/i.test(message)) return "The message is too long.";
   if (/invalid snooze date/i.test(message)) return "Choose a future snooze date.";
   if (/outcome/i.test(message)) return "Select an approved completion outcome.";
   return "The follow-up action could not be completed.";
+}
+
+const participantArchiveSchema = z.object({
+  participantId: z.string().uuid(),
+  reason: z.string().trim().min(1).max(500),
+});
+
+export async function archiveParticipant(
+  _state: ParticipantArchiveActionState,
+  form: FormData,
+): Promise<ParticipantArchiveActionState> {
+  const participantId = value(form, "participantId");
+  await requireSystemAdmin(`/admin/participants/${participantId}`);
+  try {
+    const input = participantArchiveSchema.parse({
+      participantId,
+      reason: value(form, "reason"),
+    });
+    const db = await createClient();
+    const { error } = await db.rpc("phase6_archive_participant", {
+      p_participant_id: input.participantId,
+      p_reason: input.reason,
+    } as never);
+    if (error) throw new Error(error.message);
+    revalidatePath("/admin/participants");
+    revalidatePath(`/admin/participants/${input.participantId}`);
+  } catch (error) {
+    if (error instanceof ZodError) return { error: "A removal reason is required." };
+    return { error: safeError(error) };
+  }
+  redirect("/admin/participants");
 }
 
 export async function correctParticipantContact(

@@ -22,7 +22,7 @@ Public registration collects optional Goals free-text (DEC-061 / UAT-016, amendi
 
 ## Legal and participant data
 
-Participation acknowledgment remains PROVISIONAL until legal approval. Production registration is fail-closed unless the approved legal configuration is present. Participants have no login in MVP. Global participant history, notes, People directory browse/search, and follow-up are System Admin-only; Host Admin data is event-operational and organization-scoped. The People directory lists ACTIVE participants by default with org-style pagination (DEC-063 / UAT-015); row selection opens the full participant profile.
+Participation acknowledgment remains PROVISIONAL until legal approval. Production registration is fail-closed unless the approved legal configuration is present. Participants have no login in MVP. Global participant history, notes, People directory browse/search, and follow-up are System Admin-only; Host Admin data is event-operational and organization-scoped. The People directory lists ACTIVE participants by default with org-style pagination (DEC-063 / UAT-015); row selection opens the full participant profile. System Admin may **Remove from People** via soft archive (`ACTIVE` → `ARCHIVED`, DEC-069): required reason, audit, no hard delete, history preserved; blocked while upcoming ACTIVE bookings exist; pending manage/recovery links revoked. Restore UI is out of this slice.
 
 ## Attendance and follow-up
 
@@ -30,7 +30,7 @@ Attendance uses `NOT_STARTED`, `OPEN`, `FINALIZED`, and `REOPENED`, with immutab
 
 ## Cancellation, archive, and history
 
-System Admins directly cancel Events. Host Admins may submit scoped cancellation requests where enabled. Cancellation is permanent in MVP, preserves history, creates required notification work, and does not silently rewrite attendance. Organizations and Venues use archive semantics rather than destructive deletion. Historical audit and transition records are retained.
+System Admins directly cancel Events. Host Admins may submit scoped cancellation requests where enabled. Cancellation is permanent in MVP, preserves history, creates required notification work, and does not silently rewrite attendance. Organizations, Venues, and Participants use archive semantics rather than destructive deletion. Historical audit and transition records are retained.
 
 ## Images and Storage
 
