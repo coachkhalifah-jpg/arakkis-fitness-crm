@@ -12,6 +12,8 @@ Only unresolved, deferred, accepted, or decision-pending items are listed here. 
 - Legacy permission documents conflict with the validated assigned-Organization Host Admin Venue create/update model. Canonical documents record the current model; formal synchronization of the legacy documents remains pending.
 - Local Playwright uses a shared synthetic database and one worker; parallel workers are not supported by the current fixture design.
 - `participants.goals` remains nullable (DEC-061 restores optional public collection; a destructive column drop is still deferred until an approved decision).
+- Draft take-home workout timer PR (#33) used migration number `0076`, which collides with tip `0076_phone_only_participant_match.sql` (and tip now runs through **0080**). Consolidation renumbers the timer migration to **0081**; close or supersede #33 when that lands.
+- HOLD UAT-004 / UAT-005 / UAT-007 remain parked pending Product Owner reopen.
 
 ## UI / UX
 

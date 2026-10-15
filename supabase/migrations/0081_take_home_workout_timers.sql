@@ -1,4 +1,6 @@
--- Pilot take-home workout timers (CSV-imported). Isolated from Events/registration.
+-- 0081 — Pilot take-home workout timers (CSV-imported).
+-- Isolated from Events/registration. Renumbered from draft 0076 (collision with
+-- phone-only match / later UAT migrations through 0080 on tip).
 
 create table public.take_home_workouts (
   id uuid primary key default gen_random_uuid(),
