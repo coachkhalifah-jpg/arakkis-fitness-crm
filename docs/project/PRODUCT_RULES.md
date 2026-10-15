@@ -18,7 +18,7 @@ Participants may select multiple Event dates; each successful selection creates 
 
 Automatic participant matching uses ACTIVE normalized phone alone (DEC-062 / BR-071). A phone match attaches the booking or walk-in to the existing participant without overwriting stored name/contact; System Admin contact correction is the recovery path.
 
-Public registration collects optional Goals free-text (DEC-061 / UAT-016, amending DEC-060). Goals UI copy is label `Goals` plus placeholder “Share anything that would help your coach support you.” only (DEC-064 / UAT-018). Other optional fields remain email, fitness experience, and referral source. System Admin participant detail shows goals read-only when present; the column stays nullable and is not dropped. No admin Goals edit UI in this slice.
+Public registration collects optional Goals free-text (DEC-061 / UAT-016, amending DEC-060). Goals UI copy is label `Goals` plus placeholder “Share anything that would help your coach support you.” only (DEC-064 / UAT-018). The optional details section uses the “Help us help you” disclosure and field labels only — no “Tell us a little about you.” heading or coach-experience subtext (DEC-066 / UAT-021). Other optional fields remain email, fitness experience, and referral source. System Admin participant detail shows goals read-only when present; the column stays nullable and is not dropped. No admin Goals edit UI in this slice.
 
 ## Legal and participant data
 
