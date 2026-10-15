@@ -23,7 +23,7 @@ One registration group and acknowledgment evidence are created for the submissio
 
 The form collects first name, last name, required mobile phone, optional email, primary affiliation or Other/No affiliation, optional fitness experience, optional note, and separate Participation and Data Use acknowledgments. Phone parsing uses `libphonenumber-js` with US as the explicit default and stores display phone, E.164 phone, and country. Names are trimmed, whitespace-collapsed, Unicode-NFKC normalized, and case-folded for matching while display names are preserved. Email is trimmed, lowercased, and basic-format validated. Email never independently merges participants.
 
-Automatic matching uses ACTIVE normalized E.164 phone alone (DEC-062 / UAT-014). Name-only, email-only, and fuzzy matches do not merge. A phone match attaches the registration to the existing participant without overwriting stored name/contact; optional goals may still update when provided. Protected status, history, notes, and administrative fields are never overwritten. Affiliation at registration is stored separately from event host organization.
+Automatic matching uses normalized E.164 phone alone (DEC-062 / UAT-014; DEC-072). Prefer an ACTIVE match; if none, reactivate the oldest ARCHIVED row for that phone instead of creating a twin. Name-only, email-only, and fuzzy matches do not merge. A phone match attaches the registration to the existing participant without overwriting stored name/contact; optional goals may still update when provided. Protected status, history, notes, and administrative fields are never overwritten. Affiliation at registration is stored separately from event host organization.
 
 ## Acknowledgments and confirmation
 

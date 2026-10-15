@@ -44,3 +44,42 @@ describe("DEC-070 lean permanent delete", () => {
     expect(profile).toContain("<ParticipantDeleteLeanForm");
   });
 });
+
+describe("DEC-071 force delete with history", () => {
+  it("ships migration 0084 force-delete cascade RPC", () => {
+    const migration = readFileSync(
+      "supabase/migrations/0084_force_delete_and_reactivate_archived.sql",
+      "utf8",
+    );
+    expect(migration).toContain("phase6_force_delete_participant");
+    expect(migration).toContain("PARTICIPANT_DELETED_FORCE");
+    expect(migration).toContain("session_replication_role");
+    expect(migration).toContain("delete from public.registrations");
+    expect(migration).toContain("delete from public.acknowledgment_acceptances");
+    expect(migration).toContain("delete from public.participants");
+  });
+
+  it("wires force-delete action and profile form", () => {
+    const actions = readFileSync("src/lib/services/phase-6-actions.ts", "utf8");
+    const form = readFileSync("src/components/admin/participant-force-delete-form.tsx", "utf8");
+    const profile = readFileSync("src/app/admin/participants/[id]/page.tsx", "utf8");
+    expect(actions).toContain("export async function forceDeleteParticipant");
+    expect(form).toContain('data-testid="participant-force-delete"');
+    expect(form).toContain("Force delete with history");
+    expect(profile).toContain("<ParticipantForceDeleteForm");
+  });
+});
+
+describe("DEC-072 reactivate ARCHIVED on phone match", () => {
+  it("updates public registration and walk-in match to reactivate ARCHIVED", () => {
+    const migration = readFileSync(
+      "supabase/migrations/0084_force_delete_and_reactivate_archived.sql",
+      "utf8",
+    );
+    expect(migration).toContain("PARTICIPANT_REACTIVATED_ON_REGISTRATION");
+    expect(migration).toContain("status='ARCHIVED'");
+    expect(migration).toContain("set status='ACTIVE'");
+    expect(migration).toContain("register_selected_events_with_legal");
+    expect(migration).toContain("phase5_create_walk_in");
+  });
+});

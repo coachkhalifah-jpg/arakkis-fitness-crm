@@ -9,6 +9,7 @@ import { getAdminWorkspaceMenuItems } from "@/components/admin/admin-workspace-m
 import { ParticipantArchiveForm } from "@/components/admin/participant-archive-form";
 import { ParticipantContactCorrectionForm } from "@/components/admin/participant-contact-correction-form";
 import { ParticipantDeleteLeanForm } from "@/components/admin/participant-delete-lean-form";
+import { ParticipantForceDeleteForm } from "@/components/admin/participant-force-delete-form";
 import { ParticipantManageRecoveryPanel } from "@/components/admin/participant-manage-recovery-panel";
 import { PeopleProfileDisclosure } from "@/components/admin/people-profile-disclosure";
 import {
@@ -430,6 +431,12 @@ export default async function ParticipantProfilePage({
                 bookings, notes, follow-ups, or legal history. Prefer archive when history exists.
               </p>
               <ParticipantDeleteLeanForm participantId={participant.id} />
+              <p className="ops-people-profile-copy">
+                <strong>Force delete with history</strong> permanently wipes the person and all
+                related bookings, notes, follow-ups, and legal evidence. Use only for test/junk
+                cleanup when archive is not enough. Prefer archive for real people.
+              </p>
+              <ParticipantForceDeleteForm participantId={participant.id} />
             </PeopleProfileDisclosure>
           </section>
         </section>
