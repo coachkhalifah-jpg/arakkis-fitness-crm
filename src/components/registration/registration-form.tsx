@@ -562,11 +562,6 @@ export function RegistrationForm({
                   </p>
                 ) : null}
               </label>
-              <RegistrationQuestion
-                question="Tell us a little about you."
-                subtext="This helps your coach understand your experience."
-                as="h3"
-              />
               <label className="registration-field-label">
                 <span className="registration-field-title">Fitness experience</span>
                 <select
