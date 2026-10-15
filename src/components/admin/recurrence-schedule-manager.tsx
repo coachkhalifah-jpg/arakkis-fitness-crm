@@ -45,6 +45,40 @@ function weekdayForLocalDate(value: string) {
   return Number(new Date(`${value}T00:00:00Z`).getUTCDay()) || 7;
 }
 
+/** Snap a calendar date forward to the selected ISO weekday (1=Mon … 7=Sun). */
+export function alignDateToWeekday(value: string, weekday: number) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || weekday < 1 || weekday > 7) return value;
+  const current = weekdayForLocalDate(value);
+  if (current === weekday) return value;
+  const days = (weekday - current + 7) % 7;
+  const date = new Date(`${value}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Mirrors phase3_add_schedule_rule overlap: same weekday with a valid window
+ * that still covers the prospective effective date.
+ */
+export function weekdayAlreadyScheduled(
+  rules: Rule[],
+  weekday: number,
+  effectiveDate: string,
+  seriesEndsOn: string,
+) {
+  if (!effectiveDate) return false;
+  return rules.some((rule) => {
+    if (rule.weekday !== weekday) return false;
+    const ruleEnd = rule.effective_end_date ?? seriesEndsOn;
+    if (rule.effective_start_date > ruleEnd) return false;
+    if (rule.effective_start_date > seriesEndsOn) return false;
+    return effectiveDate <= ruleEnd;
+  });
+}
+
+export const WEEKDAY_ALREADY_SCHEDULED_MESSAGE =
+  "Already scheduled — use Change schedule or pick another day";
+
 function displayRule(rule: Rule) {
   return `${weekdays[rule.weekday - 1] ?? "Day"} · ${displayTime(rule.local_start_time)}–${displayTime(rule.local_end_time)}`;
 }
@@ -209,11 +243,26 @@ export function RecurrenceScheduleManager({
       );
     }) + 1;
 
-  const nextAddOccurrence = nextDateForWeekday(Number(addWeekday), addStart, timezone);
-  const addScheduleConstraintMessage =
+  const addWeekdayNumber = Number(addWeekday);
+  const alignedAddEffectiveDate = addEffectiveDate
+    ? alignDateToWeekday(addEffectiveDate, addWeekdayNumber)
+    : "";
+  const nextAddOccurrence = nextDateForWeekday(addWeekdayNumber, addStart, timezone);
+  const addEffectiveForChecks = alignedAddEffectiveDate || nextAddOccurrence;
+  const addWeekdayAlreadyScheduled = weekdayAlreadyScheduled(
+    rules,
+    addWeekdayNumber,
+    addEffectiveForChecks,
+    seriesEndsOn,
+  );
+  const addSeriesEndConstraintMessage =
     nextAddOccurrence > seriesEndsOn
-      ? `This series ends on ${formatDate(seriesEndsOn)}. Extend the series end date before adding a ${weekdays[Number(addWeekday) - 1] ?? "new"} schedule; its next occurrence would be ${formatDate(nextAddOccurrence)}.`
+      ? `This series ends on ${formatDate(seriesEndsOn)}. Extend the series end date before adding a ${weekdays[addWeekdayNumber - 1] ?? "new"} schedule; its next occurrence would be ${formatDate(nextAddOccurrence)}.`
       : null;
+  const addScheduleConstraintMessage = addWeekdayAlreadyScheduled
+    ? WEEKDAY_ALREADY_SCHEDULED_MESSAGE
+    : addSeriesEndConstraintMessage;
+  const addSubmitBlocked = Boolean(addScheduleConstraintMessage);
 
   return (
     <section className="admin-manage-event-series" aria-labelledby="manage-event-series-heading">
@@ -436,10 +485,13 @@ export function RecurrenceScheduleManager({
                         type="date"
                         min={new Date().toISOString().slice(0, 10)}
                         max={seriesEndsOn}
-                        value={addEffectiveDate}
+                        value={alignedAddEffectiveDate || addEffectiveDate}
                         onChange={(event) => {
                           addDefaultsTouched.current = true;
-                          setAddEffectiveDate(event.currentTarget.value);
+                          const next = event.currentTarget.value;
+                          setAddEffectiveDate(
+                            next ? alignDateToWeekday(next, addWeekdayNumber) : next,
+                          );
                         }}
                         required
                       />
@@ -447,19 +499,47 @@ export function RecurrenceScheduleManager({
                     <button
                       type="button"
                       className="admin-series-submit"
-                      disabled={isPending}
-                      onClick={() =>
+                      disabled={isPending || addSubmitBlocked}
+                      onClick={() => {
+                        if (addSubmitBlocked) {
+                          setMessage({
+                            kind: "error",
+                            text:
+                              addScheduleConstraintMessage ??
+                              "Check the schedule details before adding.",
+                          });
+                          return;
+                        }
+                        const effectiveStartDate =
+                          (addEffectiveDate
+                            ? alignDateToWeekday(addEffectiveDate, addWeekdayNumber)
+                            : undefined) || undefined;
+                        if (
+                          effectiveStartDate &&
+                          weekdayAlreadyScheduled(
+                            rules,
+                            addWeekdayNumber,
+                            effectiveStartDate,
+                            seriesEndsOn,
+                          )
+                        ) {
+                          setMessage({
+                            kind: "error",
+                            text: WEEKDAY_ALREADY_SCHEDULED_MESSAGE,
+                          });
+                          return;
+                        }
                         submit("add", (requestId) =>
                           addScheduleRule({
                             requestId,
                             seriesId,
-                            weekday: Number(addWeekday),
+                            weekday: addWeekdayNumber,
                             localStartTime: addStart,
                             localEndTime: addEnd,
-                            effectiveStartDate: addEffectiveDate || undefined,
+                            effectiveStartDate,
                           }),
-                        )
-                      }
+                        );
+                      }}
                     >
                       Add schedule
                     </button>
