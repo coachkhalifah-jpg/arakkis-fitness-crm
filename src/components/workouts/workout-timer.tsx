@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { WorkoutStep } from "@/lib/workouts/csv";
 import { playWorkoutTone } from "@/lib/workouts/audio";
 import "./workout-timer.css";
@@ -9,24 +9,11 @@ const MUTE_STORAGE_KEY = "arakkis.workout.preferences.muted";
 const mutedListeners = new Set<() => void>();
 
 function formatClock(totalSeconds: number) {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  const safe = Math.max(0, Math.floor(totalSeconds));
+  const minutes = Math.floor(safe / 60);
+  const seconds = safe % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
-
-const kindLabelFull: Record<WorkoutStep["kind"], string> = {
-  prepare: "Get ready",
-  work: "Work",
-  rest: "Rest",
-  done: "Done",
-};
-
-const kindLabelShort: Record<WorkoutStep["kind"], string> = {
-  prepare: "Prep",
-  work: "Work",
-  rest: "Rest",
-  done: "Done",
-};
 
 type TimerState = {
   index: number;
@@ -76,6 +63,42 @@ function writeMutedPreference(nextMuted: boolean) {
   for (const listener of mutedListeners) listener();
 }
 
+function useScreenWakeLock(enabled: boolean) {
+  useEffect(() => {
+    if (!enabled || typeof navigator === "undefined" || !("wakeLock" in navigator)) {
+      return;
+    }
+
+    let lock: WakeLockSentinel | null = null;
+    let cancelled = false;
+
+    const request = async () => {
+      try {
+        if (cancelled || document.visibilityState !== "visible") return;
+        lock = await navigator.wakeLock.request("screen");
+        lock.addEventListener("release", () => {
+          lock = null;
+        });
+      } catch {
+        // Unsupported / denied — timer still works without wake lock.
+      }
+    };
+
+    void request();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void request();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisibility);
+      void lock?.release();
+      lock = null;
+    };
+  }, [enabled]);
+}
+
 export function WorkoutTimer({
   title,
   theme,
@@ -88,8 +111,6 @@ export function WorkoutTimer({
   const ordered = useMemo(() => [...steps].sort((a, b) => a.order - b.order), [steps]);
   const [state, setState] = useState<TimerState>(() => initialState(ordered));
   const muted = useSyncExternalStore(subscribeMuted, readMutedPreference, () => true);
-  const [stepsOpen, setStepsOpen] = useState(false);
-  const stepsListId = useId();
   const { index, remaining, running, finished } = state;
   const current = ordered[index];
   const prevRef = useRef<{ index: number; remaining: number; running: boolean; finished: boolean }>(
@@ -102,6 +123,8 @@ export function WorkoutTimer({
   );
   const warnPlayedRef = useRef<number | null>(null);
   const mutedRef = useRef(muted);
+
+  useScreenWakeLock(true);
 
   useEffect(() => {
     mutedRef.current = muted;
@@ -173,12 +196,32 @@ export function WorkoutTimer({
     };
   }, [state, current?.durationSeconds, ordered.length]);
 
+  const totals = useMemo(() => {
+    const totalDuration = ordered.reduce((sum, step) => sum + step.durationSeconds, 0);
+    let elapsedBefore = 0;
+    for (let i = 0; i < index; i += 1) {
+      elapsedBefore += ordered[i]?.durationSeconds ?? 0;
+    }
+    const currentDuration = current?.durationSeconds ?? 0;
+    const elapsedInStep = finished ? currentDuration : Math.max(0, currentDuration - remaining);
+    const elapsed = finished ? totalDuration : elapsedBefore + elapsedInStep;
+    const remainingTotal = Math.max(0, totalDuration - elapsed);
+    const progress =
+      finished || currentDuration <= 0
+        ? 100
+        : Math.min(100, (elapsedInStep / currentDuration) * 100);
+    return { elapsed, remainingTotal, progress, totalDuration };
+  }, [ordered, index, remaining, finished, current?.durationSeconds]);
+
+  const upcoming = useMemo(() => {
+    if (finished) return [];
+    return ordered.slice(index + 1, index + 4);
+  }, [ordered, index, finished]);
+
   if (!current) {
     return (
       <div className="workout-stage">
-        <div className="workout-stage__inner">
-          <p className="workout-stage__theme">This workout has no steps.</p>
-        </div>
+        <p className="workout-stage__empty">This workout has no steps.</p>
       </div>
     );
   }
@@ -186,48 +229,30 @@ export function WorkoutTimer({
   const warn = !finished && remaining <= 3 && remaining >= 0 && current.kind !== "done";
   const stepTitle = finished ? "Workout complete" : current.title;
   const cue = !finished && current.cue?.trim() ? current.cue.trim() : "";
-  const block = !finished && current.block?.trim() ? current.block.trim() : "";
-  const kindFull = finished ? kindLabelFull.done : kindLabelFull[current.kind];
-  const kindShort = finished ? kindLabelShort.done : kindLabelShort[current.kind];
-  const progressParts = [
-    `Step ${Math.min(index + 1, ordered.length)} of ${ordered.length}`,
-    kindShort,
-    block,
-  ].filter(Boolean);
+  const kind = finished ? "done" : current.kind;
+  const stepNumber = Math.min(index + 1, ordered.length);
 
   return (
-    <div className="workout-stage">
-      <div className="workout-stage__inner">
-        <header className="workout-stage__meta">
-          <p className="workout-stage__title">{title}</p>
-          {theme?.trim() ? <p className="workout-stage__theme">{theme.trim()}</p> : null}
-          <p className="workout-stage__progress">
-            <span className="sm:hidden">{progressParts.join(" · ")}</span>
-            <span className="hidden sm:inline">
-              {`Step ${Math.min(index + 1, ordered.length)} of ${ordered.length}`}
-              {!finished ? ` · ${kindFull}` : ""}
-              {block ? ` · ${block}` : ""}
-            </span>
-          </p>
-        </header>
-
-        <div className="workout-stage__hero">
-          <h1 className={`workout-stage__step-title${warn ? " is-warn" : ""}`}>{stepTitle}</h1>
-          {cue ? <p className="workout-stage__cue">{cue}</p> : null}
-          <p
-            className={`workout-stage__clock${warn ? " is-warn" : ""}`}
-            aria-live="polite"
-            aria-atomic="true"
+    <div
+      className={`workout-stage${warn ? " is-warn" : ""}`}
+      data-kind={kind}
+      style={{ ["--wt-progress" as string]: `${totals.progress}%` }}
+    >
+      <div className="workout-stage__chrome">
+        <p className="workout-stage__brand">
+          {title}
+          {theme?.trim() ? <span>{` · ${theme.trim()}`}</span> : null}
+        </p>
+        <div className="workout-stage__chrome-actions">
+          <button
+            type="button"
+            className="workout-stage__mute"
+            aria-pressed={muted}
+            aria-label={muted ? "Sound muted. Activate to unmute." : "Sound on. Activate to mute."}
+            onClick={() => writeMutedPreference(!muted)}
           >
-            {formatClock(finished ? 0 : remaining)}
-          </p>
-          <p className={`workout-stage__kind${warn ? " is-warn" : ""}`}>
-            <span className="sm:hidden">{kindShort}</span>
-            <span className="hidden sm:inline">{kindFull}</span>
-          </p>
-        </div>
-
-        <div className="workout-stage__controls">
+            {muted ? "Muted" : "Sound on"}
+          </button>
           <button
             type="button"
             className="workout-stage__btn workout-stage__btn--primary"
@@ -269,54 +294,56 @@ export function WorkoutTimer({
             Restart
           </button>
         </div>
-
-        <div className="workout-stage__preferences">
-          <button
-            type="button"
-            className="workout-stage__mute"
-            aria-pressed={muted}
-            aria-label={muted ? "Sound muted. Activate to unmute." : "Sound on. Activate to mute."}
-            onClick={() => writeMutedPreference(!muted)}
-          >
-            {muted ? "Muted" : "Sound on"}
-          </button>
-        </div>
-
-        <section className="workout-stage__steps" aria-label="Step list">
-          <button
-            type="button"
-            className="workout-stage__steps-toggle"
-            aria-expanded={stepsOpen}
-            aria-controls={stepsListId}
-            onClick={() => setStepsOpen((prev) => !prev)}
-          >
-            {stepsOpen ? "Hide steps" : "Show steps"}
-          </button>
-          <ol
-            id={stepsListId}
-            className={`workout-stage__step-list${stepsOpen ? "" : " is-collapsed"}`}
-          >
-            {ordered.map((step, stepIndex) => (
-              <li
-                key={`${step.order}-${step.title}`}
-                className={[
-                  "workout-stage__step-item",
-                  stepIndex === index && !finished ? "is-current" : "",
-                  finished || stepIndex < index ? "is-done-row" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-              >
-                <span>
-                  {step.order}. {step.title}
-                  {step.block?.trim() ? ` · ${step.block.trim()}` : ""}
-                </span>
-                <span>{formatClock(step.durationSeconds)}</span>
-              </li>
-            ))}
-          </ol>
-        </section>
       </div>
+
+      <section className="workout-stage__board" aria-label="Current interval">
+        <div className="workout-stage__fill" aria-hidden="true" />
+        <div className="workout-stage__board-inner">
+          <h1 className="workout-stage__step-title">{stepTitle}</h1>
+          {cue ? <p className="workout-stage__cue">{cue}</p> : null}
+          <p className="workout-stage__clock" aria-live="polite" aria-atomic="true">
+            {formatClock(finished ? 0 : remaining)}
+          </p>
+        </div>
+        <p className="workout-stage__index" aria-hidden="true">
+          {stepNumber}
+        </p>
+      </section>
+
+      <div className="workout-stage__stats" aria-label="Workout progress">
+        <p className="workout-stage__stat">
+          <span>Elapsed</span>
+          <strong>{formatClock(totals.elapsed)}</strong>
+        </p>
+        <p className="workout-stage__stat">
+          <span>Round</span>
+          <strong>
+            {stepNumber} / {ordered.length}
+          </strong>
+        </p>
+        <p className="workout-stage__stat">
+          <span>Remaining</span>
+          <strong>{formatClock(totals.remainingTotal)}</strong>
+        </p>
+      </div>
+
+      {upcoming.length > 0 ? (
+        <div className="workout-stage__upcoming" aria-label="Upcoming intervals">
+          {upcoming.map((step, offset) => (
+            <article
+              key={`${step.order}-${step.title}`}
+              className="workout-stage__card"
+              data-kind={step.kind}
+            >
+              <p className="workout-stage__card-title">{step.title}</p>
+              <p className="workout-stage__card-time">{formatClock(step.durationSeconds)}</p>
+              <p className="workout-stage__card-index" aria-hidden="true">
+                {index + 2 + offset}
+              </p>
+            </article>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
