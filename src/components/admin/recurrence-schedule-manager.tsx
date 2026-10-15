@@ -8,6 +8,11 @@ import {
   extendSeriesEndDate,
   stopScheduleRule,
 } from "@/lib/services/recurrence-actions";
+import {
+  alignDateToWeekday,
+  nextDateForWeekday,
+  weekdayForLocalDate,
+} from "@/lib/services/recurrence-schedule-dates";
 import { TimeTextInput } from "@/components/admin/time-text-input";
 
 type Rule = {
@@ -41,33 +46,8 @@ function displayTime(value: string) {
   return `${hour % 12 || 12}:${minutes} ${hour >= 12 ? "PM" : "AM"}`;
 }
 
-function weekdayForLocalDate(value: string) {
-  return Number(new Date(`${value}T00:00:00Z`).getUTCDay()) || 7;
-}
-
 function displayRule(rule: Rule) {
   return `${weekdays[rule.weekday - 1] ?? "Day"} · ${displayTime(rule.local_start_time)}–${displayTime(rule.local_end_time)}`;
-}
-
-function nextDateForWeekday(weekday: number, localTime: string, timezone: string) {
-  const now = new Date();
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    weekday: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(now);
-  const currentWeekday =
-    ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].indexOf(
-      parts.find((part) => part.type === "weekday")?.value ?? "",
-    ) + 1;
-  const currentTime = `${parts.find((part) => part.type === "hour")?.value ?? "00"}:${parts.find((part) => part.type === "minute")?.value ?? "00"}`;
-  let days = (weekday - currentWeekday + 7) % 7;
-  if (days === 0 && localTime <= currentTime) days = 7;
-  const date = new Date(now);
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString().slice(0, 10);
 }
 
 function formatDate(value: string) {
@@ -209,11 +189,31 @@ export function RecurrenceScheduleManager({
       );
     }) + 1;
 
-  const nextAddOccurrence = nextDateForWeekday(Number(addWeekday), addStart, timezone);
-  const addScheduleConstraintMessage =
-    nextAddOccurrence > seriesEndsOn
-      ? `This series ends on ${formatDate(seriesEndsOn)}. Extend the series end date before adding a ${weekdays[Number(addWeekday) - 1] ?? "new"} schedule; its next occurrence would be ${formatDate(nextAddOccurrence)}.`
+  const selectedAddWeekday = Number(addWeekday);
+  const alignedAddEffectiveDate = addEffectiveDate
+    ? alignDateToWeekday(addEffectiveDate, selectedAddWeekday)
+    : "";
+  const addWeekdayMismatch =
+    Boolean(addEffectiveDate) &&
+    weekdayForLocalDate(addEffectiveDate) !== selectedAddWeekday;
+  const nextAddOccurrence = nextDateForWeekday(selectedAddWeekday, addStart, timezone);
+  const effectiveAddBoundary = alignedAddEffectiveDate || nextAddOccurrence;
+  const addScheduleConstraintMessage = addWeekdayMismatch
+    ? `Effective date must fall on ${weekdays[selectedAddWeekday - 1] ?? "the selected weekday"}. Use ${formatDate(alignedAddEffectiveDate)} or pick another weekday.`
+    : effectiveAddBoundary > seriesEndsOn
+      ? `This series ends on ${formatDate(seriesEndsOn)}. Extend the series end date before adding a ${weekdays[selectedAddWeekday - 1] ?? "new"} schedule; its next occurrence would be ${formatDate(effectiveAddBoundary)}.`
       : null;
+
+  const selectedChangeWeekday = Number(changeWeekday);
+  const alignedChangeEffectiveDate = changeEffectiveDate
+    ? alignDateToWeekday(changeEffectiveDate, selectedChangeWeekday)
+    : "";
+  const changeWeekdayMismatch =
+    Boolean(changeEffectiveDate) &&
+    weekdayForLocalDate(changeEffectiveDate) !== selectedChangeWeekday;
+  const changeScheduleConstraintMessage = changeWeekdayMismatch
+    ? `Effective date must fall on ${weekdays[selectedChangeWeekday - 1] ?? "the selected weekday"}. Use ${formatDate(alignedChangeEffectiveDate)} or pick another weekday.`
+    : null;
 
   return (
     <section className="admin-manage-event-series" aria-labelledby="manage-event-series-heading">
@@ -312,16 +312,14 @@ export function RecurrenceScheduleManager({
               setExtendOpen(false);
               setAddOpen((value) => !value);
               const availableWeekday = nextAvailableWeekday();
+              const weekday = availableWeekday > 0 ? availableWeekday : Number(addWeekday);
               if (availableWeekday > 0) setAddWeekday(String(availableWeekday));
               const today = new Date().toISOString().slice(0, 10);
-              if (!addEffectiveDate || addEffectiveDate < today || addEffectiveDate > seriesEndsOn)
-                setAddEffectiveDate(
-                  nextDateForWeekday(
-                    availableWeekday > 0 ? availableWeekday : Number(addWeekday),
-                    addStart,
-                    timezone,
-                  ),
-                );
+              const seedDate =
+                !addEffectiveDate || addEffectiveDate < today || addEffectiveDate > seriesEndsOn
+                  ? nextDateForWeekday(weekday, addStart, timezone)
+                  : addEffectiveDate;
+              setAddEffectiveDate(alignDateToWeekday(seedDate, weekday));
             }}
             aria-expanded={addOpen}
           >
@@ -391,13 +389,12 @@ export function RecurrenceScheduleManager({
                         value={addWeekday}
                         onChange={(event) => {
                           addDefaultsTouched.current = true;
+                          const weekday = Number(event.currentTarget.value);
                           setAddWeekday(event.currentTarget.value);
                           setAddEffectiveDate(
-                            nextDateForWeekday(
-                              Number(event.currentTarget.value),
-                              addStart,
-                              timezone,
-                            ),
+                            addEffectiveDate
+                              ? alignDateToWeekday(addEffectiveDate, weekday)
+                              : nextDateForWeekday(weekday, addStart, timezone),
                           );
                         }}
                       >
@@ -439,7 +436,10 @@ export function RecurrenceScheduleManager({
                         value={addEffectiveDate}
                         onChange={(event) => {
                           addDefaultsTouched.current = true;
-                          setAddEffectiveDate(event.currentTarget.value);
+                          const next = event.currentTarget.value;
+                          setAddEffectiveDate(
+                            next ? alignDateToWeekday(next, Number(addWeekday)) : next,
+                          );
                         }}
                         required
                       />
@@ -447,8 +447,21 @@ export function RecurrenceScheduleManager({
                     <button
                       type="button"
                       className="admin-series-submit"
-                      disabled={isPending}
-                      onClick={() =>
+                      disabled={isPending || Boolean(addScheduleConstraintMessage)}
+                      onClick={() => {
+                        const effectiveStartDate = addEffectiveDate
+                          ? alignDateToWeekday(addEffectiveDate, Number(addWeekday))
+                          : undefined;
+                        if (
+                          effectiveStartDate &&
+                          weekdayForLocalDate(effectiveStartDate) !== Number(addWeekday)
+                        ) {
+                          setMessage({
+                            kind: "error",
+                            text: `Effective date must fall on ${weekdays[Number(addWeekday) - 1] ?? "the selected weekday"}.`,
+                          });
+                          return;
+                        }
                         submit("add", (requestId) =>
                           addScheduleRule({
                             requestId,
@@ -456,10 +469,10 @@ export function RecurrenceScheduleManager({
                             weekday: Number(addWeekday),
                             localStartTime: addStart,
                             localEndTime: addEnd,
-                            effectiveStartDate: addEffectiveDate || undefined,
+                            effectiveStartDate,
                           }),
-                        )
-                      }
+                        );
+                      }}
                     >
                       Add schedule
                     </button>
@@ -470,11 +483,24 @@ export function RecurrenceScheduleManager({
                       Future generation only. The current rule and all existing occurrences are
                       preserved.
                     </p>
+                    {changeScheduleConstraintMessage ? (
+                      <p className="admin-series-constraint-message" role="alert">
+                        {changeScheduleConstraintMessage}
+                      </p>
+                    ) : null}
                     <label>
                       Weekday
                       <select
                         value={changeWeekday}
-                        onChange={(event) => setChangeWeekday(event.currentTarget.value)}
+                        onChange={(event) => {
+                          const weekday = Number(event.currentTarget.value);
+                          setChangeWeekday(event.currentTarget.value);
+                          if (changeEffectiveDate) {
+                            setChangeEffectiveDate(
+                              alignDateToWeekday(changeEffectiveDate, weekday),
+                            );
+                          }
+                        }}
                       >
                         {weekdays.map((day, index) => (
                           <option value={String(index + 1)} key={day}>
@@ -498,15 +524,34 @@ export function RecurrenceScheduleManager({
                         min={rules.find((rule) => rule.id === changeRuleId)?.effective_start_date}
                         max={seriesEndsOn}
                         value={changeEffectiveDate}
-                        onChange={(event) => setChangeEffectiveDate(event.currentTarget.value)}
+                        onChange={(event) => {
+                          const next = event.currentTarget.value;
+                          setChangeEffectiveDate(
+                            next ? alignDateToWeekday(next, Number(changeWeekday)) : next,
+                          );
+                        }}
                         required
                       />
                     </label>
                     <button
                       type="button"
                       className="admin-series-submit admin-series-save-change"
-                      disabled={isPending}
-                      onClick={() =>
+                      disabled={isPending || Boolean(changeScheduleConstraintMessage)}
+                      onClick={() => {
+                        const effectiveStartDate = alignDateToWeekday(
+                          changeEffectiveDate,
+                          Number(changeWeekday),
+                        );
+                        if (
+                          !effectiveStartDate ||
+                          weekdayForLocalDate(effectiveStartDate) !== Number(changeWeekday)
+                        ) {
+                          setMessage({
+                            kind: "error",
+                            text: `Effective date must fall on ${weekdays[Number(changeWeekday) - 1] ?? "the selected weekday"}.`,
+                          });
+                          return;
+                        }
                         submit(`change:${changeRuleId}`, (requestId) =>
                           changeScheduleRule({
                             requestId,
@@ -515,10 +560,10 @@ export function RecurrenceScheduleManager({
                             weekday: Number(changeWeekday),
                             localStartTime: changeStart,
                             localEndTime: changeEnd,
-                            effectiveStartDate: changeEffectiveDate,
+                            effectiveStartDate,
                           }),
-                        )
-                      }
+                        );
+                      }}
                     >
                       <span className="admin-series-save-change-default">Save</span>
                       <span className="admin-series-save-change-hover" aria-hidden="true">

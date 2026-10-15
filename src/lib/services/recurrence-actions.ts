@@ -4,7 +4,8 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { requireSystemAdmin } from "@/lib/authorization/server";
 import { createClient } from "@/lib/db/server";
-import { Phase3Error } from "@/lib/services/phase-3";
+import { rethrowNextControlFlow } from "@/lib/navigation/rethrow-next";
+import { safeScheduleMessage } from "@/lib/services/recurrence-errors";
 
 const timeValue = z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Enter a valid local time.");
 const dateValue = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid effective date.");
@@ -50,21 +51,6 @@ export type RecurrenceMutationResult = {
   idempotent?: boolean;
 };
 
-function safeMessage(error: unknown) {
-  if (error instanceof Phase3Error) return error.message;
-  if (error instanceof z.ZodError) return error.issues[0]?.message ?? "Check the schedule details.";
-  if (error instanceof Error && error.message) {
-    if (
-      /schedule|series|occurrence|effective|timezone|overlap|duplicate|unique|request|System Admin/i.test(
-        error.message,
-      )
-    ) {
-      return error.message;
-    }
-  }
-  return "The schedule change could not be completed.";
-}
-
 async function callMutation(
   rpc: string,
   input: Record<string, unknown>,
@@ -79,10 +65,11 @@ async function callMutation(
         p_actor_admin_id: admin.userId,
       } as never,
     );
-    if (error) return { error: safeMessage(error) };
+    if (error) return { error: safeScheduleMessage(error) };
     return { data: (data ?? {}) as RecurrenceMutationResult };
   } catch (error) {
-    return { error: safeMessage(error) };
+    rethrowNextControlFlow(error);
+    return { error: safeScheduleMessage(error) };
   }
 }
 
@@ -99,7 +86,8 @@ export async function addScheduleRule(input: z.input<typeof addInput>) {
       p_effective_start_date: parsed.effectiveStartDate ?? null,
     });
   } catch (error) {
-    return { error: safeMessage(error) };
+    rethrowNextControlFlow(error);
+    return { error: safeScheduleMessage(error) };
   }
 }
 
@@ -116,7 +104,8 @@ export async function changeScheduleRule(input: z.input<typeof changeInput>) {
       p_local_end_time: parsed.localEndTime,
     });
   } catch (error) {
-    return { error: safeMessage(error) };
+    rethrowNextControlFlow(error);
+    return { error: safeScheduleMessage(error) };
   }
 }
 
@@ -130,7 +119,8 @@ export async function stopScheduleRule(input: z.input<typeof stopInput>) {
       p_effective_end_date: parsed.effectiveEndDate,
     });
   } catch (error) {
-    return { error: safeMessage(error) };
+    rethrowNextControlFlow(error);
+    return { error: safeScheduleMessage(error) };
   }
 }
 
@@ -144,6 +134,7 @@ export async function extendSeriesEndDate(input: z.input<typeof extendInput>) {
       p_new_ends_on: parsed.newEndsOn,
     });
   } catch (error) {
-    return { error: safeMessage(error) };
+    rethrowNextControlFlow(error);
+    return { error: safeScheduleMessage(error) };
   }
 }
