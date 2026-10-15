@@ -90,4 +90,3 @@ describe("admin People profile UX IA contract", () => {
     expect(profilePage).toContain("Remove from People");
   });
 });
-
