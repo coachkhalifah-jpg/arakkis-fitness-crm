@@ -55,9 +55,7 @@ export function EventsBulkLifecycleBar({
   return (
     <div className="admin-events-bulk-bar" data-testid="admin-events-bulk-bar">
       <div className="admin-events-bulk-bar-summary">
-        <strong>
-          {selectedIds.length} selected
-        </strong>
+        <strong>{selectedIds.length} selected</strong>
         <button type="button" className="admin-events-bulk-clear" onClick={onClear}>
           Clear selection
         </button>
@@ -140,7 +138,9 @@ export function EventsBulkLifecycleBar({
               {archivable.map((event) => (
                 <input key={event.id} type="hidden" name="eventIds" value={event.id} />
               ))}
-              <ConfirmSubmit message={`Archive ${archivable.length} cancelled event${archivable.length === 1 ? "" : "s"}?`}>
+              <ConfirmSubmit
+                message={`Archive ${archivable.length} cancelled event${archivable.length === 1 ? "" : "s"}?`}
+              >
                 Archive selected
               </ConfirmSubmit>
             </form>
