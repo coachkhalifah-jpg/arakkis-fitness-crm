@@ -64,15 +64,15 @@ describe("participant history classification", () => {
       registration_status: "CANCELLED",
       registration_outcome: "PARTICIPANT_CANCELLED",
     };
-    expect(
-      isUpcomingRegistration(active, { starts_at: "2026-10-16T12:00:00.000Z" }, now),
-    ).toBe(true);
-    expect(
-      isUpcomingRegistration(active, { starts_at: "2026-10-14T12:00:00.000Z" }, now),
-    ).toBe(false);
-    expect(
-      isUpcomingRegistration(cancelled, { starts_at: "2026-10-16T12:00:00.000Z" }, now),
-    ).toBe(false);
+    expect(isUpcomingRegistration(active, { starts_at: "2026-10-16T12:00:00.000Z" }, now)).toBe(
+      true,
+    );
+    expect(isUpcomingRegistration(active, { starts_at: "2026-10-14T12:00:00.000Z" }, now)).toBe(
+      false,
+    );
+    expect(isUpcomingRegistration(cancelled, { starts_at: "2026-10-16T12:00:00.000Z" }, now)).toBe(
+      false,
+    );
     expect(isUpcomingRegistration(active, null, now)).toBe(false);
   });
 

@@ -116,9 +116,7 @@ export default async function ParticipantProfilePage({
       return { registration, record, event };
     })
     .filter((row): row is NonNullable<typeof row> => Boolean(row))
-    .sort(
-      (a, b) => new Date(a.event.starts_at).getTime() - new Date(b.event.starts_at).getTime(),
-    );
+    .sort((a, b) => new Date(a.event.starts_at).getTime() - new Date(b.event.starts_at).getTime());
   const firstAttended = attendedChronology[0] ?? null;
   const lastAttended =
     attendedChronology.length > 0 ? attendedChronology[attendedChronology.length - 1]! : null;
@@ -248,7 +246,10 @@ export default async function ParticipantProfilePage({
                 <span className="ops-label">First attended</span>
                 <strong>
                   {firstAttended
-                    ? formatAttendanceDate(firstAttended.event.starts_at, firstAttended.event.timezone)
+                    ? formatAttendanceDate(
+                        firstAttended.event.starts_at,
+                        firstAttended.event.timezone,
+                      )
                     : "—"}
                 </strong>
                 <small>
@@ -259,7 +260,10 @@ export default async function ParticipantProfilePage({
                 <span className="ops-label">Last attended</span>
                 <strong>
                   {lastAttended
-                    ? formatAttendanceDate(lastAttended.event.starts_at, lastAttended.event.timezone)
+                    ? formatAttendanceDate(
+                        lastAttended.event.starts_at,
+                        lastAttended.event.timezone,
+                      )
                     : "—"}
                 </strong>
                 <small>
@@ -324,7 +328,9 @@ export default async function ParticipantProfilePage({
               <span className="ops-label">Active bookings</span>
             </div>
             {upcomingRegistrations.length ? (
-              <div className="ops-venue-related-list">{upcomingRegistrations.map(renderRegistrationRow)}</div>
+              <div className="ops-venue-related-list">
+                {upcomingRegistrations.map(renderRegistrationRow)}
+              </div>
             ) : (
               <div className="ops-empty">
                 <strong>No upcoming bookings</strong>
@@ -341,7 +347,9 @@ export default async function ParticipantProfilePage({
               <span className="ops-label">Past and cancelled</span>
             </div>
             {historyRegistrations.length ? (
-              <div className="ops-venue-related-list">{historyRegistrations.map(renderRegistrationRow)}</div>
+              <div className="ops-venue-related-list">
+                {historyRegistrations.map(renderRegistrationRow)}
+              </div>
             ) : (
               <div className="ops-empty">
                 <strong>No history yet</strong>

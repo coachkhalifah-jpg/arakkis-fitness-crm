@@ -13,7 +13,7 @@ const recoveryPanel = readFileSync(
 
 describe("admin People profile UX IA contract", () => {
   it("deep-links registrations to admin Event detail and follow-ups to the community queue", () => {
-    expect(profilePage).toContain('href={`/admin/events/${event.id}`}');
+    expect(profilePage).toContain("href={`/admin/events/${event.id}`}");
     expect(profilePage).toContain(
       "`/admin/community?status=${statusParam}&task=${task.id}#selected-touchpoint`",
     );
