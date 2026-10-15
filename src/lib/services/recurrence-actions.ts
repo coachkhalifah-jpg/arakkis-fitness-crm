@@ -3,8 +3,10 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { requireSystemAdmin } from "@/lib/authorization/server";
+import { createPrivilegedClient } from "@/lib/db/privileged";
 import { createClient } from "@/lib/db/server";
 import { safeScheduleMessage } from "@/lib/services/recurrence-errors";
+import { inheritSeriesMainImageOntoOccurrences } from "@/lib/services/series-event-image";
 
 const timeValue = z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Enter a valid local time.");
 const dateValue = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid effective date.");
@@ -50,9 +52,39 @@ export type RecurrenceMutationResult = {
   idempotent?: boolean;
 };
 
+function occurrenceIdsFromResult(data?: RecurrenceMutationResult) {
+  if (!data?.occurrence_ids?.length) return [] as string[];
+  return data.occurrence_ids.filter((id): id is string => typeof id === "string");
+}
+
+async function inheritImagesForNewOccurrences(
+  seriesId: string,
+  occurrenceIds: string[],
+  actorAdminId: string,
+) {
+  if (!seriesId || !occurrenceIds.length) return;
+  const sessionClient = await createClient();
+  const privilegedClient = createPrivilegedClient();
+  const result = await inheritSeriesMainImageOntoOccurrences({
+    sessionClient,
+    privilegedClient,
+    seriesId,
+    occurrenceIds,
+    actorAdminId,
+  });
+  if (result.error) {
+    console.error("[series-image-inherit] failed after schedule materialization", {
+      seriesId,
+      occurrenceCount: occurrenceIds.length,
+      error: result.error,
+    });
+  }
+}
+
 async function callMutation(
   rpc: string,
   input: Record<string, unknown>,
+  inheritSeriesId?: string,
 ): Promise<{ data?: RecurrenceMutationResult; error?: string }> {
   try {
     const admin = await requireSystemAdmin("/admin/events");
@@ -65,7 +97,13 @@ async function callMutation(
       } as never,
     );
     if (error) return { error: safeScheduleMessage(error) };
-    return { data: (data ?? {}) as RecurrenceMutationResult };
+    const result = (data ?? {}) as RecurrenceMutationResult;
+    const seriesId = inheritSeriesId ?? result.series_id;
+    const occurrenceIds = occurrenceIdsFromResult(result);
+    if (seriesId && occurrenceIds.length && !result.idempotent) {
+      await inheritImagesForNewOccurrences(seriesId, occurrenceIds, admin.userId);
+    }
+    return { data: result };
   } catch (error) {
     return { error: safeScheduleMessage(error) };
   }
@@ -75,14 +113,18 @@ async function callMutation(
 export async function addScheduleRule(input: z.input<typeof addInput>) {
   try {
     const parsed = addInput.parse(input);
-    return callMutation("phase3_add_schedule_rule", {
-      p_request_id: parsed.requestId ?? randomUUID(),
-      p_series_id: parsed.seriesId,
-      p_weekday: parsed.weekday,
-      p_local_start_time: parsed.localStartTime,
-      p_local_end_time: parsed.localEndTime,
-      p_effective_start_date: parsed.effectiveStartDate ?? null,
-    });
+    return callMutation(
+      "phase3_add_schedule_rule",
+      {
+        p_request_id: parsed.requestId ?? randomUUID(),
+        p_series_id: parsed.seriesId,
+        p_weekday: parsed.weekday,
+        p_local_start_time: parsed.localStartTime,
+        p_local_end_time: parsed.localEndTime,
+        p_effective_start_date: parsed.effectiveStartDate ?? null,
+      },
+      parsed.seriesId,
+    );
   } catch (error) {
     return { error: safeScheduleMessage(error) };
   }
@@ -92,14 +134,18 @@ export async function addScheduleRule(input: z.input<typeof addInput>) {
 export async function changeScheduleRule(input: z.input<typeof changeInput>) {
   try {
     const parsed = changeInput.parse(input);
-    return callMutation("phase3_change_schedule_rule", {
-      p_request_id: parsed.requestId ?? randomUUID(),
-      p_rule_id: parsed.ruleId,
-      p_weekday: parsed.weekday,
-      p_local_start_time: parsed.localStartTime,
-      p_effective_start_date: parsed.effectiveStartDate,
-      p_local_end_time: parsed.localEndTime,
-    });
+    return callMutation(
+      "phase3_change_schedule_rule",
+      {
+        p_request_id: parsed.requestId ?? randomUUID(),
+        p_rule_id: parsed.ruleId,
+        p_weekday: parsed.weekday,
+        p_local_start_time: parsed.localStartTime,
+        p_effective_start_date: parsed.effectiveStartDate,
+        p_local_end_time: parsed.localEndTime,
+      },
+      parsed.seriesId,
+    );
   } catch (error) {
     return { error: safeScheduleMessage(error) };
   }
@@ -123,11 +169,15 @@ export async function stopScheduleRule(input: z.input<typeof stopInput>) {
 export async function extendSeriesEndDate(input: z.input<typeof extendInput>) {
   try {
     const parsed = extendInput.parse(input);
-    return callMutation("phase3_extend_series_end_date", {
-      p_request_id: parsed.requestId ?? randomUUID(),
-      p_series_id: parsed.seriesId,
-      p_new_ends_on: parsed.newEndsOn,
-    });
+    return callMutation(
+      "phase3_extend_series_end_date",
+      {
+        p_request_id: parsed.requestId ?? randomUUID(),
+        p_series_id: parsed.seriesId,
+        p_new_ends_on: parsed.newEndsOn,
+      },
+      parsed.seriesId,
+    );
   } catch (error) {
     return { error: safeScheduleMessage(error) };
   }

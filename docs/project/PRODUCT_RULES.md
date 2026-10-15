@@ -34,7 +34,7 @@ System Admins directly cancel Events. Host Admins may submit scoped cancellation
 
 ## Images and Storage
 
-Design Asset management is System Admin-only. Event-image replacement binds Event, actor, purpose, exact asset type `EVENT_IMAGE_DESKTOP`, signature, and expiry. MIME and 5 MiB checks remain authoritative. Replacement preserves one active asset, audit history, rollback, and Storage cleanup behavior.
+Design Asset management is System Admin-only. Event-image replacement binds Event, actor, purpose, exact asset type `EVENT_IMAGE_DESKTOP`, signature, and expiry. MIME and 5 MiB checks remain authoritative. Replacement preserves one active asset, audit history, rollback, and Storage cleanup behavior. Series main-image updates are System Admin-only and fan out per-occurrence `EVENT_IMAGE_DESKTOP` rows to future non-cancelled dates (`starts_at > now()`); past dates stay unchanged. Newly materialized occurrences inherit the current series main image from the soonest upcoming active asset (else the canonical template asset).
 
 ## Confirmation and remembered device (DEC-058 / DEC-059)
 

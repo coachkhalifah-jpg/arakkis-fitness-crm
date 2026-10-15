@@ -9,8 +9,11 @@ import { createClient } from "@/lib/db/server";
 import {
   EVENT_IMAGE_ASSET_TYPE,
   createEventImageIntent,
+  createSeriesImageIntent,
   eventImageIntentErrorMessage,
   inspectEventImageIntent,
+  inspectSeriesImageIntent,
+  seriesImageIntentErrorMessage,
 } from "@/lib/services/event-image-intent";
 import {
   designAssetFileBytes,
@@ -19,6 +22,10 @@ import {
 } from "@/lib/services/design-asset-storage";
 import { cleanupStoragePaths } from "@/lib/services/storage-cleanup";
 import { runReplacementLifecycle } from "@/lib/services/design-asset-replacement";
+import {
+  selectFutureNonCancelledOccurrenceIds,
+  uploadSeriesOccurrenceImageObject,
+} from "@/lib/services/series-event-image";
 
 import { rethrowNextControlFlow } from "@/lib/navigation/rethrow-next";
 
@@ -371,4 +378,304 @@ export async function issueEventImageIntent(eventId: string): Promise<string | n
   const { data: event } = await db.from("events").select("id").eq("id", eventId).maybeSingle();
   if (!event) return null;
   return createEventImageIntent(eventId, admin.userId, EVENT_IMAGE_ASSET_TYPE);
+}
+
+/** Mint a fresh series main-image replacement intent for the current System Admin. */
+export async function issueSeriesImageIntent(seriesId: string): Promise<string | null> {
+  if (!z.string().uuid().safeParse(seriesId).success) return null;
+  const admin = await requireSystemAdmin("/admin/design-assets");
+  const db = await createClient();
+  const { data: series } = await db
+    .from("event_series")
+    .select("id")
+    .eq("id", seriesId)
+    .maybeSingle();
+  if (!series) return null;
+  return createSeriesImageIntent(seriesId, admin.userId, EVENT_IMAGE_ASSET_TYPE);
+}
+
+/**
+ * Replace the main series image on all future non-cancelled occurrences.
+ * Past occurrences keep their existing per-Event assets.
+ */
+export async function replaceSeriesMainImage(
+  _state: DesignAssetActionState,
+  form: FormData,
+): Promise<DesignAssetActionState> {
+  const uploadedPaths: string[] = [];
+  const insertedAssetIds: string[] = [];
+  const retiredPrevious: Array<{ id: string; storagePath: string }> = [];
+  let committed = false;
+  try {
+    const admin = await requireSystemAdmin("/admin/events");
+    const seriesId = text(form, "seriesId");
+    if (!z.string().uuid().safeParse(seriesId).success) {
+      return { error: "The series was not found." };
+    }
+    const file = form.get("file");
+    if (!(file instanceof File) || file.size === 0) return { error: "Choose an image to upload." };
+    if (file.size > MAX_BYTES) return { error: "Images must be 5 MiB or smaller." };
+    if (!allowedMimeTypes.includes(file.type as (typeof allowedMimeTypes)[number])) {
+      return { error: "Use a JPEG, PNG, WebP, or SVG image." };
+    }
+    const altText = text(form, "altText");
+    const focalPosition = text(form, "focalPosition") || "center";
+    if (!altText || altText.length > 240) {
+      return { error: "Enter alt text describing the image for participants." };
+    }
+    if (!["top", "center", "bottom", "left", "right"].includes(focalPosition)) {
+      return { error: "Choose a valid focal position." };
+    }
+    const intentCheck = inspectSeriesImageIntent(
+      text(form, "seriesImageIntent"),
+      seriesId,
+      admin.userId,
+      EVENT_IMAGE_ASSET_TYPE,
+    );
+    if (!intentCheck.ok) {
+      console.error("[series-image-intent] replacement rejected", {
+        reason: intentCheck.reason,
+        seriesId,
+      });
+      return { error: seriesImageIntentErrorMessage(intentCheck.reason) };
+    }
+
+    const db = await createClient();
+    const storage = createPrivilegedClient();
+    const { data: series } = await db
+      .from("event_series")
+      .select("id")
+      .eq("id", seriesId)
+      .maybeSingle();
+    if (!series) return { error: "The series was not found." };
+
+    const { data: occurrences } = await db
+      .from("events")
+      .select("id,starts_at,status,public_slug")
+      .eq("event_series_id", seriesId)
+      .order("starts_at", { ascending: true });
+    const futureIds = selectFutureNonCancelledOccurrenceIds(occurrences ?? []);
+    if (!futureIds.length) {
+      return { error: "There are no future non-cancelled occurrences to update." };
+    }
+
+    const { data: previousAssets } = await db
+      .from("design_assets")
+      .select("id,event_id,storage_path")
+      .in("event_id", futureIds)
+      .eq("asset_type", EVENT_IMAGE_ASSET_TYPE)
+      .eq("active", true);
+    const previousByEvent = new Map(
+      (previousAssets ?? []).map((asset) => [asset.event_id as string, asset]),
+    );
+
+    const fileBytes = await designAssetFileBytes(file);
+    const activatedEventIds: string[] = [];
+
+    for (const eventId of futureIds) {
+      const { path, error: uploadError } = await uploadSeriesOccurrenceImageObject({
+        sessionClient: db,
+        privilegedClient: storage,
+        seriesId,
+        eventId,
+        file,
+        bytes: fileBytes,
+      });
+      if (uploadError) throw new Error(mapDesignAssetUploadError(uploadError, "event image"));
+      uploadedPaths.push(path);
+
+      const { data: asset, error: insertError } = await db
+        .from("design_assets")
+        .insert({
+          asset_type: EVENT_IMAGE_ASSET_TYPE,
+          event_id: eventId,
+          storage_path: path,
+          original_filename: file.name.slice(0, 255),
+          mime_type: file.type,
+          byte_size: file.size,
+          alt_text: altText,
+          focal_position: focalPosition,
+          active: false,
+          created_by_admin_id: admin.userId,
+        })
+        .select("id")
+        .single();
+      if (insertError || !asset) throw new Error("The image metadata could not be saved.");
+      insertedAssetIds.push(asset.id);
+
+      const previous = previousByEvent.get(eventId);
+      const lifecycle = await runReplacementLifecycle({
+        retirePrevious: async () => {
+          const { error } = await db
+            .from("design_assets")
+            .update({
+              active: false,
+              retired_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .match({
+              asset_type: EVENT_IMAGE_ASSET_TYPE,
+              event_id: eventId,
+            })
+            .eq("active", true)
+            .neq("id", asset.id);
+          if (previous)
+            retiredPrevious.push({ id: previous.id, storagePath: previous.storage_path });
+          return {
+            error: error ? { message: "The previous image could not be retired safely." } : null,
+          };
+        },
+        activateNew: async () => {
+          const { error } = await db
+            .from("design_assets")
+            .update({ active: true, updated_at: new Date().toISOString() })
+            .eq("id", asset.id)
+            .eq("active", false);
+          return {
+            error: error ? { message: "The new image could not be activated safely." } : null,
+          };
+        },
+        restorePrevious: async () => {
+          if (!previous) return;
+          await db
+            .from("design_assets")
+            .update({ active: true, retired_at: null, updated_at: new Date().toISOString() })
+            .eq("id", previous.id);
+        },
+        deactivateNew: async () => {
+          await db
+            .from("design_assets")
+            .update({
+              active: false,
+              retired_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", asset.id);
+        },
+        cleanupNew: async () =>
+          cleanupStoragePaths([path], async (paths) => {
+            const { error } = await storage.storage.from("design-assets").remove(paths);
+            return {
+              error: error ? { message: error.message, statusCode: error.statusCode } : null,
+            };
+          }),
+        cleanupPrevious: async () => ({ ok: true, attempts: 0, unresolvedPaths: [] }),
+        refresh: () => undefined,
+      });
+      if (!lifecycle.committed) {
+        throw new Error(lifecycle.error ?? "The series image replacement failed.");
+      }
+      activatedEventIds.push(eventId);
+
+      await db.from("audit_events").insert({
+        actor_admin_id: admin.userId,
+        action: "DESIGN_ASSET_UPLOADED",
+        entity_type: "DESIGN_ASSET",
+        entity_id: asset.id,
+        new_values: {
+          asset_type: EVENT_IMAGE_ASSET_TYPE,
+          event_id: eventId,
+          series_id: seriesId,
+          series_main_image: true,
+          mime_type: file.type,
+          byte_size: file.size,
+        },
+      });
+    }
+
+    const { error: seriesAuditError } = await db.from("audit_events").insert({
+      actor_admin_id: admin.userId,
+      action: "SERIES_MAIN_IMAGE_REPLACED",
+      entity_type: "EVENT_SERIES",
+      entity_id: seriesId,
+      new_values: {
+        series_id: seriesId,
+        occurrence_ids: activatedEventIds,
+        occurrence_count: activatedEventIds.length,
+        asset_type: EVENT_IMAGE_ASSET_TYPE,
+        mime_type: file.type,
+        byte_size: file.size,
+        alt_text: altText,
+        focal_position: focalPosition,
+      },
+    });
+    if (seriesAuditError) throw new Error("The series image change could not be recorded.");
+    committed = true;
+
+    const previousPaths = [...new Set(retiredPrevious.map((row) => row.storagePath))];
+    let cleanupDebt = false;
+    if (previousPaths.length) {
+      const { data: stillReferenced } = await db
+        .from("design_assets")
+        .select("storage_path")
+        .in("storage_path", previousPaths)
+        .eq("active", true);
+      const referenced = new Set((stillReferenced ?? []).map((row) => row.storage_path));
+      const removable = previousPaths.filter((path) => !referenced.has(path));
+      if (removable.length) {
+        const cleanup = await cleanupStoragePaths(
+          removable,
+          async (paths) => {
+            const { error } = await storage.storage.from("design-assets").remove(paths);
+            return {
+              error: error ? { message: error.message, statusCode: error.statusCode } : null,
+            };
+          },
+          2,
+        );
+        cleanupDebt = !cleanup.ok;
+      }
+    }
+
+    revalidatePath("/admin/design-assets");
+    revalidatePath("/admin");
+    revalidatePath("/admin/events");
+    revalidatePath("/events");
+    for (const occurrence of occurrences ?? []) {
+      if (!activatedEventIds.includes(occurrence.id)) continue;
+      revalidatePath(`/admin/events/${occurrence.id}`);
+      if (occurrence.public_slug) revalidatePath(`/register/${occurrence.public_slug}`);
+    }
+
+    return {
+      success: cleanupDebt
+        ? `Series image updated on ${activatedEventIds.length} future occurrence${activatedEventIds.length === 1 ? "" : "s"}. Previous image cleanup is pending.`
+        : `Series image updated on ${activatedEventIds.length} future occurrence${activatedEventIds.length === 1 ? "" : "s"}.`,
+    };
+  } catch (error) {
+    rethrowNextControlFlow(error);
+    if (committed) {
+      return {
+        success: "Series image updated. Refresh the page to see it.",
+      };
+    }
+    for (const previous of retiredPrevious) {
+      await createClient()
+        .then((db) =>
+          db
+            .from("design_assets")
+            .update({ active: true, retired_at: null, updated_at: new Date().toISOString() })
+            .eq("id", previous.id),
+        )
+        .catch(() => undefined);
+    }
+    for (const assetId of insertedAssetIds) {
+      await createClient()
+        .then((db) =>
+          db
+            .from("design_assets")
+            .update({
+              active: false,
+              retired_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", assetId),
+        )
+        .catch(() => undefined);
+    }
+    if (uploadedPaths.length) {
+      await createPrivilegedClient().storage.from("design-assets").remove(uploadedPaths);
+    }
+    return { error: errorMessage(error) };
+  }
 }

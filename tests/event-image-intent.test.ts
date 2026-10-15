@@ -1,10 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createEventImageIntent,
+  createSeriesImageIntent,
   EVENT_IMAGE_ASSET_TYPE,
   eventImageIntentErrorMessage,
   eventImageIntentTtlMs,
   inspectEventImageIntent,
+  inspectSeriesImageIntent,
+  seriesImageIntentErrorMessage,
   verifyEventImageIntent,
 } from "@/lib/services/event-image-intent";
 
@@ -123,5 +126,68 @@ describe("event image replacement intent", () => {
         1_700_000_000_001,
       ),
     ).toBe(false);
+  });
+});
+
+describe("series main image replacement intent", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  function useServerEnv() {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-test-key");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3000");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role-test-key");
+    vi.stubEnv("APP_ENV", "development");
+  }
+
+  const seriesA = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const seriesB = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  const actor = "33333333-3333-4333-8333-333333333333";
+
+  it("binds the signed context to actor, series, purpose, and expiry", () => {
+    vi.stubGlobal("window", undefined);
+    useServerEnv();
+    const now = 1_700_000_000_000;
+    const token = createSeriesImageIntent(seriesA, actor, EVENT_IMAGE_ASSET_TYPE, now);
+    expect(
+      inspectSeriesImageIntent(token, seriesA, actor, EVENT_IMAGE_ASSET_TYPE, now + 1),
+    ).toEqual({ ok: true });
+    expect(
+      inspectSeriesImageIntent(token, seriesB, actor, EVENT_IMAGE_ASSET_TYPE, now + 1),
+    ).toEqual({ ok: false, reason: "mismatch" });
+    expect(inspectSeriesImageIntent(token, seriesA, actor, "EVENT_IMAGE_MOBILE", now + 1)).toEqual({
+      ok: false,
+      reason: "wrong_asset_type",
+    });
+    expect(
+      inspectSeriesImageIntent(
+        token,
+        seriesA,
+        actor,
+        EVENT_IMAGE_ASSET_TYPE,
+        now + eventImageIntentTtlMs,
+      ),
+    ).toEqual({ ok: false, reason: "expired" });
+    expect(seriesImageIntentErrorMessage("expired")).toBe(
+      "This series image form expired. Refresh the Event and try again.",
+    );
+  });
+
+  it("rejects event-image intents when a series intent is required", () => {
+    vi.stubGlobal("window", undefined);
+    useServerEnv();
+    const now = 1_700_000_000_000;
+    const eventToken = createEventImageIntent(
+      "11111111-1111-4111-8111-111111111111",
+      actor,
+      EVENT_IMAGE_ASSET_TYPE,
+      now,
+    );
+    expect(
+      inspectSeriesImageIntent(eventToken, seriesA, actor, EVENT_IMAGE_ASSET_TYPE, now + 1),
+    ).toEqual({ ok: false, reason: "mismatch" });
   });
 });
