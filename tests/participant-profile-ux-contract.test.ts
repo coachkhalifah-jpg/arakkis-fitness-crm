@@ -34,12 +34,12 @@ describe("admin People profile UX IA contract", () => {
     expect(profilePage).not.toContain("Registration and attendance");
   });
 
-  it("uses clickable contact links and hides empty Goals chrome", () => {
+  it("uses clickable contact links and always shows the Goals section", () => {
     expect(profilePage).toContain("telHref(");
     expect(profilePage).toContain("mailto:");
-    expect(profilePage).toContain("goalsText || fitnessExperience");
+    expect(profilePage).toContain('id="goals-title"');
+    expect(profilePage).toContain("No goals on file.");
     expect(profilePage).toContain("Fitness experience");
-    expect(profilePage).not.toContain("No goals on file");
   });
 
   it("places manage recovery near Upcoming and clarifies the 72-hour window", () => {
@@ -51,25 +51,29 @@ describe("admin People profile UX IA contract", () => {
     expect(recoveryPanel).toContain("expire 72 hours after issue");
   });
 
-  it("places Active + EDIT CONTACT right-aligned above Participation snapshot", () => {
+  it("places EDIT CONTACT above Active, right-aligned above Participation snapshot", () => {
     const statusActionsIndex = profilePage.indexOf(
       'data-testid="participant-profile-status-actions"',
     );
     const contactFormIndex = profilePage.indexOf("<ParticipantContactCorrectionForm");
+    const activeIndex = profilePage.indexOf(
+      '<span className="ops-status">Active</span>',
+      statusActionsIndex,
+    );
     const snapshotIndex = profilePage.indexOf("Participation snapshot");
     expect(statusActionsIndex).toBeGreaterThan(-1);
     expect(contactFormIndex).toBeGreaterThan(statusActionsIndex);
-    expect(snapshotIndex).toBeGreaterThan(contactFormIndex);
+    expect(activeIndex).toBeGreaterThan(contactFormIndex);
+    expect(snapshotIndex).toBeGreaterThan(activeIndex);
     expect(profilePage).toContain("ops-people-profile-status-actions");
-    expect(profilePage).toContain("ops-status");
     expect(contactForm).toContain('data-testid="participant-edit-contact"');
     expect(contactForm).toContain('data-testid="participant-contact-form"');
     expect(contactForm).not.toContain("ops-venue-edit-panel");
     expect(contactForm).not.toContain(">Contact<");
   });
 
-  it("places Goals and context above System Admin–only manage recovery", () => {
-    const goalsIndex = profilePage.indexOf("goalsText || fitnessExperience");
+  it("places Goals above System Admin–only manage recovery", () => {
+    const goalsIndex = profilePage.indexOf('id="goals-title"');
     const recoveryIndex = profilePage.indexOf("<ParticipantManageRecoveryPanel");
     expect(goalsIndex).toBeGreaterThan(-1);
     expect(recoveryIndex).toBeGreaterThan(goalsIndex);

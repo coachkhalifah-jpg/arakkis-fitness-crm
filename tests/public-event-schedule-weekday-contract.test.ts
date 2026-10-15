@@ -12,4 +12,15 @@ describe("DEC-068 public_event_schedule one card per series weekday", () => {
     expect(migration).toContain("occurrence_rank = 1");
     expect(migration).toContain("coalesce(e.event_series_id, e.id)");
   });
+
+  it("renders the full hub schedule (not a 7-day This week clip)", () => {
+    const eventsPage = readFileSync("src/app/events/page.tsx", "utf8");
+    const view = readFileSync("src/components/events/participant-events-view.tsx", "utf8");
+    expect(eventsPage).toContain("upcoming={mappedEvents}");
+    expect(eventsPage).not.toContain("thisWeek");
+    expect(eventsPage).not.toContain("7 * 24 * 60 * 60 * 1000");
+    expect(view).toContain("upcoming: ParticipantEventCard[]");
+    expect(view).toContain('eyebrow="Upcoming"');
+    expect(view).not.toContain('eyebrow="This week"');
+  });
 });

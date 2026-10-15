@@ -221,8 +221,8 @@ export default async function ParticipantProfilePage({
             className="ops-org-detail-status-actions ops-people-profile-status-actions"
             data-testid="participant-profile-status-actions"
           >
-            <span className="ops-status">Active</span>
             <ParticipantContactCorrectionForm participant={participant} />
+            <span className="ops-status">Active</span>
           </div>
 
           <section className="ops-org-detail">
@@ -295,28 +295,25 @@ export default async function ParticipantProfilePage({
             </div>
           </section>
 
-          {goalsText || fitnessExperience ? (
-            <section className="ops-venue-events-panel" aria-labelledby="context-title">
-              <div className="ops-section-head">
-                <span className="ops-kicker" id="context-title">
-                  Goals and context
-                </span>
-                <span className="ops-label">Read-only</span>
+          <section className="ops-venue-events-panel" aria-labelledby="goals-title">
+            <div className="ops-section-head">
+              <span className="ops-kicker" id="goals-title">
+                Goals
+              </span>
+              <span className="ops-label">Read-only</span>
+            </div>
+            <div className="ops-people-profile-context-block">
+              <p className="ops-people-profile-copy" data-testid="participant-goals">
+                {goalsText ? goalsText : "No goals on file."}
+              </p>
+            </div>
+            {fitnessExperience ? (
+              <div className="ops-people-profile-context-block">
+                <span className="ops-label">Fitness experience</span>
+                <p className="ops-people-profile-copy">{fitnessExperience}</p>
               </div>
-              {goalsText ? (
-                <div className="ops-people-profile-context-block">
-                  <span className="ops-label">Goals</span>
-                  <p className="ops-people-profile-copy">{goalsText}</p>
-                </div>
-              ) : null}
-              {fitnessExperience ? (
-                <div className="ops-people-profile-context-block">
-                  <span className="ops-label">Fitness experience</span>
-                  <p className="ops-people-profile-copy">{fitnessExperience}</p>
-                </div>
-              ) : null}
-            </section>
-          ) : null}
+            ) : null}
+          </section>
 
           <ParticipantManageRecoveryPanel
             participantId={participant.id}
