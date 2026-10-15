@@ -194,8 +194,7 @@ export function RecurrenceScheduleManager({
     ? alignDateToWeekday(addEffectiveDate, selectedAddWeekday)
     : "";
   const addWeekdayMismatch =
-    Boolean(addEffectiveDate) &&
-    weekdayForLocalDate(addEffectiveDate) !== selectedAddWeekday;
+    Boolean(addEffectiveDate) && weekdayForLocalDate(addEffectiveDate) !== selectedAddWeekday;
   const nextAddOccurrence = nextDateForWeekday(selectedAddWeekday, addStart, timezone);
   const effectiveAddBoundary = alignedAddEffectiveDate || nextAddOccurrence;
   const addScheduleConstraintMessage = addWeekdayMismatch
