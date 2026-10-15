@@ -20,7 +20,7 @@ describe("ParticipantEventsView booked state", () => {
   it("marks already-booked classes and links to manage instead of register", () => {
     render(
       <ParticipantEventsView
-        thisWeek={[
+        upcoming={[
           {
             ...baseEvent,
             manageHref: "/manage-bookings/reg-1",

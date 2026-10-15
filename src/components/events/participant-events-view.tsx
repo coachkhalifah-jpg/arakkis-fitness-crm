@@ -96,10 +96,11 @@ function OrganizationList({
 }
 
 export function ParticipantEventsView({
-  thisWeek,
+  upcoming,
   upcomingByOrganization,
 }: {
-  thisWeek: ParticipantEventCard[];
+  /** Full public hub schedule (one card per series weekday per DEC-068). */
+  upcoming: ParticipantEventCard[];
   upcomingByOrganization: Array<{
     name: string;
     description: string;
@@ -108,17 +109,17 @@ export function ParticipantEventsView({
 }) {
   return (
     <div className="participant-events-content">
-      {thisWeek.length ? (
+      {upcoming.length ? (
         <section
           className="participant-events-section"
-          aria-labelledby="participant-this-week-heading"
+          aria-labelledby="participant-upcoming-heading"
         >
           <SectionHeading
-            eyebrow="This week"
+            eyebrow="Upcoming"
             title="Already in your rhythm."
-            description="Upcoming Events from the Organizations and places available to you."
+            description="Next bookable dates from the Organizations and places available to you — including each weekday of a multi-day series."
           />
-          <EventGrid events={thisWeek} />
+          <EventGrid events={upcoming} />
         </section>
       ) : null}
 

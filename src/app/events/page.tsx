@@ -111,16 +111,10 @@ export default async function EventsPage() {
       manageHref: registrationId ? manageBookingHref(registrationId) : null,
     };
   });
-  // Server-rendered grouping intentionally uses the current instant.
-  // eslint-disable-next-line react-hooks/purity
-  const now = Date.now();
-  const weekEnd = now + 7 * 24 * 60 * 60 * 1000;
-  const thisWeek = mappedEvents.filter((event) => {
-    const source = events.find((item) => item.id === event.id);
-    if (!source) return false;
-    const startsAt = Date.parse(source.starts_at);
-    return startsAt >= now && startsAt <= weekEnd;
-  });
+  // DEC-068: public_event_schedule already returns one card per series weekday.
+  // Show the full hub projection — do not clip to a rolling 7-day "This week"
+  // window (that hid later weekdays such as next Tuesday when only Thursday
+  // fell inside the first seven days of a longer horizon).
   const organizationMap = new Map<string, ParticipantEventCard[]>();
   for (const event of mappedEvents) {
     const key = event.organizationName ?? "Upcoming Events";
@@ -188,7 +182,7 @@ export default async function EventsPage() {
           </div>
         ) : (
           <ParticipantEventsView
-            thisWeek={thisWeek}
+            upcoming={mappedEvents}
             upcomingByOrganization={upcomingByOrganization}
           />
         )}
