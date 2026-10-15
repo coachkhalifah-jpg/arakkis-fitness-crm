@@ -16,41 +16,49 @@ const kindLabel: Record<WorkoutStep["kind"], string> = {
   done: "Done",
 };
 
+type TimerState = {
+  index: number;
+  remaining: number;
+  running: boolean;
+  finished: boolean;
+};
+
+function initialState(ordered: WorkoutStep[]): TimerState {
+  return {
+    index: 0,
+    remaining: ordered[0]?.durationSeconds ?? 0,
+    running: false,
+    finished: false,
+  };
+}
+
 export function WorkoutTimer({ title, steps }: { title: string; steps: WorkoutStep[] }) {
   const ordered = useMemo(() => [...steps].sort((a, b) => a.order - b.order), [steps]);
-  const [index, setIndex] = useState(0);
-  const [remaining, setRemaining] = useState(ordered[0]?.durationSeconds ?? 0);
-  const [running, setRunning] = useState(false);
-  const [finished, setFinished] = useState(false);
-
+  const [state, setState] = useState<TimerState>(() => initialState(ordered));
+  const { index, remaining, running, finished } = state;
   const current = ordered[index];
-
-  useEffect(() => {
-    setIndex(0);
-    setRemaining(ordered[0]?.durationSeconds ?? 0);
-    setRunning(false);
-    setFinished(false);
-  }, [ordered]);
 
   useEffect(() => {
     if (!running || finished) return;
     const id = window.setInterval(() => {
-      setRemaining((value) => Math.max(0, value - 1));
+      setState((prev) => {
+        if (!prev.running || prev.finished) return prev;
+        if (prev.remaining > 1) {
+          return { ...prev, remaining: prev.remaining - 1 };
+        }
+        if (prev.index >= ordered.length - 1) {
+          return { ...prev, remaining: 0, running: false, finished: true };
+        }
+        const nextIndex = prev.index + 1;
+        return {
+          ...prev,
+          index: nextIndex,
+          remaining: ordered[nextIndex]?.durationSeconds ?? 0,
+        };
+      });
     }, 1000);
     return () => window.clearInterval(id);
-  }, [running, finished]);
-
-  useEffect(() => {
-    if (!running || finished || remaining > 0) return;
-    if (index >= ordered.length - 1) {
-      setRunning(false);
-      setFinished(true);
-      return;
-    }
-    const nextIndex = index + 1;
-    setIndex(nextIndex);
-    setRemaining(ordered[nextIndex]?.durationSeconds ?? 0);
-  }, [remaining, running, finished, index, ordered]);
+  }, [running, finished, ordered]);
 
   if (!current) {
     return <p className="text-sm text-slate-600">This workout has no steps.</p>;
@@ -79,7 +87,7 @@ export function WorkoutTimer({ title, steps }: { title: string; steps: WorkoutSt
         <button
           type="button"
           className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white disabled:opacity-40"
-          onClick={() => setRunning((value) => !value)}
+          onClick={() => setState((prev) => ({ ...prev, running: !prev.running }))}
           disabled={finished}
         >
           {running ? "Pause" : "Start"}
@@ -88,16 +96,18 @@ export function WorkoutTimer({ title, steps }: { title: string; steps: WorkoutSt
           type="button"
           className="rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-800 disabled:opacity-40"
           onClick={() => {
-            if (index >= ordered.length - 1) {
-              setRunning(false);
-              setFinished(true);
-              setRemaining(0);
-              return;
-            }
-            const nextIndex = index + 1;
-            setIndex(nextIndex);
-            setRemaining(ordered[nextIndex]?.durationSeconds ?? 0);
-            setFinished(false);
+            setState((prev) => {
+              if (prev.index >= ordered.length - 1) {
+                return { ...prev, running: false, finished: true, remaining: 0 };
+              }
+              const nextIndex = prev.index + 1;
+              return {
+                ...prev,
+                index: nextIndex,
+                remaining: ordered[nextIndex]?.durationSeconds ?? 0,
+                finished: false,
+              };
+            });
           }}
           disabled={finished}
         >
@@ -106,12 +116,7 @@ export function WorkoutTimer({ title, steps }: { title: string; steps: WorkoutSt
         <button
           type="button"
           className="rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-800"
-          onClick={() => {
-            setIndex(0);
-            setRemaining(ordered[0]?.durationSeconds ?? 0);
-            setRunning(false);
-            setFinished(false);
-          }}
+          onClick={() => setState(initialState(ordered))}
         >
           Restart
         </button>

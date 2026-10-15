@@ -65,7 +65,7 @@ export default async function TakeHomeWorkoutPage({
           Back to events
         </Link>
       </div>
-      <WorkoutTimer title={workout.title} steps={steps} />
+      <WorkoutTimer key={workout.slug} title={workout.title} steps={steps} />
     </main>
   );
 }
