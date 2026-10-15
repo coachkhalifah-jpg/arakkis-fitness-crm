@@ -599,18 +599,13 @@ export function RegistrationForm({
                   </p>
                 ) : null}
               </label>
-              <RegistrationQuestion
-                question="What are you working toward?"
-                subtext="Share anything that would help your coach support you."
-                as="h3"
-              />
               <label className="registration-field-label">
                 <span className="registration-field-title">Goals</span>
                 <textarea
                   id="goals"
                   name="goals"
                   maxLength={500}
-                  placeholder="What would you like to get from class?"
+                  placeholder="Share anything that would help your coach support you."
                   value={values.goals}
                   onChange={(event) => updateValue("goals", event.target.value)}
                   {...fieldProps("goals")}
