@@ -80,12 +80,12 @@ describe("admin People profile UX IA contract", () => {
 
   it("places the disclosure + affordance on the left (UAT-027 follow-up)", () => {
     const css = readFileSync(resolve(process.cwd(), "src/app/admin/ops.css"), "utf8");
-    expect(css).toContain(
+    const iconRuleStart = css.indexOf(
       ".ops-people-profile-page .ops-people-profile-disclosure-toggle .arakkis-disclosure-toggle-icon",
     );
-    expect(css).toMatch(
-      /\.ops-people-profile-disclosure-toggle \.arakkis-disclosure-toggle-icon\s*\{[^}]*order:\s*-1/s,
-    );
+    expect(iconRuleStart).toBeGreaterThan(-1);
+    const iconRule = css.slice(iconRuleStart, iconRuleStart + 220);
+    expect(iconRule).toContain("order: -1");
   });
 
   it("orders Goals → Upcoming → History → Follow-up → System Admin only (UAT-027)", () => {
