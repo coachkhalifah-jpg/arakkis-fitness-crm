@@ -235,6 +235,10 @@ export function RegistrationForm({
       {waiverAcknowledged ? (
         <input type="hidden" name="legalPackageAcknowledged" value="on" />
       ) : null}
+      {/* Controlled checkbox FormData is unreliable with server actions; mirror waiver pattern. */}
+      {rememberDevice && !activeRememberedFirstName ? (
+        <input type="hidden" name="rememberDevice" value="on" />
+      ) : null}
       {publicSlug ? <input type="hidden" name="registrationSlug" value={publicSlug} /> : null}
       {eventInviteToken ? (
         <input type="hidden" name="eventInviteToken" value={eventInviteToken} />
@@ -704,7 +708,6 @@ export function RegistrationForm({
           <label className="flex min-h-12 items-start gap-3">
             <input
               id="rememberDevice"
-              name="rememberDevice"
               type="checkbox"
               aria-describedby="rememberDevice-description"
               checked={rememberDevice}

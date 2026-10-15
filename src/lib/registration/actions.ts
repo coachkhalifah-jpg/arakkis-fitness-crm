@@ -141,11 +141,12 @@ async function executeRegistration(
     undefined,
     diagnosticCorrelationId,
   );
-  const remembered = form.get("continueAsRemembered") === "true" ? rememberedParticipant : null;
-  const shouldRememberDevice =
-    form.get("rememberDevice") === "on" &&
-    form.get("continueAsRemembered") !== "true" &&
-    !rememberedParticipant;
+  const continuingAsRemembered = form.get("continueAsRemembered") === "true";
+  const remembered = continuingAsRemembered ? rememberedParticipant : null;
+  // Issue a device token whenever the participant asked to remember on this
+  // submit. Do not skip just because a prior cookie exists (UAT-009): that
+  // previously left confirmation showing Remember after a checked registration.
+  const shouldRememberDevice = form.get("rememberDevice") === "on" && !continuingAsRemembered;
   const input = participantInputSchema.parse({
     firstName: remembered?.first_name ?? form.get("firstName"),
     lastName: remembered?.last_name ?? form.get("lastName"),
@@ -238,15 +239,17 @@ async function executeRegistration(
     throw noReservedClassError(result.results);
   }
   confirmationToken = result.confirmation_token;
-  let deviceRemembered = false;
+  // Returning/continue-as-remembered already has a device cookie — still signal
+  // confirmation to hide the duplicate Remember chrome (UAT-009).
+  let deviceRemembered = continuingAsRemembered && Boolean(rememberedParticipant);
   if (shouldRememberDevice) {
-    const remembered = await rememberParticipantFromConfirmation(
+    const issued = await rememberParticipantFromConfirmation(
       confirmationToken,
       diagnosticCorrelationId,
     );
     // Do not block confirmation on remember failure; the confirmation page still
     // offers Save on this device. Log outcome for hosted diagnosis.
-    if (remembered && "error" in remembered && remembered.error) {
+    if (issued && "error" in issued && issued.error) {
       logHostedAccessDiagnostic({
         correlation_id: diagnosticCorrelationId,
         boundary: "registration_submission",
@@ -255,10 +258,12 @@ async function executeRegistration(
         cookie_set_attempted: true,
         cookie_set_completed: false,
       });
-    } else if (remembered && "firstName" in remembered) {
+      // Prior cookie still means this browser is remembered — hide confirmation prompt.
+      if (rememberedParticipant) deviceRemembered = true;
+    } else if (issued && "firstName" in issued) {
       deviceRemembered = true;
     }
-  } else
+  } else if (!deviceRemembered)
     logHostedAccessDiagnostic({
       correlation_id: diagnosticCorrelationId,
       boundary: "registration_submission",
