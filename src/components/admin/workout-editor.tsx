@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { saveTakeHomeWorkout, type WorkoutEditorState } from "@/lib/workouts/actions";
 import type { WorkoutStep, WorkoutStepKind } from "@/lib/workouts/csv";
 import { convertSlipSheet, slugifyWorkoutTitle } from "@/lib/workouts/slip-sheet";
@@ -72,14 +72,7 @@ export function WorkoutEditor({ initialWorkout = null }: Props) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [addBookends, setAddBookends] = useState(true);
   const [state, action] = useActionState(saveTakeHomeWorkout, initialState);
-
-  useEffect(() => {
-    if (!initialWorkout) return;
-    setSlug(initialWorkout.slug);
-    setTitle(initialWorkout.title);
-    setTheme(initialWorkout.theme);
-    setSteps(initialWorkout.steps.length ? toEditorSteps(initialWorkout.steps) : [emptyStep()]);
-  }, [initialWorkout]);
+  // Remount via parent `key` when loading an existing workout into the editor.
 
   const payload = useMemo(
     () =>

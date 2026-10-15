@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { WorkoutStep } from "@/lib/workouts/csv";
 import { playWorkoutTone } from "@/lib/workouts/audio";
 import "./workout-timer.css";
 
 const MUTE_STORAGE_KEY = "arakkis.workout.preferences.muted";
+const mutedListeners = new Set<() => void>();
 
 function formatClock(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60);
@@ -54,6 +55,27 @@ function readMutedPreference(): boolean {
   }
 }
 
+function subscribeMuted(listener: () => void) {
+  mutedListeners.add(listener);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === MUTE_STORAGE_KEY || event.key === null) listener();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    mutedListeners.delete(listener);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+function writeMutedPreference(nextMuted: boolean) {
+  try {
+    window.localStorage.setItem(MUTE_STORAGE_KEY, nextMuted ? "true" : "false");
+  } catch {
+    // Ignore quota / private-mode failures; in-memory mute still works via emit.
+  }
+  for (const listener of mutedListeners) listener();
+}
+
 export function WorkoutTimer({
   title,
   theme,
@@ -65,7 +87,7 @@ export function WorkoutTimer({
 }) {
   const ordered = useMemo(() => [...steps].sort((a, b) => a.order - b.order), [steps]);
   const [state, setState] = useState<TimerState>(() => initialState(ordered));
-  const [muted, setMuted] = useState(true);
+  const muted = useSyncExternalStore(subscribeMuted, readMutedPreference, () => true);
   const [stepsOpen, setStepsOpen] = useState(false);
   const stepsListId = useId();
   const { index, remaining, running, finished } = state;
@@ -82,16 +104,7 @@ export function WorkoutTimer({
   const mutedRef = useRef(muted);
 
   useEffect(() => {
-    setMuted(readMutedPreference());
-  }, []);
-
-  useEffect(() => {
     mutedRef.current = muted;
-    try {
-      window.localStorage.setItem(MUTE_STORAGE_KEY, muted ? "true" : "false");
-    } catch {
-      // Ignore quota / private-mode failures; in-memory mute still works.
-    }
   }, [muted]);
 
   useEffect(() => {
@@ -263,7 +276,7 @@ export function WorkoutTimer({
             className="workout-stage__mute"
             aria-pressed={muted}
             aria-label={muted ? "Sound muted. Activate to unmute." : "Sound on. Activate to mute."}
-            onClick={() => setMuted((prev) => !prev)}
+            onClick={() => writeMutedPreference(!muted)}
           >
             {muted ? "Muted" : "Sound on"}
           </button>
