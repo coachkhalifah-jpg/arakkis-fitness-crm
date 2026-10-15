@@ -17,6 +17,7 @@ import {
   VenueSelect,
 } from "@/components/admin/event-form-fields";
 import { DesignAssetUploadForm } from "@/components/admin/design-asset-upload-form";
+import { SeriesMainImageForm } from "@/components/admin/series-main-image-form";
 import { RosterPreview } from "@/components/admin/roster-preview";
 import { CalendarUtility } from "@/components/admin/calendar-utility";
 import { EventTitleOverlayControl } from "@/components/admin/event-title-overlay-control";
@@ -39,7 +40,11 @@ import {
 } from "@/lib/services/phase-7-actions";
 import { designAssetPublicUrl } from "@/lib/config/design-assets";
 import { calendarEventFromRecord } from "@/lib/services/admin-calendar";
-import { createEventImageIntent, EVENT_IMAGE_ASSET_TYPE } from "@/lib/services/event-image-intent";
+import {
+  createEventImageIntent,
+  createSeriesImageIntent,
+  EVENT_IMAGE_ASSET_TYPE,
+} from "@/lib/services/event-image-intent";
 import { AdminWorkspaceMenu } from "@/components/admin/admin-workspace-menu";
 import { getAdminWorkspaceMenuItems } from "@/components/admin/admin-workspace-menu-items";
 import { ProgressiveDisclosureSection } from "@/components/admin/progressive-disclosure-section";
@@ -138,7 +143,7 @@ export default async function EventDetailPage({
     ? await db
         .from("events")
         .select(
-          "id,starts_at,generated_local_date,schedule_rule_id,registrations(registration_status,registration_outcome)",
+          "id,starts_at,status,generated_local_date,schedule_rule_id,registrations(registration_status,registration_outcome)",
         )
         .eq("event_series_id", event.event_series_id)
         .order("starts_at", { ascending: true })
@@ -159,6 +164,26 @@ export default async function EventDetailPage({
     .eq("asset_type", "EVENT_IMAGE_DESKTOP")
     .eq("active", true)
     .maybeSingle();
+  // Preview prefers the soonest upcoming non-cancelled occurrence as the series image source.
+  // eslint-disable-next-line react-hooks/purity -- server page snapshot uses the request instant
+  const nowMs = Date.now();
+  const futureSeriesOccurrenceIds = (seriesOccurrences ?? [])
+    .filter(
+      (occurrence) =>
+        occurrence.status !== "CANCELLED" && new Date(occurrence.starts_at).getTime() > nowMs,
+    )
+    .map((occurrence) => occurrence.id);
+  const seriesImageEventId = futureSeriesOccurrenceIds[0] ?? null;
+  const { data: seriesMainImage } =
+    event.event_series_id && seriesImageEventId
+      ? await db
+          .from("design_assets")
+          .select("id,storage_path,alt_text,event_id")
+          .eq("event_id", seriesImageEventId)
+          .eq("asset_type", "EVENT_IMAGE_DESKTOP")
+          .eq("active", true)
+          .maybeSingle()
+      : { data: null };
   const { data: registrations } = await db
     .from("registrations")
     .select(
@@ -541,29 +566,61 @@ export default async function EventDetailPage({
                   </ProgressiveDisclosureSection>
                   <ProgressiveDisclosureSection id="manage-event-repeat" number="03" title="Series">
                     {eventSeries ? (
-                      <RecurrenceScheduleManager
-                        seriesId={eventSeries.id}
-                        seriesEndsOn={eventSeries.ends_on}
-                        timezone={event.timezone}
-                        initialWeekday={localWeekday(event.starts_at, event.timezone)}
-                        initialStart={localValue(event.starts_at, event.timezone).slice(11, 16)}
-                        initialEnd={localValue(event.ends_at, event.timezone).slice(11, 16)}
-                        initialEffectiveDate={localValue(event.starts_at, event.timezone).slice(
-                          0,
-                          10,
-                        )}
-                        rules={(scheduleRules ?? []).map((rule) => ({
-                          ...rule,
-                          local_start_time: String(rule.local_start_time),
-                          local_end_time: String(rule.local_end_time),
-                        }))}
-                        occurrences={recurrenceOccurrences}
-                        canMutate={
-                          admin.role === "SYSTEM_ADMIN" &&
-                          event.status !== "CANCELLED" &&
-                          event.status !== "COMPLETED"
-                        }
-                      />
+                      <>
+                        <RecurrenceScheduleManager
+                          seriesId={eventSeries.id}
+                          seriesEndsOn={eventSeries.ends_on}
+                          timezone={event.timezone}
+                          initialWeekday={localWeekday(event.starts_at, event.timezone)}
+                          initialStart={localValue(event.starts_at, event.timezone).slice(11, 16)}
+                          initialEnd={localValue(event.ends_at, event.timezone).slice(11, 16)}
+                          initialEffectiveDate={localValue(event.starts_at, event.timezone).slice(
+                            0,
+                            10,
+                          )}
+                          rules={(scheduleRules ?? []).map((rule) => ({
+                            ...rule,
+                            local_start_time: String(rule.local_start_time),
+                            local_end_time: String(rule.local_end_time),
+                          }))}
+                          occurrences={recurrenceOccurrences}
+                          canMutate={
+                            admin.role === "SYSTEM_ADMIN" &&
+                            event.status !== "CANCELLED" &&
+                            event.status !== "COMPLETED"
+                          }
+                        />
+                        {admin.role === "SYSTEM_ADMIN" ? (
+                          <div className="admin-manage-event-image admin-series-main-image mt-6">
+                            <h3 className="font-semibold">Series image</h3>
+                            <p className="mt-1 text-sm text-slate-600">
+                              Updates the main image on future non-cancelled dates. Past dates keep
+                              their current image. This occurrence-only control remains under Event
+                              image.
+                            </p>
+                            {seriesMainImage ? (
+                              <img
+                                src={designAssetPublicUrl(seriesMainImage.storage_path)}
+                                alt={seriesMainImage.alt_text}
+                                className="mt-4 aspect-video w-full rounded-xl object-cover"
+                              />
+                            ) : (
+                              <p className="mt-3 rounded border border-dashed p-4 text-sm text-slate-600">
+                                No series image on upcoming dates yet.
+                              </p>
+                            )}
+                            <SeriesMainImageForm
+                              seriesId={eventSeries.id}
+                              intentToken={createSeriesImageIntent(
+                                eventSeries.id,
+                                admin.userId,
+                                EVENT_IMAGE_ASSET_TYPE,
+                              )}
+                              defaultAltText={`${event.name} series image`}
+                            />
+                          </div>
+                        ) : null}
+                      </>
                     ) : (
                       <p className="admin-create-guidance">This is a single Event.</p>
                     )}

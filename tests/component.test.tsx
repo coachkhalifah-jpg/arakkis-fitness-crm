@@ -32,6 +32,7 @@ import { FloatingBackButton } from "@/components/registration/floating-back-butt
 import { RosterStatusCarousel } from "@/components/admin/roster-status-carousel";
 import { ManageEventRosterDialog } from "@/components/admin/manage-event-roster-dialog";
 import { DesignAssetUploadForm } from "@/components/admin/design-asset-upload-form";
+import { SeriesMainImageForm } from "@/components/admin/series-main-image-form";
 import { RecurringScheduleFields } from "@/components/admin/recurring-schedule-fields";
 import { EventCarousel } from "@/components/events/event-carousel";
 import { WhatToBring } from "@/components/registration/what-to-bring";
@@ -433,6 +434,18 @@ describe("presentation controls", () => {
     );
     expect(document.querySelector('input[name="assetType"]')).toHaveValue("EVENT_IMAGE_DESKTOP");
     expect(screen.queryByRole("combobox", { name: "Asset type" })).not.toBeInTheDocument();
+  });
+
+  it("binds the series id for series main image uploads", () => {
+    render(
+      <SeriesMainImageForm seriesId="series-a" intentToken="series-intent-a" />,
+    );
+    expect(document.querySelector('input[name="seriesId"]')).toHaveValue("series-a");
+    expect(document.querySelector('input[name="seriesImageIntent"]')).toHaveValue(
+      "series-intent-a",
+    );
+    expect(screen.getByRole("button", { name: /update series image/i })).toBeInTheDocument();
+    expect(screen.getByText(/future non-cancelled dates/i)).toBeInTheDocument();
   });
 
   it("labels the icon-only public back control", () => {
