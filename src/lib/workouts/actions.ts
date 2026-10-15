@@ -3,7 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { requireSystemAdmin } from "@/lib/authorization/server";
 import { createClient } from "@/lib/db/server";
-import { parseWorkoutCsv, type ParsedWorkout, type WorkoutStepKind } from "@/lib/workouts/csv";
+import {
+  looksLikeCoachSlipSheet,
+  parseWorkoutCsv,
+  type ParsedWorkout,
+  type WorkoutStepKind,
+} from "@/lib/workouts/csv";
+import { convertSlipSheet } from "@/lib/workouts/slip-sheet";
 import { persistTakeHomeWorkout } from "@/lib/workouts/persist";
 
 export type WorkoutImportState = { error?: string; success?: string };
@@ -40,24 +46,41 @@ export async function importTakeHomeWorkouts(
       return { error: "Upload a .csv file exported from Google Sheets." };
     }
 
-    const parsed = parseWorkoutCsv(await file.text());
-    if (parsed.error) return { error: parsed.error };
-    if (!parsed.workouts.length) return { error: "No workouts found in the CSV." };
+    const text = await file.text();
+    let workouts: ParsedWorkout[] = [];
+
+    if (looksLikeCoachSlipSheet(text)) {
+      const converted = convertSlipSheet(text);
+      if (converted.error || !converted.workout) {
+        return {
+          error:
+            converted.error ??
+            "Could not convert the coach sheet. Prefer Paste/Upload in the Workout editor above.",
+        };
+      }
+      workouts = [converted.workout];
+    } else {
+      const parsed = parseWorkoutCsv(text);
+      if (parsed.error) return { error: parsed.error };
+      workouts = parsed.workouts;
+    }
+
+    if (!workouts.length) return { error: "No workouts found in the CSV." };
 
     const db = await createClient();
-    for (const workout of parsed.workouts) {
+    for (const workout of workouts) {
       const result = await persistTakeHomeWorkout(db, admin.userId, workout);
       if (result.error) return { error: result.error };
       revalidateWorkout(workout.slug);
     }
 
     revalidatePath("/admin/workouts");
-    const labels = parsed.workouts.map((workout) => workout.slug).join(", ");
+    const labels = workouts.map((workout) => workout.slug).join(", ");
     return {
       success:
-        parsed.workouts.length === 1
-          ? `Imported workout "${labels}". Open /workouts/${parsed.workouts[0].slug}.`
-          : `Imported ${parsed.workouts.length} workouts: ${labels}.`,
+        workouts.length === 1
+          ? `Imported workout "${labels}". Open /workouts/${workouts[0].slug}.`
+          : `Imported ${workouts.length} workouts: ${labels}.`,
     };
   } catch {
     return { error: "The workout CSV could not be imported." };

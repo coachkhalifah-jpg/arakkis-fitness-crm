@@ -1,3 +1,5 @@
+import { slugifyWorkoutTitle } from "@/lib/workouts/slip-sheet";
+
 export type WorkoutStepKind = "prepare" | "work" | "rest" | "done";
 
 export type WorkoutStep = {
@@ -18,14 +20,15 @@ export type ParsedWorkout = {
 
 const STEP_KINDS = new Set<WorkoutStepKind>(["prepare", "work", "rest", "done"]);
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+/** Slug is authored on the Workout editor page; optional in flat CSV. */
 const REQUIRED_HEADERS = [
-  "workout_slug",
   "workout_title",
   "step_order",
   "step_title",
   "duration_seconds",
   "step_kind",
 ] as const;
+
 function splitCsvLine(line: string): string[] {
   const cells: string[] = [];
   let current = "";
@@ -66,6 +69,16 @@ function optionalText(value: string | undefined, max: number): string | undefine
   return trimmed;
 }
 
+export function looksLikeCoachSlipSheet(raw: string): boolean {
+  const sample = raw.slice(0, 4000).toLowerCase();
+  return (
+    sample.includes("time,exercise") ||
+    sample.includes("repeat once") ||
+    /theme:\s*/.test(sample) ||
+    sample.includes("at-home")
+  );
+}
+
 export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error?: string } {
   const text = raw.replace(/^\uFEFF/, "").trim();
   if (!text) return { workouts: [], error: "The CSV file is empty." };
@@ -81,12 +94,16 @@ export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error
     if (!headers.includes(required)) {
       return {
         workouts: [],
-        error: `Missing required column "${required}". Use the take-home workout CSV template.`,
+        error: `Missing required column "${required}". Use the take-home workout CSV template, or load a coach SlipL sheet in the Workout editor.`,
       };
     }
   }
 
-  const index = Object.fromEntries(headers.map((header, i) => [header, i])) as Record<string, number>;
+  const index = Object.fromEntries(headers.map((header, i) => [header, i])) as Record<
+    string,
+    number
+  >;
+  const hasSlug = headers.includes("workout_slug");
   const hasTheme = headers.includes("workout_theme");
   const hasCue = headers.includes("cue");
   const hasBlock = headers.includes("block");
@@ -101,8 +118,9 @@ export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error
 
   for (let rowNumber = 2; rowNumber <= lines.length; rowNumber += 1) {
     const cells = splitCsvLine(lines[rowNumber - 1]);
-    const slug = (cells[index.workout_slug] ?? "").toLowerCase();
     const title = cells[index.workout_title] ?? "";
+    const slugRaw = hasSlug ? (cells[index.workout_slug] ?? "").trim().toLowerCase() : "";
+    const slug = slugRaw || slugifyWorkoutTitle(title);
     const orderRaw = cells[index.step_order] ?? "";
     const stepTitle = cells[index.step_title] ?? "";
     const durationRaw = cells[index.duration_seconds] ?? "";
@@ -111,16 +129,18 @@ export function parseWorkoutCsv(raw: string): { workouts: ParsedWorkout[]; error
     const cueRaw = hasCue ? (cells[index.cue] ?? "") : "";
     const blockRaw = hasBlock ? (cells[index.block] ?? "") : "";
 
-    if (!SLUG_PATTERN.test(slug)) {
-      return {
-        workouts: [],
-        error: `Row ${rowNumber}: workout_slug must be lowercase kebab-case (e.g. home-core-15).`,
-      };
-    }
     if (!title || title.length > 160) {
       return {
         workouts: [],
         error: `Row ${rowNumber}: workout_title must be 1–160 characters.`,
+      };
+    }
+    if (!SLUG_PATTERN.test(slug)) {
+      return {
+        workouts: [],
+        error: slugRaw
+          ? `Row ${rowNumber}: workout_slug must be lowercase kebab-case (e.g. home-core-15).`
+          : `Row ${rowNumber}: could not derive a kebab-case slug from the title. Set slug in the Workout editor, or add an optional workout_slug column.`,
       };
     }
     if (hasTheme && themeRaw.trim().length > 160) {

@@ -1,10 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useState } from "react";
-import {
-  saveTakeHomeWorkout,
-  type WorkoutEditorState,
-} from "@/lib/workouts/actions";
+import { saveTakeHomeWorkout, type WorkoutEditorState } from "@/lib/workouts/actions";
 import type { WorkoutStep, WorkoutStepKind } from "@/lib/workouts/csv";
 import { convertSlipSheet, slugifyWorkoutTitle } from "@/lib/workouts/slip-sheet";
 import { parseWorkoutCsv } from "@/lib/workouts/csv";
@@ -80,9 +77,7 @@ export function WorkoutEditor({ initialWorkout = null }: Props) {
     setSlug(initialWorkout.slug);
     setTitle(initialWorkout.title);
     setTheme(initialWorkout.theme);
-    setSteps(
-      initialWorkout.steps.length ? toEditorSteps(initialWorkout.steps) : [emptyStep()],
-    );
+    setSteps(initialWorkout.steps.length ? toEditorSteps(initialWorkout.steps) : [emptyStep()]);
   }, [initialWorkout]);
 
   const payload = useMemo(
@@ -113,9 +108,7 @@ export function WorkoutEditor({ initialWorkout = null }: Props) {
     setTheme(next.theme ?? "");
     setSteps(toEditorSteps(next.steps));
     setLoadError(null);
-    setLoadMessage(
-      `Loaded ${next.steps.length} steps into the Workout editor. Review, then save.`,
-    );
+    setLoadMessage(`Loaded ${next.steps.length} steps into the Workout editor. Review, then save.`);
   }
 
   function loadCoachSheet(raw: string) {
@@ -152,8 +145,8 @@ export function WorkoutEditor({ initialWorkout = null }: Props) {
         <div>
           <h2 className="text-lg font-semibold text-slate-900">Workout editor</h2>
           <p className="mt-1 text-sm text-slate-600">
-            Author identity once, then steps. Load a coach SlipL sheet or flat CSV into the
-            editor, review, and save. This does not touch Events or People.
+            Author identity once, then steps. Load a coach SlipL sheet or flat CSV into the editor,
+            review, and save. This does not touch Events or People.
           </p>
         </div>
 
@@ -199,8 +192,8 @@ export function WorkoutEditor({ initialWorkout = null }: Props) {
         <div>
           <h3 className="text-base font-semibold text-slate-900">Load from coach sheet</h3>
           <p className="mt-1 text-sm text-slate-600">
-            Paste a Google Sheets export (Time / Exercise / Notes, Repeat once). Converts into
-            the editor — does not save until you click Save workout.
+            Paste a Google Sheets export (Time / Exercise / Notes, Repeat once). Converts into the
+            editor — does not save until you click Save workout.
           </p>
         </div>
         <label className="inline-flex items-center gap-2 text-sm text-slate-700">

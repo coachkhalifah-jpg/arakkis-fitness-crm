@@ -11,7 +11,7 @@ export function WorkoutImportForm() {
   return (
     <form action={action} className="grid gap-4">
       <label className="grid gap-2 text-sm">
-        Workout CSV
+        CSV file
         <input
           name="csv"
           type="file"
@@ -20,8 +20,10 @@ export function WorkoutImportForm() {
           className="rounded border border-dashed p-3"
         />
         <span className="text-slate-600">
-          Required: workout_slug, workout_title, step_order, step_title, duration_seconds,
-          step_kind. Optional: workout_theme, cue, block. Template:{" "}
+          Accepts a coach SlipL sheet export, or a flat timer CSV. Slug is optional in flat CSV
+          (derived from title); set/edit slug in the Workout editor. Flat columns: workout_title,
+          step_order, step_title, duration_seconds, step_kind. Optional: workout_slug,
+          workout_theme, cue, block. Template:{" "}
           <a className="underline" href="/templates/take-home-workout-timer.csv" download>
             take-home-workout-timer.csv
           </a>

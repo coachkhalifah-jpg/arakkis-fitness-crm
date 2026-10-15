@@ -70,12 +70,14 @@ export function WorkoutTimer({
   const stepsListId = useId();
   const { index, remaining, running, finished } = state;
   const current = ordered[index];
-  const prevRef = useRef<{ index: number; remaining: number; running: boolean; finished: boolean }>({
-    index: 0,
-    remaining: ordered[0]?.durationSeconds ?? 0,
-    running: false,
-    finished: false,
-  });
+  const prevRef = useRef<{ index: number; remaining: number; running: boolean; finished: boolean }>(
+    {
+      index: 0,
+      remaining: ordered[0]?.durationSeconds ?? 0,
+      running: false,
+      finished: false,
+    },
+  );
   const warnPlayedRef = useRef<number | null>(null);
   const mutedRef = useRef(muted);
 
@@ -121,9 +123,11 @@ export function WorkoutTimer({
     if (!toneMuted) {
       const advanced = state.index !== prev.index;
       const startedFromIdle =
-        state.running && !prev.running && !state.finished && state.remaining === (current?.durationSeconds ?? 0);
-      const completedLast =
-        state.finished && !prev.finished && state.index === ordered.length - 1;
+        state.running &&
+        !prev.running &&
+        !state.finished &&
+        state.remaining === (current?.durationSeconds ?? 0);
+      const completedLast = state.finished && !prev.finished && state.index === ordered.length - 1;
 
       if (advanced && !state.finished) {
         playWorkoutTone("end");

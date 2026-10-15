@@ -26,8 +26,9 @@ export default async function AdminWorkoutsPage() {
           </p>
           <h1 className="text-3xl font-semibold text-slate-900">Workout timers</h1>
           <p className="max-w-2xl text-sm text-slate-600">
-            Configure take-home timer pages in the Workout editor, or convert a coach SlipL sheet
-            into steps. Separate from Events and registration.
+            Use the <strong>Workout editor</strong> below: set slug / title / theme, load a coach
+            SlipL sheet or flat CSV into the step table, then save. Separate from Events and
+            registration.
           </p>
         </header>
 

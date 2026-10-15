@@ -78,9 +78,7 @@ describe("SlipL coach sheet converter", () => {
     });
 
     // Round 1: 3 exercises ×2 + one post rest
-    const round1 = result.workout!.steps.filter((step) =>
-      step.block?.startsWith("Round 1"),
-    );
+    const round1 = result.workout!.steps.filter((step) => step.block?.startsWith("Round 1"));
     expect(round1).toHaveLength(7);
     expect(round1.filter((step) => step.kind === "rest")).toHaveLength(1);
     expect(round1.at(-1)).toMatchObject({ title: "rest", durationSeconds: 60, kind: "rest" });

@@ -77,7 +77,9 @@ export function WorkoutAdminPanel({ workouts }: { workouts: AdminWorkoutListItem
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Active workouts</h2>
-            <p className="text-sm text-slate-600">Open the run page, load into the editor, or retire.</p>
+            <p className="text-sm text-slate-600">
+              Open the run page, load into the editor, or retire.
+            </p>
           </div>
           <button
             type="button"
@@ -120,7 +122,10 @@ export function WorkoutAdminPanel({ workouts }: { workouts: AdminWorkoutListItem
                     >
                       Edit
                     </button>
-                    <Link href={`/workouts/${workout.slug}`} className="text-sm font-semibold underline">
+                    <Link
+                      href={`/workouts/${workout.slug}`}
+                      className="text-sm font-semibold underline"
+                    >
                       Open page
                     </Link>
                     <form action={retireTakeHomeWorkout}>

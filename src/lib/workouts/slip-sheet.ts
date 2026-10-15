@@ -211,9 +211,7 @@ export function convertSlipSheet(
   }
 
   for (const block of blocks) {
-    const pass = block.repeatOnce
-      ? [...block.exercises, ...block.exercises]
-      : [...block.exercises];
+    const pass = block.repeatOnce ? [...block.exercises, ...block.exercises] : [...block.exercises];
     const sequence = [...pass, ...block.postRests];
     for (const exercise of sequence) {
       steps.push({
