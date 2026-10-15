@@ -34,8 +34,9 @@ Local synthetic pilot validation and the private GitHub backup are complete. Hos
 
 ## Recommended sequence
 
-1. Complete Product Owner review of the canonical operating documents.
-2. Synchronize the legacy Venue-permission documents through a formal decision/document update.
-3. Run owner-controlled staging migration, Auth, backup, monitoring, legal-gate, and smoke validation.
-4. Complete journey-based UAT and sign-off.
+1. Land the isolated take-home workout timer stream (migration **0081**; supersedes draft #33 numbering after tip reached **0080**).
+2. Complete Product Owner review of the canonical operating documents.
+3. Synchronize the legacy Venue-permission documents through a formal decision/document update.
+4. Continue owner-controlled staging Auth, backup, monitoring, legal-gate, and smoke validation (hosted migrations through **0080** applied for DEC-068).
 5. Start the shared UI/UX design-system initiative as a separate product-improvement stream.
+6. HOLD UAT-004 / 005 / 007 stay parked unless Product Owner reopens.

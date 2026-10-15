@@ -1709,6 +1709,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      take_home_workouts: {
+        Row: {
+          id: string;
+          slug: string;
+          title: string;
+          steps: Json;
+          active: boolean;
+          created_by_admin_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          slug: string;
+          title: string;
+          steps: Json;
+          active?: boolean;
+          created_by_admin_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          slug?: string;
+          title?: string;
+          steps?: Json;
+          active?: boolean;
+          created_by_admin_id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       public_event_schedule: { Row: Record<string, unknown>; Relationships: []; };

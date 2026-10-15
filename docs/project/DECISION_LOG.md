@@ -25,3 +25,5 @@ This is a concise handoff log; the durable source records remain in `docs/DECISI
 | 2026-10-15 / DEC-066 / UAT-021 | Remove registration optional-section heading “Tell us a little about you.” and subtext “This helps your coach understand your experience.” | Redundant with “Help us help you” + field labels after Goals copy simplify. |
 | 2026-10-15 / DEC-067 / UAT-009 | After successful registration Remember, confirmation hides Remember UI via `remembered=1` + cookie resolve (identity RPC optional). | Closes duplicate prompt on post-book confirmation. |
 | 2026-10-15 / DEC-068 | Public Events hub: next occurrence **per series weekday**, not one card for the whole series. | Multi-day series visible on `/events` without changing 14-day register window. |
+| 2026-10-15 / hosted 0080 | Coach applied DEC-068 migration **0080** on hosted; public `/events` weekday cards PASS. | Tip SQL was already correct; missing hosted apply was the gap. |
+| 2026-10-15 / timer migration | Take-home workout timer stream uses migration **0081** (draft #33’s `0076` collided with phone-match). | Preserve ordered migrations; supersede #33 numbering. |
