@@ -59,30 +59,21 @@ export function ParticipantContactCorrectionForm({ participant }: { participant:
   }, [open, router, state.success]);
 
   return (
-    <section className="ops-venue-edit-panel" aria-labelledby="contact-correction-heading">
-      <div className="ops-section-head">
-        <span className="ops-kicker" id="contact-correction-heading">
-          Contact
+    <>
+      <button
+        type="button"
+        className="ops-org-add-link"
+        data-testid="participant-edit-contact"
+        onClick={() => {
+          setClosing(false);
+          setOpen(true);
+        }}
+      >
+        EDIT CONTACT{" "}
+        <span className="arakkis-arrow-icon" aria-hidden="true">
+          ↗
         </span>
-        <button
-          type="button"
-          className="ops-org-add-link"
-          data-testid="participant-edit-contact"
-          onClick={() => {
-            setClosing(false);
-            setOpen(true);
-          }}
-        >
-          EDIT CONTACT{" "}
-          <span className="arakkis-arrow-icon" aria-hidden="true">
-            ↗
-          </span>
-        </button>
-      </div>
-      <p className="ops-people-profile-copy">
-        Name, phone, and email only. Participant ID and history stay unchanged. A matching identity
-        is sent to review instead of being merged.
-      </p>
+      </button>
 
       {open ? (
         <div className="admin-events-page admin-organization-create-shell">
@@ -191,6 +182,6 @@ export function ParticipantContactCorrectionForm({ participant }: { participant:
           </div>
         </div>
       ) : null}
-    </section>
+    </>
   );
 }

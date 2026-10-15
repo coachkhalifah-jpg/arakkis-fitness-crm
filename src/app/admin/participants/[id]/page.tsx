@@ -226,7 +226,10 @@ export default async function ParticipantProfilePage({
                   Finalized attendance and qualifying registration standing for coaching context.
                 </p>
               </div>
-              <span className="ops-status">Active</span>
+              <div className="ops-org-detail-status-actions">
+                <span className="ops-status">Active</span>
+                <ParticipantContactCorrectionForm participant={participant} />
+              </div>
             </div>
             <div
               className="ops-org-stats ops-people-profile-stats"
@@ -287,8 +290,6 @@ export default async function ParticipantProfilePage({
               </div>
             </div>
           </section>
-
-          <ParticipantContactCorrectionForm participant={participant} />
 
           {goalsText || fitnessExperience ? (
             <section className="ops-venue-events-panel" aria-labelledby="context-title">
