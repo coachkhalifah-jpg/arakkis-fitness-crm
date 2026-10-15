@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSystemAdmin } from "@/lib/authorization/server";
 import { signOut } from "@/lib/auth/session-actions";
@@ -8,11 +9,35 @@ import { getAdminWorkspaceMenuItems } from "@/components/admin/admin-workspace-m
 import { ParticipantContactCorrectionForm } from "@/components/admin/participant-contact-correction-form";
 import { ParticipantManageRecoveryPanel } from "@/components/admin/participant-manage-recovery-panel";
 import {
+  isCancellationRegistration,
   isQualifyingRegistration,
+  isUpcomingRegistration,
   organizationAffiliationLabel,
+  participantHistoryDetailLabel,
   participantHistoryLabel,
 } from "@/lib/participants/history";
 import { formatParticipantPhoneDisplay } from "@/lib/registration/normalization";
+
+function formatEventInstant(value: string, timezone: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: timezone,
+  }).format(new Date(value));
+}
+
+function formatAttendanceDate(value: string, timezone: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeZone: timezone,
+  }).format(new Date(value));
+}
+
+function telHref(normalizedPhone: string, displayPhone: string) {
+  const fromNormalized = normalizedPhone.replace(/[^+\d]/g, "");
+  if (fromNormalized) return `tel:${fromNormalized}`;
+  return `tel:${displayPhone.replace(/[^+\d]/g, "")}`;
+}
 
 export default async function ParticipantProfilePage({
   params,
@@ -35,7 +60,9 @@ export default async function ParticipantProfilePage({
     )
     .eq("participant_id", id)
     .order("registered_at", { ascending: false });
-  const qualifyingRegistrationCount = (registrations ?? []).filter(isQualifyingRegistration).length;
+  const registrationRows = registrations ?? [];
+  const qualifyingRegistrationCount = registrationRows.filter(isQualifyingRegistration).length;
+  const cancellationCount = registrationRows.filter(isCancellationRegistration).length;
   const { data: affiliation } = participant.primary_affiliation_organization_id
     ? await db
         .from("organizations")
@@ -44,7 +71,7 @@ export default async function ParticipantProfilePage({
         .maybeSingle()
     : { data: null };
   const affiliationLabel = organizationAffiliationLabel(affiliation);
-  const eventIds = (registrations ?? []).map((r) => r.event_id);
+  const eventIds = registrationRows.map((r) => r.event_id);
   const [{ data: events }, { data: tasks }] = await Promise.all([
     eventIds.length
       ? db
@@ -59,7 +86,7 @@ export default async function ParticipantProfilePage({
       .order("created_at", { ascending: false }),
   ]);
   const eventById = new Map((events ?? []).map((event) => [event.id, event]));
-  const registrationIds = (registrations ?? []).map((r) => r.id);
+  const registrationIds = registrationRows.map((r) => r.id);
   const [{ data: attendance }, { data: pendingRecovery }] = await Promise.all([
     registrationIds.length
       ? db
@@ -81,11 +108,78 @@ export default async function ParticipantProfilePage({
   const noShowCount = (attendance ?? []).filter(
     (a) => a.status === "NO_SHOW" && a.finalized_at,
   ).length;
+  const attendedChronology = registrationRows
+    .map((registration) => {
+      const record = attendanceByRegistration.get(registration.id);
+      const event = eventById.get(registration.event_id);
+      if (!record || record.status !== "ATTENDED" || !record.finalized_at || !event) return null;
+      return { registration, record, event };
+    })
+    .filter((row): row is NonNullable<typeof row> => Boolean(row))
+    .sort(
+      (a, b) => new Date(a.event.starts_at).getTime() - new Date(b.event.starts_at).getTime(),
+    );
+  const firstAttended = attendedChronology[0] ?? null;
+  const lastAttended =
+    attendedChronology.length > 0 ? attendedChronology[attendedChronology.length - 1]! : null;
+  const now = new Date();
+  const upcomingRegistrations = registrationRows
+    .filter((registration) =>
+      isUpcomingRegistration(registration, eventById.get(registration.event_id), now),
+    )
+    .sort((a, b) => {
+      const aStart = eventById.get(a.event_id)?.starts_at ?? "";
+      const bStart = eventById.get(b.event_id)?.starts_at ?? "";
+      return new Date(aStart).getTime() - new Date(bStart).getTime();
+    });
+  const upcomingIds = new Set(upcomingRegistrations.map((registration) => registration.id));
+  const historyRegistrations = registrationRows
+    .filter((registration) => !upcomingIds.has(registration.id))
+    .sort((a, b) => {
+      const aStart = eventById.get(a.event_id)?.starts_at ?? a.registered_at;
+      const bStart = eventById.get(b.event_id)?.starts_at ?? b.registered_at;
+      return new Date(bStart).getTime() - new Date(aStart).getTime();
+    });
   const fullName = `${participant.first_name} ${participant.last_name}`;
   const formattedPhone = formatParticipantPhoneDisplay(
     participant.display_phone,
     participant.phone_country,
   );
+  const phoneLink = telHref(participant.normalized_phone, participant.display_phone);
+  const goalsText =
+    typeof (participant as { goals?: string | null }).goals === "string"
+      ? (participant as { goals?: string | null }).goals?.trim() || ""
+      : "";
+  const fitnessExperience = participant.fitness_experience?.trim() || "";
+  const memberLabel = participantHistoryLabel(qualifyingRegistrationCount);
+  const memberDetail = participantHistoryDetailLabel(qualifyingRegistrationCount);
+
+  const renderRegistrationRow = (r: (typeof registrationRows)[number]) => {
+    const event = eventById.get(r.event_id);
+    const a = attendanceByRegistration.get(r.id);
+    const meta = (
+      <span>
+        {event ? formatEventInstant(event.starts_at, event.timezone) : "—"} · Registration{" "}
+        {r.registration_status}
+        {r.registration_outcome !== "ACTIVE" ? ` (${r.registration_outcome})` : ""} · Attendance{" "}
+        {a?.status ?? "NOT_RECORDED"}
+      </span>
+    );
+    if (!event) {
+      return (
+        <div key={r.id} className="ops-people-profile-list-row">
+          <strong>Event unavailable</strong>
+          {meta}
+        </div>
+      );
+    }
+    return (
+      <Link key={r.id} href={`/admin/events/${event.id}`}>
+        <strong>{event.name}</strong>
+        {meta}
+      </Link>
+    );
+  };
 
   return (
     <>
@@ -101,13 +195,26 @@ export default async function ParticipantProfilePage({
           <div>
             <p className="ops-kicker orange">System Admin / People</p>
             <h1>{fullName}</h1>
+            <p className="ops-people-profile-contact">
+              <a href={phoneLink}>{formattedPhone}</a>
+              {participant.email ? (
+                <>
+                  <span aria-hidden="true"> · </span>
+                  <a href={`mailto:${participant.email}`}>{participant.email}</a>
+                </>
+              ) : (
+                <>
+                  <span aria-hidden="true"> · </span>
+                  <span>No email</span>
+                </>
+              )}
+            </p>
           </div>
           <div className="ops-context">
             <span className="ops-label">Current scope</span>
             <strong>All organizations</strong>
-            <span className="ops-label">
-              {formattedPhone} · {participant.email ?? "No email"}
-            </span>
+            <span className="ops-label">Primary affiliation</span>
+            <strong>{affiliationLabel}</strong>
           </div>
         </div>
 
@@ -115,10 +222,10 @@ export default async function ParticipantProfilePage({
           <section className="ops-org-detail">
             <div className="ops-org-detail-head">
               <div>
-                <p className="ops-kicker orange">Participant identity</p>
-                <h2>{fullName}</h2>
-                <p>
-                  {formattedPhone} · {participant.email ?? "No email"}
+                <p className="ops-kicker orange">Participation snapshot</p>
+                <h2>Attendance and standing</h2>
+                <p className="ops-people-profile-copy">
+                  Finalized attendance and qualifying registration standing for coaching context.
                 </p>
               </div>
               <span className="ops-status">Active</span>
@@ -133,24 +240,75 @@ export default async function ParticipantProfilePage({
                 <small>Primary organization</small>
               </div>
               <div>
+                <span className="ops-label">Member</span>
+                <strong>{memberLabel}</strong>
+                <small>{memberDetail}</small>
+              </div>
+              <div>
+                <span className="ops-label">First attended</span>
+                <strong>
+                  {firstAttended
+                    ? formatAttendanceDate(firstAttended.event.starts_at, firstAttended.event.timezone)
+                    : "—"}
+                </strong>
+                <small>
+                  {firstAttended ? firstAttended.event.name : "No finalized attendance yet"}
+                </small>
+              </div>
+              <div>
+                <span className="ops-label">Last attended</span>
+                <strong>
+                  {lastAttended
+                    ? formatAttendanceDate(lastAttended.event.starts_at, lastAttended.event.timezone)
+                    : "—"}
+                </strong>
+                <small>
+                  {lastAttended ? lastAttended.event.name : "No finalized attendance yet"}
+                </small>
+              </div>
+              <div>
                 <span className="ops-label">Attended</span>
                 <strong>{attendedCount}</strong>
                 <small>Finalized attendance</small>
+              </div>
+              <div>
+                <span className="ops-label">Cancellations</span>
+                <strong>{cancellationCount}</strong>
+                <small>Participant, admin, or event cancelled</small>
               </div>
               <div>
                 <span className="ops-label">No-shows</span>
                 <strong>{noShowCount}</strong>
                 <small>Finalized no-shows</small>
               </div>
-              <div>
-                <span className="ops-label">History</span>
-                <strong>{participantHistoryLabel(qualifyingRegistrationCount)}</strong>
-                <small>Qualifying registrations</small>
-              </div>
             </div>
           </section>
 
           <ParticipantContactCorrectionForm participant={participant} />
+
+          {goalsText || fitnessExperience ? (
+            <section className="ops-venue-events-panel" aria-labelledby="context-title">
+              <div className="ops-section-head">
+                <span className="ops-kicker" id="context-title">
+                  Goals and context
+                </span>
+                <span className="ops-label">Read-only</span>
+              </div>
+              {goalsText ? (
+                <div className="ops-people-profile-context-block">
+                  <span className="ops-label">Goals</span>
+                  <p className="ops-people-profile-copy">{goalsText}</p>
+                </div>
+              ) : null}
+              {fitnessExperience ? (
+                <div className="ops-people-profile-context-block">
+                  <span className="ops-label">Fitness experience</span>
+                  <p className="ops-people-profile-copy">{fitnessExperience}</p>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
+
           <ParticipantManageRecoveryPanel
             participantId={participant.id}
             displayPhone={participant.display_phone}
@@ -158,54 +316,36 @@ export default async function ParticipantProfilePage({
             pendingLink={pendingRecovery}
           />
 
-          <section className="ops-venue-events-panel" aria-labelledby="goals-title">
+          <section className="ops-venue-events-panel" aria-labelledby="upcoming-title">
             <div className="ops-section-head">
-              <span className="ops-kicker" id="goals-title">
-                Goals
+              <span className="ops-kicker" id="upcoming-title">
+                Upcoming
               </span>
-              <span className="ops-label">Read-only</span>
+              <span className="ops-label">Active bookings</span>
             </div>
-            <p className="ops-people-profile-copy">
-              {participant.goals?.trim() ? participant.goals : "No goals on file."}
-            </p>
-          </section>
-
-          <section
-            className="ops-venue-events-panel"
-            aria-labelledby="registration-attendance-title"
-          >
-            <div className="ops-section-head">
-              <span className="ops-kicker" id="registration-attendance-title">
-                Registration and attendance
-              </span>
-            </div>
-            {(registrations ?? []).length ? (
-              <div className="ops-venue-related-list">
-                {(registrations ?? []).map((r) => {
-                  const event = eventById.get(r.event_id);
-                  const a = attendanceByRegistration.get(r.id);
-                  return (
-                    <div key={r.id} className="ops-people-profile-list-row">
-                      <strong>{event?.name ?? "Event unavailable"}</strong>
-                      <span>
-                        {event
-                          ? new Intl.DateTimeFormat("en-US", {
-                              dateStyle: "medium",
-                              timeStyle: "short",
-                              timeZone: event.timezone,
-                            }).format(new Date(event.starts_at))
-                          : "—"}{" "}
-                        · Registration {r.registration_status} · Attendance{" "}
-                        {a?.status ?? "NOT_RECORDED"}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+            {upcomingRegistrations.length ? (
+              <div className="ops-venue-related-list">{upcomingRegistrations.map(renderRegistrationRow)}</div>
             ) : (
               <div className="ops-empty">
-                <strong>No registrations yet</strong>
-                <p>This participant has not registered for an Event.</p>
+                <strong>No upcoming bookings</strong>
+                <p>This participant is not registered for a future Event.</p>
+              </div>
+            )}
+          </section>
+
+          <section className="ops-venue-events-panel" aria-labelledby="history-title">
+            <div className="ops-section-head">
+              <span className="ops-kicker" id="history-title">
+                History
+              </span>
+              <span className="ops-label">Past and cancelled</span>
+            </div>
+            {historyRegistrations.length ? (
+              <div className="ops-venue-related-list">{historyRegistrations.map(renderRegistrationRow)}</div>
+            ) : (
+              <div className="ops-empty">
+                <strong>No history yet</strong>
+                <p>Past registrations and cancelled bookings will appear here.</p>
               </div>
             )}
           </section>
@@ -215,24 +355,38 @@ export default async function ParticipantProfilePage({
               <span className="ops-kicker" id="follow-up-history-title">
                 Follow-up history
               </span>
+              <Link className="text-button" href="/admin/community?status=ALL">
+                Open follow-ups queue
+              </Link>
             </div>
             {(tasks ?? []).length ? (
               <div className="ops-venue-related-list">
-                {(tasks ?? []).map((task) => (
-                  <div key={task.id} className="ops-people-profile-list-row">
-                    <strong>
-                      {task.task_title} · {task.status}
-                    </strong>
-                    <span>
-                      Due{" "}
-                      {new Intl.DateTimeFormat("en-US", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      }).format(new Date(task.due_at))}{" "}
-                      · {eventById.get(task.event_id ?? "")?.name ?? "Event unavailable"}
-                    </span>
-                  </div>
-                ))}
+                {(tasks ?? []).map((task) => {
+                  const statusParam =
+                    task.status === "PENDING" ||
+                    task.status === "COMPLETED" ||
+                    task.status === "DISMISSED"
+                      ? task.status
+                      : "ALL";
+                  return (
+                    <Link
+                      key={task.id}
+                      href={`/admin/community?status=${statusParam}&task=${task.id}#selected-touchpoint`}
+                    >
+                      <strong>
+                        {task.task_title} · {task.status}
+                      </strong>
+                      <span>
+                        Due{" "}
+                        {new Intl.DateTimeFormat("en-US", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        }).format(new Date(task.due_at))}{" "}
+                        · {eventById.get(task.event_id ?? "")?.name ?? "Event unavailable"}
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
             ) : (
               <div className="ops-empty">

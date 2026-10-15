@@ -1601,7 +1601,25 @@
   overflow-wrap: anywhere;
 }
 .ops-people-profile-page .ops-people-profile-stats {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.ops-people-profile-page .ops-people-profile-contact {
+  margin: 0.65rem 0 0;
+  max-width: 36rem;
+  color: #aeb3bb;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.ops-people-profile-page .ops-people-profile-contact a {
+  color: #f7f5f0;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+.ops-people-profile-page .ops-people-profile-contact a:hover,
+.ops-people-profile-page .ops-people-profile-contact a:focus-visible {
+  color: #ff7a3d;
 }
 .ops-people-profile-page .ops-people-profile-copy {
   max-width: 42rem;
@@ -1610,6 +1628,15 @@
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   font-size: 0.85rem;
   line-height: 1.4;
+}
+.ops-people-profile-page .ops-people-profile-context-block {
+  margin-top: 1rem;
+}
+.ops-people-profile-page .ops-people-profile-context-block .ops-label {
+  display: block;
+}
+.ops-people-profile-page .ops-people-profile-context-block .ops-people-profile-copy {
+  margin-top: 0.35rem;
 }
 .ops-people-profile-page .ops-people-profile-copy .ops-label {
   display: inline;
@@ -1756,6 +1783,11 @@
 @media (max-width: 900px) {
   .ops-people-profile-page .ops-people-profile-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .ops-people-profile-page .ops-people-profile-stats {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
