@@ -3,9 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { requireSystemAdmin } from "@/lib/authorization/server";
 import { createClient } from "@/lib/db/server";
-import { parseWorkoutCsv } from "@/lib/workouts/csv";
+import { parseWorkoutCsv, type ParsedWorkout, type WorkoutStepKind } from "@/lib/workouts/csv";
+import { persistTakeHomeWorkout } from "@/lib/workouts/persist";
 
 export type WorkoutImportState = { error?: string; success?: string };
+export type WorkoutEditorState = { error?: string; success?: string; slug?: string };
+
+const STEP_KINDS = new Set<WorkoutStepKind>(["prepare", "work", "rest", "done"]);
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+function revalidateWorkout(slug: string) {
+  revalidatePath(`/workouts/${slug}`);
+  revalidatePath("/admin/workouts");
+}
 
 export async function importTakeHomeWorkouts(
   _state: WorkoutImportState,
@@ -36,45 +46,9 @@ export async function importTakeHomeWorkouts(
 
     const db = await createClient();
     for (const workout of parsed.workouts) {
-      const steps = workout.steps.map((step) => ({
-        order: step.order,
-        title: step.title,
-        duration_seconds: step.durationSeconds,
-        kind: step.kind,
-        ...(step.cue ? { cue: step.cue } : {}),
-        ...(step.block ? { block: step.block } : {}),
-      }));
-      const theme = workout.theme?.trim() || null;
-      const { data: existing } = await db
-        .from("take_home_workouts")
-        .select("id")
-        .eq("slug", workout.slug)
-        .eq("active", true)
-        .maybeSingle();
-
-      if (existing) {
-        const { error } = await db
-          .from("take_home_workouts")
-          .update({
-            title: workout.title,
-            theme,
-            steps,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", existing.id);
-        if (error) return { error: "The workout could not be updated." };
-      } else {
-        const { error } = await db.from("take_home_workouts").insert({
-          slug: workout.slug,
-          title: workout.title,
-          theme,
-          steps,
-          active: true,
-          created_by_admin_id: admin.userId,
-        });
-        if (error) return { error: "The workout could not be saved." };
-      }
-      revalidatePath(`/workouts/${workout.slug}`);
+      const result = await persistTakeHomeWorkout(db, admin.userId, workout);
+      if (result.error) return { error: result.error };
+      revalidateWorkout(workout.slug);
     }
 
     revalidatePath("/admin/workouts");
@@ -87,6 +61,97 @@ export async function importTakeHomeWorkouts(
     };
   } catch {
     return { error: "The workout CSV could not be imported." };
+  }
+}
+
+function parseEditorPayload(raw: string): { workout?: ParsedWorkout; error?: string } {
+  let data: unknown;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    return { error: "The Workout editor payload was invalid." };
+  }
+  if (!data || typeof data !== "object") {
+    return { error: "The Workout editor payload was invalid." };
+  }
+  const record = data as Record<string, unknown>;
+  const slug = String(record.slug ?? "")
+    .trim()
+    .toLowerCase();
+  const title = String(record.title ?? "").trim();
+  const themeRaw = String(record.theme ?? "").trim();
+  if (!SLUG_PATTERN.test(slug)) {
+    return { error: "Slug must be lowercase kebab-case (e.g. slipl-a)." };
+  }
+  if (!title || title.length > 160) {
+    return { error: "Title must be 1–160 characters." };
+  }
+  if (themeRaw.length > 160) {
+    return { error: "Theme must be at most 160 characters." };
+  }
+  if (!Array.isArray(record.steps) || record.steps.length < 1 || record.steps.length > 200) {
+    return { error: "Add between 1 and 200 steps." };
+  }
+
+  const steps: ParsedWorkout["steps"] = [];
+  for (let i = 0; i < record.steps.length; i += 1) {
+    const step = record.steps[i] as Record<string, unknown>;
+    const stepTitle = String(step.title ?? "").trim();
+    const durationSeconds = Number(step.durationSeconds);
+    const kind = String(step.kind ?? "").toLowerCase() as WorkoutStepKind;
+    const cue = String(step.cue ?? "").trim();
+    const block = String(step.block ?? "").trim();
+    if (!stepTitle || stepTitle.length > 120) {
+      return { error: `Step ${i + 1}: title must be 1–120 characters.` };
+    }
+    if (!Number.isInteger(durationSeconds) || durationSeconds < 1 || durationSeconds > 3600) {
+      return { error: `Step ${i + 1}: duration must be an integer from 1 to 3600.` };
+    }
+    if (!STEP_KINDS.has(kind)) {
+      return { error: `Step ${i + 1}: kind must be prepare, work, rest, or done.` };
+    }
+    if (cue.length > 200) return { error: `Step ${i + 1}: cue must be at most 200 characters.` };
+    if (block.length > 80) return { error: `Step ${i + 1}: block must be at most 80 characters.` };
+    steps.push({
+      order: i + 1,
+      title: stepTitle,
+      durationSeconds,
+      kind,
+      ...(cue ? { cue } : {}),
+      ...(block ? { block } : {}),
+    });
+  }
+
+  return {
+    workout: {
+      slug,
+      title,
+      ...(themeRaw ? { theme: themeRaw } : {}),
+      steps,
+    },
+  };
+}
+
+export async function saveTakeHomeWorkout(
+  _state: WorkoutEditorState,
+  form: FormData,
+): Promise<WorkoutEditorState> {
+  try {
+    const admin = await requireSystemAdmin("/admin/workouts");
+    const parsed = parseEditorPayload(String(form.get("payload") ?? ""));
+    if (parsed.error || !parsed.workout) return { error: parsed.error ?? "Invalid workout." };
+
+    const db = await createClient();
+    const result = await persistTakeHomeWorkout(db, admin.userId, parsed.workout);
+    if (result.error) return { error: result.error };
+
+    revalidateWorkout(parsed.workout.slug);
+    return {
+      success: `Saved workout "${parsed.workout.slug}". Open /workouts/${parsed.workout.slug}.`,
+      slug: parsed.workout.slug,
+    };
+  } catch {
+    return { error: "The workout could not be saved." };
   }
 }
 
