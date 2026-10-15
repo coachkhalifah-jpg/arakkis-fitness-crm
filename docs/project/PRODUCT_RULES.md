@@ -12,7 +12,7 @@ These rules are the current project baseline. A change requires an explicit Prod
 
 ## Events and registration
 
-Events belong to a host Organization and Venue. Event creation validates capacity, deadlines, timezone, venue/Organization relationship, recurrence, image type/size, and authorization. Creation is atomic and idempotent by request identity. Publication and public slugs do not bypass authorization, capacity, registration windows, or legal gates. Schedule materialize (Add day / Change / Extend) copies new occurrences from the canonical earliest series Event; existing per-occurrence field overrides do not block materialization (DEC-065).
+Events belong to a host Organization and Venue. Event creation validates capacity, deadlines, timezone, venue/Organization relationship, recurrence, image type/size, and authorization. Creation is atomic and idempotent by request identity. Publication and public slugs do not bypass authorization, capacity, registration windows, or legal gates. Schedule materialize (Add day / Change / Extend) copies new occurrences from the canonical earliest series Event; existing per-occurrence field overrides do not block materialization (DEC-065). The public Events hub shows the next bookable occurrence per series weekday (DEC-068); the series register link still limits selectable dates to the rolling 14-day window (DEC-049).
 
 Participants may select multiple Event dates; each successful selection creates a separate Registration. Capacity, deadlines, duplicate active registration, and partial success are evaluated per Event.
 
