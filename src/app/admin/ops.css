@@ -1772,6 +1772,52 @@
   padding-top: 0.5rem;
   border-top: 1px solid #59616b;
 }
+.ops-people-profile-page .ops-people-profile-destructive-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+.ops-people-profile-page .ops-people-profile-destructive-trigger {
+  border-color: #59616b;
+  background: transparent;
+  color: #ff7a3d;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.ops-people-profile-page .ops-people-profile-destructive-trigger:hover,
+.ops-people-profile-page .ops-people-profile-destructive-trigger:focus-visible,
+.ops-people-profile-page .ops-people-profile-destructive-trigger[aria-expanded="true"] {
+  border-color: #e5484d;
+  background: #e5484d;
+  color: #17191c;
+  outline: none;
+}
+.ops-people-destructive-sheet .ops-people-profile-archive {
+  margin-top: 0.85rem;
+  max-width: none;
+}
+.ops-people-destructive-sheet .admin-series-panel-form > p {
+  margin: 0;
+  color: #aeb3bb;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+.ops-people-destructive-sheet .ui-button-destructive {
+  border-color: #e5484d;
+  background: transparent;
+  color: #e5484d;
+}
+.ops-people-destructive-sheet .ui-button-destructive:not(:disabled):hover,
+.ops-people-destructive-sheet .ui-button-destructive:not(:disabled):focus-visible {
+  border-color: #e5484d;
+  background: #e5484d;
+  color: #17191c;
+}
 .ops-people-profile-page .ops-people-profile-archive {
   display: grid;
   gap: 0.85rem;

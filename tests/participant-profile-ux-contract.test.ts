@@ -123,6 +123,29 @@ describe("admin People profile UX IA contract", () => {
     expect(removeIndex).toBeGreaterThan(recoveryIndex);
     expect(leanIndex).toBeGreaterThan(removeIndex);
     expect(forceIndex).toBeGreaterThan(leanIndex);
-    expect(profilePage).toContain("Force delete with history");
+  });
+
+  it("opens lean/force delete like series Stop (trigger then sheet)", () => {
+    const leanForm = readFileSync(
+      resolve(process.cwd(), "src/components/admin/participant-delete-lean-form.tsx"),
+      "utf8",
+    );
+    const forceForm = readFileSync(
+      resolve(process.cwd(), "src/components/admin/participant-force-delete-form.tsx"),
+      "utf8",
+    );
+    const sheet = readFileSync(
+      resolve(process.cwd(), "src/components/admin/people-destructive-action-sheet.tsx"),
+      "utf8",
+    );
+    expect(sheet).toContain('role="dialog"');
+    expect(sheet).toContain("admin-events-filter-overlay");
+    expect(leanForm).toContain("aria-expanded={open}");
+    expect(leanForm).toContain("PeopleDestructiveActionSheet");
+    expect(leanForm).toContain("Delete permanently");
+    expect(forceForm).toContain("aria-expanded={open}");
+    expect(forceForm).toContain("PeopleDestructiveActionSheet");
+    expect(forceForm).toContain("Force delete with history");
+    expect(profilePage).toContain("ops-people-profile-destructive-actions");
   });
 });
