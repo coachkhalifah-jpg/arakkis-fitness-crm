@@ -519,7 +519,8 @@ export async function replaceSeriesMainImage(
             })
             .eq("active", true)
             .neq("id", asset.id);
-          if (previous) retiredPrevious.push({ id: previous.id, storagePath: previous.storage_path });
+          if (previous)
+            retiredPrevious.push({ id: previous.id, storagePath: previous.storage_path });
           return {
             error: error ? { message: "The previous image could not be retired safely." } : null,
           };

@@ -437,9 +437,7 @@ describe("presentation controls", () => {
   });
 
   it("binds the series id for series main image uploads", () => {
-    render(
-      <SeriesMainImageForm seriesId="series-a" intentToken="series-intent-a" />,
-    );
+    render(<SeriesMainImageForm seriesId="series-a" intentToken="series-intent-a" />);
     expect(document.querySelector('input[name="seriesId"]')).toHaveValue("series-a");
     expect(document.querySelector('input[name="seriesImageIntent"]')).toHaveValue(
       "series-intent-a",

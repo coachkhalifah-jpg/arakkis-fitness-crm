@@ -152,15 +152,16 @@ describe("series main image replacement intent", () => {
     useServerEnv();
     const now = 1_700_000_000_000;
     const token = createSeriesImageIntent(seriesA, actor, EVENT_IMAGE_ASSET_TYPE, now);
-    expect(inspectSeriesImageIntent(token, seriesA, actor, EVENT_IMAGE_ASSET_TYPE, now + 1)).toEqual(
-      { ok: true },
-    );
-    expect(inspectSeriesImageIntent(token, seriesB, actor, EVENT_IMAGE_ASSET_TYPE, now + 1)).toEqual(
-      { ok: false, reason: "mismatch" },
-    );
     expect(
-      inspectSeriesImageIntent(token, seriesA, actor, "EVENT_IMAGE_MOBILE", now + 1),
-    ).toEqual({ ok: false, reason: "wrong_asset_type" });
+      inspectSeriesImageIntent(token, seriesA, actor, EVENT_IMAGE_ASSET_TYPE, now + 1),
+    ).toEqual({ ok: true });
+    expect(
+      inspectSeriesImageIntent(token, seriesB, actor, EVENT_IMAGE_ASSET_TYPE, now + 1),
+    ).toEqual({ ok: false, reason: "mismatch" });
+    expect(inspectSeriesImageIntent(token, seriesA, actor, "EVENT_IMAGE_MOBILE", now + 1)).toEqual({
+      ok: false,
+      reason: "wrong_asset_type",
+    });
     expect(
       inspectSeriesImageIntent(
         token,
