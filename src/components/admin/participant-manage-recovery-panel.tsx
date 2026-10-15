@@ -60,8 +60,9 @@ export function ParticipantManageRecoveryPanel({
       <p className="ops-kicker orange">System Admin only</p>
       <h2 id="manage-recovery-title">Manage / recovery link</h2>
       <p className="ops-people-profile-copy">
-        Send the participant a temporary link so they can view and manage upcoming bookings on a
-        browser that is not remembered yet.
+        Issue a single-use link (valid for 72 hours) so the participant can open upcoming bookings
+        on a browser that is not remembered yet. Nothing is sent automatically — text or WhatsApp
+        the URL yourself.
       </p>
       <p className="ops-people-profile-copy">
         <span className="ops-label">Text or WhatsApp to</span>{" "}
@@ -70,11 +71,13 @@ export function ParticipantManageRecoveryPanel({
 
       {pendingLink ? (
         <p className="ops-people-profile-copy" data-testid="manage-recovery-pending">
-          Active link pending · expires {new Date(pendingLink.expires_at).toLocaleString()} · issued{" "}
-          {new Date(pendingLink.issued_at).toLocaleString()}
+          Active link pending · expires {new Date(pendingLink.expires_at).toLocaleString()} (72-hour
+          window from issue) · issued {new Date(pendingLink.issued_at).toLocaleString()}
         </p>
       ) : (
-        <p className="ops-people-profile-copy">No active manage link.</p>
+        <p className="ops-people-profile-copy">
+          No active manage link. Generated links expire 72 hours after issue if unused.
+        </p>
       )}
 
       <div className="ops-people-profile-actions">

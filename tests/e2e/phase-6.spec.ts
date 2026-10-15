@@ -71,7 +71,8 @@ test("System Admin can browse, search, and open participant CRM profiles", async
   await page.getByRole("link", { name: new RegExp(`CRM Attended ${fixture.suffix}`) }).click();
   await expect(page).toHaveURL(/\/admin\/participants\//);
   await expect(page.getByRole("heading", { name: "CRM Attended" })).toBeVisible();
-  await expect(page.getByText("Registration and attendance history")).toBeVisible();
+  await expect(page.getByText("Upcoming", { exact: true })).toBeVisible();
+  await expect(page.getByText("History", { exact: true })).toBeVisible();
   await expect(page.getByText("Attendance ATTENDED")).toBeVisible();
   await expect(page.getByText("Follow-up history")).toBeVisible();
 });

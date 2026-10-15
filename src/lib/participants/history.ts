@@ -11,12 +11,38 @@ export function isQualifyingRegistration(registration: ParticipantRegistrationHi
   );
 }
 
+/** Cancelled registrations that count toward CRM cancellation totals (excludes merge cleanup). */
+export function isCancellationRegistration(registration: ParticipantRegistrationHistory) {
+  return (
+    registration.registration_status === "CANCELLED" &&
+    registration.registration_outcome !== "MERGED_DUPLICATE"
+  );
+}
+
 export function participantHistoryLabel(qualifyingRegistrationCount: number) {
   return qualifyingRegistrationCount > 1 ? "Returning member" : "New member";
+}
+
+/** Clarifying subcopy under New/Returning — keeps member-type semantics honest. */
+export function participantHistoryDetailLabel(qualifyingRegistrationCount: number) {
+  if (qualifyingRegistrationCount <= 0) return "No qualifying registrations yet";
+  if (qualifyingRegistrationCount === 1) return "1 qualifying registration";
+  return `${qualifyingRegistrationCount} qualifying registrations`;
 }
 
 export function organizationAffiliationLabel(
   organization: { name: string; active_status: string } | null | undefined,
 ) {
   return organization?.active_status === "ACTIVE" ? organization.name : "Organization unavailable";
+}
+
+/** Active bookings whose Event has not started yet. */
+export function isUpcomingRegistration(
+  registration: ParticipantRegistrationHistory,
+  event: { starts_at: string } | null | undefined,
+  now: Date = new Date(),
+) {
+  return Boolean(
+    isQualifyingRegistration(registration) && event && new Date(event.starts_at) >= now,
+  );
 }
