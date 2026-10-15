@@ -79,7 +79,7 @@ function bookingTitle(name: string | null | undefined) {
 export default async function ConfirmationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ token?: string; correlationId?: string }>;
+  searchParams: Promise<{ token?: string; correlationId?: string; remembered?: string }>;
 }) {
   const routeSearchParams = await searchParams;
   const token = routeSearchParams.token ?? "";
