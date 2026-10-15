@@ -6,6 +6,10 @@ const profilePage = readFileSync(
   resolve(process.cwd(), "src/app/admin/participants/[id]/page.tsx"),
   "utf8",
 );
+const contactForm = readFileSync(
+  resolve(process.cwd(), "src/components/admin/participant-contact-correction-form.tsx"),
+  "utf8",
+);
 const recoveryPanel = readFileSync(
   resolve(process.cwd(), "src/components/admin/participant-manage-recovery-panel.tsx"),
   "utf8",
@@ -45,5 +49,19 @@ describe("admin People profile UX IA contract", () => {
     expect(upcomingIndex).toBeGreaterThan(recoveryIndex);
     expect(recoveryPanel).toContain("72 hours");
     expect(recoveryPanel).toContain("expire 72 hours after issue");
+  });
+
+  it("places EDIT CONTACT in the detail head next to Active (Org-style), not a mid-page Contact panel", () => {
+    const statusActionsIndex = profilePage.indexOf('className="ops-org-detail-status-actions"');
+    const contactFormIndex = profilePage.indexOf("<ParticipantContactCorrectionForm");
+    const goalsIndex = profilePage.indexOf("goalsText || fitnessExperience");
+    expect(statusActionsIndex).toBeGreaterThan(-1);
+    expect(contactFormIndex).toBeGreaterThan(statusActionsIndex);
+    expect(goalsIndex).toBeGreaterThan(contactFormIndex);
+    expect(profilePage).toContain("ops-status");
+    expect(contactForm).toContain('data-testid="participant-edit-contact"');
+    expect(contactForm).toContain('data-testid="participant-contact-form"');
+    expect(contactForm).not.toContain("ops-venue-edit-panel");
+    expect(contactForm).not.toContain(">Contact<");
   });
 });
