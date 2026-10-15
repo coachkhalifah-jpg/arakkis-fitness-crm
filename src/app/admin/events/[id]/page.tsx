@@ -32,6 +32,7 @@ import {
   generateEventInviteLink,
   revokeEventInviteLinksForm,
 } from "@/lib/services/phase-3-actions";
+import { EventDeleteLeanForm } from "@/components/admin/event-delete-lean-form";
 import {
   pausePhase7EventForm,
   phase7EventUrl,
@@ -874,6 +875,7 @@ export default async function EventDetailPage({
                   </ConfirmSubmit>
                 </form>
               ) : null}
+              <EventDeleteLeanForm eventId={id} />
             </div>
           ) : null}
         </div>

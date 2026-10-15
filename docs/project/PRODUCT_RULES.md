@@ -30,7 +30,7 @@ Attendance uses `NOT_STARTED`, `OPEN`, `FINALIZED`, and `REOPENED`, with immutab
 
 ## Cancellation, archive, and history
 
-System Admins directly cancel Events. Host Admins may submit scoped cancellation requests where enabled. Cancellation is permanent in MVP, preserves history, creates required notification work, and does not silently rewrite attendance. Organizations, Venues, and Participants use archive semantics rather than destructive deletion. Historical audit and transition records are retained.
+System Admins directly cancel Events. Host Admins may submit scoped cancellation requests where enabled. Cancellation is permanent in MVP, preserves history, creates required notification work, and does not silently rewrite attendance. System Admins may **bulk-cancel** and **bulk-archive-cancelled** Events from `/admin/events` discovery Select mode (DEC-073). System Admins may **Delete permanently** an Event only when lean — no durable registrations/cancellation/CRM/booking history (DEC-074 / migration 0085); otherwise cancel + archive. Organizations, Venues, and Participants use archive semantics rather than destructive deletion (Participants also have lean/force delete per DEC-070/071). Historical audit and transition records are retained.
 
 ## Images and Storage
 

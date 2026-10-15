@@ -16,6 +16,8 @@ Only unresolved, deferred, accepted, or decision-pending items are listed here. 
 - HOLD UAT-004 / UAT-005 / UAT-007 remain parked pending Product Owner reopen.
 - Participant restore/un-archive UI after DEC-069 soft-archive is deferred until Product Owner requests it (DEC-072 covers automatic reactivation on phone match at registration/walk-in).
 - Bulk retention / scheduled purge of archived participants is deferred (DEC-070 lean delete + DEC-071 force delete cover single-row cleanup only).
+- Event force-cascade wipe with history remains out of scope (DEC-074 is lean-only; cancel + archive remain the history-preserving path).
+- Hosted apply of migration **0085** (event lean delete RPC) is required before DEC-074 works in production.
 
 ## UI / UX
 

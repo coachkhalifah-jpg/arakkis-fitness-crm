@@ -12,6 +12,8 @@ Canonical roles are `SYSTEM_ADMIN`, `HOST_ADMIN`, and unauthenticated public Par
 | Series main image fan-out | System Admin only | Denied | Denied | Future non-cancelled occurrences only; Host cannot upload/replace |
 | Participants/CRM/follow-up | System Admin only except event-operational Host projections | System Admin global; Host scoped event projections | System Admin global; Host approved event operations | RLS/data-layer scope |
 | Participant archive / lean delete / force delete (DEC-069–071) | System Admin on participant CRM detail only | System Admin participant detail; Host denied | Archive, lean delete, force-delete System Admin only | Security-definer RPCs; Host cannot execute |
+| Event bulk cancel / bulk archive-cancelled (DEC-073) | System Admin on `/admin/events` discovery Select mode | Denied | Cancel + archive-cancelled System Admin only | Reuses single-event cancel/archive actions |
+| Event lean permanent delete (DEC-074) | System Admin discovery bulk + event detail | Denied | Lean delete System Admin only | `phase3_delete_lean_event`; Host cannot execute |
 | Participant manage/recovery link (DEC-059) | System Admin on participant CRM detail only | System Admin participant detail; Host/anon denied | Issue/regenerate/revoke System Admin only (server + service-role RPC) | Hash-only storage; consume via security-definer RPC; no anon table reads |
 | Registration | Public | Public routes subject to availability/legal rules | Validated public RPC/action | Narrow public projection and RPC |
 

@@ -2638,6 +2638,87 @@ html[data-participant-transition-fallback="true"][data-participant-transition-re
 }
 .admin-events-page .admin-event-discovery-filter-launcher {
   justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+.admin-events-page .admin-event-discovery-select-button {
+  min-height: 2.625rem;
+  border: 1px solid #41474e;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.7rem 1.1rem;
+  color: #f7f5f0;
+  font-family:
+    "SF Pro Display",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  font-weight: 900;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.admin-events-page .admin-event-discovery-select-button:hover,
+.admin-events-page .admin-event-discovery-select-button:focus-visible,
+.admin-events-page .admin-event-discovery-select-button.is-active {
+  border-color: #ff7a3d;
+  background: #ff7a3d;
+  color: #101315;
+}
+.admin-events-page .admin-event-card-select {
+  position: absolute;
+  z-index: 3;
+  top: 0.65rem;
+  left: 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.35rem;
+  background: rgba(16, 19, 21, 0.82);
+}
+.admin-events-page .admin-event-card-select input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #ff7a3d;
+}
+.admin-events-page .event-card-shell-selected {
+  outline: 2px solid #ff7a3d;
+  outline-offset: 2px;
+}
+.admin-events-page .admin-events-bulk-bar {
+  position: sticky;
+  bottom: 1rem;
+  z-index: 20;
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  border: 1px solid #41474e;
+  background: rgba(16, 19, 21, 0.96);
+  padding: 0.9rem 1rem;
+}
+.admin-events-page .admin-events-bulk-bar-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #f7f5f0;
+  font-size: 0.85rem;
+}
+.admin-events-page .admin-events-bulk-clear {
+  border: 0;
+  background: transparent;
+  color: #aeb4bb;
+  text-decoration: underline;
+}
+.admin-events-page .admin-events-bulk-bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
 }
 .admin-events-page .admin-event-discovery-filter-arrow {
   margin-left: 0;
@@ -7147,6 +7228,7 @@ body:has(.admin-manage-event-page) {
 
 /* Keep the enlarged metadata visible instead of letting legacy portrait-card sizing clip it. */
 .admin-events-page .event-card-shell {
+  position: relative;
   border: 1px solid #25292d;
 }
 .admin-events-page .event-card-admin {

@@ -6,6 +6,7 @@ import { AdminEventCardRail } from "@/components/admin/admin-event-card-rail";
 import { DisclosureToggle } from "@/components/ui/disclosure-toggle";
 import { CalendarUtility } from "@/components/admin/calendar-utility";
 import { ArchiveCancelledEventButton } from "@/components/admin/archive-cancelled-event-button";
+import { EventsBulkLifecycleBar } from "@/components/admin/events-bulk-lifecycle-bar";
 import type { CalendarEvent } from "@/lib/registration/calendar";
 
 export type AdminDiscoveryEvent = {
@@ -16,6 +17,7 @@ export type AdminDiscoveryEvent = {
   status: string;
   publicationStatus: string;
   startsAt: string;
+  archivedAt: string | null;
   event: Parameters<typeof AdminEventCard>[0]["event"];
   venueName: string;
   date: Parameters<typeof AdminEventCard>[0]["date"];
@@ -95,17 +97,21 @@ export function AdminEventsDiscovery({
   calendarEvents = [],
   calendarError = false,
   initialEventId = null,
+  canBulkManage = false,
 }: {
   events: AdminDiscoveryEvent[];
   calendarEvents?: CalendarEvent[];
   calendarError?: boolean;
   initialEventId?: string | null;
+  canBulkManage?: boolean;
 }) {
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [expanded, setExpanded] = useState<string | null>(null);
   const shouldScrollToExpandedRef = useRef(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filtersClosing, setFiltersClosing] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const filterCloseTimer = useRef<number | null>(null);
   const filterTriggerRef = useRef<HTMLButtonElement>(null);
   const openFilters = useCallback(() => {
@@ -165,6 +171,24 @@ export function AdminEventsDiscovery({
   });
   const setFilter = (key: keyof Filters, value: string) =>
     setFilters((current) => ({ ...current, [key]: value }));
+  const clearSelection = useCallback(() => setSelectedIds([]), []);
+  const toggleSelected = useCallback((id: string, selected: boolean) => {
+    setSelectedIds((current) => {
+      if (selected) return current.includes(id) ? current : [...current, id];
+      return current.filter((item) => item !== id);
+    });
+  }, []);
+  const selectedEvents = useMemo(
+    () =>
+      events
+        .filter((event) => selectedIds.includes(event.id))
+        .map((event) => ({
+          id: event.id,
+          status: event.status,
+          archivedAt: event.archivedAt,
+        })),
+    [events, selectedIds],
+  );
   const renderCard = (item: AdminDiscoveryEvent) => (
     <AdminEventCard
       key={item.id}
@@ -182,6 +206,9 @@ export function AdminEventsDiscovery({
       canCheckIn={item.canCheckIn}
       checkInAction={item.checkInAction}
       canRemoveRegistration={item.canRemoveRegistration}
+      selectionMode={selectionMode}
+      selected={selectedIds.includes(item.id)}
+      onSelectedChange={(selected) => toggleSelected(item.id, selected)}
       actions={
         item.canArchive ? (
           <ArchiveCancelledEventButton
@@ -237,6 +264,21 @@ export function AdminEventsDiscovery({
       <div className="admin-event-discovery mt-8">
         <div className="admin-event-discovery-filter-launcher">
           <CalendarUtility events={calendarEvents} error={calendarError} />
+          {canBulkManage ? (
+            <button
+              type="button"
+              className={`admin-event-discovery-select-button${selectionMode ? " is-active" : ""}`}
+              aria-pressed={selectionMode}
+              onClick={() => {
+                setSelectionMode((current) => {
+                  if (current) clearSelection();
+                  return !current;
+                });
+              }}
+            >
+              {selectionMode ? "Done selecting" : "Select"}
+            </button>
+          ) : null}
           <DisclosureToggle
             ref={filterTriggerRef}
             className="admin-event-discovery-filter-button"
@@ -418,6 +460,13 @@ export function AdminEventsDiscovery({
             </section>
           </>
         )}
+        {canBulkManage && selectionMode ? (
+          <EventsBulkLifecycleBar
+            selectedIds={selectedIds}
+            selectedEvents={selectedEvents}
+            onClear={clearSelection}
+          />
+        ) : null}
       </div>
     </AdminEventCardRail>
   );

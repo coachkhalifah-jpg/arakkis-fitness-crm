@@ -442,6 +442,7 @@ export default async function EventsPage({
                   status: event.status,
                   publicationStatus: event.publication_status,
                   startsAt: event.starts_at,
+                  archivedAt: event.archived_at,
                   event: {
                     id: event.id,
                     name: event.name,
@@ -484,13 +485,17 @@ export default async function EventsPage({
                   canRemoveRegistration:
                     event.status !== "CANCELLED" &&
                     event.attendance_processing_state !== "FINALIZED",
-                  canArchive: admin.role === "SYSTEM_ADMIN" && event.status === "CANCELLED",
+                  canArchive:
+                    admin.role === "SYSTEM_ADMIN" &&
+                    event.status === "CANCELLED" &&
+                    !event.archived_at,
                   archiveAction: archiveCancelledEventForm,
                 };
               })}
               calendarEvents={calendarEvents ?? []}
               calendarError={calendarEvents === null}
               initialEventId={initialEventId}
+              canBulkManage={admin.role === "SYSTEM_ADMIN"}
             />
           ) : null}
         </div>
