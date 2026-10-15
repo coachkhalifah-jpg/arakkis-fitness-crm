@@ -11,6 +11,7 @@ Canonical roles are `SYSTEM_ADMIN`, `HOST_ADMIN`, and unauthenticated public Par
 | Design Assets | System Admin only | System Admin only | System Admin only | RLS and server-only Storage access |
 | Series main image fan-out | System Admin only | Denied | Denied | Future non-cancelled occurrences only; Host cannot upload/replace |
 | Participants/CRM/follow-up | System Admin only except event-operational Host projections | System Admin global; Host scoped event projections | System Admin global; Host approved event operations | RLS/data-layer scope |
+| Participant archive / lean delete / force delete (DEC-069–071) | System Admin on participant CRM detail only | System Admin participant detail; Host denied | Archive, lean delete, force-delete System Admin only | Security-definer RPCs; Host cannot execute |
 | Participant manage/recovery link (DEC-059) | System Admin on participant CRM detail only | System Admin participant detail; Host/anon denied | Issue/regenerate/revoke System Admin only (server + service-role RPC) | Hash-only storage; consume via security-definer RPC; no anon table reads |
 | Registration | Public | Public routes subject to availability/legal rules | Validated public RPC/action | Narrow public projection and RPC |
 

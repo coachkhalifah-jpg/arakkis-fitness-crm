@@ -14,8 +14,8 @@ Only unresolved, deferred, accepted, or decision-pending items are listed here. 
 - `participants.goals` remains nullable (DEC-061 restores optional public collection; a destructive column drop is still deferred until an approved decision).
 - Draft take-home workout timer PR (#33) used migration number `0076`, which collides with tip `0076_phone_only_participant_match.sql` (and tip now runs through **0080**). Consolidation renumbers the timer migration to **0081**; close or supersede #33 when that lands.
 - HOLD UAT-004 / UAT-005 / UAT-007 remain parked pending Product Owner reopen.
-- Participant restore/un-archive UI after DEC-069 soft-archive is deferred until Product Owner requests it.
-- Bulk retention / scheduled purge of archived participants is deferred (DEC-070 covers lean single-row delete only).
+- Participant restore/un-archive UI after DEC-069 soft-archive is deferred until Product Owner requests it (DEC-072 covers automatic reactivation on phone match at registration/walk-in).
+- Bulk retention / scheduled purge of archived participants is deferred (DEC-070 lean delete + DEC-071 force delete cover single-row cleanup only).
 
 ## UI / UX
 

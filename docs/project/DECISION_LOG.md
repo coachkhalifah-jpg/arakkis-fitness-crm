@@ -30,3 +30,5 @@ This is a concise handoff log; the durable source records remain in `docs/DECISI
 | 2026-10-15 / DEC-069 | System Admin **Remove from People** soft-archives ACTIVE participants (migration 0082). | Directory clutter reduction; preserve history; block if upcoming bookings. |
 | 2026-10-15 / DEC-070 | System Admin **Delete permanently** only when lean / no durable history (migration 0083). | Keeps DB lean for junk/test rows; refuse when history exists → use archive. |
 | 2026-10-15 / UAT-027 | People profile: Goals/Upcoming/History/Follow-up/Remove default-collapsed; System Admin only at bottom (recovery then Remove). | Operator IA; preserves DisclosureToggle/ops patterns. |
+| 2026-10-15 / DEC-071 | System Admin **Force delete with history** cascade wipe (migration 0084). | Pilot/test cleanup when lean delete is blocked by CRM history. |
+| 2026-10-15 / DEC-072 | Phone match reactivates oldest ARCHIVED participant when no ACTIVE match (0084). | Prevents twin after archive → public/walk-in re-registration. |

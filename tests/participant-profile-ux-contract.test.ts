@@ -103,6 +103,16 @@ describe("admin People profile UX IA contract", () => {
     expect(profilePage).toContain("Remove from People");
     expect(profilePage).toContain("embedded");
     expect(recoveryPanel).toContain("System Admin only");
-    expect(profilePage).not.toContain("ParticipantForceDeleteForm");
+  });
+
+  it("places force delete inside Remove disclosure after lean delete (DEC-071)", () => {
+    const removeIndex = profilePage.indexOf('id="remove-person"');
+    const leanIndex = profilePage.indexOf("<ParticipantDeleteLeanForm", removeIndex);
+    const forceIndex = profilePage.indexOf("<ParticipantForceDeleteForm", removeIndex);
+    const recoveryIndex = profilePage.indexOf("<ParticipantManageRecoveryPanel");
+    expect(removeIndex).toBeGreaterThan(recoveryIndex);
+    expect(leanIndex).toBeGreaterThan(removeIndex);
+    expect(forceIndex).toBeGreaterThan(leanIndex);
+    expect(profilePage).toContain("Force delete with history");
   });
 });
