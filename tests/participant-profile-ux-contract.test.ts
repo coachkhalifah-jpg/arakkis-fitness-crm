@@ -51,17 +51,28 @@ describe("admin People profile UX IA contract", () => {
     expect(recoveryPanel).toContain("expire 72 hours after issue");
   });
 
-  it("places EDIT CONTACT in the detail head next to Active (Org-style), not a mid-page Contact panel", () => {
-    const statusActionsIndex = profilePage.indexOf('className="ops-org-detail-status-actions"');
+  it("places Active + EDIT CONTACT right-aligned above Participation snapshot", () => {
+    const statusActionsIndex = profilePage.indexOf(
+      'data-testid="participant-profile-status-actions"',
+    );
     const contactFormIndex = profilePage.indexOf("<ParticipantContactCorrectionForm");
-    const goalsIndex = profilePage.indexOf("goalsText || fitnessExperience");
+    const snapshotIndex = profilePage.indexOf("Participation snapshot");
     expect(statusActionsIndex).toBeGreaterThan(-1);
     expect(contactFormIndex).toBeGreaterThan(statusActionsIndex);
-    expect(goalsIndex).toBeGreaterThan(contactFormIndex);
+    expect(snapshotIndex).toBeGreaterThan(contactFormIndex);
+    expect(profilePage).toContain("ops-people-profile-status-actions");
     expect(profilePage).toContain("ops-status");
     expect(contactForm).toContain('data-testid="participant-edit-contact"');
     expect(contactForm).toContain('data-testid="participant-contact-form"');
     expect(contactForm).not.toContain("ops-venue-edit-panel");
     expect(contactForm).not.toContain(">Contact<");
+  });
+
+  it("places Goals and context above System Admin–only manage recovery", () => {
+    const goalsIndex = profilePage.indexOf("goalsText || fitnessExperience");
+    const recoveryIndex = profilePage.indexOf("<ParticipantManageRecoveryPanel");
+    expect(goalsIndex).toBeGreaterThan(-1);
+    expect(recoveryIndex).toBeGreaterThan(goalsIndex);
+    expect(recoveryPanel).toContain("System Admin only");
   });
 });

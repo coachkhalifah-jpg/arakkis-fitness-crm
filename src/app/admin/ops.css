@@ -1646,13 +1646,17 @@
   color: #f7f5f0;
   font-weight: 700;
 }
-.ops-people-profile-page .ops-org-detail-status-actions {
+.ops-people-profile-page .ops-people-profile-status-actions {
   display: flex;
+  width: 100%;
   min-width: max-content;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 0.75rem;
-  text-align: left;
+  text-align: right;
+}
+.ops-people-profile-page .ops-people-profile-status-actions > .ops-status {
+  color: #c7f36b;
 }
 .ops-people-profile-page .ops-venue-edit-panel {
   border: 0;
