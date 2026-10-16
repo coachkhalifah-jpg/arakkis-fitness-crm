@@ -41,6 +41,21 @@ describe("UAT-026 discovery wiring", () => {
     expect(discovery).toContain('data-testid="admin-event-discovery-months"');
   });
 
+  it("hides By month unless at least one month is selected", () => {
+    expect(discovery).toContain("monthsSelected");
+    expect(discovery).toContain("nonMonthFiltersActive");
+    expect(discovery).toMatch(/monthsSelected \? \(/);
+  });
+
+  it("keeps Filters active outside the Filter button for contrast", () => {
+    expect(discovery).toContain("admin-event-discovery-filter-trigger-group");
+    const toggleStart = discovery.indexOf('className="admin-event-discovery-filter-button"');
+    const toggleEnd = discovery.indexOf("</DisclosureToggle>", toggleStart);
+    const insideToggle = discovery.slice(toggleStart, toggleEnd);
+    expect(discovery).toContain("Filters active");
+    expect(insideToggle).not.toContain("Filters active");
+  });
+
   it("keeps This week and By Organization alongside month rows", () => {
     expect(discovery).toContain("This week");
     expect(discovery).toContain("By Organization");

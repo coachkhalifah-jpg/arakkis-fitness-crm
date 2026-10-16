@@ -183,6 +183,10 @@ export function AdminEventsDiscovery({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [closeFilters, filtersOpen]);
   const activeFilters = hasActiveFilters(filters);
+  const monthsSelected = filters.months.length > 0;
+  const nonMonthFiltersActive = Boolean(
+    filters.query || filters.organization || filters.status || filters.from || filters.to,
+  );
   const organizations = useMemo(
     () =>
       [
@@ -349,23 +353,27 @@ export function AdminEventsDiscovery({
               {selectionMode ? "Done selecting" : "Select"}
             </button>
           ) : null}
-          <DisclosureToggle
-            ref={filterTriggerRef}
-            className="admin-event-discovery-filter-button"
-            aria-label="Open event search and filters"
-            expanded={filtersOpen}
-            controls="admin-event-discovery-filters"
-            onClick={filtersOpen ? closeFilters : openFilters}
-            showIcon={false}
-          >
-            <span>Filter</span>
-            <span className="admin-event-discovery-filter-arrow" aria-hidden="true">
-              ↘
-            </span>
+          <div className="admin-event-discovery-filter-trigger-group">
+            <DisclosureToggle
+              ref={filterTriggerRef}
+              className="admin-event-discovery-filter-button"
+              aria-label="Open event search and filters"
+              expanded={filtersOpen}
+              controls="admin-event-discovery-filters"
+              onClick={filtersOpen ? closeFilters : openFilters}
+              showIcon={false}
+            >
+              <span>Filter</span>
+              <span className="admin-event-discovery-filter-arrow" aria-hidden="true">
+                ↘
+              </span>
+            </DisclosureToggle>
             {activeFilters ? (
-              <span className="admin-event-discovery-filter-count">Filters active</span>
+              <span className="admin-event-discovery-filter-count" aria-live="polite">
+                Filters active
+              </span>
             ) : null}
-          </DisclosureToggle>
+          </div>
           {filtersOpen ? (
             <div
               className={`admin-events-filter-overlay${filtersClosing ? " is-closing" : ""}`}
@@ -449,8 +457,8 @@ export function AdminEventsDiscovery({
                   <fieldset className="admin-events-filter-months">
                     <legend>Months</legend>
                     <p className="admin-events-filter-months-hint">
-                      Multiselect calendar months (New York). Leave empty to show every month that
-                      still has events.
+                      Multiselect calendar months (New York). Leave empty to keep the default This
+                      week / By Organization view.
                     </p>
                     {availableMonths.length ? (
                       <div
@@ -503,94 +511,159 @@ export function AdminEventsDiscovery({
             </div>
           ) : null}
         </div>
-        <section aria-labelledby="this-week-heading">
-          <div className="admin-event-discovery-heading admin-event-discovery-heading-priority">
-            <div>
-              <p className="admin-event-discovery-kicker">Priority view</p>
-              <h2 id="this-week-heading">This week</h2>
-            </div>
-            <span>
-              {thisWeek.length} event{thisWeek.length === 1 ? "" : "s"}
-            </span>
-          </div>
-          <Carousel id="this-week" events={thisWeek} renderCard={renderCard} />
-        </section>
-        <section
-          className="admin-event-discovery-months"
-          aria-labelledby="by-month-heading"
-          data-testid="admin-event-discovery-months"
-        >
-          <div className="admin-event-discovery-heading">
-            <div>
-              {activeFilters ? <p className="admin-event-discovery-kicker">Filter-aware</p> : null}
-              <h2 id="by-month-heading">By month</h2>
-            </div>
-            <span>
-              {monthGroups.length} month{monthGroups.length === 1 ? "" : "s"} · {filtered.length}{" "}
-              event{filtered.length === 1 ? "" : "s"}
-            </span>
-          </div>
-          {monthGroups.length ? (
-            monthGroups.map((group) => (
-              <div key={group.key} className="admin-event-organization-group">
-                <DisclosureToggle
-                  className="admin-event-organization-toggle"
-                  expanded={expandedMonth === group.key}
-                  controls={`organization-events-month-${group.key}`}
-                  onClick={() => setExpandedMonth(expandedMonth === group.key ? null : group.key)}
-                >
-                  <strong>{group.label}</strong>
-                  <span className="admin-event-organization-count">
-                    {group.events.length} {group.events.length === 1 ? "event" : "events"}
-                  </span>
-                </DisclosureToggle>
-                {expandedMonth === group.key ? (
-                  <Carousel
-                    id={`month-${group.key}`}
-                    events={group.events}
-                    renderCard={renderCard}
-                  />
-                ) : null}
-              </div>
-            ))
-          ) : (
-            <p className="admin-event-discovery-empty">No events match the current filters.</p>
-          )}
-        </section>
-        <section
-          className="admin-event-discovery-organizations"
-          aria-labelledby="by-organization-heading"
-        >
-          <div className="admin-event-discovery-heading">
-            <h2 id="by-organization-heading">By Organization</h2>
-            <span>{groups.length} organizations</span>
-          </div>
-          {groups.map((group) => (
-            <div key={group.id} className="admin-event-organization-group">
-              <DisclosureToggle
-                className="admin-event-organization-toggle"
-                expanded={expandedOrg === group.id}
-                controls={`organization-events-${group.id}`}
-                onClick={() => {
-                  if (expandedOrg !== group.id) shouldScrollToExpandedRef.current = true;
-                  setExpandedOrg(expandedOrg === group.id ? null : group.id);
-                }}
-              >
-                <strong>{group.name}</strong>
-                <span className="admin-event-organization-count">
-                  {group.upcoming} {group.upcoming === 1 ? "event" : "events"}
+        {monthsSelected ? (
+          <>
+            <section aria-labelledby="this-week-heading">
+              <div className="admin-event-discovery-heading admin-event-discovery-heading-priority">
+                <div>
+                  <p className="admin-event-discovery-kicker">Priority view</p>
+                  <h2 id="this-week-heading">This week</h2>
+                </div>
+                <span>
+                  {thisWeek.length} event{thisWeek.length === 1 ? "" : "s"}
                 </span>
-              </DisclosureToggle>
-              {expandedOrg === group.id ? (
-                <Carousel
-                  id={`organization-${group.id}`}
-                  events={group.events}
-                  renderCard={renderCard}
-                />
-              ) : null}
+              </div>
+              <Carousel id="this-week" events={thisWeek} renderCard={renderCard} />
+            </section>
+            <section
+              className="admin-event-discovery-months"
+              aria-labelledby="by-month-heading"
+              data-testid="admin-event-discovery-months"
+            >
+              <div className="admin-event-discovery-heading">
+                <div>
+                  <p className="admin-event-discovery-kicker">Filter-aware</p>
+                  <h2 id="by-month-heading">By month</h2>
+                </div>
+                <span>
+                  {monthGroups.length} month{monthGroups.length === 1 ? "" : "s"} ·{" "}
+                  {filtered.length} event{filtered.length === 1 ? "" : "s"}
+                </span>
+              </div>
+              {monthGroups.length ? (
+                monthGroups.map((group) => (
+                  <div key={group.key} className="admin-event-organization-group">
+                    <DisclosureToggle
+                      className="admin-event-organization-toggle"
+                      expanded={expandedMonth === group.key}
+                      controls={`organization-events-month-${group.key}`}
+                      onClick={() =>
+                        setExpandedMonth(expandedMonth === group.key ? null : group.key)
+                      }
+                    >
+                      <strong>{group.label}</strong>
+                      <span className="admin-event-organization-count">
+                        {group.events.length} {group.events.length === 1 ? "event" : "events"}
+                      </span>
+                    </DisclosureToggle>
+                    {expandedMonth === group.key ? (
+                      <Carousel
+                        id={`month-${group.key}`}
+                        events={group.events}
+                        renderCard={renderCard}
+                      />
+                    ) : null}
+                  </div>
+                ))
+              ) : (
+                <p className="admin-event-discovery-empty">No events match the current filters.</p>
+              )}
+            </section>
+            <section
+              className="admin-event-discovery-organizations"
+              aria-labelledby="by-organization-heading"
+            >
+              <div className="admin-event-discovery-heading">
+                <h2 id="by-organization-heading">By Organization</h2>
+                <span>{groups.length} organizations</span>
+              </div>
+              {groups.map((group) => (
+                <div key={group.id} className="admin-event-organization-group">
+                  <DisclosureToggle
+                    className="admin-event-organization-toggle"
+                    expanded={expandedOrg === group.id}
+                    controls={`organization-events-${group.id}`}
+                    onClick={() => {
+                      if (expandedOrg !== group.id) shouldScrollToExpandedRef.current = true;
+                      setExpandedOrg(expandedOrg === group.id ? null : group.id);
+                    }}
+                  >
+                    <strong>{group.name}</strong>
+                    <span className="admin-event-organization-count">
+                      {group.upcoming} {group.upcoming === 1 ? "event" : "events"}
+                    </span>
+                  </DisclosureToggle>
+                  {expandedOrg === group.id ? (
+                    <Carousel
+                      id={`organization-${group.id}`}
+                      events={group.events}
+                      renderCard={renderCard}
+                    />
+                  ) : null}
+                </div>
+              ))}
+            </section>
+          </>
+        ) : nonMonthFiltersActive ? (
+          <section aria-labelledby="filtered-events-heading">
+            <div className="admin-event-discovery-heading">
+              <h2 id="filtered-events-heading">Results</h2>
+              <span>
+                {filtered.length} event{filtered.length === 1 ? "" : "s"}
+              </span>
             </div>
-          ))}
-        </section>
+            <Carousel id="results" events={filtered} renderCard={renderCard} />
+          </section>
+        ) : (
+          <>
+            <section aria-labelledby="this-week-heading">
+              <div className="admin-event-discovery-heading admin-event-discovery-heading-priority">
+                <div>
+                  <p className="admin-event-discovery-kicker">Priority view</p>
+                  <h2 id="this-week-heading">This week</h2>
+                </div>
+                <span>
+                  {thisWeek.length} event{thisWeek.length === 1 ? "" : "s"}
+                </span>
+              </div>
+              <Carousel id="this-week" events={thisWeek} renderCard={renderCard} />
+            </section>
+            <section
+              className="admin-event-discovery-organizations"
+              aria-labelledby="by-organization-heading"
+            >
+              <div className="admin-event-discovery-heading">
+                <h2 id="by-organization-heading">By Organization</h2>
+                <span>{groups.length} organizations</span>
+              </div>
+              {groups.map((group) => (
+                <div key={group.id} className="admin-event-organization-group">
+                  <DisclosureToggle
+                    className="admin-event-organization-toggle"
+                    expanded={expandedOrg === group.id}
+                    controls={`organization-events-${group.id}`}
+                    onClick={() => {
+                      if (expandedOrg !== group.id) shouldScrollToExpandedRef.current = true;
+                      setExpandedOrg(expandedOrg === group.id ? null : group.id);
+                    }}
+                  >
+                    <strong>{group.name}</strong>
+                    <span className="admin-event-organization-count">
+                      {group.upcoming} {group.upcoming === 1 ? "event" : "events"}
+                    </span>
+                  </DisclosureToggle>
+                  {expandedOrg === group.id ? (
+                    <Carousel
+                      id={`organization-${group.id}`}
+                      events={group.events}
+                      renderCard={renderCard}
+                    />
+                  ) : null}
+                </div>
+              ))}
+            </section>
+          </>
+        )}
         {canBulkManage && selectionMode ? (
           <EventsBulkLifecycleBar
             selectedIds={selectedIds}
