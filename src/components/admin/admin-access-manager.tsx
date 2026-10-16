@@ -91,7 +91,11 @@ export function AdminAccessManager({
             <p className="ops-invitation-record-role">System Admin</p>
             <h3>{admin.display_name}</h3>
             <p>{admin.email}</p>
-            <p className="ops-invitation-record-status">{admin.status}</p>
+            <p
+              className={`ops-invitation-record-status is-${admin.status.toLowerCase()}`}
+            >
+              {admin.status}
+            </p>
             <p className="ops-invitation-form-note">System Admin lifecycle is owner-protected.</p>
           </article>
         ))}
@@ -105,7 +109,11 @@ export function AdminAccessManager({
                 <p className="ops-invitation-record-role">Host Admin</p>
                 <h3>{admin.display_name}</h3>
                 <p>{admin.email}</p>
-                <p className="ops-invitation-record-status">{admin.status}</p>
+                <p
+                  className={`ops-invitation-record-status is-${admin.status.toLowerCase()}`}
+                >
+                  {admin.status}
+                </p>
               </div>
               <p className="ops-invitation-record-organization">
                 {admin.organizationNames.join(", ") || "No active assignment"}

@@ -74,6 +74,61 @@ begin
   end if;
 end $$;
 
+-- Stuck is_pending reservation must not block a new invitation for the same email+org.
+do $$
+declare
+  stale_invitation_id uuid;
+  recovered_invitation_id uuid;
+begin
+  stale_invitation_id := public.create_admin_invitation(
+    'phase7-stale@example.test',
+    decode(repeat('e', 64), 'hex'),
+    now() + interval '72 hours',
+    '71000000-0000-0000-0000-000000000001',
+    array['72000000-0000-0000-0000-000000000001'::uuid]
+  );
+  if not public.revoke_admin_invitation(
+    stale_invitation_id,
+    '71000000-0000-0000-0000-000000000001'
+  ) then
+    raise exception 'failed to revoke invitation before simulating drift';
+  end if;
+
+  -- Simulate trigger/schema drift: reservation remains pending after revoke.
+  update public.admin_invitation_organizations
+  set is_pending = true
+  where invitation_id = stale_invitation_id;
+
+  recovered_invitation_id := public.create_admin_invitation(
+    'phase7-stale@example.test',
+    decode(repeat('f', 64), 'hex'),
+    now() + interval '72 hours',
+    '71000000-0000-0000-0000-000000000001',
+    array['72000000-0000-0000-0000-000000000001'::uuid]
+  );
+
+  if recovered_invitation_id is null then
+    raise exception 'stale pending reservation blocked invitation creation';
+  end if;
+  if not exists (
+    select 1
+    from public.admin_invitations ai
+    join public.admin_invitation_organizations io on io.invitation_id = ai.id
+    where ai.id = recovered_invitation_id
+      and ai.status = 'PENDING'
+      and io.is_pending
+      and io.organization_id = '72000000-0000-0000-0000-000000000001'
+  ) then
+    raise exception 'recovered invitation was not pending for the requested organization';
+  end if;
+  if exists (
+    select 1 from public.admin_invitation_organizations
+    where invitation_id = stale_invitation_id and is_pending
+  ) then
+    raise exception 'stale invitation reservation remained pending';
+  end if;
+end $$;
+
 select set_config('app.environment', 'production', true);
 do $$
 begin
