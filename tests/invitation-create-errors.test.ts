@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { mapInvitationCreateError } from "@/lib/auth/invitation-create-errors";
+import {
+  mapInvitationCreateError,
+  mapInvitationRegenerateError,
+} from "@/lib/auth/invitation-create-errors";
 
 describe("mapInvitationCreateError", () => {
   it("returns the generic message when no error is present", () => {
@@ -31,5 +34,35 @@ describe("mapInvitationCreateError", () => {
     expect(message).toContain("invitation service is unavailable");
     expect(message).not.toContain("create_admin_invitation");
     expect(message).not.toContain("PGRST202");
+  });
+
+  it("maps bytea decode failures as service unavailable", () => {
+    expect(
+      mapInvitationCreateError({
+        message: 'invalid input syntax for type bytea: "\\xnothex"',
+        code: "22P02",
+      }),
+    ).toContain("invitation service is unavailable");
+  });
+});
+
+describe("mapInvitationRegenerateError", () => {
+  it("maps permission / missing function failures", () => {
+    expect(
+      mapInvitationRegenerateError({
+        message: "permission denied for function regenerate_admin_invitation",
+        code: "42501",
+      }),
+    ).toContain("invitation service is unavailable");
+  });
+
+  it("maps false RPC return to no-longer-pending", () => {
+    expect(mapInvitationRegenerateError(null, true)).toContain("no longer pending");
+  });
+
+  it("maps unauthorized actor", () => {
+    expect(
+      mapInvitationRegenerateError({ message: "administrator is not authorized" }),
+    ).toContain("System Admin authorization failed");
   });
 });
