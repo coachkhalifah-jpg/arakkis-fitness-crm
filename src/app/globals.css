@@ -2839,6 +2839,56 @@ html[data-participant-transition-fallback="true"][data-participant-transition-re
   outline-offset: 0;
   box-shadow: none;
 }
+.admin-events-page .admin-events-filter-months {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+.admin-events-page .admin-events-filter-months legend {
+  margin-bottom: 0.2rem;
+  color: #f7f5f0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.admin-events-page .admin-events-filter-months-hint,
+.admin-events-page .admin-events-filter-months-empty,
+.admin-events-page .admin-event-discovery-empty {
+  margin: 0;
+  color: #aeb4bb;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+.admin-events-page .admin-events-filter-month-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.admin-events-page .admin-events-filter-month-chip {
+  min-height: 2.1rem;
+  border: 1px solid #41474e;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.35rem 0.7rem;
+  color: #f7f5f0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.admin-events-page .admin-events-filter-month-chip:hover,
+.admin-events-page .admin-events-filter-month-chip:focus-visible,
+.admin-events-page .admin-events-filter-month-chip.is-selected {
+  border-color: #ff7a3d;
+  background: #ff7a3d;
+  color: #101315;
+}
+.admin-events-page .admin-event-discovery-months {
+  margin-top: 1.75rem;
+}
 
 /* Venue editing uses the same compact, high-contrast form language as the
    canonical Arakkis create forms while remaining scoped to the side menu. */

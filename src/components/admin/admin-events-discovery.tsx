@@ -7,6 +7,7 @@ import { DisclosureToggle } from "@/components/ui/disclosure-toggle";
 import { CalendarUtility } from "@/components/admin/calendar-utility";
 import { ArchiveCancelledEventButton } from "@/components/admin/archive-cancelled-event-button";
 import { EventsBulkLifecycleBar } from "@/components/admin/events-bulk-lifecycle-bar";
+import { eventMonthKey, eventMonthLabel, groupEventsByMonthKey } from "@/lib/admin/event-month";
 import type { CalendarEvent } from "@/lib/registration/calendar";
 
 export type AdminDiscoveryEvent = {
@@ -36,8 +37,22 @@ export type AdminDiscoveryEvent = {
   archiveAction: (id: string) => Promise<void>;
 };
 
-type Filters = { query: string; organization: string; status: string; from: string; to: string };
-const initialFilters: Filters = { query: "", organization: "", status: "", from: "", to: "" };
+type Filters = {
+  query: string;
+  organization: string;
+  status: string;
+  from: string;
+  to: string;
+  months: string[];
+};
+const initialFilters: Filters = {
+  query: "",
+  organization: "",
+  status: "",
+  from: "",
+  to: "",
+  months: [],
+};
 
 function isWithinThisWeek(startsAt: string, now = new Date()) {
   const start = now.getTime();
@@ -46,7 +61,10 @@ function isWithinThisWeek(startsAt: string, now = new Date()) {
   return eventStart >= start && eventStart < end;
 }
 
-function matchesFilters(event: AdminDiscoveryEvent, filters: Filters) {
+function matchesNonMonthFilters(
+  event: AdminDiscoveryEvent,
+  filters: Omit<Filters, "months"> | Filters,
+) {
   const query = filters.query.trim().toLowerCase();
   const starts = new Date(event.startsAt).getTime();
   return (
@@ -57,6 +75,23 @@ function matchesFilters(event: AdminDiscoveryEvent, filters: Filters) {
       event.publicationStatus === filters.status) &&
     (!filters.from || starts >= new Date(filters.from).getTime()) &&
     (!filters.to || starts <= new Date(filters.to).getTime())
+  );
+}
+
+function matchesFilters(event: AdminDiscoveryEvent, filters: Filters) {
+  if (!matchesNonMonthFilters(event, filters)) return false;
+  if (!filters.months.length) return true;
+  return filters.months.includes(eventMonthKey(event.startsAt));
+}
+
+function hasActiveFilters(filters: Filters) {
+  return Boolean(
+    filters.query ||
+    filters.organization ||
+    filters.status ||
+    filters.from ||
+    filters.to ||
+    filters.months.length,
   );
 }
 
@@ -106,7 +141,8 @@ export function AdminEventsDiscovery({
   canBulkManage?: boolean;
 }) {
   const [filters, setFilters] = useState<Filters>(initialFilters);
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [expandedOrg, setExpandedOrg] = useState<string | null>(null);
+  const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
   const shouldScrollToExpandedRef = useRef(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filtersClosing, setFiltersClosing] = useState(false);
@@ -146,7 +182,7 @@ export function AdminEventsDiscovery({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [closeFilters, filtersOpen]);
-  const activeFilters = Object.values(filters).some(Boolean);
+  const activeFilters = hasActiveFilters(filters);
   const organizations = useMemo(
     () =>
       [
@@ -158,19 +194,38 @@ export function AdminEventsDiscovery({
     () => [...events].sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt)),
     [events],
   );
+  const baseFiltered = useMemo(
+    () => sorted.filter((event) => matchesNonMonthFilters(event, filters)),
+    [sorted, filters],
+  );
+  const availableMonths = useMemo(() => {
+    const keys = new Set(baseFiltered.map((event) => eventMonthKey(event.startsAt)));
+    return [...keys].sort().map((key) => ({ key, label: eventMonthLabel(key) }));
+  }, [baseFiltered]);
   const filtered = useMemo(
     () => sorted.filter((event) => matchesFilters(event, filters)),
     [sorted, filters],
   );
   const now = new Date();
-  const upcoming = sorted.filter((event) => new Date(event.startsAt) >= now);
-  const thisWeek = upcoming.filter((event) => isWithinThisWeek(event.startsAt, now));
-  const groups = organizations.map(([id, name]) => {
-    const groupEvents = upcoming.filter((event) => event.organizationId === id);
-    return { id, name, events: groupEvents, upcoming: groupEvents.length };
-  });
-  const setFilter = (key: keyof Filters, value: string) =>
+  const filteredUpcoming = filtered.filter((event) => new Date(event.startsAt) >= now);
+  const thisWeek = filteredUpcoming.filter((event) => isWithinThisWeek(event.startsAt, now));
+  const monthGroups = useMemo(() => groupEventsByMonthKey(filtered), [filtered]);
+  const groups = organizations
+    .map(([id, name]) => {
+      const groupEvents = filteredUpcoming.filter((event) => event.organizationId === id);
+      return { id, name, events: groupEvents, upcoming: groupEvents.length };
+    })
+    .filter((group) => group.upcoming > 0);
+  const setFilter = (key: "query" | "organization" | "status" | "from" | "to", value: string) =>
     setFilters((current) => ({ ...current, [key]: value }));
+  const toggleMonth = (monthKey: string) => {
+    setFilters((current) => {
+      const selected = current.months.includes(monthKey)
+        ? current.months.filter((item) => item !== monthKey)
+        : [...current.months, monthKey].sort();
+      return { ...current, months: selected };
+    });
+  };
   const clearSelection = useCallback(() => setSelectedIds([]), []);
   const toggleSelected = useCallback((id: string, selected: boolean) => {
     setSelectedIds((current) => {
@@ -226,13 +281,23 @@ export function AdminEventsDiscovery({
     if (!saved) return;
     try {
       const context = JSON.parse(saved) as {
-        filters?: Filters;
+        filters?: Partial<Filters> & { months?: string[] };
         expanded?: string | null;
+        expandedOrg?: string | null;
+        expandedMonth?: string | null;
         scrollY?: number;
       };
       requestAnimationFrame(() => {
-        if (context.filters) setFilters(context.filters!);
-        if (context.expanded) setExpanded(context.expanded);
+        if (context.filters) {
+          setFilters({
+            ...initialFilters,
+            ...context.filters,
+            months: Array.isArray(context.filters.months) ? context.filters.months : [],
+          });
+        }
+        if (context.expandedOrg) setExpandedOrg(context.expandedOrg);
+        else if (context.expanded) setExpandedOrg(context.expanded);
+        if (context.expandedMonth) setExpandedMonth(context.expandedMonth);
         window.scrollTo(0, context.scrollY ?? 0);
       });
     } catch {
@@ -240,23 +305,28 @@ export function AdminEventsDiscovery({
     }
   }, []);
   useEffect(() => {
-    if (!expanded || !shouldScrollToExpandedRef.current) return;
+    if (!expandedOrg || !shouldScrollToExpandedRef.current) return;
     shouldScrollToExpandedRef.current = false;
     const frame = window.requestAnimationFrame(() => {
-      document.getElementById(`organization-events-${expanded}`)?.scrollIntoView?.({
+      document.getElementById(`organization-events-${expandedOrg}`)?.scrollIntoView?.({
         behavior: "smooth",
         block: "start",
       });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [expanded]);
+  }, [expandedOrg]);
   useEffect(
     () => () =>
       sessionStorage.setItem(
         "arakkis:admin-events:context",
-        JSON.stringify({ filters, expanded, scrollY: window.scrollY }),
+        JSON.stringify({
+          filters,
+          expandedOrg,
+          expandedMonth,
+          scrollY: window.scrollY,
+        }),
       ),
-    [filters, expanded],
+    [filters, expandedOrg, expandedMonth],
   );
 
   return (
@@ -376,6 +446,39 @@ export function AdminEventsDiscovery({
                       onChange={(event) => setFilter("to", event.target.value)}
                     />
                   </label>
+                  <fieldset className="admin-events-filter-months">
+                    <legend>Months</legend>
+                    <p className="admin-events-filter-months-hint">
+                      Multiselect calendar months (New York). Leave empty to show every month that
+                      still has events.
+                    </p>
+                    {availableMonths.length ? (
+                      <div
+                        className="admin-events-filter-month-chips"
+                        role="group"
+                        aria-label="Months"
+                      >
+                        {availableMonths.map((month) => {
+                          const selected = filters.months.includes(month.key);
+                          return (
+                            <button
+                              key={month.key}
+                              type="button"
+                              className={`admin-events-filter-month-chip${selected ? " is-selected" : ""}`}
+                              aria-pressed={selected}
+                              onClick={() => toggleMonth(month.key)}
+                            >
+                              {month.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="admin-events-filter-months-empty">
+                        No months in the current set.
+                      </p>
+                    )}
+                  </fieldset>
                 </div>
                 <div className="admin-events-filter-actions">
                   <button
@@ -400,66 +503,94 @@ export function AdminEventsDiscovery({
             </div>
           ) : null}
         </div>
-        {activeFilters ? (
-          <section aria-labelledby="filtered-events-heading">
-            <div className="admin-event-discovery-heading">
-              <h2 id="filtered-events-heading">Results</h2>
-              <span>
-                {filtered.length} event{filtered.length === 1 ? "" : "s"}
-              </span>
+        <section aria-labelledby="this-week-heading">
+          <div className="admin-event-discovery-heading admin-event-discovery-heading-priority">
+            <div>
+              <p className="admin-event-discovery-kicker">Priority view</p>
+              <h2 id="this-week-heading">This week</h2>
             </div>
-            <Carousel id="results" events={filtered} renderCard={renderCard} />
-          </section>
-        ) : (
-          <>
-            <section aria-labelledby="this-week-heading">
-              <div className="admin-event-discovery-heading admin-event-discovery-heading-priority">
-                <div>
-                  <p className="admin-event-discovery-kicker">Priority view</p>
-                  <h2 id="this-week-heading">This week</h2>
-                </div>
-                <span>
-                  {thisWeek.length} event{thisWeek.length === 1 ? "" : "s"}
+            <span>
+              {thisWeek.length} event{thisWeek.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          <Carousel id="this-week" events={thisWeek} renderCard={renderCard} />
+        </section>
+        <section
+          className="admin-event-discovery-months"
+          aria-labelledby="by-month-heading"
+          data-testid="admin-event-discovery-months"
+        >
+          <div className="admin-event-discovery-heading">
+            <div>
+              {activeFilters ? <p className="admin-event-discovery-kicker">Filter-aware</p> : null}
+              <h2 id="by-month-heading">By month</h2>
+            </div>
+            <span>
+              {monthGroups.length} month{monthGroups.length === 1 ? "" : "s"} · {filtered.length}{" "}
+              event{filtered.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          {monthGroups.length ? (
+            monthGroups.map((group) => (
+              <div key={group.key} className="admin-event-organization-group">
+                <DisclosureToggle
+                  className="admin-event-organization-toggle"
+                  expanded={expandedMonth === group.key}
+                  controls={`organization-events-month-${group.key}`}
+                  onClick={() => setExpandedMonth(expandedMonth === group.key ? null : group.key)}
+                >
+                  <strong>{group.label}</strong>
+                  <span className="admin-event-organization-count">
+                    {group.events.length} {group.events.length === 1 ? "event" : "events"}
+                  </span>
+                </DisclosureToggle>
+                {expandedMonth === group.key ? (
+                  <Carousel
+                    id={`month-${group.key}`}
+                    events={group.events}
+                    renderCard={renderCard}
+                  />
+                ) : null}
+              </div>
+            ))
+          ) : (
+            <p className="admin-event-discovery-empty">No events match the current filters.</p>
+          )}
+        </section>
+        <section
+          className="admin-event-discovery-organizations"
+          aria-labelledby="by-organization-heading"
+        >
+          <div className="admin-event-discovery-heading">
+            <h2 id="by-organization-heading">By Organization</h2>
+            <span>{groups.length} organizations</span>
+          </div>
+          {groups.map((group) => (
+            <div key={group.id} className="admin-event-organization-group">
+              <DisclosureToggle
+                className="admin-event-organization-toggle"
+                expanded={expandedOrg === group.id}
+                controls={`organization-events-${group.id}`}
+                onClick={() => {
+                  if (expandedOrg !== group.id) shouldScrollToExpandedRef.current = true;
+                  setExpandedOrg(expandedOrg === group.id ? null : group.id);
+                }}
+              >
+                <strong>{group.name}</strong>
+                <span className="admin-event-organization-count">
+                  {group.upcoming} {group.upcoming === 1 ? "event" : "events"}
                 </span>
-              </div>
-              <Carousel id="this-week" events={thisWeek} renderCard={renderCard} />
-            </section>
-            <section
-              className="admin-event-discovery-organizations"
-              aria-labelledby="by-organization-heading"
-            >
-              <div className="admin-event-discovery-heading">
-                <h2 id="by-organization-heading">By Organization</h2>
-                <span>{groups.length} organizations</span>
-              </div>
-              {groups.map((group) => (
-                <div key={group.id} className="admin-event-organization-group">
-                  <DisclosureToggle
-                    className="admin-event-organization-toggle"
-                    expanded={expanded === group.id}
-                    controls={`organization-events-${group.id}`}
-                    onClick={() => {
-                      if (expanded !== group.id) shouldScrollToExpandedRef.current = true;
-                      setExpanded(expanded === group.id ? null : group.id);
-                    }}
-                  >
-                    <strong>{group.name}</strong>
-                    <span className="admin-event-organization-count">
-                      {group.upcoming} {group.upcoming === 1 ? "event" : "events"}
-                    </span>
-                  </DisclosureToggle>
-                  {expanded === group.id ? (
-                    <Carousel
-                      id={`organization-${group.id}`}
-                      events={group.events}
-                      renderCard={renderCard}
-                    />
-                  ) : null}
-                </div>
-              ))}
-            </section>
-          </>
-        )}
+              </DisclosureToggle>
+              {expandedOrg === group.id ? (
+                <Carousel
+                  id={`organization-${group.id}`}
+                  events={group.events}
+                  renderCard={renderCard}
+                />
+              ) : null}
+            </div>
+          ))}
+        </section>
         {canBulkManage && selectionMode ? (
           <EventsBulkLifecycleBar
             selectedIds={selectedIds}
