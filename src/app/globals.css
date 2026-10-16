@@ -7441,6 +7441,36 @@ body:has(.admin-manage-event-page) {
   color: var(--ink-soft);
   opacity: 0.7;
 }
+.ops-auth-password-field {
+  position: relative;
+  display: block;
+}
+.ops-auth-password-field input {
+  padding-right: 2.75rem;
+}
+.ops-auth-password-toggle {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+.ops-auth-password-toggle:hover,
+.ops-auth-password-toggle:focus-visible {
+  color: var(--ink);
+  outline: 0;
+}
 .ops-auth-error {
   padding: 0.8rem;
   border: 1px solid var(--danger);
