@@ -133,11 +133,11 @@
 
 .workout-stage__step-title {
   margin: 0;
-  max-width: 16ch;
+  max-width: 14ch;
   font-family: var(--wt-display);
-  font-size: clamp(1.9rem, 7vw, 3.6rem);
+  font-size: clamp(2.6rem, 9.5vw, 4.75rem);
   font-weight: 500;
-  line-height: 1;
+  line-height: 0.95;
   letter-spacing: 0.01em;
   text-transform: uppercase;
   text-align: center;
@@ -160,14 +160,14 @@
   color: inherit;
   padding: 0;
   margin: 0;
-  width: min(92vw, 36rem, 72svh);
+  width: min(96vw, 40rem, 76svh);
   aspect-ratio: 1;
   position: relative;
   display: grid;
   place-items: center;
   cursor: pointer;
   flex: 0 1 auto;
-  max-height: 72svh;
+  max-height: 76svh;
 }
 
 .workout-stage__dial:disabled {
@@ -208,10 +208,10 @@
 .workout-stage__clock {
   margin: 0;
   font-family: var(--wt-display);
-  font-size: clamp(4.8rem, 22vw, 11rem);
+  font-size: clamp(6.5rem, 28vw, 13.5rem);
   font-weight: 300;
-  line-height: 0.9;
-  letter-spacing: -0.03em;
+  line-height: 0.88;
+  letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
   color: var(--wt-fg);
 }
@@ -289,6 +289,8 @@
 }
 
 .workout-stage__card {
+  appearance: none;
+  border: 0;
   position: relative;
   min-height: 4.25rem;
   border-radius: 0.5rem;
@@ -298,7 +300,20 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: flex-start;
   gap: 0.1rem;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.workout-stage__card:focus-visible {
+  outline: 2px solid var(--wt-fg);
+  outline-offset: 2px;
+}
+
+.workout-stage__card:active {
+  filter: brightness(0.96);
 }
 
 .workout-stage__card[data-kind="prepare"] {
@@ -346,20 +361,36 @@
 
 .workout-stage__movements-toggle {
   width: 100%;
-  justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.85rem;
   border: 0;
   border-radius: 0;
   background: #111113;
   color: var(--wt-fg);
-  font-size: 0.78rem;
+  font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 0.7rem 0.85rem;
+  padding: 0.85rem 0.95rem;
 }
 
-.workout-stage__movements-toggle .arakkis-disclosure-toggle-icon {
+.workout-stage__movements-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
   color: var(--wt-ring);
+  font-size: clamp(2.4rem, 8vw, 3.4rem);
+  font-weight: 300;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.workout-stage__movements-toggle[aria-expanded="true"] .workout-stage__movements-plus {
+  transform: rotate(45deg);
 }
 
 .workout-stage__movements-panel {
