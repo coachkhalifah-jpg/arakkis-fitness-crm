@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { WorkoutStep } from "@/lib/workouts/csv";
 import { playWorkoutTone } from "@/lib/workouts/audio";
+import { DisclosureToggle } from "@/components/ui/disclosure-toggle";
 import "./workout-timer.css";
 
 const MUTE_STORAGE_KEY = "arakkis.workout.preferences.muted";
 const mutedListeners = new Set<() => void>();
+const RING_RADIUS = 45;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 function formatClock(totalSeconds: number) {
   const safe = Math.max(0, Math.floor(totalSeconds));
@@ -14,6 +17,13 @@ function formatClock(totalSeconds: number) {
   const seconds = safe % 60;
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
+
+const kindLabelShort: Record<WorkoutStep["kind"], string> = {
+  prepare: "Prep",
+  work: "Work",
+  rest: "Rest",
+  done: "Done",
+};
 
 type TimerState = {
   index: number;
@@ -111,6 +121,9 @@ export function WorkoutTimer({
   const ordered = useMemo(() => [...steps].sort((a, b) => a.order - b.order), [steps]);
   const [state, setState] = useState<TimerState>(() => initialState(ordered));
   const muted = useSyncExternalStore(subscribeMuted, readMutedPreference, () => true);
+  const [movementsOpen, setMovementsOpen] = useState(false);
+  const [ringProgress, setRingProgress] = useState(0);
+  const movementsId = useId();
   const { index, remaining, running, finished } = state;
   const current = ordered[index];
   const prevRef = useRef<{ index: number; remaining: number; running: boolean; finished: boolean }>(
@@ -123,12 +136,61 @@ export function WorkoutTimer({
   );
   const warnPlayedRef = useRef<number | null>(null);
   const mutedRef = useRef(muted);
+  const secondStartedAtRef = useRef<number | null>(null);
+  const stateRef = useRef(state);
+  const orderedRef = useRef(ordered);
 
   useScreenWakeLock(true);
 
   useEffect(() => {
     mutedRef.current = muted;
   }, [muted]);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  useEffect(() => {
+    orderedRef.current = ordered;
+  }, [ordered]);
+
+  useEffect(() => {
+    if (running && !finished) {
+      secondStartedAtRef.current = performance.now();
+    } else {
+      secondStartedAtRef.current = null;
+    }
+  }, [running, finished, remaining, index]);
+
+  useEffect(() => {
+    const syncProgress = () => {
+      const currentState = stateRef.current;
+      const stepsOrdered = orderedRef.current;
+      const step = stepsOrdered[currentState.index];
+      const duration = step?.durationSeconds ?? 0;
+      if (currentState.finished || duration <= 0) {
+        setRingProgress(1);
+        return;
+      }
+      const wholeElapsed = Math.max(0, duration - currentState.remaining);
+      const fraction =
+        currentState.running && secondStartedAtRef.current != null
+          ? Math.min(0.999, Math.max(0, (performance.now() - secondStartedAtRef.current) / 1000))
+          : 0;
+      setRingProgress(Math.min(1, Math.max(0, (wholeElapsed + fraction) / duration)));
+    };
+
+    syncProgress();
+    if (!running || finished) return;
+
+    let raf = 0;
+    const loop = () => {
+      syncProgress();
+      raf = window.requestAnimationFrame(loop);
+    };
+    raf = window.requestAnimationFrame(loop);
+    return () => window.cancelAnimationFrame(raf);
+  }, [running, finished, remaining, index]);
 
   useEffect(() => {
     if (!running || finished) return;
@@ -203,20 +265,23 @@ export function WorkoutTimer({
       elapsedBefore += ordered[i]?.durationSeconds ?? 0;
     }
     const currentDuration = current?.durationSeconds ?? 0;
-    const elapsedInStep = finished ? currentDuration : Math.max(0, currentDuration - remaining);
-    const elapsed = finished ? totalDuration : elapsedBefore + elapsedInStep;
+    const wholeElapsedInStep = finished
+      ? currentDuration
+      : Math.max(0, currentDuration - remaining);
+    const elapsed = finished ? totalDuration : elapsedBefore + wholeElapsedInStep;
     const remainingTotal = Math.max(0, totalDuration - elapsed);
-    const progress =
-      finished || currentDuration <= 0
-        ? 100
-        : Math.min(100, (elapsedInStep / currentDuration) * 100);
-    return { elapsed, remainingTotal, progress, totalDuration };
+    return { elapsed, remainingTotal, totalDuration };
   }, [ordered, index, remaining, finished, current?.durationSeconds]);
 
   const upcoming = useMemo(() => {
     if (finished) return [];
     return ordered.slice(index + 1, index + 4);
   }, [ordered, index, finished]);
+
+  const toggleRunning = () => {
+    if (finished) return;
+    setState((prev) => ({ ...prev, running: !prev.running }));
+  };
 
   if (!current) {
     return (
@@ -231,13 +296,10 @@ export function WorkoutTimer({
   const cue = !finished && current.cue?.trim() ? current.cue.trim() : "";
   const kind = finished ? "done" : current.kind;
   const stepNumber = Math.min(index + 1, ordered.length);
+  const dashOffset = RING_CIRCUMFERENCE * (1 - ringProgress);
 
   return (
-    <div
-      className={`workout-stage${warn ? " is-warn" : ""}`}
-      data-kind={kind}
-      style={{ ["--wt-progress" as string]: `${totals.progress}%` }}
-    >
+    <div className={`workout-stage${warn ? " is-warn" : ""}`} data-kind={kind}>
       <div className="workout-stage__chrome">
         <p className="workout-stage__brand">
           {title}
@@ -256,7 +318,7 @@ export function WorkoutTimer({
           <button
             type="button"
             className="workout-stage__btn workout-stage__btn--primary"
-            onClick={() => setState((prev) => ({ ...prev, running: !prev.running }))}
+            onClick={toggleRunning}
             disabled={finished}
           >
             {running ? "Pause" : "Start"}
@@ -297,53 +359,123 @@ export function WorkoutTimer({
       </div>
 
       <section className="workout-stage__board" aria-label="Current interval">
-        <div className="workout-stage__fill" aria-hidden="true" />
-        <div className="workout-stage__board-inner">
-          <h1 className="workout-stage__step-title">{stepTitle}</h1>
-          {cue ? <p className="workout-stage__cue">{cue}</p> : null}
-          <p className="workout-stage__clock" aria-live="polite" aria-atomic="true">
-            {formatClock(finished ? 0 : remaining)}
-          </p>
-        </div>
-        <p className="workout-stage__index" aria-hidden="true">
-          {stepNumber}
-        </p>
+        <h1 className="workout-stage__step-title">{stepTitle}</h1>
+        {cue ? <p className="workout-stage__cue">{cue}</p> : null}
+
+        <button
+          type="button"
+          className="workout-stage__dial"
+          onClick={toggleRunning}
+          disabled={finished}
+          aria-label={
+            finished
+              ? "Workout complete"
+              : running
+                ? `Pause timer, ${formatClock(remaining)} remaining`
+                : `Start timer, ${formatClock(remaining)} remaining`
+          }
+        >
+          <svg className="workout-stage__ring" viewBox="0 0 100 100" aria-hidden="true">
+            <circle className="workout-stage__ring-track" cx="50" cy="50" r={RING_RADIUS} />
+            <circle
+              className="workout-stage__ring-progress"
+              cx="50"
+              cy="50"
+              r={RING_RADIUS}
+              strokeDasharray={RING_CIRCUMFERENCE}
+              strokeDashoffset={dashOffset}
+            />
+          </svg>
+          <div className="workout-stage__dial-face">
+            <p className="workout-stage__clock" aria-live="polite" aria-atomic="true">
+              {formatClock(finished ? 0 : remaining)}
+            </p>
+            <p className="workout-stage__dial-hint">
+              {finished ? "Done" : running ? "Tap to pause" : "Tap to start"}
+            </p>
+          </div>
+        </button>
       </section>
 
-      <div className="workout-stage__stats" aria-label="Workout progress">
-        <p className="workout-stage__stat">
-          <span>Elapsed</span>
-          <strong>{formatClock(totals.elapsed)}</strong>
-        </p>
-        <p className="workout-stage__stat">
-          <span>Round</span>
-          <strong>
-            {stepNumber} / {ordered.length}
-          </strong>
-        </p>
-        <p className="workout-stage__stat">
-          <span>Remaining</span>
-          <strong>{formatClock(totals.remainingTotal)}</strong>
-        </p>
-      </div>
-
-      {upcoming.length > 0 ? (
-        <div className="workout-stage__upcoming" aria-label="Upcoming intervals">
-          {upcoming.map((step, offset) => (
-            <article
-              key={`${step.order}-${step.title}`}
-              className="workout-stage__card"
-              data-kind={step.kind}
-            >
-              <p className="workout-stage__card-title">{step.title}</p>
-              <p className="workout-stage__card-time">{formatClock(step.durationSeconds)}</p>
-              <p className="workout-stage__card-index" aria-hidden="true">
-                {index + 2 + offset}
-              </p>
-            </article>
-          ))}
+      <div className="workout-stage__rows">
+        <div className="workout-stage__row" aria-label="Workout progress">
+          <div className="workout-stage__stats">
+            <p className="workout-stage__stat">
+              <span>Elapsed</span>
+              <strong>{formatClock(totals.elapsed)}</strong>
+            </p>
+            <p className="workout-stage__stat">
+              <span>Round</span>
+              <strong>
+                {stepNumber} / {ordered.length}
+              </strong>
+            </p>
+            <p className="workout-stage__stat">
+              <span>Remaining</span>
+              <strong>{formatClock(totals.remainingTotal)}</strong>
+            </p>
+          </div>
         </div>
-      ) : null}
+
+        <div className="workout-stage__row" aria-label="Upcoming intervals">
+          {upcoming.length > 0 ? (
+            <div className="workout-stage__upcoming">
+              {upcoming.map((step, offset) => (
+                <article
+                  key={`${step.order}-${step.title}`}
+                  className="workout-stage__card"
+                  data-kind={step.kind}
+                >
+                  <p className="workout-stage__card-title">{step.title}</p>
+                  <p className="workout-stage__card-time">{formatClock(step.durationSeconds)}</p>
+                  <p className="workout-stage__card-index" aria-hidden="true">
+                    {index + 2 + offset}
+                  </p>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="workout-stage__upcoming-empty">No upcoming intervals</p>
+          )}
+        </div>
+
+        <div className="workout-stage__row">
+          <DisclosureToggle
+            className="workout-stage__movements-toggle"
+            expanded={movementsOpen}
+            controls={movementsId}
+            onClick={() => setMovementsOpen((open) => !open)}
+          >
+            Movements
+          </DisclosureToggle>
+          <div id={movementsId} className="workout-stage__movements-panel" hidden={!movementsOpen}>
+            <table className="workout-stage__movements-table">
+              <thead>
+                <tr>
+                  <th scope="col">Exercises</th>
+                  <th scope="col">Block</th>
+                  <th scope="col">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ordered.map((step, stepIndex) => (
+                  <tr
+                    key={`${step.order}-${step.title}-row`}
+                    className={stepIndex === index && !finished ? "is-current" : undefined}
+                  >
+                    <td>
+                      {step.title}
+                      <span className="sr-only">{` (${kindLabelShort[step.kind]})`}</span>
+                    </td>
+                    <td>{step.block?.trim() || "—"}</td>
+                    <td>{formatClock(step.durationSeconds)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

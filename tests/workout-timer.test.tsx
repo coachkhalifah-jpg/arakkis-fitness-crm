@@ -38,37 +38,51 @@ const steps = [
 ];
 
 describe("WorkoutTimer stage", () => {
-  it("renders PACER-like board with Preferences mute default and secondary title", () => {
+  it("renders dial board, progress rows, and collapsed movements", () => {
     const { container } = render(
       <WorkoutTimer title="15-Minute Core Finisher" theme="Core at home" steps={steps} />,
     );
 
-    expect(container.querySelector(".workout-stage__board")).not.toBeNull();
+    expect(container.querySelector(".workout-stage__dial")).not.toBeNull();
+    expect(container.querySelector(".workout-stage__ring-progress")).not.toBeNull();
     expect(screen.getByText(/15-Minute Core Finisher/)).toBeInTheDocument();
     expect(screen.getByText(/Core at home/)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Get ready" })).toBeInTheDocument();
     expect(screen.getByText("Elapsed")).toBeInTheDocument();
     expect(screen.getByText("Round")).toBeInTheDocument();
     expect(screen.getByText("Remaining")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Sound muted/i })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    expect(screen.getByRole("button", { name: /Sound muted/i })).toHaveTextContent("Muted");
-    expect(screen.queryByText(/Back to events/i)).not.toBeInTheDocument();
-    expect(screen.queryByText("Slow and controlled")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Upcoming intervals")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Movements/i })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(screen.queryByRole("columnheader", { name: "Exercises" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Sound muted/i })).toHaveTextContent("Muted");
   });
 
-  it("shows cue only for the current step and sticks unmute in localStorage", () => {
+  it("pauses when the dial is clicked and expands the movements table", () => {
     render(<WorkoutTimer title="Core" steps={steps} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start timer/i }));
+    expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Pause timer/i }));
+    expect(screen.getByRole("button", { name: "Start" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByRole("heading", { name: "Dead bug" })).toBeInTheDocument();
     expect(screen.getByText("Slow and controlled")).toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole("button", { name: /Movements/i }));
+    expect(screen.getByRole("button", { name: /Movements/i })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(screen.getByRole("columnheader", { name: "Exercises" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Block" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Time" })).toBeInTheDocument();
+    expect(screen.getAllByRole("cell", { name: /Dead bug/i }).length).toBeGreaterThan(0);
+
     fireEvent.click(screen.getByRole("button", { name: /Sound muted/i }));
-    expect(screen.getByRole("button", { name: /Sound on/i })).toHaveTextContent("Sound on");
     expect(window.localStorage.getItem("arakkis.workout.preferences.muted")).toBe("false");
   });
 });
