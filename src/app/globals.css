@@ -2636,6 +2636,27 @@ html[data-participant-transition-fallback="true"][data-participant-transition-re
   background: #ff7a3d;
   color: #101315;
 }
+.admin-events-page .admin-event-discovery-filter-trigger-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.admin-events-page .admin-event-discovery-filter-count {
+  max-width: 4.5rem;
+  color: #c7f36b;
+  font-family:
+    "SF Pro Display",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
 .admin-events-page .admin-event-discovery-filter-launcher {
   justify-content: flex-start;
   flex-wrap: wrap;
@@ -5078,6 +5099,7 @@ body:has(.admin-manage-event-page) {
   color: var(--admin-accent);
 }
 .admin-event-discovery-filter-count {
+  color: #c7f36b;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0;
