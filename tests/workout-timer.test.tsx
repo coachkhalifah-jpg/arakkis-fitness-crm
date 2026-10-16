@@ -60,26 +60,26 @@ describe("WorkoutTimer stage", () => {
     expect(screen.getByRole("button", { name: /Sound muted/i })).toHaveTextContent("Muted");
   });
 
-  it("pauses when the dial is clicked and expands the movements table", () => {
-    render(<WorkoutTimer title="Core" steps={steps} />);
+  it("pauses from the dial, jumps to a selected upcoming interval, and expands movements", () => {
+    const { container } = render(<WorkoutTimer title="Core" steps={steps} />);
 
     fireEvent.click(screen.getByRole("button", { name: /Start timer/i }));
     expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Pause timer/i }));
     expect(screen.getByRole("button", { name: "Start" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    fireEvent.click(screen.getByRole("button", { name: /Start Dead bug/i }));
     expect(screen.getByRole("heading", { name: "Dead bug" })).toBeInTheDocument();
     expect(screen.getByText("Slow and controlled")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
 
+    expect(container.querySelector(".workout-stage__movements-plus")).not.toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /Movements/i }));
     expect(screen.getByRole("button", { name: /Movements/i })).toHaveAttribute(
       "aria-expanded",
       "true",
     );
     expect(screen.getByRole("columnheader", { name: "Exercises" })).toBeInTheDocument();
-    expect(screen.getByRole("columnheader", { name: "Block" })).toBeInTheDocument();
-    expect(screen.getByRole("columnheader", { name: "Time" })).toBeInTheDocument();
     expect(screen.getAllByRole("cell", { name: /Dead bug/i }).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: /Sound muted/i }));

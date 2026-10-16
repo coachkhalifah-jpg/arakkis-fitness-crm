@@ -283,6 +283,18 @@ export function WorkoutTimer({
     setState((prev) => ({ ...prev, running: !prev.running }));
   };
 
+  const jumpToStep = (stepIndex: number) => {
+    const step = ordered[stepIndex];
+    if (!step) return;
+    setState({
+      index: stepIndex,
+      remaining: step.durationSeconds,
+      running: true,
+      finished: false,
+    });
+    warnPlayedRef.current = null;
+  };
+
   if (!current) {
     return (
       <div className="workout-stage">
@@ -420,19 +432,25 @@ export function WorkoutTimer({
         <div className="workout-stage__row" aria-label="Upcoming intervals">
           {upcoming.length > 0 ? (
             <div className="workout-stage__upcoming">
-              {upcoming.map((step, offset) => (
-                <article
-                  key={`${step.order}-${step.title}`}
-                  className="workout-stage__card"
-                  data-kind={step.kind}
-                >
-                  <p className="workout-stage__card-title">{step.title}</p>
-                  <p className="workout-stage__card-time">{formatClock(step.durationSeconds)}</p>
-                  <p className="workout-stage__card-index" aria-hidden="true">
-                    {index + 2 + offset}
-                  </p>
-                </article>
-              ))}
+              {upcoming.map((step, offset) => {
+                const stepIndex = index + 1 + offset;
+                return (
+                  <button
+                    key={`${step.order}-${step.title}`}
+                    type="button"
+                    className="workout-stage__card"
+                    data-kind={step.kind}
+                    onClick={() => jumpToStep(stepIndex)}
+                    aria-label={`Start ${step.title}, ${formatClock(step.durationSeconds)}`}
+                  >
+                    <p className="workout-stage__card-title">{step.title}</p>
+                    <p className="workout-stage__card-time">{formatClock(step.durationSeconds)}</p>
+                    <p className="workout-stage__card-index" aria-hidden="true">
+                      {stepIndex + 1}
+                    </p>
+                  </button>
+                );
+              })}
             </div>
           ) : (
             <p className="workout-stage__upcoming-empty">No upcoming intervals</p>
@@ -444,9 +462,13 @@ export function WorkoutTimer({
             className="workout-stage__movements-toggle"
             expanded={movementsOpen}
             controls={movementsId}
+            showIcon={false}
             onClick={() => setMovementsOpen((open) => !open)}
           >
-            Movements
+            <span className="workout-stage__movements-plus" aria-hidden="true">
+              +
+            </span>
+            <span>Movements</span>
           </DisclosureToggle>
           <div id={movementsId} className="workout-stage__movements-panel" hidden={!movementsOpen}>
             <table className="workout-stage__movements-table">
