@@ -1,4 +1,4 @@
--- 0084 — Optional theme line on take-home workouts (run-page secondary meta).
+-- 0086 — Optional theme line on take-home workouts (run-page secondary meta).
 -- Cue/block live in steps jsonb; no Events/People coupling.
 -- Idempotent: safe if theme was already added manually or by a prior apply.
 
