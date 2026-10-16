@@ -1418,6 +1418,15 @@ html[data-participant-transition-fallback="true"][data-participant-transition-re
   font-weight: 800;
   text-transform: uppercase;
 }
+.ops-invitation-record-status.is-active {
+  color: #c7f36b;
+}
+.ops-invitation-record-status.is-suspended {
+  color: #e6c578;
+}
+.ops-invitation-record-status.is-deactivated {
+  color: #ff8e85;
+}
 .ops-invitation-group.is-expired .ops-invitation-record-status {
   color: #e6c578;
 }
