@@ -278,6 +278,20 @@ export function WorkoutTimer({
     return ordered.slice(index + 1, index + 4);
   }, [ordered, index, finished]);
 
+  const movementGroups = useMemo(() => {
+    const groups: { name: string; entries: { step: WorkoutStep; stepIndex: number }[] }[] = [];
+    ordered.forEach((step, stepIndex) => {
+      const name = step.block?.trim() || "Session";
+      const last = groups[groups.length - 1];
+      if (last && last.name === name) {
+        last.entries.push({ step, stepIndex });
+        return;
+      }
+      groups.push({ name, entries: [{ step, stepIndex }] });
+    });
+    return groups;
+  }, [ordered]);
+
   const toggleRunning = () => {
     if (finished) return;
     setState((prev) => ({ ...prev, running: !prev.running }));
@@ -471,30 +485,35 @@ export function WorkoutTimer({
             <span>Movements</span>
           </DisclosureToggle>
           <div id={movementsId} className="workout-stage__movements-panel" hidden={!movementsOpen}>
-            <table className="workout-stage__movements-table">
-              <thead>
-                <tr>
-                  <th scope="col">Exercises</th>
-                  <th scope="col">Block</th>
-                  <th scope="col">Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ordered.map((step, stepIndex) => (
-                  <tr
-                    key={`${step.order}-${step.title}-row`}
-                    className={stepIndex === index && !finished ? "is-current" : undefined}
-                  >
-                    <td>
-                      {step.title}
-                      <span className="sr-only">{` (${kindLabelShort[step.kind]})`}</span>
-                    </td>
-                    <td>{step.block?.trim() || "—"}</td>
-                    <td>{formatClock(step.durationSeconds)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {movementGroups.map((group) => (
+              <section key={group.name} className="workout-stage__block">
+                <h3 className="workout-stage__block-header">{group.name}</h3>
+                <table className="workout-stage__movements-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Time</th>
+                      <th scope="col">Exercise</th>
+                      <th scope="col">Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.entries.map(({ step, stepIndex }) => (
+                      <tr
+                        key={`${step.order}-${step.title}-row`}
+                        className={stepIndex === index && !finished ? "is-current" : undefined}
+                      >
+                        <td>{formatClock(step.durationSeconds)}</td>
+                        <td>
+                          {step.title}
+                          <span className="sr-only">{` (${kindLabelShort[step.kind]})`}</span>
+                        </td>
+                        <td>{step.cue?.trim() || ""}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </section>
+            ))}
           </div>
         </div>
       </div>

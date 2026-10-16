@@ -70,7 +70,7 @@ describe("WorkoutTimer stage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Start Dead bug/i }));
     expect(screen.getByRole("heading", { name: "Dead bug" })).toBeInTheDocument();
-    expect(screen.getByText("Slow and controlled")).toBeInTheDocument();
+    expect(screen.getAllByText("Slow and controlled").length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
 
     expect(container.querySelector(".workout-stage__movements-plus")).not.toBeNull();
@@ -79,8 +79,13 @@ describe("WorkoutTimer stage", () => {
       "aria-expanded",
       "true",
     );
-    expect(screen.getByRole("columnheader", { name: "Exercises" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Warmup" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Circuit" })).toBeInTheDocument();
+    expect(screen.getAllByRole("columnheader", { name: "Time" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("columnheader", { name: "Exercise" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("columnheader", { name: "Notes" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("cell", { name: /Dead bug/i }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("columnheader", { name: "Block" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Sound muted/i }));
     expect(window.localStorage.getItem("arakkis.workout.preferences.muted")).toBe("false");
