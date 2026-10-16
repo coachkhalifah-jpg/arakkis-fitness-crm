@@ -47,6 +47,9 @@ export function AdminEventCard({
   canRemoveRegistration,
   actions,
   cancelAction,
+  selectionMode = false,
+  selected = false,
+  onSelectedChange,
 }: {
   event: {
     id: string;
@@ -73,6 +76,9 @@ export function AdminEventCard({
   canRemoveRegistration: boolean;
   actions: ReactNode;
   cancelAction?: ReactNode;
+  selectionMode?: boolean;
+  selected?: boolean;
+  onSelectedChange?: (selected: boolean) => void;
 }) {
   const rail = useAdminEventCardRail();
   const [localOpen, setLocalOpen] = useState(false);
@@ -139,8 +145,19 @@ export function AdminEventCard({
   return (
     <article
       ref={shellRef}
-      className={`event-card-shell event-card-admin ${event.status === "CANCELLED" ? "event-card-shell-cancelled" : ""} ${open ? "event-card-shell-expanded" : ""}`}
+      className={`event-card-shell event-card-admin ${event.status === "CANCELLED" ? "event-card-shell-cancelled" : ""} ${open ? "event-card-shell-expanded" : ""} ${selected ? "event-card-shell-selected" : ""}`}
     >
+      {selectionMode ? (
+        <label className="admin-event-card-select">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={(changeEvent) => onSelectedChange?.(changeEvent.target.checked)}
+            onClick={(clickEvent) => clickEvent.stopPropagation()}
+            aria-label={`Select ${event.name}`}
+          />
+        </label>
+      ) : null}
       <DisclosureToggle
         ref={triggerRef}
         className="event-card-trigger"

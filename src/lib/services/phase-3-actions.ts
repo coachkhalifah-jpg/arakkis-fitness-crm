@@ -832,6 +832,143 @@ export async function archiveCancelledEvent(id: string): Promise<Phase3ActionSta
   }
 }
 
+const uuidListSchema = z.array(z.string().uuid()).min(1).max(50);
+const leanDeleteReasonSchema = z.object({
+  eventId: z.string().uuid(),
+  reason: z.string().trim().min(1).max(500),
+});
+
+function formEventIds(form: FormData): string[] {
+  return form
+    .getAll("eventIds")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+}
+
+/** DEC-073: cancel many Events with one shared reason (System Admin). */
+export async function bulkCancelEvents(
+  _state: Phase3ActionState,
+  form: FormData,
+): Promise<Phase3ActionState> {
+  try {
+    await requireSystemAdmin();
+    const eventIds = uuidListSchema.parse(formEventIds(form));
+    const reason = value(form, "reason") || "Bulk cancelled by System Admin";
+    if (reason.length > 500) throw new Phase3Error("invalid", "Reason is too long.");
+    const failures: string[] = [];
+    let cancelled = 0;
+    for (const id of eventIds) {
+      const result = await cancelEvent(id, reason);
+      if (result.error) failures.push(result.error);
+      else cancelled += 1;
+    }
+    revalidatePath("/admin/events");
+    if (failures.length && cancelled === 0) return { error: failures[0] };
+    if (failures.length)
+      return {
+        error: `Cancelled ${cancelled} of ${eventIds.length}. ${failures[0]}`,
+      };
+    return {
+      success: `Cancelled ${cancelled} event${cancelled === 1 ? "" : "s"} permanently.`,
+    };
+  } catch (error) {
+    if (error instanceof z.ZodError) return { error: "Select at least one event." };
+    return { error: message(error) };
+  }
+}
+
+/** DEC-073: archive many already-cancelled Events (System Admin). */
+export async function bulkArchiveCancelledEvents(
+  _state: Phase3ActionState,
+  form: FormData,
+): Promise<Phase3ActionState> {
+  try {
+    await requireSystemAdmin();
+    const eventIds = uuidListSchema.parse(formEventIds(form));
+    const failures: string[] = [];
+    let archived = 0;
+    for (const id of eventIds) {
+      const result = await archiveCancelledEvent(id);
+      if (result.error) failures.push(result.error);
+      else archived += 1;
+    }
+    revalidatePath("/admin/events");
+    if (failures.length && archived === 0) return { error: failures[0] };
+    if (failures.length)
+      return {
+        error: `Archived ${archived} of ${eventIds.length}. ${failures[0]}`,
+      };
+    return {
+      success: `Archived ${archived} cancelled event${archived === 1 ? "" : "s"}.`,
+    };
+  } catch (error) {
+    if (error instanceof z.ZodError) return { error: "Select at least one event." };
+    return { error: message(error) };
+  }
+}
+
+/** DEC-074: permanently delete a lean Event with no durable history. */
+export async function deleteLeanEvent(
+  _state: Phase3ActionState,
+  form: FormData,
+): Promise<Phase3ActionState> {
+  try {
+    await requireSystemAdmin();
+    const input = leanDeleteReasonSchema.parse({
+      eventId: value(form, "eventId"),
+      reason: value(form, "reason"),
+    });
+    const db = await createClient();
+    const { error } = await db.rpc("phase3_delete_lean_event", {
+      p_event_id: input.eventId,
+      p_reason: input.reason,
+    } as never);
+    if (error) throw new Phase3Error("conflict", error.message);
+    revalidatePath("/admin/events");
+  } catch (error) {
+    if (error instanceof z.ZodError) return { error: "A deletion reason is required." };
+    return { error: message(error) };
+  }
+  redirect("/admin/events");
+}
+
+/** DEC-074: bulk lean-delete; each id is validated independently by the RPC. */
+export async function bulkDeleteLeanEvents(
+  _state: Phase3ActionState,
+  form: FormData,
+): Promise<Phase3ActionState> {
+  try {
+    await requireSystemAdmin();
+    const eventIds = uuidListSchema.parse(formEventIds(form));
+    const reason = value(form, "reason");
+    if (!reason) throw new Phase3Error("invalid", "A deletion reason is required.");
+    if (reason.length > 500) throw new Phase3Error("invalid", "Reason is too long.");
+    const db = await createClient();
+    const failures: string[] = [];
+    let deleted = 0;
+    for (const id of eventIds) {
+      const { error } = await db.rpc("phase3_delete_lean_event", {
+        p_event_id: id,
+        p_reason: reason,
+      } as never);
+      if (error) failures.push(error.message);
+      else deleted += 1;
+    }
+    revalidatePath("/admin/events");
+    if (failures.length && deleted === 0) return { error: failures[0] };
+    if (failures.length)
+      return {
+        error: `Deleted ${deleted} of ${eventIds.length}. ${failures[0]}`,
+      };
+    return {
+      success: `Permanently deleted ${deleted} lean event${deleted === 1 ? "" : "s"}.`,
+    };
+  } catch (error) {
+    if (error instanceof z.ZodError) return { error: "Select at least one event." };
+    return { error: message(error) };
+  }
+}
+
 export async function updateEvent(
   _state: Phase3ActionState,
   form: FormData,
@@ -1102,6 +1239,10 @@ export async function cancelEventForm(id: string) {
 }
 export async function archiveCancelledEventForm(id: string) {
   await archiveCancelledEvent(id);
+}
+export async function deleteLeanEventForm(id: string, form: FormData) {
+  form.set("eventId", id);
+  await deleteLeanEvent({}, form);
 }
 export async function archiveOrganizationForm(id: string) {
   await archiveOrganization(id);

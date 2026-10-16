@@ -32,3 +32,5 @@ This is a concise handoff log; the durable source records remain in `docs/DECISI
 | 2026-10-15 / UAT-027 | People profile: Goals/Upcoming/History/Follow-up/Remove default-collapsed; System Admin only at bottom (recovery then Remove). | Operator IA; preserves DisclosureToggle/ops patterns. |
 | 2026-10-15 / DEC-071 | System Admin **Force delete with history** cascade wipe (migration 0084). | Pilot/test cleanup when lean delete is blocked by CRM history. |
 | 2026-10-15 / DEC-072 | Phone match reactivates oldest ARCHIVED participant when no ACTIVE match (0084). | Prevents twin after archive → public/walk-in re-registration. |
+| 2026-10-15 / DEC-073 | System Admin bulk cancel + bulk archive-cancelled from `/admin/events` discovery Select mode. | Discovery clutter reduction without per-card navigation. |
+| 2026-10-15 / DEC-074 | System Admin lean hard-delete of Events with no durable history (migration 0085). | Junk/test cleanup; refuse when history exists → cancel + archive. |
