@@ -22,15 +22,9 @@ describe("Event registration pause / resume (UX-R001)", () => {
     expect(actions).toMatch(
       /export async function resumePhase7EventForm\(\s*_state: Phase7ActionState/,
     );
-    expect(actions).toMatch(
-      /return setRegistrationPaused\(eventId, true\);/,
-    );
-    expect(actions).toMatch(
-      /return setRegistrationPaused\(eventId, false\);/,
-    );
-    expect(actions).not.toMatch(
-      /await setRegistrationPaused\(String\(formData\.get\("eventId"\)/,
-    );
+    expect(actions).toMatch(/return setRegistrationPaused\(eventId, true\);/);
+    expect(actions).toMatch(/return setRegistrationPaused\(eventId, false\);/);
+    expect(actions).not.toMatch(/await setRegistrationPaused\(String\(formData\.get\("eventId"\)/);
   });
 
   it("surfaces pause/resume error and success with pending disable", () => {
