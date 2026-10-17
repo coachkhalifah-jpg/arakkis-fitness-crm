@@ -19,12 +19,12 @@ import {
   cancelEventForm,
   archiveCancelledEventForm,
   copyEventForm,
-  finalizeAttendanceSubmit,
-  reopenAttendanceSubmit,
   updateEvent,
   generateEventInviteLink,
   revokeEventInviteLinksForm,
 } from "@/lib/services/phase-3-actions";
+import { FinalizeAttendanceForm } from "@/components/admin/finalize-attendance-form";
+import { ReopenAttendanceForm } from "@/components/admin/reopen-attendance-form";
 import { EventDeleteLeanForm } from "@/components/admin/event-delete-lean-form";
 import { phase7EventUrl } from "@/lib/services/phase-7-actions";
 import { normalizePublicSlug } from "@/lib/services/phase-7";
@@ -407,41 +407,11 @@ export default async function EventDetailPage({
           event.status !== "DRAFT" &&
           event.attendance_processing_state === "FINALIZED" &&
           admin.role === "SYSTEM_ADMIN" ? (
-            <div className="admin-manage-event-attendance">
-              <div className="admin-manage-event-attendance-actions flex flex-wrap gap-2">
-                <form action={reopenAttendanceSubmit} className="flex gap-2">
-                  <input type="hidden" name="eventId" value={id} />
-                  <input
-                    name="reason"
-                    required
-                    placeholder="Reopen reason"
-                    className="rounded border p-2 text-sm"
-                  />
-                  <ConfirmSubmit message="Reopen attendance for correction?">Reopen</ConfirmSubmit>
-                </form>
-              </div>
-              <Alert className="mt-4">
-                Attendance is finalized. Authorized Host Admins may correct individual results for
-                this event with a reason. Only System Admins may reopen the entire event.
-              </Alert>
-            </div>
+            <ReopenAttendanceForm eventId={id} />
           ) : null}
           {event.status !== "CANCELLED" && event.attendance_processing_state === "OPEN" ? (
             admin.role === "SYSTEM_ADMIN" ? (
-              <div className="admin-manage-event-attendance">
-                <form
-                  action={finalizeAttendanceSubmit}
-                  className="admin-manage-event-attendance-actions"
-                >
-                  <input type="hidden" name="eventId" value={id} />
-                  <ConfirmSubmit message="Finalize attendance for this Event? Unmarked eligible registrations will be recorded as no-shows.">
-                    Finalize Attendance
-                  </ConfirmSubmit>
-                </form>
-                <p className="mt-3 text-sm text-slate-600">
-                  Unmarked eligible registrations will be recorded as no-shows.
-                </p>
-              </div>
+              <FinalizeAttendanceForm eventId={id} />
             ) : null
           ) : null}
           {event.status !== "CANCELLED" && event.attendance_processing_state === "OPEN" ? (
