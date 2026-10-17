@@ -748,7 +748,7 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await expect(
       page.getByRole("heading", { name: "Publishing and registration link" }),
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: "Copy registration link" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Copy Link" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Download QR" })).toBeVisible();
     expect(
       await page.evaluate(
@@ -775,8 +775,8 @@ test.describe("Phase 7 publishing and slug registration", () => {
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(/\/admin$/);
     await page.goto(`/admin/events/${fixture.eventId}`);
-    await page.getByRole("button", { name: "Copy registration link" }).focus();
-    await expect(page.locator("button:focus")).toHaveAccessibleName("Copy registration link");
+    await page.getByRole("button", { name: "Copy Link" }).focus();
+    await expect(page.locator("button:focus")).toHaveAccessibleName("Copy Link");
     await page.keyboard.press("Enter");
     await expect(page.getByRole("status")).toContainText(/copied|unavailable/i);
     await page.getByRole("link", { name: "Download QR" }).focus();

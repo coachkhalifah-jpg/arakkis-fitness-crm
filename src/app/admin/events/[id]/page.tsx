@@ -781,14 +781,20 @@ export default async function EventDetailPage({
           <RosterPreview
             eventId={id}
             eventName={event.name}
-            people={rosterRows.map((row) => ({
-              id: row.id,
-              name: row.participantName,
-              phone: row.phone || null,
-              attendanceStatus: row.attendanceStatus,
-              attendanceState: event.attendance_processing_state,
-              firstClass: row.firstClass,
-            }))}
+            people={(registrations ?? []).map((registration) => {
+              const participant = participantById.get(registration.participant_id);
+              return {
+                id: registration.participant_id,
+                name: participant
+                  ? `${participant.first_name} ${participant.last_name}`
+                  : "Participant unavailable",
+                phone: participant?.display_phone ?? null,
+                attendanceStatus:
+                  attendanceByRegistration.get(registration.id)?.status ?? "NOT_RECORDED",
+                attendanceState: event.attendance_processing_state,
+                firstClass: Boolean(participant && !firstClassParticipantIds.has(participant.id)),
+              };
+            })}
             canViewPhone={true}
           />
           <ProgressiveDisclosureSection

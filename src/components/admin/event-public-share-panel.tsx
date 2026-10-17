@@ -39,7 +39,14 @@ export function EventPublicSharePanel({
             QR Code <span aria-hidden="true">↗</span>
           </a>
         ) : null}
-        {publicUrl && !inviteOnly ? <CopyLinkButton url={publicUrl} /> : null}
+        {publicUrl && !inviteOnly ? (
+          <CopyLinkButton
+            url={publicUrl}
+            label="Copy Link"
+            className="admin-manage-event-share-link"
+            showCopyIcon
+          />
+        ) : null}
       </div>
 
       {!canonicalSlug ? (
