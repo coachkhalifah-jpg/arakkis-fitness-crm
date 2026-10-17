@@ -27,6 +27,16 @@ describe("Event public share / slug save", () => {
     expect(panel).toContain("router.refresh()");
   });
 
+  it("styles Copy Link like Share/QR with a copy icon, not a right arrow", () => {
+    const button = readFileSync(join(root, "src/components/admin/copy-link-button.tsx"), "utf8");
+    expect(panel).toContain('label="Copy Link"');
+    expect(panel).toContain('className="admin-manage-event-share-link"');
+    expect(panel).toContain("showCopyIcon");
+    expect(button).toContain('from "lucide-react"');
+    expect(button).toContain("Copy");
+    expect(button).not.toContain("↗");
+  });
+
   it("resolves series slug whether PostgREST returns object or array", () => {
     expect(qr).toContain("Array.isArray(seriesRelation)");
     expect(qr).not.toMatch(/event_series\?\.\[0\]\?\.public_slug/);

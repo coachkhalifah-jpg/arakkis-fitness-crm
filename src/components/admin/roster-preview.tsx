@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { attendancePresentation } from "@/lib/services/attendance-presentation";
 
 type RosterPreviewPerson = {
@@ -41,7 +42,14 @@ export function RosterPreview({
         {people.slice(0, 4).map((person) => (
           <li key={person.id}>
             <span>
-              <strong>{person.name}</strong>
+              <strong>
+                <Link
+                  href={`/admin/participants/${person.id}`}
+                  className="admin-roster-preview-name"
+                >
+                  {person.name}
+                </Link>
+              </strong>
               {canViewPhone && person.phone ? <small>{person.phone}</small> : null}
             </span>
             <span className={person.attendanceStatus === "ATTENDED" ? "is-checked-in" : ""}>

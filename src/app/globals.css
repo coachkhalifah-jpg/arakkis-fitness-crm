@@ -4678,12 +4678,13 @@ body:has(.admin-manage-event-page) {
 .admin-manage-event-share-link,
 .admin-manage-event-calendar-card .admin-calendar-direct-action,
 .admin-manage-event-calendar-card .admin-calendar-download {
-  display: flex;
+  display: inline-flex;
   width: fit-content;
   min-width: 8rem;
   min-height: 44px;
   align-items: center;
   justify-content: center;
+  gap: 0.4rem;
   border: 1px solid #59616b;
   border-radius: 0;
   background: transparent;
@@ -4694,9 +4695,24 @@ body:has(.admin-manage-event-page) {
   font-weight: 800;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  cursor: pointer;
 }
 .admin-manage-event-share-link {
   margin-top: 0;
+}
+.admin-manage-event-copy-link {
+  display: grid;
+  width: fit-content;
+  min-width: 0;
+  gap: 0.35rem;
+  align-content: start;
+}
+.admin-manage-event-copy-link .admin-manage-event-share-link {
+  width: 100%;
+}
+.admin-manage-event-copy-link [role="status"] {
+  color: #aeb4bb;
+  font-size: 0.72rem;
 }
 .admin-manage-event-share-panel {
   display: grid;
@@ -4782,6 +4798,8 @@ body:has(.admin-manage-event-page) {
     width: 100%;
   }
   .admin-manage-event-calendar-share-actions > a,
+  .admin-manage-event-calendar-share-actions .admin-manage-event-copy-link,
+  .admin-manage-event-calendar-share-actions .admin-manage-event-share-link,
   .admin-manage-event-calendar-actions .admin-calendar-direct-action,
   .admin-manage-event-calendar-actions .admin-calendar-download {
     box-sizing: border-box;
@@ -11736,6 +11754,16 @@ body:has(.manage-booking-detail-page) > header {
 }
 .admin-roster-preview-list strong {
   font-size: 0.9rem;
+}
+.admin-roster-preview-list .admin-roster-preview-name {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.12em;
+}
+.admin-roster-preview-list .admin-roster-preview-name:hover,
+.admin-roster-preview-list .admin-roster-preview-name:focus-visible {
+  text-decoration-color: currentColor;
 }
 .admin-roster-preview-list small {
   color: #aeb3bb;
