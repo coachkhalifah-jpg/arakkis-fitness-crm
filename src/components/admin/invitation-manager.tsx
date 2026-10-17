@@ -107,7 +107,8 @@ export function InvitationManager({
           </label>
           <div className="ops-invitation-form-rule" />
           <p className="ops-invitation-form-note">
-            Invitations expire after 72 hours. No email is sent automatically.
+            Invitations expire after 72 hours. No email is sent automatically. Pending invites stay
+            on Invitation history until accepted, expired, or revoked.
           </p>
           <Button type="submit" disabled={pending} className="ops-invitation-submit">
             {pending ? (

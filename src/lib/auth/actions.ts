@@ -5,6 +5,12 @@ import { createClient } from "@/lib/db/server";
 import { getServerEnv } from "@/lib/config/env";
 import { requireSystemAdmin } from "@/lib/authorization/server";
 import { createInvitationToken, hashInvitationToken } from "@/lib/auth/tokens";
+import {
+  logInvitationCreateFailure,
+  logInvitationRegenerateFailure,
+  mapInvitationCreateError,
+  mapInvitationRegenerateError,
+} from "@/lib/auth/invitation-create-errors";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -38,11 +44,17 @@ export async function createHostInvitation(formData: FormData) {
       p_organization_ids: organizationIds,
     },
   );
-  if (invitationError || !invitation) return { error: "Invitation could not be created." };
+  if (invitationError || !invitation) {
+    logInvitationCreateFailure(invitationError, {
+      organizationCount: organizationIds.length,
+      hasEmail: Boolean(email),
+    });
+    return { error: mapInvitationCreateError(invitationError) };
+  }
 
   const env = getServerEnv();
   return {
-    inviteUrl: `${env.NEXT_PUBLIC_APP_URL}/admin/invitations/accept?token=${encodeURIComponent(token)}`,
+    inviteUrl: `${env.APP_BASE_URL || env.NEXT_PUBLIC_APP_URL}/admin/invitations/accept?token=${encodeURIComponent(token)}`,
   };
 }
 
@@ -68,7 +80,14 @@ export async function regenerateInvitation(invitationId: string) {
     p_token_expires_at: expires,
     p_actor_admin_id: actor.userId,
   });
-  if (error || !regenerated) return { error: "Invitation could not be regenerated." };
+  if (error || !regenerated) {
+    const rpcReturnedFalse = !error && regenerated === false;
+    logInvitationRegenerateFailure(error, {
+      invitationIdPresent: Boolean(invitationId),
+      rpcReturnedFalse,
+    });
+    return { error: mapInvitationRegenerateError(error, rpcReturnedFalse) };
+  }
   const env = getServerEnv();
   return {
     inviteUrl: `${env.APP_BASE_URL || env.NEXT_PUBLIC_APP_URL}/admin/invitations/accept?token=${encodeURIComponent(token)}`,
