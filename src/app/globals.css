@@ -10250,10 +10250,21 @@ body:has(.manage-booking-detail-page) > header {
   line-height: 1.5;
 }
 .event-hero-venue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
   margin-top: 0.35rem;
   color: var(--foreground-muted);
   font-size: 0.95rem;
   line-height: 1.4;
+}
+.event-hero-venue-pin {
+  flex: 0 0 auto;
+  width: 0.95rem;
+  height: 0.95rem;
+  color: #ffffff;
+  stroke: #ffffff;
 }
 .event-hero-status {
   display: block;
