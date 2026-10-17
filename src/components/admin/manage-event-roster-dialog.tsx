@@ -3,11 +3,10 @@
 import { useCallback, useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import type { RegistrationRosterRow } from "@/components/admin/registration-roster";
+import { CheckInButton } from "@/components/admin/check-in-button";
 import { RemoveRosterAction } from "@/components/admin/remove-roster-action";
 import { getDialogFocusableElements } from "@/components/admin/dialog-focus";
 import { attendancePresentation } from "@/lib/services/attendance-presentation";
-
-type ServerAction = (formData: FormData) => Promise<void>;
 
 export type ManageEventRosterDialogProps = {
   eventId: string;
@@ -20,7 +19,6 @@ export type ManageEventRosterDialogProps = {
   checkedIn: number;
   capacity: number;
   canEdit: boolean;
-  checkInAction: ServerAction;
   canRemoveRegistration: boolean;
 };
 
@@ -37,7 +35,6 @@ export function ManageEventRosterDialog({
   checkedIn,
   capacity,
   canEdit,
-  checkInAction,
   canRemoveRegistration,
 }: ManageEventRosterDialogProps & { open: boolean; onClose: () => void }) {
   const modalRef = useRef<HTMLDivElement>(null);
@@ -139,25 +136,19 @@ export function ManageEventRosterDialog({
                   </div>
                   <div className="admin-manage-roster-actions">
                     {canEdit && row.registrationStatus !== "CANCELLED" ? (
-                      <form action={checkInAction}>
-                        <input type="hidden" name="eventId" value={eventId} />
-                        <input type="hidden" name="registrationId" value={row.id} />
-                        <input
-                          type="hidden"
-                          name="status"
-                          value={checkedInState ? "NOT_RECORDED" : "ATTENDED"}
-                        />
-                        <button
-                          type="submit"
-                          className={
-                            checkedInState
-                              ? "admin-manage-roster-check-in is-checked-in"
-                              : "admin-manage-roster-check-in"
-                          }
-                        >
-                          {checkedInState ? "IN" : "Check in"}
-                        </button>
-                      </form>
+                      <CheckInButton
+                        eventId={eventId}
+                        registrationId={row.id}
+                        status={checkedInState ? "NOT_RECORDED" : "ATTENDED"}
+                        className={
+                          checkedInState
+                            ? "admin-manage-roster-check-in is-checked-in"
+                            : "admin-manage-roster-check-in"
+                        }
+                        pendingLabel={checkedInState ? "…" : "Checking in…"}
+                      >
+                        {checkedInState ? "IN" : "Check in"}
+                      </CheckInButton>
                     ) : (
                       <span
                         className={

@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAdminEventCardRail } from "@/components/admin/admin-event-card-rail";
+import { CheckInButton } from "@/components/admin/check-in-button";
 import { RemoveRosterAction } from "@/components/admin/remove-roster-action";
 import { DisclosureToggle } from "@/components/ui/disclosure-toggle";
 import { getDialogFocusableElements } from "@/components/admin/dialog-focus";
@@ -20,7 +21,6 @@ type EventPerson = {
   attendanceStatus: string;
   firstClass: boolean;
 };
-type CheckInAction = (formData: FormData) => Promise<void>;
 
 function eventStatusLabel(status: string) {
   return status.replaceAll("_", " ");
@@ -43,7 +43,6 @@ export function AdminEventCard({
   people,
   canViewPhone,
   canCheckIn,
-  checkInAction,
   canRemoveRegistration,
   actions,
   cancelAction,
@@ -72,7 +71,6 @@ export function AdminEventCard({
   people: EventPerson[];
   canViewPhone: boolean;
   canCheckIn: boolean;
-  checkInAction: CheckInAction;
   canRemoveRegistration: boolean;
   actions: ReactNode;
   cancelAction?: ReactNode;
@@ -292,32 +290,31 @@ export function AdminEventCard({
                             </td>
                             <td className="p-3">
                               {person.attendanceStatus === "ATTENDED" && canCheckIn ? (
-                                <form action={checkInAction}>
-                                  <input type="hidden" name="eventId" value={event.id} />
-                                  <input type="hidden" name="registrationId" value={person.id} />
-                                  <input type="hidden" name="status" value="NOT_RECORDED" />
-                                  <button type="submit" className="event-roster-check-in-state">
-                                    IN
-                                    <Check size={16} strokeWidth={2.5} aria-hidden="true" />
-                                  </button>
-                                </form>
+                                <CheckInButton
+                                  eventId={event.id}
+                                  registrationId={person.id}
+                                  status="NOT_RECORDED"
+                                  className="event-roster-check-in-state"
+                                  pendingLabel="…"
+                                >
+                                  IN
+                                  <Check size={16} strokeWidth={2.5} aria-hidden="true" />
+                                </CheckInButton>
                               ) : person.attendanceStatus === "ATTENDED" ? (
                                 <span className="event-roster-check-in-state">
                                   IN
                                   <Check size={16} strokeWidth={2.5} aria-hidden="true" />
                                 </span>
                               ) : canCheckIn ? (
-                                <form action={checkInAction}>
-                                  <input type="hidden" name="eventId" value={event.id} />
-                                  <input type="hidden" name="registrationId" value={person.id} />
-                                  <input type="hidden" name="status" value="ATTENDED" />
-                                  <button
-                                    type="submit"
-                                    className="event-roster-check-in-button rounded-full bg-brand text-white transition hover:bg-brand/90 disabled:opacity-60"
-                                  >
-                                    Check in
-                                  </button>
-                                </form>
+                                <CheckInButton
+                                  eventId={event.id}
+                                  registrationId={person.id}
+                                  status="ATTENDED"
+                                  className="event-roster-check-in-button rounded-full bg-brand text-white transition hover:bg-brand/90 disabled:opacity-60"
+                                  pendingLabel="Checking in…"
+                                >
+                                  Check in
+                                </CheckInButton>
                               ) : (
                                 attendancePresentation(
                                   person.attendanceStatus,
@@ -381,32 +378,31 @@ export function AdminEventCard({
                           <div className="event-roster-mobile-actions">
                             <div className="event-roster-mobile-check-in">
                               {person.attendanceStatus === "ATTENDED" && canCheckIn ? (
-                                <form action={checkInAction}>
-                                  <input type="hidden" name="eventId" value={event.id} />
-                                  <input type="hidden" name="registrationId" value={person.id} />
-                                  <input type="hidden" name="status" value="NOT_RECORDED" />
-                                  <button type="submit" className="event-roster-check-in-state">
-                                    IN
-                                    <Check size={16} strokeWidth={2.5} aria-hidden="true" />
-                                  </button>
-                                </form>
+                                <CheckInButton
+                                  eventId={event.id}
+                                  registrationId={person.id}
+                                  status="NOT_RECORDED"
+                                  className="event-roster-check-in-state"
+                                  pendingLabel="…"
+                                >
+                                  IN
+                                  <Check size={16} strokeWidth={2.5} aria-hidden="true" />
+                                </CheckInButton>
                               ) : person.attendanceStatus === "ATTENDED" ? (
                                 <span className="event-roster-check-in-state">
                                   IN
                                   <Check size={16} strokeWidth={2.5} aria-hidden="true" />
                                 </span>
                               ) : canCheckIn ? (
-                                <form action={checkInAction}>
-                                  <input type="hidden" name="eventId" value={event.id} />
-                                  <input type="hidden" name="registrationId" value={person.id} />
-                                  <input type="hidden" name="status" value="ATTENDED" />
-                                  <button
-                                    type="submit"
-                                    className="event-roster-check-in-button w-full rounded-none border border-brand bg-transparent text-admin-text transition hover:bg-brand hover:text-white disabled:opacity-60"
-                                  >
-                                    Check in
-                                  </button>
-                                </form>
+                                <CheckInButton
+                                  eventId={event.id}
+                                  registrationId={person.id}
+                                  status="ATTENDED"
+                                  className="event-roster-check-in-button w-full rounded-none border border-brand bg-transparent text-admin-text transition hover:bg-brand hover:text-white disabled:opacity-60"
+                                  pendingLabel="Checking in…"
+                                >
+                                  Check in
+                                </CheckInButton>
                               ) : (
                                 <span className="text-sm text-admin-text-muted">
                                   {

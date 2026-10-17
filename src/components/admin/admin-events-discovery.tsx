@@ -31,7 +31,6 @@ export type AdminDiscoveryEvent = {
   people: Parameters<typeof AdminEventCard>[0]["people"];
   canViewPhone: boolean;
   canCheckIn: boolean;
-  checkInAction: Parameters<typeof AdminEventCard>[0]["checkInAction"];
   canRemoveRegistration: boolean;
   canArchive: boolean;
   archiveAction: (id: string) => Promise<void>;
@@ -263,7 +262,6 @@ export function AdminEventsDiscovery({
       people={item.people}
       canViewPhone={item.canViewPhone}
       canCheckIn={item.canCheckIn}
-      checkInAction={item.checkInAction}
       canRemoveRegistration={item.canRemoveRegistration}
       selectionMode={selectionMode}
       selected={selectedIds.includes(item.id)}
