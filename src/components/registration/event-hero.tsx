@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { MapPin } from "lucide-react";
 import { eventCardAsset } from "@/lib/config/admin-visual-assets";
 import { FloatingBackButton } from "@/components/registration/floating-back-button";
 import { participantDisplayName } from "@/lib/registration/display";
@@ -108,7 +109,10 @@ export function EventHero({
         <div className="event-hero-identity mx-auto max-w-[92%] text-center text-white">
           <p className="event-hero-host">{displayHost}</p>
           <h1 className="event-hero-title">{displayEventName}</h1>
-          <p className="event-hero-venue">{displayVenue}</p>
+          <p className="event-hero-venue">
+            <MapPin className="event-hero-venue-pin" aria-hidden="true" strokeWidth={2} />
+            <span>{displayVenue}</span>
+          </p>
         </div>
       </div>
     </div>
