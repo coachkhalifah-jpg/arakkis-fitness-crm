@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireActiveAdmin } from "@/lib/authorization/server";
 import { signOut } from "@/lib/auth/session-actions";
 import { createClient } from "@/lib/db/server";
-import { archiveCancelledEventForm, createEvent } from "@/lib/services/phase-3-actions";
+import { createEvent } from "@/lib/services/phase-3-actions";
 import { SegmentedNavigation } from "@/components/admin/segmented-navigation";
 import {
   AdminEventsDiscovery,
@@ -484,7 +484,6 @@ export default async function EventsPage({
                     admin.role === "SYSTEM_ADMIN" &&
                     event.status === "CANCELLED" &&
                     !event.archived_at,
-                  archiveAction: archiveCancelledEventForm,
                 };
               })}
               calendarEvents={calendarEvents ?? []}
