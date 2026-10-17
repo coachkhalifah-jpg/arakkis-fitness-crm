@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { ZodError } from "zod";
 import { requireSystemAdmin } from "@/lib/authorization/server";
 import { createClient } from "@/lib/db/server";
 import { getServerEnv } from "@/lib/config/env";
@@ -140,16 +141,23 @@ export async function setPhase7Slug(id: string, value: string): Promise<Phase7Ac
     const { admin, db, event } = await scopedEvent(id);
     const slug = assertPublicSlug(normalizePublicSlug(value));
     if (event.event_series_id) {
-      const { error } = await db
+      const { data: updatedSeries, error } = await db
         .from("event_series")
         .update({ public_slug: slug })
-        .eq("id", event.event_series_id);
+        .eq("id", event.event_series_id)
+        .select("id,public_slug")
+        .maybeSingle();
       if (error)
         throw new Phase3Error(
           "conflict",
           error.code === "23505"
             ? "That public slug is already in use."
             : "Series public slug could not be saved.",
+        );
+      if (!updatedSeries?.public_slug)
+        throw new Phase3Error(
+          "conflict",
+          "Series public slug could not be saved (no row updated).",
         );
       await audit(
         admin.userId,
@@ -158,10 +166,17 @@ export async function setPhase7Slug(id: string, value: string): Promise<Phase7Ac
         event.event_series_id,
         { public_slug: slug },
       );
+      revalidatePath("/admin/events");
       revalidatePath(`/admin/events/${id}`);
-      return { success: "Series public slug saved." };
+      revalidatePath(`/register/${slug}`);
+      return { success: "Series public slug saved. Share and QR are ready." };
     }
-    const { error } = await db.from("events").update({ public_slug: slug }).eq("id", id);
+    const { data: updatedEvent, error } = await db
+      .from("events")
+      .update({ public_slug: slug })
+      .eq("id", id)
+      .select("id,public_slug")
+      .maybeSingle();
     if (error)
       throw new Phase3Error(
         "conflict",
@@ -169,12 +184,32 @@ export async function setPhase7Slug(id: string, value: string): Promise<Phase7Ac
           ? "That public slug is already in use."
           : "Public slug could not be saved.",
       );
+    if (!updatedEvent?.public_slug)
+      throw new Phase3Error("conflict", "Public slug could not be saved (no row updated).");
     await audit(admin.userId, "EVENT_SLUG_CHANGED", "EVENT", id, { public_slug: slug }, event);
+    revalidatePath("/admin/events");
     revalidatePath(`/admin/events/${id}`);
-    return { success: "Public slug saved." };
+    revalidatePath(`/register/${slug}`);
+    return { success: "Public slug saved. Share and QR are ready." };
   } catch (error) {
+    if (error instanceof ZodError) {
+      return {
+        error: "Use a URL-safe slug like the-fight-within (lowercase letters, numbers, hyphens).",
+      };
+    }
     return { error: error instanceof Error ? error.message : "Public slug could not be saved." };
   }
+}
+
+/** Bound for useActionState — surfaces success/error instead of silent no-ops. */
+export async function setPhase7SlugAction(
+  _state: Phase7ActionState,
+  form: FormData,
+): Promise<Phase7ActionState> {
+  const eventId = String(form.get("eventId") ?? "").trim();
+  const publicSlug = String(form.get("publicSlug") ?? "");
+  if (!eventId) return { error: "Event is required." };
+  return setPhase7Slug(eventId, publicSlug);
 }
 
 export async function setRegistrationPaused(
@@ -231,5 +266,6 @@ export async function resumePhase7EventForm(formData: FormData) {
 }
 
 export async function setPhase7SlugForm(id: string, formData: FormData) {
-  await setPhase7Slug(id, String(formData.get("publicSlug") ?? ""));
+  const result = await setPhase7Slug(id, String(formData.get("publicSlug") ?? ""));
+  if (result.error) throw new Error(result.error);
 }
