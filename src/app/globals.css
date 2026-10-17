@@ -4698,6 +4698,38 @@ body:has(.admin-manage-event-page) {
 .admin-manage-event-share-link {
   margin-top: 0;
 }
+.admin-manage-event-share-panel {
+  display: grid;
+  gap: 0.85rem;
+  align-content: start;
+  min-width: 0;
+}
+.admin-manage-event-share-empty {
+  margin: 0;
+  color: #aeb4bb;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.admin-manage-event-slug-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #f7f5f0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.admin-manage-event-share-message {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+.admin-manage-event-share-message.is-error {
+  color: #ff7a3d;
+}
+.admin-manage-event-share-message.is-success {
+  color: #c7f36b;
+}
 .admin-manage-event-calendar-share-actions,
 .admin-manage-event-calendar-actions,
 .admin-manage-event-calendar-actions .admin-calendar-single-actions {

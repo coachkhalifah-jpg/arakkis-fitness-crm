@@ -8,7 +8,6 @@ import { ConfirmSubmit } from "@/components/admin/confirm-submit";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { WalkInForm } from "@/components/admin/walk-in-form";
-import { CopyLinkButton } from "@/components/admin/copy-link-button";
 import type { RegistrationRosterRow } from "@/components/admin/registration-roster";
 import { ContextualBack } from "@/components/admin/contextual-back";
 import {
@@ -37,8 +36,9 @@ import {
   pausePhase7EventForm,
   phase7EventUrl,
   resumePhase7EventForm,
-  setPhase7SlugForm,
 } from "@/lib/services/phase-7-actions";
+import { normalizePublicSlug } from "@/lib/services/phase-7";
+import { EventPublicSharePanel } from "@/components/admin/event-public-share-panel";
 import { designAssetPublicUrl } from "@/lib/config/design-assets";
 import { calendarEventFromRecord } from "@/lib/services/admin-calendar";
 import {
@@ -373,18 +373,32 @@ export default async function EventDetailPage({
           </div>
           <div className="admin-manage-event-card admin-manage-event-calendar-card">
             <h2>Share and calendar</h2>
-            <div className="admin-manage-event-calendar-share-actions">
-              {publicUrl ? (
-                <a className="admin-manage-event-share-link" href={publicUrl}>
-                  Share event <span aria-hidden="true">↗</span>
-                </a>
-              ) : null}
-              {canonicalSlug ? (
-                <a className="admin-manage-event-share-link" href={`/admin/events/${id}/qr`}>
-                  QR Code <span aria-hidden="true">↗</span>
-                </a>
-              ) : null}
-            </div>
+            {canEdit ? (
+              <EventPublicSharePanel
+                eventId={id}
+                publicUrl={publicUrl}
+                canonicalSlug={canonicalSlug}
+                accessMode={event.access_mode ?? "PUBLIC"}
+                suggestedSlug={normalizePublicSlug(event.name)}
+              />
+            ) : (
+              <div className="admin-manage-event-calendar-share-actions">
+                {publicUrl ? (
+                  <a className="admin-manage-event-share-link" href={publicUrl}>
+                    Share event <span aria-hidden="true">↗</span>
+                  </a>
+                ) : (
+                  <p className="admin-manage-event-share-empty">
+                    No public registration link is available for this Event yet.
+                  </p>
+                )}
+                {canonicalSlug ? (
+                  <a className="admin-manage-event-share-link" href={`/admin/events/${id}/qr`}>
+                    QR Code <span aria-hidden="true">↗</span>
+                  </a>
+                ) : null}
+              </div>
+            )}
             {event.status !== "CANCELLED" ? (
               <div className="admin-manage-event-calendar-actions">
                 <CalendarUtility events={[eventCalendarEvent]} single />
@@ -801,13 +815,7 @@ export default async function EventDetailPage({
                     <Button type="submit">Pause registration</Button>
                   </form>
                 )}
-                {publicUrl ? <CopyLinkButton url={publicUrl} /> : null}
               </div>
-            ) : null}
-            {publicUrl ? (
-              <p className="admin-manage-event-url" data-testid="canonical-url">
-                {publicUrl}
-              </p>
             ) : null}
             {event.access_mode === "INVITE_ONLY" && canEdit ? (
               <div className="admin-manage-event-invite">
@@ -831,23 +839,9 @@ export default async function EventDetailPage({
                 </form>
               </div>
             ) : null}
-            {canEdit ? (
-              <form
-                action={setPhase7SlugForm.bind(null, id)}
-                className="admin-manage-event-slug-form"
-              >
-                <label className="sr-only" htmlFor="publicSlug">
-                  Public slug
-                </label>
-                <input
-                  id="publicSlug"
-                  name="publicSlug"
-                  defaultValue={canonicalSlug ?? ""}
-                  className="min-w-0 flex-1 rounded border p-2"
-                />
-                <Button type="submit">Save slug</Button>
-              </form>
-            ) : null}
+            <p className="admin-manage-event-share-empty">
+              Public slug, Share link, and QR live in Share and calendar above.
+            </p>
           </ProgressiveDisclosureSection>
           {admin.role === "SYSTEM_ADMIN" ? (
             <div className="admin-manage-event-rare-actions">
