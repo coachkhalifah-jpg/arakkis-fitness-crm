@@ -10,11 +10,7 @@ import { Alert } from "@/components/ui/alert";
 import { WalkInForm } from "@/components/admin/walk-in-form";
 import type { RegistrationRosterRow } from "@/components/admin/registration-roster";
 import { ContextualBack } from "@/components/admin/contextual-back";
-import {
-  OrganizationVenueFields,
-  EventTimingFields,
-  VenueSelect,
-} from "@/components/admin/event-form-fields";
+import { OrganizationVenueFields, EventTimingFields } from "@/components/admin/event-form-fields";
 import { DesignAssetUploadForm } from "@/components/admin/design-asset-upload-form";
 import { SeriesMainImageForm } from "@/components/admin/series-main-image-form";
 import { RosterPreview } from "@/components/admin/roster-preview";
@@ -27,7 +23,6 @@ import {
   finalizeAttendanceSubmit,
   reopenAttendanceSubmit,
   updateEvent,
-  setOccurrenceLocationOverrideSubmit,
   generateEventInviteLink,
   revokeEventInviteLinksForm,
 } from "@/lib/services/phase-3-actions";
@@ -39,6 +34,7 @@ import {
 } from "@/lib/services/phase-7-actions";
 import { normalizePublicSlug } from "@/lib/services/phase-7";
 import { EventPublicSharePanel } from "@/components/admin/event-public-share-panel";
+import { OccurrenceLocationOverrideForm } from "@/components/admin/occurrence-location-override-form";
 import { designAssetPublicUrl } from "@/lib/config/design-assets";
 import { calendarEventFromRecord } from "@/lib/services/admin-calendar";
 import {
@@ -475,6 +471,19 @@ export default async function EventDetailPage({
           >
             <h2 className="sr-only">Admin</h2>
             <div className="admin-manage-event-configuration">
+              {canEdit && admin.role === "SYSTEM_ADMIN" ? (
+                <OccurrenceLocationOverrideForm
+                  eventId={id}
+                  organizationId={event.host_organization_id}
+                  organizationName={
+                    organizations?.find(
+                      (organization) => organization.id === event.host_organization_id,
+                    )?.name
+                  }
+                  defaultVenueId={event.location_override_venue_id ?? event.venue_id}
+                  venues={venues ?? []}
+                />
+              ) : null}
               {canEdit ? (
                 <ActionForm
                   action={updateEvent}
@@ -520,43 +529,6 @@ export default async function EventDetailPage({
                         className="mt-1 w-full rounded border p-2"
                       />
                     </label>
-                    {admin.role === "SYSTEM_ADMIN" ? (
-                      <div className="mt-4 mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
-                        <h3 className="font-semibold text-amber-950">Occurrence location</h3>
-                        <p className="mt-1 text-sm text-amber-900">
-                          This changes this occurrence only; the series and other dates keep their
-                          locations.
-                        </p>
-                        <input type="hidden" name="eventId" value={id} />
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <VenueSelect
-                            name="venueId"
-                            defaultValue={event.location_override_venue_id ?? event.venue_id}
-                            className="rounded border p-2 text-sm"
-                            organizationId={event.host_organization_id}
-                            organizationName={
-                              organizations?.find(
-                                (organization) => organization.id === event.host_organization_id,
-                              )?.name
-                            }
-                            venues={venues ?? []}
-                          />
-                          <input
-                            name="note"
-                            placeholder="Optional location note"
-                            className="rounded border p-2 text-sm"
-                            maxLength={200}
-                          />
-                          <button
-                            type="submit"
-                            formAction={setOccurrenceLocationOverrideSubmit}
-                            className="admin-manage-event-orange-action rounded bg-brand px-3 py-2 text-sm font-semibold text-white"
-                          >
-                            Save occurrence location
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
                   </ProgressiveDisclosureSection>
                   <ProgressiveDisclosureSection
                     id="manage-event-schedule"
