@@ -5,7 +5,6 @@ import { signOut } from "@/lib/auth/session-actions";
 import { createClient } from "@/lib/db/server";
 import { ActionForm } from "@/components/admin/action-form";
 import { ConfirmSubmit } from "@/components/admin/confirm-submit";
-import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { WalkInForm } from "@/components/admin/walk-in-form";
 import type { RegistrationRosterRow } from "@/components/admin/registration-roster";
@@ -27,14 +26,11 @@ import {
   revokeEventInviteLinksForm,
 } from "@/lib/services/phase-3-actions";
 import { EventDeleteLeanForm } from "@/components/admin/event-delete-lean-form";
-import {
-  pausePhase7EventForm,
-  phase7EventUrl,
-  resumePhase7EventForm,
-} from "@/lib/services/phase-7-actions";
+import { phase7EventUrl } from "@/lib/services/phase-7-actions";
 import { normalizePublicSlug } from "@/lib/services/phase-7";
 import { EventPublicSharePanel } from "@/components/admin/event-public-share-panel";
 import { OccurrenceLocationOverrideForm } from "@/components/admin/occurrence-location-override-form";
+import { EventRegistrationPauseControls } from "@/components/admin/event-registration-pause-controls";
 import { designAssetPublicUrl } from "@/lib/config/design-assets";
 import { calendarEventFromRecord } from "@/lib/services/admin-calendar";
 import {
@@ -781,19 +777,10 @@ export default async function EventDetailPage({
               </div>
             </dl>
             {admin.role === "SYSTEM_ADMIN" && event.status !== "CANCELLED" ? (
-              <div className="admin-manage-event-secondary-actions">
-                {event.registration_paused_at ? (
-                  <form action={resumePhase7EventForm}>
-                    <input type="hidden" name="eventId" value={id} />
-                    <Button type="submit">Resume registration</Button>
-                  </form>
-                ) : (
-                  <form action={pausePhase7EventForm}>
-                    <input type="hidden" name="eventId" value={id} />
-                    <Button type="submit">Pause registration</Button>
-                  </form>
-                )}
-              </div>
+              <EventRegistrationPauseControls
+                eventId={id}
+                paused={Boolean(event.registration_paused_at)}
+              />
             ) : null}
             {event.access_mode === "INVITE_ONLY" && canEdit ? (
               <div className="admin-manage-event-invite">
