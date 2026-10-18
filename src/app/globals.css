@@ -5377,8 +5377,10 @@ body:has(.admin-manage-event-page) {
     sans-serif;
   font-size: clamp(1.75rem, 7cqw, 2.125rem);
   font-weight: 800;
-  line-height: 0.98;
+  /* line-height < 1 + overflow:hidden (line-clamp) clips glyph ink / descenders */
+  line-height: 1.12;
   letter-spacing: -0.02em;
+  padding-block: 0.05em 0.16em;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -7373,7 +7375,8 @@ body:has(.admin-manage-event-page) {
   padding: 0.65rem 0.75rem 0.7rem;
 }
 
-/* Keep longer event names inside the hero instead of clipping the end of a word. */
+/* Keep longer event names inside the hero instead of clipping the end of a word.
+   Vertical ink room comes from shared .event-card-title-overlay line-height/padding. */
 .admin-events-page .event-card-title-overlay {
   right: 1rem;
   max-width: none;
@@ -11052,7 +11055,7 @@ body:has(.manage-booking-detail-page) > header {
   font-size: clamp(1.8rem, 3vw, 3rem);
   font-weight: 900;
   letter-spacing: -0.07em;
-  line-height: 0.82;
+  line-height: 1.08;
   text-transform: uppercase;
 }
 .participant-event-card-meta {
