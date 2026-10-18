@@ -40,10 +40,7 @@ export function OccurrenceLocationOverrideForm({
   }, [router, state.success]);
 
   return (
-    <div
-      className="mt-6 border-t border-slate-200 pt-4"
-      data-testid="occurrence-location-override"
-    >
+    <div className="mt-6 border-t border-slate-200 pt-4" data-testid="occurrence-location-override">
       <h3 className="text-sm font-semibold text-slate-900">Occurrence location</h3>
       <p className="mt-1 text-sm text-slate-600">
         This changes this occurrence only; the series and other dates keep their locations.
