@@ -64,7 +64,10 @@ export async function setOccurrenceLocationOverride(form: FormData): Promise<Pha
   try {
     const admin = await requireSystemAdmin();
     const eventId = value(form, "eventId");
-    const venueId = value(form, "venueId");
+    // Unique name — must not share venueId with the Update Event form.
+    const venueId = value(form, "locationOverrideVenueId");
+    if (!eventId) return { error: "Event is required." };
+    if (!venueId) return { error: "Choose a venue for this occurrence." };
     const db = await createClient();
     const { data: event } = await db
       .from("events")
@@ -86,7 +89,7 @@ export async function setOccurrenceLocationOverride(form: FormData): Promise<Pha
         "invalid",
         "Choose an active venue belonging to the Event organization or a Public Venue.",
       );
-    const { error } = await db
+    const { data: updated, error } = await db
       .from("events")
       .update({
         location_override_venue_id: venue.id,
@@ -94,8 +97,15 @@ export async function setOccurrenceLocationOverride(form: FormData): Promise<Pha
         location_override_by_admin_id: admin.userId,
         location_override_note: value(form, "note") || null,
       })
-      .eq("id", eventId);
+      .eq("id", eventId)
+      .select("id,location_override_venue_id")
+      .maybeSingle();
     if (error) throw new Phase3Error("conflict", "Occurrence location could not be updated.");
+    if (!updated || updated.location_override_venue_id !== venue.id)
+      throw new Phase3Error(
+        "conflict",
+        "Occurrence location could not be updated (no row updated).",
+      );
     await audit(
       admin.userId,
       "EVENT_OCCURRENCE_LOCATION_UPDATED",
@@ -112,8 +122,12 @@ export async function setOccurrenceLocationOverride(form: FormData): Promise<Pha
   }
 }
 
-export async function setOccurrenceLocationOverrideSubmit(form: FormData): Promise<void> {
-  await setOccurrenceLocationOverride(form);
+/** Bound for useActionState — surfaces success/error instead of silent no-ops. */
+export async function setOccurrenceLocationOverrideAction(
+  _state: Phase3ActionState,
+  form: FormData,
+): Promise<Phase3ActionState> {
+  return setOccurrenceLocationOverride(form);
 }
 
 function eventImageFile(form: FormData) {
