@@ -9,12 +9,7 @@ type PasswordInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & 
 /**
  * Password field with an explicit show/hide control for admin auth forms.
  */
-export function PasswordInput({
-  label,
-  id,
-  className,
-  ...props
-}: PasswordInputProps) {
+export function PasswordInput({ label, id, className, ...props }: PasswordInputProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const [visible, setVisible] = useState(false);
