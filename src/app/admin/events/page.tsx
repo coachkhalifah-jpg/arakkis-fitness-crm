@@ -2,11 +2,7 @@ import Link from "next/link";
 import { requireActiveAdmin } from "@/lib/authorization/server";
 import { signOut } from "@/lib/auth/session-actions";
 import { createClient } from "@/lib/db/server";
-import {
-  archiveCancelledEventForm,
-  createEvent,
-  markAttendanceSubmit,
-} from "@/lib/services/phase-3-actions";
+import { archiveCancelledEventForm, createEvent } from "@/lib/services/phase-3-actions";
 import { SegmentedNavigation } from "@/components/admin/segmented-navigation";
 import {
   AdminEventsDiscovery,
@@ -481,7 +477,6 @@ export default async function EventsPage({
                     event.status !== "CANCELLED" &&
                     (event.attendance_processing_state === "OPEN" ||
                       event.attendance_processing_state === "REOPENED"),
-                  checkInAction: markAttendanceSubmit,
                   canRemoveRegistration:
                     event.status !== "CANCELLED" &&
                     event.attendance_processing_state !== "FINALIZED",

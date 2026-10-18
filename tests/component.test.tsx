@@ -25,6 +25,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/services/phase-5-actions", () => ({
   removeRegistrationFromRoster: vi.fn(async () => ({ success: "removed" })),
   saveAttendanceChanges: vi.fn(async () => ({})),
+  markAttendance: vi.fn(async () => ({})),
 }));
 
 import { Button } from "@/components/ui/button";
@@ -91,8 +92,6 @@ describe("presentation controls", () => {
   it("cycles keyboard focus through roster controls without refocusing close", async () => {
     const { userEvent } = await import("@testing-library/user-event");
     const user = userEvent.setup();
-    const action = vi.fn(async () => undefined);
-    const removeAction = vi.fn(async () => ({}));
     render(
       <ManageEventRosterDialog
         open
@@ -118,7 +117,6 @@ describe("presentation controls", () => {
         checkedIn={0}
         capacity={20}
         canEdit
-        checkInAction={action}
         canRemoveRegistration
       />,
     );
