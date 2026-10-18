@@ -40,36 +40,39 @@ export function OccurrenceLocationOverrideForm({
   }, [router, state.success]);
 
   return (
-    <div
-      className="mt-4 mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4"
-      data-testid="occurrence-location-override"
-    >
-      <h3 className="font-semibold text-amber-950">Occurrence location</h3>
-      <p className="mt-1 text-sm text-amber-900">
+    <div className="mt-6 border-t border-slate-200 pt-4" data-testid="occurrence-location-override">
+      <h3 className="text-sm font-semibold text-slate-900">Occurrence location</h3>
+      <p className="mt-1 text-sm text-slate-600">
         This changes this occurrence only; the series and other dates keep their locations.
       </p>
-      <form action={action} className="mt-3 flex flex-wrap gap-2">
+      <form action={action} className="mt-3 grid gap-3">
         <input type="hidden" name="eventId" value={eventId} />
-        <VenueSelect
-          name="locationOverrideVenueId"
-          defaultValue={defaultVenueId}
-          className="rounded border p-2 text-sm"
-          organizationId={organizationId}
-          organizationName={organizationName}
-          venues={venues}
-          required
-          aria-label="Occurrence venue"
-        />
-        <input
-          name="note"
-          placeholder="Optional location note"
-          className="rounded border p-2 text-sm"
-          maxLength={200}
-          aria-label="Optional location note"
-        />
-        <SubmitButton className="admin-manage-event-orange-action rounded bg-brand px-3 py-2 text-sm font-semibold text-white">
-          Save occurrence location
-        </SubmitButton>
+        <label>
+          Occurrence venue
+          <VenueSelect
+            name="locationOverrideVenueId"
+            defaultValue={defaultVenueId}
+            className="mt-1 w-full rounded border p-2"
+            organizationId={organizationId}
+            organizationName={organizationName}
+            venues={venues}
+            required
+            aria-label="Occurrence venue"
+          />
+        </label>
+        <label>
+          Optional location note
+          <input
+            name="note"
+            placeholder="Optional location note"
+            className="mt-1 w-full rounded border p-2"
+            maxLength={200}
+            aria-label="Optional location note"
+          />
+        </label>
+        <div>
+          <SubmitButton>Save occurrence location</SubmitButton>
+        </div>
       </form>
       {state.error ? (
         <p role="alert" className="mt-2 text-sm text-red-700">

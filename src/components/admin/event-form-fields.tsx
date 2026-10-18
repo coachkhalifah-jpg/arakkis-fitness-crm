@@ -10,11 +10,14 @@ export function OrganizationVenueFields({
   venues,
   organizationId = "",
   venueId = "",
+  form,
 }: {
   organizations: Organization[];
   venues: Venue[];
   organizationId?: string;
   venueId?: string;
+  /** Associate controls with a form by id (HTML form attribute). */
+  form?: string;
 }) {
   const [selectedOrganization, setSelectedOrganization] = useState(organizationId);
   const venueRef = useRef<HTMLSelectElement>(null);
@@ -25,6 +28,7 @@ export function OrganizationVenueFields({
       <label>
         Organization
         <select
+          form={form}
           name="hostOrganizationId"
           required
           defaultValue={organizationId}
@@ -56,6 +60,7 @@ export function OrganizationVenueFields({
         Venue
         <VenueSelect
           ref={venueRef}
+          form={form}
           name="venueId"
           required
           defaultValue={venueId}

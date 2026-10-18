@@ -21,6 +21,7 @@ import {
   revokeEventInviteLinksForm,
 } from "@/lib/services/phase-3-actions";
 import { FinalizeAttendanceForm } from "@/components/admin/finalize-attendance-form";
+import { OpenAttendanceForm } from "@/components/admin/open-attendance-form";
 import { ReopenAttendanceForm } from "@/components/admin/reopen-attendance-form";
 import { EventRareLifecycleActions } from "@/components/admin/event-rare-lifecycle-actions";
 import { EventDeleteLeanForm } from "@/components/admin/event-delete-lean-form";
@@ -403,6 +404,11 @@ export default async function EventDetailPage({
           ) : null}
           {event.status !== "CANCELLED" &&
           event.status !== "DRAFT" &&
+          event.attendance_processing_state === "NOT_STARTED" ? (
+            <OpenAttendanceForm eventId={id} />
+          ) : null}
+          {event.status !== "CANCELLED" &&
+          event.status !== "DRAFT" &&
           event.attendance_processing_state === "FINALIZED" &&
           admin.role === "SYSTEM_ADMIN" ? (
             <ReopenAttendanceForm eventId={id} />
@@ -435,237 +441,250 @@ export default async function EventDetailPage({
           >
             <h2 className="sr-only">Admin</h2>
             <div className="admin-manage-event-configuration">
-              {canEdit && admin.role === "SYSTEM_ADMIN" ? (
-                <OccurrenceLocationOverrideForm
-                  eventId={id}
-                  organizationId={event.host_organization_id}
-                  organizationName={
-                    organizations?.find(
-                      (organization) => organization.id === event.host_organization_id,
-                    )?.name
-                  }
-                  defaultVenueId={event.location_override_venue_id ?? event.venue_id}
-                  venues={venues ?? []}
-                />
-              ) : null}
               {canEdit ? (
-                <ActionForm
-                  action={updateEvent}
-                  submitLabel="Update"
-                  className="admin-event-update-form"
-                >
+                <>
                   <ProgressiveDisclosureSection
                     id="manage-event-basics"
                     number="01"
                     title="Event basics"
                   >
-                    <input type="hidden" name="id" value={id} />
-                    <label>
-                      Name
-                      <input
-                        name="name"
-                        required
-                        defaultValue={event.name}
-                        className="mt-1 w-full rounded border p-2"
-                      />
-                    </label>
-                    <EventTitleOverlayControl
-                      eventName={event.name}
-                      imageUrl={
-                        eventImage ? designAssetPublicUrl(eventImage.storage_path) : undefined
-                      }
-                      initialColor={event.event_title_color ?? "#FFFFFF"}
-                    />
-                    <OrganizationVenueFields
-                      organizations={organizations ?? []}
-                      venues={venues ?? []}
-                      organizationId={event.host_organization_id}
-                      venueId={event.venue_id}
-                    />
-                    <label>
-                      Capacity
-                      <input
-                        name="capacity"
-                        type="number"
-                        min="1"
-                        required
-                        defaultValue={event.capacity}
-                        className="mt-1 w-full rounded border p-2"
-                      />
-                    </label>
-                  </ProgressiveDisclosureSection>
-                  <ProgressiveDisclosureSection
-                    id="manage-event-schedule"
-                    className="admin-manage-event-schedule-section"
-                    number="02"
-                    title="Schedule"
-                  >
-                    {eventSeries ? (
-                      <div className="admin-manage-event-occurrence-context" role="note">
-                        <strong>Manage This Occurrence</strong>
-                        <p>
-                          Changes here affect only this date. They do not change the recurring
-                          schedule.
-                        </p>
-                      </div>
-                    ) : null}
-                    <EventTimingFields
-                      startValue={localValue(event.starts_at, event.timezone)}
-                      endValue={localValue(event.ends_at, event.timezone)}
-                      deadlineValue={localValue(event.registration_deadline, event.timezone)}
-                    />
-                  </ProgressiveDisclosureSection>
-                  <ProgressiveDisclosureSection id="manage-event-repeat" number="03" title="Series">
-                    {eventSeries ? (
-                      <>
-                        <RecurrenceScheduleManager
-                          seriesId={eventSeries.id}
-                          seriesEndsOn={eventSeries.ends_on}
-                          timezone={event.timezone}
-                          initialWeekday={localWeekday(event.starts_at, event.timezone)}
-                          initialStart={localValue(event.starts_at, event.timezone).slice(11, 16)}
-                          initialEnd={localValue(event.ends_at, event.timezone).slice(11, 16)}
-                          initialEffectiveDate={localValue(event.starts_at, event.timezone).slice(
-                            0,
-                            10,
-                          )}
-                          rules={(scheduleRules ?? []).map((rule) => ({
-                            ...rule,
-                            local_start_time: String(rule.local_start_time),
-                            local_end_time: String(rule.local_end_time),
-                          }))}
-                          occurrences={recurrenceOccurrences}
-                          canMutate={
-                            admin.role === "SYSTEM_ADMIN" &&
-                            event.status !== "CANCELLED" &&
-                            event.status !== "COMPLETED"
-                          }
+                    <div className="admin-event-update-form grid gap-4">
+                      <input form="manage-event-update" type="hidden" name="id" value={id} />
+                      <label>
+                        Name
+                        <input
+                          form="manage-event-update"
+                          name="name"
+                          required
+                          defaultValue={event.name}
+                          className="mt-1 w-full rounded border p-2"
                         />
-                        {admin.role === "SYSTEM_ADMIN" ? (
-                          <div className="admin-manage-event-image admin-series-main-image mt-6">
-                            <h3 className="font-semibold">Series image</h3>
-                            <p className="mt-1 text-sm text-slate-600">
-                              Updates the main image on future non-cancelled dates. Past dates keep
-                              their current image. This occurrence-only control remains under Event
-                              image.
-                            </p>
-                            {seriesMainImage ? (
-                              <img
-                                src={designAssetPublicUrl(seriesMainImage.storage_path)}
-                                alt={seriesMainImage.alt_text}
-                                className="mt-4 aspect-video w-full rounded-xl object-cover"
-                              />
-                            ) : (
-                              <p className="mt-3 rounded border border-dashed p-4 text-sm text-slate-600">
-                                No series image on upcoming dates yet.
-                              </p>
+                      </label>
+                      <EventTitleOverlayControl
+                        form="manage-event-update"
+                        eventName={event.name}
+                        imageUrl={
+                          eventImage ? designAssetPublicUrl(eventImage.storage_path) : undefined
+                        }
+                        initialColor={event.event_title_color ?? "#FFFFFF"}
+                      />
+                      <OrganizationVenueFields
+                        form="manage-event-update"
+                        organizations={organizations ?? []}
+                        venues={venues ?? []}
+                        organizationId={event.host_organization_id}
+                        venueId={event.venue_id}
+                      />
+                      <label>
+                        Capacity
+                        <input
+                          form="manage-event-update"
+                          name="capacity"
+                          type="number"
+                          min="1"
+                          required
+                          defaultValue={event.capacity}
+                          className="mt-1 w-full rounded border p-2"
+                        />
+                      </label>
+                      {admin.role === "SYSTEM_ADMIN" ? (
+                        <OccurrenceLocationOverrideForm
+                          eventId={id}
+                          organizationId={event.host_organization_id}
+                          organizationName={
+                            organizations?.find(
+                              (organization) => organization.id === event.host_organization_id,
+                            )?.name
+                          }
+                          defaultVenueId={event.location_override_venue_id ?? event.venue_id}
+                          venues={venues ?? []}
+                        />
+                      ) : null}
+                    </div>
+                  </ProgressiveDisclosureSection>
+                  <ActionForm
+                    id="manage-event-update"
+                    action={updateEvent}
+                    submitLabel="Update"
+                    className="admin-event-update-form"
+                  >
+                    <ProgressiveDisclosureSection
+                      id="manage-event-schedule"
+                      className="admin-manage-event-schedule-section"
+                      number="02"
+                      title="Schedule"
+                    >
+                      {eventSeries ? (
+                        <div className="admin-manage-event-occurrence-context" role="note">
+                          <strong>Manage This Occurrence</strong>
+                          <p>
+                            Changes here affect only this date. They do not change the recurring
+                            schedule.
+                          </p>
+                        </div>
+                      ) : null}
+                      <EventTimingFields
+                        startValue={localValue(event.starts_at, event.timezone)}
+                        endValue={localValue(event.ends_at, event.timezone)}
+                        deadlineValue={localValue(event.registration_deadline, event.timezone)}
+                      />
+                    </ProgressiveDisclosureSection>
+                    <ProgressiveDisclosureSection
+                      id="manage-event-repeat"
+                      number="03"
+                      title="Series"
+                    >
+                      {eventSeries ? (
+                        <>
+                          <RecurrenceScheduleManager
+                            seriesId={eventSeries.id}
+                            seriesEndsOn={eventSeries.ends_on}
+                            timezone={event.timezone}
+                            initialWeekday={localWeekday(event.starts_at, event.timezone)}
+                            initialStart={localValue(event.starts_at, event.timezone).slice(11, 16)}
+                            initialEnd={localValue(event.ends_at, event.timezone).slice(11, 16)}
+                            initialEffectiveDate={localValue(event.starts_at, event.timezone).slice(
+                              0,
+                              10,
                             )}
-                            <SeriesMainImageForm
-                              seriesId={eventSeries.id}
-                              intentToken={createSeriesImageIntent(
-                                eventSeries.id,
-                                admin.userId,
-                                EVENT_IMAGE_ASSET_TYPE,
+                            rules={(scheduleRules ?? []).map((rule) => ({
+                              ...rule,
+                              local_start_time: String(rule.local_start_time),
+                              local_end_time: String(rule.local_end_time),
+                            }))}
+                            occurrences={recurrenceOccurrences}
+                            canMutate={
+                              admin.role === "SYSTEM_ADMIN" &&
+                              event.status !== "CANCELLED" &&
+                              event.status !== "COMPLETED"
+                            }
+                          />
+                          {admin.role === "SYSTEM_ADMIN" ? (
+                            <div className="admin-manage-event-image admin-series-main-image mt-6">
+                              <h3 className="font-semibold">Series image</h3>
+                              <p className="mt-1 text-sm text-slate-600">
+                                Updates the main image on future non-cancelled dates. Past dates
+                                keep their current image. This occurrence-only control remains under
+                                Event image.
+                              </p>
+                              {seriesMainImage ? (
+                                <img
+                                  src={designAssetPublicUrl(seriesMainImage.storage_path)}
+                                  alt={seriesMainImage.alt_text}
+                                  className="mt-4 aspect-video w-full rounded-xl object-cover"
+                                />
+                              ) : (
+                                <p className="mt-3 rounded border border-dashed p-4 text-sm text-slate-600">
+                                  No series image on upcoming dates yet.
+                                </p>
                               )}
-                              defaultAltText={`${event.name} series image`}
-                            />
-                          </div>
-                        ) : null}
-                      </>
-                    ) : (
-                      <p className="admin-create-guidance">This is a single Event.</p>
-                    )}
-                  </ProgressiveDisclosureSection>
-                  <ProgressiveDisclosureSection
-                    id="manage-event-visibility"
-                    number="04"
-                    title="Visibility and access"
-                  >
-                    <label>
-                      Visibility
-                      <select
-                        name="visibility"
-                        defaultValue={event.visibility}
-                        className="mt-1 w-full rounded border p-2"
-                      >
-                        <option value="PUBLIC">Public</option>
-                        <option value="AFFILIATION_RESTRICTED">Affiliation restricted</option>
-                      </select>
-                    </label>
-                    <label>
-                      Who can access this Event?
-                      <select
-                        name="accessMode"
-                        defaultValue={event.access_mode ?? "PUBLIC"}
-                        className="mt-1 w-full rounded border p-2"
-                      >
-                        <option value="PUBLIC">Public — visible on the public Events page</option>
-                        <option value="UNLISTED">Unlisted — anyone with the direct link</option>
-                        <option value="INVITE_ONLY">
-                          Invite-only — a valid invitation link is required
-                        </option>
-                      </select>
-                      <span className="mt-1 block text-xs text-slate-500">
-                        Unlisted and invite-only Events stay hidden from public discovery.
-                      </span>
-                    </label>
-                  </ProgressiveDisclosureSection>
-                  <ProgressiveDisclosureSection
-                    id="manage-event-participant-information"
-                    number="05"
-                    title="Participant information"
-                  >
-                    <label>
-                      Description
-                      <textarea
-                        name="description"
-                        defaultValue={event.description ?? ""}
-                        className="mt-1 min-h-20 w-full rounded border p-2"
-                      />
-                    </label>
-                    <label>
-                      What to bring &amp; arrival notes (optional)
-                      <textarea
-                        name="participantInstructions"
-                        defaultValue={event.participant_instructions ?? ""}
-                        className="mt-1 min-h-20 w-full rounded border p-2"
-                        aria-describedby="participant-instructions-help"
-                      />
-                      <span
-                        id="participant-instructions-help"
-                        className="mt-1 block text-xs text-admin-text-muted"
-                      >
-                        Use one plain-text item per line. These notes appear on the public event and
-                        booking confirmation.
-                      </span>
-                    </label>
-                  </ProgressiveDisclosureSection>
-                  <ProgressiveDisclosureSection
-                    id="manage-event-communications"
-                    number="06"
-                    title="Communication"
-                  >
-                    <label>
-                      Communication link (optional)
-                      <input
-                        name="communicationUrl"
-                        type="url"
-                        defaultValue={event.communication_url ?? ""}
-                        placeholder="https://..."
-                        className="mt-1 w-full rounded border p-2"
-                      />
-                    </label>
-                    <label>
-                      Link label
-                      <input
-                        name="communicationLabel"
-                        defaultValue={event.communication_label ?? ""}
-                        placeholder="Join the group"
-                        className="mt-1 w-full rounded border p-2"
-                      />
-                    </label>
-                  </ProgressiveDisclosureSection>
-                </ActionForm>
+                              <SeriesMainImageForm
+                                seriesId={eventSeries.id}
+                                intentToken={createSeriesImageIntent(
+                                  eventSeries.id,
+                                  admin.userId,
+                                  EVENT_IMAGE_ASSET_TYPE,
+                                )}
+                                defaultAltText={`${event.name} series image`}
+                              />
+                            </div>
+                          ) : null}
+                        </>
+                      ) : (
+                        <p className="admin-create-guidance">This is a single Event.</p>
+                      )}
+                    </ProgressiveDisclosureSection>
+                    <ProgressiveDisclosureSection
+                      id="manage-event-visibility"
+                      number="04"
+                      title="Visibility and access"
+                    >
+                      <label>
+                        Visibility
+                        <select
+                          name="visibility"
+                          defaultValue={event.visibility}
+                          className="mt-1 w-full rounded border p-2"
+                        >
+                          <option value="PUBLIC">Public</option>
+                          <option value="AFFILIATION_RESTRICTED">Affiliation restricted</option>
+                        </select>
+                      </label>
+                      <label>
+                        Who can access this Event?
+                        <select
+                          name="accessMode"
+                          defaultValue={event.access_mode ?? "PUBLIC"}
+                          className="mt-1 w-full rounded border p-2"
+                        >
+                          <option value="PUBLIC">Public — visible on the public Events page</option>
+                          <option value="UNLISTED">Unlisted — anyone with the direct link</option>
+                          <option value="INVITE_ONLY">
+                            Invite-only — a valid invitation link is required
+                          </option>
+                        </select>
+                        <span className="mt-1 block text-xs text-slate-500">
+                          Unlisted and invite-only Events stay hidden from public discovery.
+                        </span>
+                      </label>
+                    </ProgressiveDisclosureSection>
+                    <ProgressiveDisclosureSection
+                      id="manage-event-participant-information"
+                      number="05"
+                      title="Participant information"
+                    >
+                      <label>
+                        Description
+                        <textarea
+                          name="description"
+                          defaultValue={event.description ?? ""}
+                          className="mt-1 min-h-20 w-full rounded border p-2"
+                        />
+                      </label>
+                      <label>
+                        What to bring &amp; arrival notes (optional)
+                        <textarea
+                          name="participantInstructions"
+                          defaultValue={event.participant_instructions ?? ""}
+                          className="mt-1 min-h-20 w-full rounded border p-2"
+                          aria-describedby="participant-instructions-help"
+                        />
+                        <span
+                          id="participant-instructions-help"
+                          className="mt-1 block text-xs text-admin-text-muted"
+                        >
+                          Use one plain-text item per line. These notes appear on the public event
+                          and booking confirmation.
+                        </span>
+                      </label>
+                    </ProgressiveDisclosureSection>
+                    <ProgressiveDisclosureSection
+                      id="manage-event-communications"
+                      number="06"
+                      title="Communication"
+                    >
+                      <label>
+                        Communication link (optional)
+                        <input
+                          name="communicationUrl"
+                          type="url"
+                          defaultValue={event.communication_url ?? ""}
+                          placeholder="https://..."
+                          className="mt-1 w-full rounded border p-2"
+                        />
+                      </label>
+                      <label>
+                        Link label
+                        <input
+                          name="communicationLabel"
+                          defaultValue={event.communication_label ?? ""}
+                          placeholder="Join the group"
+                          className="mt-1 w-full rounded border p-2"
+                        />
+                      </label>
+                    </ProgressiveDisclosureSection>
+                  </ActionForm>
+                </>
               ) : (
                 <dl className="mt-4 space-y-2 text-sm">
                   <div>

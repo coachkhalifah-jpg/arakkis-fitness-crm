@@ -15,6 +15,7 @@ export function ActionForm({
   submitOptions,
   focusFirstError = false,
   className,
+  id,
   cancelHref,
   cancelLabel = "Cancel",
   cancelAction,
@@ -28,6 +29,7 @@ export function ActionForm({
   submitOptions?: Array<{ label: string; value: string }>;
   focusFirstError?: boolean;
   className?: string;
+  id?: string;
   cancelHref?: string;
   cancelLabel?: string;
   cancelAction?: () => void;
@@ -40,27 +42,43 @@ export function ActionForm({
   const submittedValues = useRef(new Map<string, string>());
   useEffect(() => {
     if (!state.error || !formRef.current) return;
-    for (const control of formRef.current.querySelectorAll<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >("[name]")) {
+    const form = formRef.current;
+    const owned = [
+      ...form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+        "[name]",
+      ),
+    ];
+    const associated = id
+      ? [
+          ...document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+            `[form="${id}"][name]`,
+          ),
+        ]
+      : [];
+    for (const control of [...owned, ...associated]) {
       if (control instanceof HTMLInputElement && control.type === "file") continue;
       const value = submittedValues.current.get(control.name);
       if (value !== undefined) control.value = value;
     }
     if (focusFirstError) {
       window.requestAnimationFrame(() => {
-        formRef.current?.querySelector<HTMLElement>(":invalid")?.focus();
+        const invalidOwned = form.querySelector<HTMLElement>(":invalid");
+        const invalidAssociated = id
+          ? document.querySelector<HTMLElement>(`[form="${id}"]:invalid`)
+          : null;
+        (invalidOwned ?? invalidAssociated)?.focus();
       });
     }
-    formRef.current.dispatchEvent(
+    form.dispatchEvent(
       new CustomEvent("arakkis:form-error", {
         bubbles: true,
-        detail: { form: formRef.current, message: state.error },
+        detail: { form, message: state.error },
       }),
     );
-  }, [focusFirstError, state.error]);
+  }, [focusFirstError, id, state.error]);
   return (
     <form
+      id={id}
       ref={formRef}
       action={formAction}
       className={className ?? "grid gap-4"}

@@ -40,7 +40,13 @@ export function ProgressiveDisclosureSection({
     field?.addEventListener("change", onFieldChange);
     const onFormError = (event: Event) => {
       const detail = (event as FormErrorEvent).detail;
-      if (detail?.form && !section.closest("form")?.isSameNode(detail.form)) return;
+      if (detail?.form) {
+        const nestedInForm = section.closest("form")?.isSameNode(detail.form);
+        const ownsAssociated =
+          Boolean(detail.form.id) &&
+          Boolean(section.querySelector(`[form="${CSS.escape(detail.form.id)}"]`));
+        if (!nestedInForm && !ownsAssociated) return;
+      }
       const message = (detail?.message ?? "").toLowerCase();
       if (
         !message ||

@@ -6,10 +6,13 @@ export function EventTitleOverlayControl({
   eventName,
   imageUrl,
   initialColor,
+  form,
 }: {
   eventName: string;
   imageUrl?: string;
   initialColor: string;
+  /** Associate the color control with a form by id (HTML form attribute). */
+  form?: string;
 }) {
   const [color, setColor] = useState(initialColor);
   return (
@@ -17,6 +20,7 @@ export function EventTitleOverlayControl({
       <label>
         Event title color
         <input
+          form={form}
           name="eventTitleColor"
           type="color"
           value={color}
