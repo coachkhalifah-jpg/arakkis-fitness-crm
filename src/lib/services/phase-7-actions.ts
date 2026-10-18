@@ -219,11 +219,20 @@ export async function setRegistrationPaused(
   try {
     const { admin, db, event } = await scopedEvent(id);
     const value = paused ? new Date().toISOString() : null;
-    const { error } = await db
+    const { data: updatedEvent, error } = await db
       .from("events")
       .update({ registration_paused_at: value })
-      .eq("id", id);
+      .eq("id", id)
+      .select("id,registration_paused_at")
+      .maybeSingle();
     if (error) throw new Phase3Error("conflict", "Registration availability could not be changed.");
+    const pausedPersisted = Boolean(updatedEvent?.registration_paused_at);
+    if (!updatedEvent || pausedPersisted !== paused) {
+      throw new Phase3Error(
+        "conflict",
+        "Registration availability could not be changed (no row updated).",
+      );
+    }
     await audit(
       admin.userId,
       paused ? "REGISTRATION_PAUSED" : "REGISTRATION_RESUMED",
@@ -257,12 +266,24 @@ export async function unpublishPhase7EventForm(id: string) {
   await unpublishPhase7Event(id);
 }
 
-export async function pausePhase7EventForm(formData: FormData) {
-  await setRegistrationPaused(String(formData.get("eventId") ?? ""), true);
+/** Bound for useActionState — surfaces success/error instead of silent no-ops. */
+export async function pausePhase7EventForm(
+  _state: Phase7ActionState,
+  formData: FormData,
+): Promise<Phase7ActionState> {
+  const eventId = String(formData.get("eventId") ?? "").trim();
+  if (!eventId) return { error: "Event is required." };
+  return setRegistrationPaused(eventId, true);
 }
 
-export async function resumePhase7EventForm(formData: FormData) {
-  await setRegistrationPaused(String(formData.get("eventId") ?? ""), false);
+/** Bound for useActionState — surfaces success/error instead of silent no-ops. */
+export async function resumePhase7EventForm(
+  _state: Phase7ActionState,
+  formData: FormData,
+): Promise<Phase7ActionState> {
+  const eventId = String(formData.get("eventId") ?? "").trim();
+  if (!eventId) return { error: "Event is required." };
+  return setRegistrationPaused(eventId, false);
 }
 
 export async function setPhase7SlugForm(id: string, formData: FormData) {
