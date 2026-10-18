@@ -21,6 +21,7 @@ import {
   revokeEventInviteLinksForm,
 } from "@/lib/services/phase-3-actions";
 import { FinalizeAttendanceForm } from "@/components/admin/finalize-attendance-form";
+import { OpenAttendanceForm } from "@/components/admin/open-attendance-form";
 import { ReopenAttendanceForm } from "@/components/admin/reopen-attendance-form";
 import { EventRareLifecycleActions } from "@/components/admin/event-rare-lifecycle-actions";
 import { EventDeleteLeanForm } from "@/components/admin/event-delete-lean-form";
@@ -403,6 +404,11 @@ export default async function EventDetailPage({
           ) : null}
           {event.status !== "CANCELLED" &&
           event.status !== "DRAFT" &&
+          event.attendance_processing_state === "NOT_STARTED" ? (
+            <OpenAttendanceForm eventId={id} />
+          ) : null}
+          {event.status !== "CANCELLED" &&
+          event.status !== "DRAFT" &&
           event.attendance_processing_state === "FINALIZED" &&
           admin.role === "SYSTEM_ADMIN" ? (
             <ReopenAttendanceForm eventId={id} />
@@ -435,65 +441,73 @@ export default async function EventDetailPage({
           >
             <h2 className="sr-only">Admin</h2>
             <div className="admin-manage-event-configuration">
-              {canEdit && admin.role === "SYSTEM_ADMIN" ? (
-                <OccurrenceLocationOverrideForm
-                  eventId={id}
-                  organizationId={event.host_organization_id}
-                  organizationName={
-                    organizations?.find(
-                      (organization) => organization.id === event.host_organization_id,
-                    )?.name
-                  }
-                  defaultVenueId={event.location_override_venue_id ?? event.venue_id}
-                  venues={venues ?? []}
-                />
-              ) : null}
               {canEdit ? (
-                <ActionForm
-                  action={updateEvent}
-                  submitLabel="Update"
-                  className="admin-event-update-form"
-                >
+                <>
                   <ProgressiveDisclosureSection
                     id="manage-event-basics"
                     number="01"
                     title="Event basics"
                   >
-                    <input type="hidden" name="id" value={id} />
-                    <label>
-                      Name
-                      <input
-                        name="name"
-                        required
-                        defaultValue={event.name}
-                        className="mt-1 w-full rounded border p-2"
+                    <div className="admin-event-update-form grid gap-4">
+                      <input form="manage-event-update" type="hidden" name="id" value={id} />
+                      <label>
+                        Name
+                        <input
+                          form="manage-event-update"
+                          name="name"
+                          required
+                          defaultValue={event.name}
+                          className="mt-1 w-full rounded border p-2"
+                        />
+                      </label>
+                      <EventTitleOverlayControl
+                        form="manage-event-update"
+                        eventName={event.name}
+                        imageUrl={
+                          eventImage ? designAssetPublicUrl(eventImage.storage_path) : undefined
+                        }
+                        initialColor={event.event_title_color ?? "#FFFFFF"}
                       />
-                    </label>
-                    <EventTitleOverlayControl
-                      eventName={event.name}
-                      imageUrl={
-                        eventImage ? designAssetPublicUrl(eventImage.storage_path) : undefined
-                      }
-                      initialColor={event.event_title_color ?? "#FFFFFF"}
-                    />
-                    <OrganizationVenueFields
-                      organizations={organizations ?? []}
-                      venues={venues ?? []}
-                      organizationId={event.host_organization_id}
-                      venueId={event.venue_id}
-                    />
-                    <label>
-                      Capacity
-                      <input
-                        name="capacity"
-                        type="number"
-                        min="1"
-                        required
-                        defaultValue={event.capacity}
-                        className="mt-1 w-full rounded border p-2"
+                      <OrganizationVenueFields
+                        form="manage-event-update"
+                        organizations={organizations ?? []}
+                        venues={venues ?? []}
+                        organizationId={event.host_organization_id}
+                        venueId={event.venue_id}
                       />
-                    </label>
+                      <label>
+                        Capacity
+                        <input
+                          form="manage-event-update"
+                          name="capacity"
+                          type="number"
+                          min="1"
+                          required
+                          defaultValue={event.capacity}
+                          className="mt-1 w-full rounded border p-2"
+                        />
+                      </label>
+                      {admin.role === "SYSTEM_ADMIN" ? (
+                        <OccurrenceLocationOverrideForm
+                          eventId={id}
+                          organizationId={event.host_organization_id}
+                          organizationName={
+                            organizations?.find(
+                              (organization) => organization.id === event.host_organization_id,
+                            )?.name
+                          }
+                          defaultVenueId={event.location_override_venue_id ?? event.venue_id}
+                          venues={venues ?? []}
+                        />
+                      ) : null}
+                    </div>
                   </ProgressiveDisclosureSection>
+                  <ActionForm
+                    id="manage-event-update"
+                    action={updateEvent}
+                    submitLabel="Update"
+                    className="admin-event-update-form"
+                  >
                   <ProgressiveDisclosureSection
                     id="manage-event-schedule"
                     className="admin-manage-event-schedule-section"
@@ -666,6 +680,7 @@ export default async function EventDetailPage({
                     </label>
                   </ProgressiveDisclosureSection>
                 </ActionForm>
+                </>
               ) : (
                 <dl className="mt-4 space-y-2 text-sm">
                   <div>

@@ -3553,13 +3553,12 @@ html[data-participant-transition-fallback="true"][data-participant-transition-re
 .admin-manage-event-page .admin-create-disclosure-content[hidden] {
   display: none;
 }
-.admin-manage-event-page .admin-event-update-form > .ui-button {
+.admin-manage-event-page .admin-event-update-form > .ui-button,
+.admin-manage-event-page [data-testid="occurrence-location-override"] .ui-button {
   display: flex;
   width: fit-content;
   min-width: 6.25rem;
   min-height: 44px;
-  margin-top: 2.25rem;
-  margin-left: auto;
   border: 1px solid #ff7a3d;
   border-radius: 0;
   background: #ff7a3d;
@@ -3579,8 +3578,14 @@ html[data-participant-transition-fallback="true"][data-participant-transition-re
   line-height: 1;
   text-transform: uppercase;
 }
+.admin-manage-event-page .admin-event-update-form > .ui-button {
+  margin-top: 2.25rem;
+  margin-left: auto;
+}
 .admin-manage-event-page .admin-event-update-form > .ui-button:hover,
-.admin-manage-event-page .admin-event-update-form > .ui-button:focus-visible {
+.admin-manage-event-page .admin-event-update-form > .ui-button:focus-visible,
+.admin-manage-event-page [data-testid="occurrence-location-override"] .ui-button:hover,
+.admin-manage-event-page [data-testid="occurrence-location-override"] .ui-button:focus-visible {
   border-color: #ff7a3d;
   background: #f7f5f0;
   color: #17191c;
@@ -12307,6 +12312,8 @@ body:has(.manage-booking-detail-page) > header {
    page-scoped so the shared button behavior remains unchanged elsewhere. */
 .admin-manage-event-page .admin-event-update-form > .ui-button:hover,
 .admin-manage-event-page .admin-event-update-form > .ui-button:focus-visible,
+.admin-manage-event-page [data-testid="occurrence-location-override"] .ui-button:hover,
+.admin-manage-event-page [data-testid="occurrence-location-override"] .ui-button:focus-visible,
 .admin-manage-event-page
   #manage-event-image
   .admin-event-image-upload-form
