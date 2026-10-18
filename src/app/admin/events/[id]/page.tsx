@@ -16,15 +16,13 @@ import { RosterPreview } from "@/components/admin/roster-preview";
 import { CalendarUtility } from "@/components/admin/calendar-utility";
 import { EventTitleOverlayControl } from "@/components/admin/event-title-overlay-control";
 import {
-  cancelEventForm,
-  archiveCancelledEventForm,
-  copyEventForm,
   updateEvent,
   generateEventInviteLink,
   revokeEventInviteLinksForm,
 } from "@/lib/services/phase-3-actions";
 import { FinalizeAttendanceForm } from "@/components/admin/finalize-attendance-form";
 import { ReopenAttendanceForm } from "@/components/admin/reopen-attendance-form";
+import { EventRareLifecycleActions } from "@/components/admin/event-rare-lifecycle-actions";
 import { EventDeleteLeanForm } from "@/components/admin/event-delete-lean-form";
 import { phase7EventUrl } from "@/lib/services/phase-7-actions";
 import { normalizePublicSlug } from "@/lib/services/phase-7";
@@ -780,30 +778,11 @@ export default async function EventDetailPage({
           </ProgressiveDisclosureSection>
           {admin.role === "SYSTEM_ADMIN" ? (
             <div className="admin-manage-event-rare-actions">
-              {event.status !== "CANCELLED" ? (
-                <form action={copyEventForm.bind(null, id)}>
-                  <ConfirmSubmit message="Copy this event into a new draft? Registrations and history will not be copied.">
-                    Copy event
-                  </ConfirmSubmit>
-                </form>
-              ) : null}
-              {event.status !== "CANCELLED" && event.status !== "COMPLETED" ? (
-                <form action={cancelEventForm.bind(null, id)}>
-                  <ConfirmSubmit
-                    message="Cancel this event permanently? It cannot be restored."
-                    variant="destructive"
-                  >
-                    Cancel event
-                  </ConfirmSubmit>
-                </form>
-              ) : null}
-              {event.status === "CANCELLED" && !event.archived_at ? (
-                <form action={archiveCancelledEventForm.bind(null, id)}>
-                  <ConfirmSubmit message="Archive this cancelled event? Registrations and history will be preserved.">
-                    Archive event
-                  </ConfirmSubmit>
-                </form>
-              ) : null}
+              <EventRareLifecycleActions
+                eventId={id}
+                status={event.status}
+                archivedAt={event.archived_at}
+              />
               <EventDeleteLeanForm eventId={id} />
             </div>
           ) : null}

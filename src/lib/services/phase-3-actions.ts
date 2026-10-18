@@ -808,6 +808,7 @@ export async function cancelEvent(id: string, reason: string): Promise<Phase3Act
       );
     await audit(admin.userId, "EVENT_CANCELLED", "EVENT", id, { status: "CANCELLED", reason }, old);
     revalidatePath("/admin/events");
+    revalidatePath(`/admin/events/${id}`);
     return { success: "Event cancelled permanently." };
   } catch (error) {
     return { error: message(error) };
@@ -1137,7 +1138,13 @@ export async function copyEvent(id: string): Promise<Phase3ActionState> {
     if (error || !data) throw new Phase3Error("conflict", "Event could not be copied.");
     await audit(admin.userId, "EVENT_COPIED", "EVENT", data.id, { source_event_id: id });
     revalidatePath("/admin/events");
-    return { success: "A new draft copy was created." };
+    revalidatePath(`/admin/events/${data.id}`);
+    return {
+      success: "A new draft copy was created.",
+      createdEventId: data.id,
+      createdName: `${source.name} (Copy)`,
+      createdStatus: "Draft",
+    };
   } catch (error) {
     return { error: message(error) };
   }
@@ -1245,14 +1252,27 @@ export async function revokeEventInviteLinksForm(form: FormData): Promise<void> 
 export async function publishEventForm(id: string) {
   await publishEvent(id);
 }
-export async function copyEventForm(id: string) {
-  await copyEvent(id);
+
+/** useActionState wrappers — return { error | success } instead of swallowing. */
+export async function copyEventAction(
+  _state: Phase3ActionState,
+  form: FormData,
+): Promise<Phase3ActionState> {
+  const result = await copyEvent(value(form, "eventId"));
+  if (result.createdEventId) redirect(`/admin/events/${result.createdEventId}`);
+  return result;
 }
-export async function cancelEventForm(id: string) {
-  await cancelEvent(id, "Cancelled by System Admin");
+export async function cancelEventAction(
+  _state: Phase3ActionState,
+  form: FormData,
+): Promise<Phase3ActionState> {
+  return cancelEvent(value(form, "eventId"), "Cancelled by System Admin");
 }
-export async function archiveCancelledEventForm(id: string) {
-  await archiveCancelledEvent(id);
+export async function archiveCancelledEventAction(
+  _state: Phase3ActionState,
+  form: FormData,
+): Promise<Phase3ActionState> {
+  return archiveCancelledEvent(value(form, "eventId"));
 }
 export async function deleteLeanEventForm(id: string, form: FormData) {
   form.set("eventId", id);

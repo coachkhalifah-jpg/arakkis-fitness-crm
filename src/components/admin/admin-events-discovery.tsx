@@ -33,7 +33,6 @@ export type AdminDiscoveryEvent = {
   canCheckIn: boolean;
   canRemoveRegistration: boolean;
   canArchive: boolean;
-  archiveAction: (id: string) => Promise<void>;
 };
 
 type Filters = {
@@ -268,11 +267,7 @@ export function AdminEventsDiscovery({
       onSelectedChange={(selected) => toggleSelected(item.id, selected)}
       actions={
         item.canArchive ? (
-          <ArchiveCancelledEventButton
-            eventId={item.id}
-            eventName={item.name}
-            action={item.archiveAction}
-          />
+          <ArchiveCancelledEventButton eventId={item.id} eventName={item.name} />
         ) : null
       }
     />
