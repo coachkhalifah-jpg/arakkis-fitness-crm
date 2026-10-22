@@ -12,7 +12,12 @@ describe("Published event Update preserves schedule (capacity-only safe)", () =>
     expect(updateFn).toContain("const patch = published");
     expect(updateFn).toContain("capacity: input.capacity");
     expect(updateFn).toContain(".update(patch)");
-    expect(updateFn).not.toMatch(/const patch = published\s*\?\s*\{[^}]*starts_at:/s);
+    const patchStart = updateFn.indexOf("const patch = published");
+    const draftArm = updateFn.indexOf(": {", patchStart);
+    const publishedArm = updateFn.slice(patchStart, draftArm === -1 ? undefined : draftArm);
+    expect(publishedArm).not.toContain("starts_at:");
+    expect(publishedArm).not.toContain("host_organization_id:");
+    expect(publishedArm).not.toContain("venue_id:");
   });
 
   it("still parses form times for DRAFT edits", () => {
