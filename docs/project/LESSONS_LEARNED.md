@@ -13,4 +13,5 @@
 - UI/UX standards should be reusable across components and pages, not solved page by page.
 - Confirmation “Add to calendar” cards must reuse the shared participant EventCard shell (`event-card-shell` / `participant-event-card`), not a one-off confirmation-calendar card language (UAT-010).
 - Event card hero titles (`.event-card-title-overlay`) must not use `line-height` below ~1.1 while `-webkit-line-clamp` / `overflow: hidden` is on — tight line boxes clip descenders and baselines on heavy display type (Fight Night card clip). Prefer padding-block inside the overflow box over relying on parent inset alone.
+- Published Event capacity must remain editable under DEC-009 / FR-005 (floor = active registrations). Do not put `capacity` in `enforce_event_phase_3_guards` post-DRAFT immutability; schedule/venue/ownership stay immutable. Opaque `42501` → “cannot be edited in its current state” hid this (pilot Manage Event capacity 10→15).
 - Keep stable project context in canonical documents instead of repeatedly embedding it in prompts.
