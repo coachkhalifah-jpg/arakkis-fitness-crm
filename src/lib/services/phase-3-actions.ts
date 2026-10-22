@@ -1037,18 +1037,29 @@ export async function updateEvent(
         "invalid",
         "Choose a venue belonging to the selected organization or an independent/public venue.",
       );
-    const times = parseEventTimes(input, venue.timezone);
+    // After publish, schedule/ownership are DB-immutable. Always preserve those columns so a
+    // capacity/copy-only Update cannot rewrite UTC instants via local datetime round-trip
+    // (minute truncation) or venue timezone drift.
+    const published = old.status !== "DRAFT";
+    const times = published
+      ? {
+          startsAt: old.starts_at as string,
+          endsAt: old.ends_at as string,
+          registrationDeadline: old.registration_deadline as string,
+        }
+      : parseEventTimes(input, venue.timezone);
+    const timezone = published ? (old.timezone as string) : venue.timezone;
     const { error } = await db
       .from("events")
       .update({
-        host_organization_id: input.hostOrganizationId,
-        venue_id: input.venueId,
+        host_organization_id: published ? old.host_organization_id : input.hostOrganizationId,
+        venue_id: published ? old.venue_id : input.venueId,
         name: input.name,
         description: input.description || null,
         participant_instructions: input.participantInstructions || null,
         starts_at: times.startsAt,
         ends_at: times.endsAt,
-        timezone: venue.timezone,
+        timezone,
         registration_deadline: times.registrationDeadline,
         capacity: input.capacity,
         visibility: input.visibility,
