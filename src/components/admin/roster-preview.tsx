@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useId, useState } from "react";
 import { attendancePresentation } from "@/lib/services/attendance-presentation";
 
 type RosterPreviewPerson = {
@@ -9,6 +12,8 @@ type RosterPreviewPerson = {
   attendanceState: string;
   firstClass: boolean;
 };
+
+const PREVIEW_LIMIT = 4;
 
 export function RosterPreview({
   eventName,
@@ -21,6 +26,12 @@ export function RosterPreview({
   people: RosterPreviewPerson[];
   canViewPhone: boolean;
 }) {
+  const listId = useId();
+  const [expanded, setExpanded] = useState(false);
+  const hasMore = people.length > PREVIEW_LIMIT;
+  const visiblePeople = expanded || !hasMore ? people : people.slice(0, PREVIEW_LIMIT);
+  const hiddenCount = people.length - PREVIEW_LIMIT;
+
   return (
     <section className="admin-roster-preview" aria-labelledby="manage-event-roster-preview-title">
       <div className="admin-roster-preview-heading">
@@ -38,8 +49,12 @@ export function RosterPreview({
           Download roster <span aria-hidden="true">↓</span>
         </a>
       </div>
-      <ol className="admin-roster-preview-list" aria-label="Roster preview participants">
-        {people.slice(0, 4).map((person) => (
+      <ol
+        id={listId}
+        className="admin-roster-preview-list"
+        aria-label="Roster preview participants"
+      >
+        {visiblePeople.map((person) => (
           <li key={person.id}>
             <span>
               <strong>
@@ -61,8 +76,16 @@ export function RosterPreview({
       {!people.length ? (
         <p className="admin-roster-preview-empty">No participants registered.</p>
       ) : null}
-      {people.length > 4 ? (
-        <p className="admin-roster-preview-more">+ {people.length - 4} more participants</p>
+      {hasMore ? (
+        <button
+          type="button"
+          className="admin-roster-preview-more"
+          aria-expanded={expanded}
+          aria-controls={listId}
+          onClick={() => setExpanded((current) => !current)}
+        >
+          {expanded ? "Show first 4" : `+ ${hiddenCount} more participants`}
+        </button>
       ) : null}
     </section>
   );

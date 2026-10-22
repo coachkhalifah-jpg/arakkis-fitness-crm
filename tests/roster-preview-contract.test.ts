@@ -21,4 +21,12 @@ describe("Roster preview name links (UAT-028)", () => {
     expect(page).toContain("id: registration.participant_id");
     expect(page).toContain("<RosterPreview");
   });
+
+  it("expands + N more inline and collapses back to the first 4", () => {
+    expect(preview).toContain("PREVIEW_LIMIT = 4");
+    expect(preview).toContain("aria-expanded={expanded}");
+    expect(preview).toContain("`+ ${hiddenCount} more participants`");
+    expect(preview).toContain('"Show first 4"');
+    expect(preview).toContain("setExpanded");
+  });
 });
