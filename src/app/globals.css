@@ -11817,6 +11817,26 @@ body:has(.manage-booking-detail-page) > header {
   color: #aeb3bb;
   font-size: 0.72rem;
 }
+button.admin-roster-preview-more {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  padding: 0.25rem 0;
+  color: #f7f5f0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.14em;
+}
+button.admin-roster-preview-more:hover,
+button.admin-roster-preview-more:focus-visible {
+  color: #ff7a3d;
+  text-decoration-color: currentColor;
+}
 @media (max-width: 640px) {
   .admin-roster-preview-heading {
     align-items: flex-start;
