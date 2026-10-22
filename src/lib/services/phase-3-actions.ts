@@ -1037,9 +1037,8 @@ export async function updateEvent(
         "invalid",
         "Choose a venue belonging to the selected organization or an independent/public venue.",
       );
-    // After publish, schedule/ownership are DB-immutable. Always preserve those columns so a
-    // capacity/copy-only Update cannot rewrite UTC instants via local datetime round-trip
-    // (minute truncation) or venue timezone drift.
+    // After publish, omit schedule/ownership columns entirely so PostgREST cannot
+    // false-diff timestamptz via client round-trip. Capacity + copy remain mutable.
     const published = old.status !== "DRAFT";
     const times = published
       ? {
@@ -1049,26 +1048,36 @@ export async function updateEvent(
         }
       : parseEventTimes(input, venue.timezone);
     const timezone = published ? (old.timezone as string) : venue.timezone;
-    const { error } = await db
-      .from("events")
-      .update({
-        host_organization_id: published ? old.host_organization_id : input.hostOrganizationId,
-        venue_id: published ? old.venue_id : input.venueId,
-        name: input.name,
-        description: input.description || null,
-        participant_instructions: input.participantInstructions || null,
-        starts_at: times.startsAt,
-        ends_at: times.endsAt,
-        timezone,
-        registration_deadline: times.registrationDeadline,
-        capacity: input.capacity,
-        visibility: input.visibility,
-        access_mode: input.accessMode,
-        communication_url: communication.url,
-        communication_label: communication.label,
-        event_title_color: input.eventTitleColor,
-      })
-      .eq("id", id);
+    const patch = published
+      ? {
+          name: input.name,
+          description: input.description || null,
+          participant_instructions: input.participantInstructions || null,
+          capacity: input.capacity,
+          visibility: input.visibility,
+          access_mode: input.accessMode,
+          communication_url: communication.url,
+          communication_label: communication.label,
+          event_title_color: input.eventTitleColor,
+        }
+      : {
+          host_organization_id: input.hostOrganizationId,
+          venue_id: input.venueId,
+          name: input.name,
+          description: input.description || null,
+          participant_instructions: input.participantInstructions || null,
+          starts_at: times.startsAt,
+          ends_at: times.endsAt,
+          timezone,
+          registration_deadline: times.registrationDeadline,
+          capacity: input.capacity,
+          visibility: input.visibility,
+          access_mode: input.accessMode,
+          communication_url: communication.url,
+          communication_label: communication.label,
+          event_title_color: input.eventTitleColor,
+        };
+    const { error } = await db.from("events").update(patch).eq("id", id);
     if (error) {
       const detail = typeof error.message === "string" ? error.message : "";
       if (/capacity cannot be below active registrations/i.test(detail)) {
@@ -1080,7 +1089,9 @@ export async function updateEvent(
       if (/published event scheduling and ownership fields are immutable/i.test(detail)) {
         throw new Phase3Error(
           "conflict",
-          "Schedule, venue, and ownership cannot be changed after this event is published. Capacity may still be updated.",
+          input.capacity !== old.capacity
+            ? "Capacity could not be updated. Confirm migration 0087 is applied on this environment, then retry."
+            : "Schedule, venue, and ownership cannot be changed after this event is published.",
         );
       }
       throw new Phase3Error(
@@ -1098,8 +1109,9 @@ export async function updateEvent(
       {
         ...input,
         ...times,
-        timezone: venue.timezone,
+        timezone,
         venue_type: venue.organization_id ? "ORGANIZATION" : "INDEPENDENT_PUBLIC",
+        published_patch: published,
       },
       old,
     );

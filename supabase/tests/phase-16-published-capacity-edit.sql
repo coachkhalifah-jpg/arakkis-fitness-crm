@@ -1,5 +1,5 @@
--- Published (OPEN) events may raise capacity; floor still blocks below active registrations.
--- Run after migrations including 0085.
+-- Published capacity edit: enforce_event_phase_3_guards must not lock capacity.
+-- Run after migrations including 0087.
 
 do $$
 declare
@@ -17,7 +17,8 @@ begin
     raise exception 'published capacity assertion failed: enforce_event_phase_3_guards missing';
   end if;
 
-  if definition ilike '%new.capacity <> old.capacity%' then
+  if definition ilike '%new.capacity%old.capacity%'
+     or definition ilike '%new.capacity is distinct from old.capacity%' then
     raise exception 'published capacity assertion failed: capacity still immutable in phase 3 guards';
   end if;
 
