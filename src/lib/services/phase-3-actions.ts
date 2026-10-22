@@ -1058,13 +1058,27 @@ export async function updateEvent(
         event_title_color: input.eventTitleColor,
       })
       .eq("id", id);
-    if (error)
+    if (error) {
+      const detail = typeof error.message === "string" ? error.message : "";
+      if (/capacity cannot be below active registrations/i.test(detail)) {
+        throw new Phase3Error(
+          "conflict",
+          "Capacity cannot be below the number of active registrations.",
+        );
+      }
+      if (/published event scheduling and ownership fields are immutable/i.test(detail)) {
+        throw new Phase3Error(
+          "conflict",
+          "Schedule, venue, and ownership cannot be changed after this event is published. Capacity may still be updated.",
+        );
+      }
       throw new Phase3Error(
         "conflict",
         error.code === "42501"
           ? "This event cannot be edited in its current state."
           : "Event could not be updated.",
       );
+    }
     await audit(
       admin.userId,
       "EVENT_UPDATED",
