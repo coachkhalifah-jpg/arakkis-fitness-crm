@@ -53,11 +53,7 @@ describe("UAT-029B Past Events of today", () => {
 
   it("omits empty Past Events by returning []", () => {
     expect(
-      selectPastEventsOfToday(
-        [{ id: "future", startsAt: "2026-10-24T23:00:00.000Z" }],
-        now,
-        tz,
-      ),
+      selectPastEventsOfToday([{ id: "future", startsAt: "2026-10-24T23:00:00.000Z" }], now, tz),
     ).toEqual([]);
   });
 

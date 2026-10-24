@@ -16,11 +16,7 @@ export function eventDayKey(value: string | Date, timeZone: string): string {
 }
 
 /** True when `startsAt` falls on the same admin-local calendar date as `now`. */
-export function isSameAdminLocalDay(
-  startsAt: string | Date,
-  now: Date,
-  timeZone: string,
-): boolean {
+export function isSameAdminLocalDay(startsAt: string | Date, now: Date, timeZone: string): boolean {
   return eventDayKey(startsAt, timeZone) === eventDayKey(now, timeZone);
 }
 
