@@ -42,8 +42,13 @@ describe("Manage Event success polish", () => {
     expect(actionForm).toContain("successClassName");
     expect(actionForm).toContain("successCheckmark");
     expect(actionForm).toContain("ActionFormSuccessCheckmark");
+    expect(actionForm).toContain("successNonce");
     expect(actionForm.toLowerCase()).not.toContain("anime.js");
     expect(checkmark.toLowerCase()).not.toContain("anime");
+
+    const actions = readFileSync(join(root, "src/lib/services/phase-3-actions.ts"), "utf8");
+    expect(actions).toContain('success: "Event updated."');
+    expect(actions).toContain("successNonce: Date.now()");
 
     expect(css).toContain(".admin-manage-event-update-success");
     expect(css).toContain("color: var(--manage-lime, #c7f36b)");
