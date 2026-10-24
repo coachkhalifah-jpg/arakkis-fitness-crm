@@ -42,6 +42,7 @@ import { getAdminWorkspaceMenuItems } from "@/components/admin/admin-workspace-m
 import { ProgressiveDisclosureSection } from "@/components/admin/progressive-disclosure-section";
 import { RecurrenceScheduleManager } from "@/components/admin/recurrence-schedule-manager";
 import { PublicErrorState } from "@/components/registration/public-error-state";
+import { reconcileAttendanceOpenForEvent } from "@/lib/services/attendance-auto-open";
 
 function localValue(value: string, timezone: string) {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -98,7 +99,18 @@ export default async function EventDetailPage({
   const { id } = await params;
   const { from } = await searchParams;
   const db = await createClient();
-  const { data: event } = await db.from("events").select("*").eq("id", id).single();
+  let { data: event } = await db.from("events").select("*").eq("id", id).single();
+  if (
+    event &&
+    event.status !== "CANCELLED" &&
+    event.status !== "DRAFT" &&
+    event.attendance_processing_state === "NOT_STARTED"
+  ) {
+    const reconciled = await reconcileAttendanceOpenForEvent(db, id);
+    if (reconciled?.attendance_processing_state) {
+      event = { ...event, attendance_processing_state: reconciled.attendance_processing_state };
+    }
+  }
   if (!event) {
     const admin = await requireActiveAdmin(`/admin/events/${id}`);
     if (admin.role === "HOST_ADMIN") {

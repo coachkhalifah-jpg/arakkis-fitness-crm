@@ -26,7 +26,7 @@ Participation acknowledgment remains PROVISIONAL until legal approval. Productio
 
 ## Attendance and follow-up
 
-Attendance uses `NOT_STARTED`, `OPEN`, `FINALIZED`, and `REOPENED`, with immutable/auditable transitions. Authorized admins may correct individual attendance; reopening a finalized Event is System Admin-only. Cancelled registrations do not become no-shows. First-ever attendance and finalized no-show processing create idempotent follow-up tasks. Messages are editable/copyable and manually sent; automated messaging is out of scope.
+Attendance uses `NOT_STARTED`, `OPEN`, `FINALIZED`, and `REOPENED`, with immutable/auditable transitions. Check-in auto-opens at `starts_at − 30 minutes` (UTC instant math; UAT-029A): server-enforced, on-access reconcile (Manage Event + Admin Events) and mark/walk-in paths; manual Open check-in remains lag fallback after the window. Authorized admins may correct individual attendance; reopening a finalized Event is System Admin-only. Cancelled registrations do not become no-shows. First-ever attendance and finalized no-show processing create idempotent follow-up tasks. Messages are editable/copyable and manually sent; automated messaging is out of scope.
 
 ## Cancellation, archive, and history
 

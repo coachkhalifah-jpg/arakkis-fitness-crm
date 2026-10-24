@@ -19,6 +19,7 @@ import { getAdminWorkspaceMenuItems } from "@/components/admin/admin-workspace-m
 import { ProgressiveDisclosureSection } from "@/components/admin/progressive-disclosure-section";
 import { CalendarUtility } from "@/components/admin/calendar-utility";
 import { getAuthorizedCalendarEvents } from "@/lib/services/admin-calendar";
+import { reconcileDueAttendanceOpens } from "@/lib/services/attendance-auto-open";
 
 export default async function EventsPage({
   searchParams,
@@ -28,6 +29,7 @@ export default async function EventsPage({
   const admin = await requireActiveAdmin();
   const calendarEvents = await getAuthorizedCalendarEvents(admin);
   const db = await createClient();
+  await reconcileDueAttendanceOpens(db);
   const [{ data: organizations }, { data: venues }, { data: events }] = await Promise.all([
     db.from("organizations").select("id,name").eq("active_status", "ACTIVE").order("name"),
     db
