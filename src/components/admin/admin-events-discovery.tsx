@@ -1,14 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import { AdminEventCard } from "@/components/admin/admin-event-card";
 import { AdminEventCardRail } from "@/components/admin/admin-event-card-rail";
 import { DisclosureToggle } from "@/components/ui/disclosure-toggle";
 import { CalendarUtility } from "@/components/admin/calendar-utility";
 import { ArchiveCancelledEventButton } from "@/components/admin/archive-cancelled-event-button";
 import { EventsBulkLifecycleBar } from "@/components/admin/events-bulk-lifecycle-bar";
+import { getBrowserTimeZone, selectPastEventsOfToday } from "@/lib/admin/event-day";
 import { eventMonthKey, eventMonthLabel, groupEventsByMonthKey } from "@/lib/admin/event-month";
 import type { CalendarEvent } from "@/lib/registration/calendar";
+
+const emptySubscribe = () => () => {};
 
 export type AdminDiscoveryEvent = {
   id: string;
@@ -208,9 +219,18 @@ export function AdminEventsDiscovery({
     () => sorted.filter((event) => matchesFilters(event, filters)),
     [sorted, filters],
   );
+  // UAT-029B B1: calendar day / Past Events use admin browser timezone (not UAT-026 NY months).
+  const adminTimeZone = useSyncExternalStore<string | null>(
+    emptySubscribe,
+    getBrowserTimeZone,
+    () => null,
+  );
   const now = new Date();
   const filteredUpcoming = filtered.filter((event) => new Date(event.startsAt) >= now);
   const thisWeek = filteredUpcoming.filter((event) => isWithinThisWeek(event.startsAt, now));
+  const pastEventsOfToday = adminTimeZone
+    ? selectPastEventsOfToday(filtered, now, adminTimeZone)
+    : [];
   const monthGroups = useMemo(() => groupEventsByMonthKey(filtered), [filtered]);
   const groups = organizations
     .map(([id, name]) => {
@@ -272,6 +292,22 @@ export function AdminEventsDiscovery({
       }
     />
   );
+  // UAT-029B B3: Past Events after upcoming priority; omit when empty.
+  const pastEventsSection =
+    pastEventsOfToday.length > 0 ? (
+      <section
+        aria-labelledby="past-events-heading"
+        data-testid="admin-event-discovery-past-events"
+      >
+        <div className="admin-event-discovery-heading">
+          <h2 id="past-events-heading">Past Events</h2>
+          <span>
+            {pastEventsOfToday.length} event{pastEventsOfToday.length === 1 ? "" : "s"}
+          </span>
+        </div>
+        <Carousel id="past-events" events={pastEventsOfToday} renderCard={renderCard} />
+      </section>
+    ) : null;
 
   useEffect(() => {
     const saved = sessionStorage.getItem("arakkis:admin-events:context");
@@ -518,6 +554,7 @@ export function AdminEventsDiscovery({
               </div>
               <Carousel id="this-week" events={thisWeek} renderCard={renderCard} />
             </section>
+            {pastEventsSection}
             <section
               className="admin-event-discovery-months"
               aria-labelledby="by-month-heading"
@@ -621,6 +658,7 @@ export function AdminEventsDiscovery({
               </div>
               <Carousel id="this-week" events={thisWeek} renderCard={renderCard} />
             </section>
+            {pastEventsSection}
             <section
               className="admin-event-discovery-organizations"
               aria-labelledby="by-organization-heading"
