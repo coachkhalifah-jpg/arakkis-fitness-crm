@@ -4,13 +4,20 @@ import { revalidatePath } from "next/cache";
 import { manageBooking } from "@/lib/registration/booking-management";
 import type { BookingActionError } from "@/lib/registration/booking-management";
 
+/** Bound for useActionState — success must differ from the initial state so pending clears. */
+export type CancelBookingActionState = {
+  error?: string;
+  success?: boolean;
+};
+
 export async function cancelBookingAction(
-  _state: BookingActionError | undefined,
+  _state: CancelBookingActionState,
   form: FormData,
-): Promise<BookingActionError | undefined> {
+): Promise<CancelBookingActionState> {
+  const registrationId = String(form.get("registrationId") ?? "");
   const result = await manageBooking(
     "CANCEL",
-    String(form.get("registrationId") ?? ""),
+    registrationId,
     undefined,
     String(form.get("accessToken") ?? "") || undefined,
   );
@@ -18,7 +25,10 @@ export async function cancelBookingAction(
   revalidatePath("/");
   revalidatePath("/events");
   revalidatePath("/manage-bookings");
-  return undefined;
+  if (registrationId) {
+    revalidatePath(`/manage-bookings/${registrationId}`);
+  }
+  return { success: true };
 }
 
 export async function restoreBookingAction(
