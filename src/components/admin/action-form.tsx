@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Phase3ActionState } from "@/lib/services/phase-3-actions";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { CopyLinkButton } from "@/components/admin/copy-link-button";
+import { ActionFormBesideSuccess } from "@/components/admin/action-form-beside-success";
 import { ActionFormSuccessCheckmark } from "@/components/admin/action-form-success-checkmark";
 
 type Action = (state: Phase3ActionState, formData: FormData) => Promise<Phase3ActionState>;
@@ -25,6 +26,8 @@ export function ActionForm({
   cancelClassName = "admin-action-form-cancel",
   successClassName,
   successCheckmark = false,
+  successBesideSubmit = false,
+  successStatusLabel = "UPDATED",
 }: {
   action: Action;
   children: React.ReactNode;
@@ -43,10 +46,29 @@ export function ActionForm({
   successClassName?: string;
   /** When true, render a one-shot animated checkmark next to the success text. */
   successCheckmark?: boolean;
+  /**
+   * When true, show ephemeral checkmark + successStatusLabel beside the submit
+   * control (same actions row) instead of the below-form success row.
+   * Opt-in; Manage Event update only today.
+   */
+  successBesideSubmit?: boolean;
+  /** Short status label for beside-submit success (default UPDATED). */
+  successStatusLabel?: string;
 }) {
   const [state, formAction] = useActionState(action, {});
   const formRef = useRef<HTMLFormElement>(null);
   const submittedValues = useRef(new Map<string, string>());
+  const successRemountKey = state.successNonce ?? state.success;
+  const besideSuccess =
+    successBesideSubmit && state.success && successRemountKey != null ? (
+      <ActionFormBesideSuccess
+        key={`beside-${successRemountKey}`}
+        successNonce={successRemountKey}
+        label={successStatusLabel}
+        className={successClassName ?? "admin-manage-event-update-success"}
+      />
+    ) : null;
+
   useEffect(() => {
     if (!state.error || !formRef.current) return;
     const form = formRef.current;
@@ -105,10 +127,12 @@ export function ActionForm({
               {option.label}
             </SubmitButton>
           ))}
+          {besideSuccess}
         </div>
       ) : cancelHref || cancelAction ? (
         <div className={actionsClassName}>
           <SubmitButton className={submitClassName}>{submitLabel}</SubmitButton>
+          {besideSuccess}
           {cancelHref ? (
             <Link className={cancelClassName} href={cancelHref}>
               {cancelLabel}
@@ -119,6 +143,11 @@ export function ActionForm({
             </button>
           )}
         </div>
+      ) : successBesideSubmit ? (
+        <div className="admin-manage-event-update-actions">
+          <SubmitButton className={submitClassName}>{submitLabel}</SubmitButton>
+          {besideSuccess}
+        </div>
       ) : (
         <SubmitButton>{submitLabel}</SubmitButton>
       )}
@@ -127,7 +156,7 @@ export function ActionForm({
           {state.error}
         </p>
       ) : null}
-      {state.success ? (
+      {state.success && !successBesideSubmit ? (
         <p
           key={successCheckmark ? `success-${state.successNonce ?? state.success}` : undefined}
           role="status"
