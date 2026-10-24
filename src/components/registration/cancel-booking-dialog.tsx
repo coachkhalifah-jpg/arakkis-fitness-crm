@@ -1,9 +1,12 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { ManagedBooking } from "@/lib/registration/booking-management";
-import { cancelBookingAction } from "@/lib/registration/booking-actions";
-import type { BookingActionError } from "@/lib/registration/booking-management";
+import {
+  cancelBookingAction,
+  type CancelBookingActionState,
+} from "@/lib/registration/booking-actions";
 import { formatInTimezone } from "@/lib/registration/datetime";
 
 function formatDate(value: string, timezone: string) {
@@ -32,10 +35,11 @@ export function CancelBookingDialog({
   accessToken?: string;
   className?: string;
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [state, action, pending] = useActionState<BookingActionError | undefined, FormData>(
+  const [state, action, pending] = useActionState<CancelBookingActionState, FormData>(
     cancelBookingAction,
-    undefined,
+    {},
   );
   const keepButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -48,6 +52,12 @@ export function CancelBookingDialog({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open]);
+
+  useEffect(() => {
+    if (!state.success) return;
+    setOpen(false);
+    router.refresh();
+  }, [router, state.success]);
 
   return (
     <>
@@ -98,6 +108,7 @@ export function CancelBookingDialog({
                 type="button"
                 className="min-h-11 rounded-full border border-[var(--border)] px-4 text-sm font-semibold text-ink transition-colors hover:bg-[var(--surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 onClick={() => setOpen(false)}
+                disabled={pending}
               >
                 Keep my booking
               </button>
@@ -109,13 +120,14 @@ export function CancelBookingDialog({
                 <button
                   type="submit"
                   disabled={pending}
-                  className="min-h-11 rounded-full border border-red-700 px-4 text-sm font-bold text-red-700 transition-colors hover:bg-red-700 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-700"
+                  aria-busy={pending}
+                  className="min-h-11 rounded-full border border-red-700 px-4 text-sm font-bold text-red-700 transition-colors hover:bg-red-700 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-700 disabled:opacity-60"
                 >
                   {pending ? "Cancelling…" : "Cancel booking"}
                 </button>
               </form>
             </div>
-            {state?.error ? (
+            {state.error ? (
               <p className="mt-4 text-sm font-medium text-red-700" role="alert">
                 {state.error}
               </p>
