@@ -12,14 +12,16 @@ describe("Cancel booking completion (UAT-024)", () => {
   );
 
   it("returns a distinct success state so useActionState pending can clear", () => {
-    expect(actions).toContain("CancelBookingActionState");
-    expect(actions).toMatch(
+    const cancelFn = actions.slice(
+      actions.indexOf("export async function cancelBookingAction"),
+      actions.indexOf("export async function restoreBookingAction"),
+    );
+    expect(cancelFn).toContain("CancelBookingActionState");
+    expect(cancelFn).toMatch(
       /export async function cancelBookingAction\(\s*_state: CancelBookingActionState,\s*form: FormData,\s*\): Promise<CancelBookingActionState>/,
     );
-    expect(actions).toContain('return { success: true }');
-    expect(actions).not.toMatch(
-      /cancelBookingAction[\s\S]*?return undefined;\s*\n\}/,
-    );
+    expect(cancelFn).toContain("return { success: true }");
+    expect(cancelFn).not.toContain("return undefined");
   });
 
   it("closes the dialog and refreshes the route on cancel success", () => {
