@@ -46,6 +46,8 @@ export type Phase3ActionState = {
   errorAction?: string;
   errorCode?: string;
   success?: string;
+  /** Unique per successful update so client success UI can remount (replay CSS animation). */
+  successNonce?: number;
   createdEventId?: string;
   createdName?: string;
   createdStatus?: "Draft" | "Published";
@@ -1117,7 +1119,7 @@ export async function updateEvent(
     );
     revalidatePath("/admin/events");
     revalidatePath(`/admin/events/${id}`);
-    return { success: "Event updated." };
+    return { success: "Event updated.", successNonce: Date.now() };
   } catch (error) {
     return { error: message(error) };
   }
