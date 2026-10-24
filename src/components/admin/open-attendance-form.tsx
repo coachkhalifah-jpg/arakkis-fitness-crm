@@ -32,7 +32,8 @@ export function OpenAttendanceForm({ eventId }: { eventId: string }) {
         </p>
       ) : null}
       <p className="mt-3 text-sm text-slate-600">
-        Opens check-in so the roster Check in actions become available for this Event.
+        Check-in opens automatically 30 minutes before start. Use this if it has not opened yet once
+        that window begins.
       </p>
     </div>
   );

@@ -39,11 +39,44 @@ describe("Open check-in attendance control", () => {
   });
 
   it("allows Host Admin as well as System Admin (no SYSTEM_ADMIN-only gate on Open)", () => {
-    const openGate = page.slice(
-      page.indexOf('attendance_processing_state === "NOT_STARTED"') - 200,
-      page.indexOf('attendance_processing_state === "NOT_STARTED"') + 280,
-    );
+    const formIndex = page.indexOf("<OpenAttendanceForm");
+    const openGate = page.slice(Math.max(0, formIndex - 280), formIndex + 80);
+    expect(openGate).toContain('attendance_processing_state === "NOT_STARTED"');
     expect(openGate).toContain("OpenAttendanceForm");
     expect(openGate).not.toContain('admin.role === "SYSTEM_ADMIN"');
+  });
+
+  it("reconciles auto-open on Manage Event access when still NOT_STARTED", () => {
+    expect(page).toContain("reconcileAttendanceOpenForEvent");
+    expect(page).toMatch(
+      /attendance_processing_state === "NOT_STARTED"[\s\S]*reconcileAttendanceOpenForEvent/,
+    );
+  });
+});
+
+describe("UAT-029A check-in window auto-open wiring", () => {
+  const eventsPage = readFileSync(join(root, "src/app/admin/events/page.tsx"), "utf8");
+  const migration = readFileSync(
+    join(root, "supabase/migrations/0088_attendance_checkin_auto_open_window.sql"),
+    "utf8",
+  );
+  const errors = readFileSync(join(root, "src/lib/services/attendance-errors.ts"), "utf8");
+
+  it("batch-reconciles due opens on Admin Events discovery", () => {
+    expect(eventsPage).toContain("reconcileDueAttendanceOpens");
+  });
+
+  it("defines T-30m opens_at helper and auto-open RPCs", () => {
+    expect(migration).toContain("phase5_attendance_check_in_opens_at");
+    expect(migration).toContain("interval '30 minutes'");
+    expect(migration).toContain("phase5_auto_open_attendance_if_due");
+    expect(migration).toContain("phase5_reconcile_due_attendance_opens");
+    expect(migration).toContain("attendance check-in window has not opened");
+    expect(migration).toContain("'source', 'AUTO'");
+    expect(migration).toContain("'source', 'MANUAL'");
+  });
+
+  it("maps pre-window errors to a clear coach message", () => {
+    expect(errors).toContain("Check-in opens 30 minutes before the event starts.");
   });
 });

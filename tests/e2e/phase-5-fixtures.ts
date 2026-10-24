@@ -249,6 +249,16 @@ export function createRegisteredParticipant(
 }
 
 export async function openAttendance(client: SupabaseClient, eventId: string) {
+  // UAT-029A: manual open is gated to starts_at − 30m. Synthetic Phase 5 events
+  // default to 2099; move them into the open window before calling the RPC.
+  localSql(`
+    update public.events
+    set starts_at = now() + interval '15 minutes',
+        ends_at = now() + interval '75 minutes',
+        registration_deadline = now() + interval '10 minutes'
+    where id = ${sql(eventId)}
+      and attendance_processing_state = 'NOT_STARTED';
+  `);
   const result = await client.rpc("phase5_open_attendance", { p_event_id: eventId });
   if (result.error) throw new Error(result.error.message);
   return result.data;

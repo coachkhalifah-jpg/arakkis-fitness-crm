@@ -75,6 +75,12 @@ export function mapAttendanceError(error: unknown): AttendanceError {
       message: "You are not authorized to change this event's attendance.",
       nextAction: "Open an event assigned to your organization or ask a System Admin.",
     };
+  if (/check-in window has not opened|window has not opened/i.test(message))
+    return {
+      code: "ATTENDANCE_NOT_OPEN",
+      message: "Check-in opens 30 minutes before the event starts.",
+      nextAction: "Wait until 30 minutes before start, then refresh or open check-in.",
+    };
   if (/open/i.test(message))
     return {
       code: "ATTENDANCE_NOT_OPEN",
