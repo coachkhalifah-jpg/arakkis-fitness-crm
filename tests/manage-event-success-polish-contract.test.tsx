@@ -49,9 +49,10 @@ describe("Manage Event success polish", () => {
     expect(css).toContain("color: var(--manage-lime, #c7f36b)");
     expect(css).toContain("@keyframes admin-manage-event-success-pop");
     expect(css).toContain("@keyframes admin-manage-event-success-draw");
-    expect(css).not.toMatch(
-      /admin-manage-event-success-(?:pop|draw)\s*\{[^}]*animation-iteration-count:\s*infinite/s,
-    );
+    // Avoid /s (es2018) — CI tsc target rejects it. One-shot uses forwards/both, not infinite.
+    expect(css).toMatch(/animation:[^;]*admin-manage-event-success-pop[^;]*forwards/);
+    expect(css).toMatch(/animation:[^;]*admin-manage-event-success-draw[^;]*both/);
+    expect(css).not.toContain("animation-iteration-count: infinite");
   });
 
   it("renders the 32x32 lime-circle SVG with the branded check path", () => {
