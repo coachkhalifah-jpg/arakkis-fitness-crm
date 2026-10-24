@@ -129,11 +129,7 @@ export function ActionForm({
       ) : null}
       {state.success ? (
         <p
-          key={
-            successCheckmark
-              ? `success-${state.successNonce ?? state.success}`
-              : undefined
-          }
+          key={successCheckmark ? `success-${state.successNonce ?? state.success}` : undefined}
           role="status"
           className={successClassName ?? "text-sm text-green-700"}
         >
