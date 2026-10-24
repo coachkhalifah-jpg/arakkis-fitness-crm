@@ -42,20 +42,21 @@ export function CancelBookingDialog({
     {},
   );
   const keepButtonRef = useRef<HTMLButtonElement>(null);
+  // Derive closed UI from success so we do not setState inside an effect (CI lint).
+  const dialogOpen = open && !state.success;
 
   useEffect(() => {
-    if (!open) return;
+    if (!dialogOpen) return;
     keepButtonRef.current?.focus();
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open]);
+  }, [dialogOpen]);
 
   useEffect(() => {
     if (!state.success) return;
-    setOpen(false);
     router.refresh();
   }, [router, state.success]);
 
@@ -68,7 +69,7 @@ export function CancelBookingDialog({
       >
         {label}
       </button>
-      {open ? (
+      {dialogOpen ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4"
           role="presentation"
