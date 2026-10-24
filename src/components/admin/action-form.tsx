@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Phase3ActionState } from "@/lib/services/phase-3-actions";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { CopyLinkButton } from "@/components/admin/copy-link-button";
+import { ActionFormSuccessCheckmark } from "@/components/admin/action-form-success-checkmark";
 
 type Action = (state: Phase3ActionState, formData: FormData) => Promise<Phase3ActionState>;
 
@@ -22,6 +23,8 @@ export function ActionForm({
   actionsClassName = "admin-action-form-buttons",
   submitClassName,
   cancelClassName = "admin-action-form-cancel",
+  successClassName,
+  successCheckmark = false,
 }: {
   action: Action;
   children: React.ReactNode;
@@ -36,6 +39,10 @@ export function ActionForm({
   actionsClassName?: string;
   submitClassName?: string;
   cancelClassName?: string;
+  /** Optional scoped success row class (e.g. Manage Event lime polish). */
+  successClassName?: string;
+  /** When true, render a one-shot animated checkmark next to the success text. */
+  successCheckmark?: boolean;
 }) {
   const [state, formAction] = useActionState(action, {});
   const formRef = useRef<HTMLFormElement>(null);
@@ -121,36 +128,41 @@ export function ActionForm({
         </p>
       ) : null}
       {state.success ? (
-        <p role="status" className="text-sm text-green-700">
-          {state.success}
-          {state.createdEventId ? (
-            <>
-              <span className="mt-2 block font-medium">
-                {state.createdStatus ?? "Draft"} created: {state.createdName ?? "Event"}.
-              </span>
+        <p role="status" className={successClassName ?? "text-sm text-green-700"}>
+          {successCheckmark ? (
+            <ActionFormSuccessCheckmark className="action-form-success-checkmark" />
+          ) : null}
+          <span className={successCheckmark ? "action-form-success-checkmark__message" : undefined}>
+            {state.success}
+            {state.createdEventId ? (
+              <>
+                <span className="mt-2 block font-medium">
+                  {state.createdStatus ?? "Draft"} created: {state.createdName ?? "Event"}.
+                </span>
+                <span className="mt-2 flex flex-wrap gap-3">
+                  <Link className="underline" href={`/admin/events/${state.createdEventId}`}>
+                    Open the created event
+                  </Link>
+                  {state.publicUrl ? (
+                    <a className="underline" href={state.publicUrl}>
+                      Public registration page
+                    </a>
+                  ) : null}
+                  <Link className="underline" href="/admin/events">
+                    Back to Events
+                  </Link>
+                </span>
+              </>
+            ) : null}
+            {state.inviteUrl ? (
               <span className="mt-2 flex flex-wrap gap-3">
-                <Link className="underline" href={`/admin/events/${state.createdEventId}`}>
-                  Open the created event
-                </Link>
-                {state.publicUrl ? (
-                  <a className="underline" href={state.publicUrl}>
-                    Public registration page
-                  </a>
-                ) : null}
-                <Link className="underline" href="/admin/events">
-                  Back to Events
-                </Link>
+                <a className="break-all underline" href={state.inviteUrl}>
+                  {state.inviteUrl}
+                </a>
+                <CopyLinkButton url={state.inviteUrl} />
               </span>
-            </>
-          ) : null}
-          {state.inviteUrl ? (
-            <span className="mt-2 flex flex-wrap gap-3">
-              <a className="break-all underline" href={state.inviteUrl}>
-                {state.inviteUrl}
-              </a>
-              <CopyLinkButton url={state.inviteUrl} />
-            </span>
-          ) : null}
+            ) : null}
+          </span>
         </p>
       ) : null}
     </form>

@@ -519,6 +519,8 @@ export default async function EventDetailPage({
                     action={updateEvent}
                     submitLabel="Update"
                     className="admin-event-update-form"
+                    successClassName="admin-manage-event-update-success"
+                    successCheckmark
                   >
                     <ProgressiveDisclosureSection
                       id="manage-event-schedule"
