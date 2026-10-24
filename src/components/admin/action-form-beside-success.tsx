@@ -17,23 +17,18 @@ export function ActionFormBesideSuccess({
   className?: string;
   holdMs?: number;
 }) {
+  // Fresh mount (parent keys on successNonce) starts visible; timeout only hides.
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    setVisible(true);
     const timer = window.setTimeout(() => setVisible(false), holdMs);
     return () => window.clearTimeout(timer);
-  }, [successNonce, holdMs]);
+  }, [holdMs, successNonce]);
 
   if (!visible) return null;
 
   return (
-    <p
-      key={`success-${successNonce}`}
-      role="status"
-      className={className}
-      data-testid="action-form-beside-success"
-    >
+    <p role="status" className={className} data-testid="action-form-beside-success">
       <ActionFormSuccessCheckmark className="action-form-success-checkmark" />
       <span className="action-form-success-checkmark__message">{label}</span>
     </p>
