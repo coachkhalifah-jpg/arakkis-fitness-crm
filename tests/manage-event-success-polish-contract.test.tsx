@@ -27,14 +27,17 @@ describe("Manage Event success polish", () => {
     expect(updateFormBlock).toContain('successClassName="admin-manage-event-update-success"');
     expect(updateFormBlock).toContain("successCheckmark");
 
-    const inviteFormIndex = page.indexOf("generateEventInviteLink");
+    const inviteFormIndex = page.indexOf("action={generateEventInviteLink}");
     expect(inviteFormIndex).toBeGreaterThan(-1);
+    const inviteFormOpen = page.lastIndexOf("<ActionForm", inviteFormIndex);
     const inviteFormBlock = page.slice(
-      inviteFormIndex,
+      inviteFormOpen,
       page.indexOf("</ActionForm>", inviteFormIndex),
     );
+    expect(inviteFormBlock).toContain("action={generateEventInviteLink}");
     expect(inviteFormBlock).not.toContain("successClassName");
     expect(inviteFormBlock).not.toContain("successCheckmark");
+    expect(page.match(/successClassName="admin-manage-event-update-success"/g)?.length).toBe(1);
 
     expect(actionForm).toContain("successClassName");
     expect(actionForm).toContain("successCheckmark");
