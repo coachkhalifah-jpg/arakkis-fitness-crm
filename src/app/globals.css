@@ -3554,6 +3554,7 @@ html[data-participant-transition-fallback="true"][data-participant-transition-re
   display: none;
 }
 .admin-manage-event-page .admin-event-update-form > .ui-button,
+.admin-manage-event-page .admin-event-update-form > .admin-manage-event-update-actions .ui-button,
 .admin-manage-event-page [data-testid="occurrence-location-override"] .ui-button {
   display: flex;
   width: fit-content;
@@ -3578,12 +3579,30 @@ html[data-participant-transition-fallback="true"][data-participant-transition-re
   line-height: 1;
   text-transform: uppercase;
 }
-.admin-manage-event-page .admin-event-update-form > .ui-button {
+.admin-manage-event-page .admin-event-update-form > .ui-button,
+.admin-manage-event-page .admin-event-update-form > .admin-manage-event-update-actions {
   margin-top: 2.25rem;
   margin-left: auto;
 }
+.admin-manage-event-page .admin-event-update-form > .admin-manage-event-update-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  width: fit-content;
+  max-width: 100%;
+}
 .admin-manage-event-page .admin-event-update-form > .ui-button:hover,
 .admin-manage-event-page .admin-event-update-form > .ui-button:focus-visible,
+.admin-manage-event-page
+  .admin-event-update-form
+  > .admin-manage-event-update-actions
+  .ui-button:hover,
+.admin-manage-event-page
+  .admin-event-update-form
+  > .admin-manage-event-update-actions
+  .ui-button:focus-visible,
 .admin-manage-event-page [data-testid="occurrence-location-override"] .ui-button:hover,
 .admin-manage-event-page [data-testid="occurrence-location-override"] .ui-button:focus-visible {
   border-color: #ff7a3d;
@@ -4144,6 +4163,9 @@ html[data-participant-transition-fallback="true"][data-participant-transition-re
   margin: 0;
   color: var(--manage-lime, #c7f36b);
   font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   line-height: 1.35;
 }
 .admin-manage-event-update-success .action-form-success-checkmark {
@@ -12389,6 +12411,14 @@ button.admin-roster-preview-more:focus-visible {
    page-scoped so the shared button behavior remains unchanged elsewhere. */
 .admin-manage-event-page .admin-event-update-form > .ui-button:hover,
 .admin-manage-event-page .admin-event-update-form > .ui-button:focus-visible,
+.admin-manage-event-page
+  .admin-event-update-form
+  > .admin-manage-event-update-actions
+  .ui-button:hover,
+.admin-manage-event-page
+  .admin-event-update-form
+  > .admin-manage-event-update-actions
+  .ui-button:focus-visible,
 .admin-manage-event-page [data-testid="occurrence-location-override"] .ui-button:hover,
 .admin-manage-event-page [data-testid="occurrence-location-override"] .ui-button:focus-visible,
 .admin-manage-event-page

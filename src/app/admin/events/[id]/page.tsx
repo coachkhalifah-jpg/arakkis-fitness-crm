@@ -521,6 +521,8 @@ export default async function EventDetailPage({
                     className="admin-event-update-form"
                     successClassName="admin-manage-event-update-success"
                     successCheckmark
+                    successBesideSubmit
+                    successStatusLabel="UPDATED"
                   >
                     <ProgressiveDisclosureSection
                       id="manage-event-schedule"
