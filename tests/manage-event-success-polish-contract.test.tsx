@@ -49,9 +49,13 @@ describe("Manage Event success polish", () => {
     expect(css).toContain("color: var(--manage-lime, #c7f36b)");
     expect(css).toContain("@keyframes admin-manage-event-success-pop");
     expect(css).toContain("@keyframes admin-manage-event-success-draw");
-    // Avoid /s (es2018) — CI tsc target rejects it. One-shot uses forwards/both, not infinite.
-    expect(css).toMatch(/animation:[^;]*admin-manage-event-success-pop[^;]*forwards/);
-    expect(css).toMatch(/animation:[^;]*admin-manage-event-success-draw[^;]*both/);
+    // Avoid /s (es2018) — CI tsc target rejects it. One-shot uses both/forwards, not infinite.
+    expect(css).toContain(
+      "animation: admin-manage-event-success-pop 420ms cubic-bezier(0.2, 0.9, 0.25, 1) both",
+    );
+    expect(css).toContain(
+      "animation: admin-manage-event-success-draw 360ms ease-out 160ms forwards",
+    );
     expect(css).not.toContain("animation-iteration-count: infinite");
   });
 
