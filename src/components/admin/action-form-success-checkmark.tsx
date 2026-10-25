@@ -3,8 +3,8 @@ export function ActionFormSuccessCheckmark({ className }: { className?: string }
   return (
     <svg
       className={className}
-      width="32"
-      height="32"
+      width="24"
+      height="24"
       viewBox="0 0 32 32"
       aria-hidden="true"
       focusable="false"
