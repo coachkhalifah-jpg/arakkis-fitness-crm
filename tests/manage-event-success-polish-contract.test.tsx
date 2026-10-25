@@ -165,8 +165,15 @@ describe("Manage Event beside-submit UPDATED clear", () => {
     expect(screen.getByRole("status")).toHaveTextContent("UPDATED");
     expect(screen.getByRole("status").className).not.toContain("is-fading-out");
 
+    // Replay must step hold → out effect flush → fade, same as first lifecycle:
+    // fade timer only schedules after phase→"out", so one HOLD+FADE advance leaves is-fading-out.
     act(() => {
-      vi.advanceTimersByTime(BESIDE_SUCCESS_HOLD_MS + BESIDE_SUCCESS_FADE_OUT_MS);
+      vi.advanceTimersByTime(BESIDE_SUCCESS_HOLD_MS);
+    });
+    expect(screen.getByRole("status").className).toContain("is-fading-out");
+
+    act(() => {
+      vi.advanceTimersByTime(BESIDE_SUCCESS_FADE_OUT_MS);
     });
     expect(screen.queryByRole("status")).toBeNull();
   });
