@@ -76,8 +76,6 @@ describe("DEC-073 / DEC-074 event bulk lifecycle + lean delete", () => {
     expect(opsCss).toMatch(
       /\.ops-people-destructive-sheet\s+\.ops-people-profile-archive\s*\{[^}]*display:\s*grid;[^}]*gap:\s*1rem;/,
     );
-    expect(opsCss).toContain(
-      ".ops-people-destructive-sheet .ops-people-profile-archive-reason",
-    );
+    expect(opsCss).toContain(".ops-people-destructive-sheet .ops-people-profile-archive-reason");
   });
 });
