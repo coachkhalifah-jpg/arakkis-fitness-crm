@@ -1798,8 +1798,26 @@
   outline: none;
 }
 .ops-people-destructive-sheet .ops-people-profile-archive {
+  display: grid;
+  gap: 1rem;
   margin-top: 0.85rem;
   max-width: none;
+}
+.ops-people-destructive-sheet .ops-people-profile-archive-reason {
+  display: grid;
+  gap: 0.35rem;
+  color: #aeb3bb;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-size: 0.85rem;
+}
+.ops-people-destructive-sheet .ops-people-profile-archive-reason input {
+  min-height: 44px;
+  border: 1px solid #59616b;
+  border-radius: 0;
+  background: #2c3137;
+  padding: 0.65rem 0.85rem;
+  color: #f7f5f0;
+  font: inherit;
 }
 .ops-people-destructive-sheet .admin-series-panel-form > p {
   margin: 0;

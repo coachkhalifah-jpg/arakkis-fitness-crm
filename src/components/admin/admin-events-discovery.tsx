@@ -695,7 +695,7 @@ export function AdminEventsDiscovery({
             </section>
           </>
         )}
-        {canBulkManage && selectionMode ? (
+        {canBulkManage && selectionMode && selectedIds.length > 0 ? (
           <EventsBulkLifecycleBar
             selectedIds={selectedIds}
             selectedEvents={selectedEvents}
