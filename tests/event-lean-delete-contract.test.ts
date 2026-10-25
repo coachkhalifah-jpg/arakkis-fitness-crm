@@ -9,6 +9,10 @@ describe("DEC-073 / DEC-074 event bulk lifecycle + lean delete", () => {
     join(root, "supabase/migrations/0085_event_bulk_lifecycle_and_lean_delete.sql"),
     "utf8",
   );
+  const bypassMigration = readFileSync(
+    join(root, "supabase/migrations/0089_lean_event_delete_trigger_bypass.sql"),
+    "utf8",
+  );
   const discovery = readFileSync(
     join(root, "src/components/admin/admin-events-discovery.tsx"),
     "utf8",
@@ -32,6 +36,17 @@ describe("DEC-073 / DEC-074 event bulk lifecycle + lean delete", () => {
     expect(migration).toContain("registrations");
     expect(migration).toContain("cancellation history");
     expect(migration).toContain("delete from public.design_assets");
+  });
+
+  it("bypasses archive-not-delete triggers via session_replication_role=replica (0089)", () => {
+    expect(bypassMigration).toContain("phase3_delete_lean_event");
+    expect(bypassMigration).toContain("session_replication_role");
+    expect(bypassMigration).toContain("'replica'");
+    expect(bypassMigration).toMatch(
+      /EVENT_DELETED_LEAN[\s\S]*session_replication_role[\s\S]*delete from public\.events/,
+    );
+    expect(bypassMigration).toContain("cancellation history");
+    expect(bypassMigration).toContain("cannot permanently delete");
   });
 
   it("wires bulk cancel/archive/lean-delete actions", () => {
