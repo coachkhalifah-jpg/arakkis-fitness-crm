@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ConfirmSubmit } from "@/components/admin/confirm-submit";
 import { PeopleDestructiveActionSheet } from "@/components/admin/people-destructive-action-sheet";
 import {
@@ -21,6 +22,7 @@ export function EventsBulkLifecycleBar({
   selectedEvents: { id: string; status: string; archivedAt: string | null }[];
   onClear: () => void;
 }) {
+  const router = useRouter();
   const [mode, setMode] = useState<BulkMode>(null);
   const [cancelState, cancelAction] = useActionState<Phase3ActionState, FormData>(
     bulkCancelEvents,
@@ -43,14 +45,24 @@ export function EventsBulkLifecycleBar({
     (event) => event.status === "CANCELLED" && !event.archivedAt,
   );
 
-  useEffect(() => {
-    if (cancelState.success || archiveState.success || deleteState.success) onClear();
-  }, [archiveState.success, cancelState.success, deleteState.success, onClear]);
-
-  if (!selectedIds.length) return null;
-
   const activeState =
     mode === "cancel" ? cancelState : mode === "archive" ? archiveState : deleteState;
+  // Derive closed sheet from success so we do not setMode(null) inside an effect (CI lint).
+  const modeSucceeded =
+    (mode === "cancel" && Boolean(cancelState.success)) ||
+    (mode === "archive" && Boolean(archiveState.success)) ||
+    (mode === "lean-delete" && Boolean(deleteState.success));
+  const sheetOpen = mode !== null && !modeSucceeded;
+
+  useEffect(() => {
+    if (!(cancelState.success || archiveState.success || deleteState.success)) return;
+    // Refresh first so the discovery RSC list drops deleted/cancelled/archived rows,
+    // then clear selection (bar may unmount). Sheet already closed via sheetOpen.
+    router.refresh();
+    onClear();
+  }, [archiveState.success, cancelState.success, deleteState.success, onClear, router]);
+
+  if (!selectedIds.length) return null;
 
   return (
     <div className="admin-events-bulk-bar" data-testid="admin-events-bulk-bar">
@@ -87,7 +99,7 @@ export function EventsBulkLifecycleBar({
       </div>
 
       <PeopleDestructiveActionSheet
-        open={mode !== null}
+        open={sheetOpen}
         onClose={() => setMode(null)}
         kicker="Events"
         title={
