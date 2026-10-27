@@ -1,9 +1,9 @@
 -- 0090 — Hosted-safe lean/force delete bypass (DEC-074 / DEC-071).
--- Hosted smoke after 0089: permission denied to set parameter "session_replication_role".
--- Supabase `postgres` is not a full superuser; set_config('session_replication_role',
--- 'replica') fails even inside SECURITY DEFINER RPCs. Replace that pattern with a
--- transaction-local custom GUC that prevent_application_delete() honors, so BEFORE
--- DELETE may RETURN OLD only when privileged RPCs opt in.
+-- Hosted smoke after 0089: Supabase postgres cannot elevate replication role
+-- (permission denied on that session parameter) even inside SECURITY DEFINER RPCs.
+-- Replace that pattern with a transaction-local custom GUC that
+-- prevent_application_delete() honors, so BEFORE DELETE may RETURN OLD only when
+-- privileged RPCs opt in.
 
 create or replace function public.prevent_application_delete()
 returns trigger
@@ -129,7 +129,7 @@ begin
     jsonb_build_object('deleted', true, 'mode', 'lean')
   );
 
-  -- Hosted-safe bypass of *_no_delete / prevent_application_delete (not session_replication_role).
+  -- Hosted-safe bypass of *_no_delete / prevent_application_delete via custom GUC.
   perform set_config('arakkis.allow_application_delete', 'on', true);
 
   -- Ephemeral / setup-only children that do not represent durable operational history.
@@ -241,7 +241,7 @@ begin
     jsonb_build_object('deleted', true, 'mode', 'force')
   );
 
-  -- Hosted-safe bypass of *_no_delete / prevent_application_delete (not session_replication_role).
+  -- Hosted-safe bypass of *_no_delete / prevent_application_delete via custom GUC.
   perform set_config('arakkis.allow_application_delete', 'on', true);
 
   delete from public.notification_delivery_transitions

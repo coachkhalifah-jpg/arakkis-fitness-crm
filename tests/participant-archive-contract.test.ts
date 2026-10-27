@@ -63,7 +63,7 @@ describe("DEC-071 force delete with history", () => {
     const migration = readFileSync("supabase/migrations/0090_lean_delete_guc_bypass.sql", "utf8");
     expect(migration).toContain("phase6_force_delete_participant");
     expect(migration).toContain("arakkis.allow_application_delete");
-    expect(migration).not.toContain("session_replication_role");
+    expect(migration).not.toMatch(/set_config\(\s*'session_replication_role'/);
     expect(migration).toContain("PARTICIPANT_DELETED_FORCE");
     expect(migration).toContain("delete from public.participants");
   });

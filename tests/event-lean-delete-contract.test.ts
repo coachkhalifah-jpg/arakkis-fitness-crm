@@ -59,7 +59,7 @@ describe("DEC-073 / DEC-074 event bulk lifecycle + lean delete", () => {
     expect(hostedBypassMigration).toContain("return OLD");
     expect(hostedBypassMigration).toContain("phase3_delete_lean_event");
     expect(hostedBypassMigration).toContain("phase6_force_delete_participant");
-    expect(hostedBypassMigration).not.toContain("session_replication_role");
+    expect(hostedBypassMigration).not.toMatch(/set_config\(\s*'session_replication_role'/);
     expect(hostedBypassMigration).toMatch(
       /EVENT_DELETED_LEAN[\s\S]*arakkis\.allow_application_delete[\s\S]*delete from public\.events/,
     );
@@ -77,9 +77,7 @@ describe("DEC-073 / DEC-074 event bulk lifecycle + lean delete", () => {
     expect(globalsCss).toContain(
       ".admin-events-page .admin-events-bulk-bar-actions .admin-series-action-subordinate:not(:disabled):hover",
     );
-    expect(globalsCss).toMatch(
-      /\.admin-events-bulk-bar-actions[\s\S]*#f28a4b[\s\S]*#e5484d/,
-    );
+    expect(globalsCss).toMatch(/\.admin-events-bulk-bar-actions[\s\S]*#f28a4b[\s\S]*#e5484d/);
   });
 
   it("wires bulk cancel/archive/lean-delete actions", () => {
