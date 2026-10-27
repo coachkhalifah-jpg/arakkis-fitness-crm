@@ -59,6 +59,15 @@ describe("DEC-071 force delete with history", () => {
     expect(migration).toContain("delete from public.participants");
   });
 
+  it("replaces force-delete bypass with hosted-safe GUC in 0090", () => {
+    const migration = readFileSync("supabase/migrations/0090_lean_delete_guc_bypass.sql", "utf8");
+    expect(migration).toContain("phase6_force_delete_participant");
+    expect(migration).toContain("arakkis.allow_application_delete");
+    expect(migration).not.toMatch(/set_config\(\s*'session_replication_role'/);
+    expect(migration).toContain("PARTICIPANT_DELETED_FORCE");
+    expect(migration).toContain("delete from public.participants");
+  });
+
   it("wires force-delete action and profile form", () => {
     const actions = readFileSync("src/lib/services/phase-6-actions.ts", "utf8");
     const form = readFileSync("src/components/admin/participant-force-delete-form.tsx", "utf8");
