@@ -2748,9 +2748,15 @@ html[data-participant-transition-fallback="true"][data-participant-transition-re
   background: #f28a4b;
   color: #17191c;
 }
-.admin-events-page .admin-events-bulk-bar-actions .admin-series-action-subordinate:not(:disabled):hover,
-.admin-events-page .admin-events-bulk-bar-actions .admin-series-action-subordinate:not(:disabled):focus-visible,
-.admin-events-page .admin-events-bulk-bar-actions .admin-series-action-subordinate:not(:disabled):active {
+.admin-events-page
+  .admin-events-bulk-bar-actions
+  .admin-series-action-subordinate:not(:disabled):hover,
+.admin-events-page
+  .admin-events-bulk-bar-actions
+  .admin-series-action-subordinate:not(:disabled):focus-visible,
+.admin-events-page
+  .admin-events-bulk-bar-actions
+  .admin-series-action-subordinate:not(:disabled):active {
   border-color: #e5484d;
   background: #e5484d;
   color: #17191c;
