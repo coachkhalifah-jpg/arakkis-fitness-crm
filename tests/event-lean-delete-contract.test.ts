@@ -71,11 +71,12 @@ describe("DEC-073 / DEC-074 event bulk lifecycle + lean delete", () => {
 
   it("matches series-action hover for bulk lifecycle bar actions", () => {
     const globalsCss = readFileSync(join(root, "src/app/globals.css"), "utf8");
-    expect(globalsCss).toContain(
-      ".admin-events-page .admin-events-bulk-bar-actions .admin-series-action:not(:disabled):hover",
+    // Prettier may wrap long compound selectors across lines.
+    expect(globalsCss).toMatch(
+      /\.admin-events-page\s+\.admin-events-bulk-bar-actions\s+\.admin-series-action:not\(:disabled\):hover/,
     );
-    expect(globalsCss).toContain(
-      ".admin-events-page .admin-events-bulk-bar-actions .admin-series-action-subordinate:not(:disabled):hover",
+    expect(globalsCss).toMatch(
+      /\.admin-events-page\s+\.admin-events-bulk-bar-actions\s+\.admin-series-action-subordinate:not\(:disabled\):hover/,
     );
     expect(globalsCss).toMatch(/\.admin-events-bulk-bar-actions[\s\S]*#f28a4b[\s\S]*#e5484d/);
   });
