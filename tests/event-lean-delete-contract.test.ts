@@ -13,6 +13,10 @@ describe("DEC-073 / DEC-074 event bulk lifecycle + lean delete", () => {
     join(root, "supabase/migrations/0089_lean_event_delete_trigger_bypass.sql"),
     "utf8",
   );
+  const hostedBypassMigration = readFileSync(
+    join(root, "supabase/migrations/0090_lean_delete_guc_bypass.sql"),
+    "utf8",
+  );
   const discovery = readFileSync(
     join(root, "src/components/admin/admin-events-discovery.tsx"),
     "utf8",
@@ -47,6 +51,35 @@ describe("DEC-073 / DEC-074 event bulk lifecycle + lean delete", () => {
     );
     expect(bypassMigration).toContain("cancellation history");
     expect(bypassMigration).toContain("cannot permanently delete");
+  });
+
+  it("uses hosted-safe arakkis.allow_application_delete GUC (0090), not session_replication_role", () => {
+    expect(hostedBypassMigration).toContain("prevent_application_delete");
+    expect(hostedBypassMigration).toContain("arakkis.allow_application_delete");
+    expect(hostedBypassMigration).toContain("return OLD");
+    expect(hostedBypassMigration).toContain("phase3_delete_lean_event");
+    expect(hostedBypassMigration).toContain("phase6_force_delete_participant");
+    expect(hostedBypassMigration).not.toContain("session_replication_role");
+    expect(hostedBypassMigration).toMatch(
+      /EVENT_DELETED_LEAN[\s\S]*arakkis\.allow_application_delete[\s\S]*delete from public\.events/,
+    );
+    expect(hostedBypassMigration).toContain("cancellation history");
+    expect(hostedBypassMigration).toContain("cannot permanently delete");
+    expect(hostedBypassMigration).toContain("PARTICIPANT_DELETED_FORCE");
+    expect(hostedBypassMigration).toContain("application records are archived, not deleted");
+  });
+
+  it("matches series-action hover for bulk lifecycle bar actions", () => {
+    const globalsCss = readFileSync(join(root, "src/app/globals.css"), "utf8");
+    expect(globalsCss).toContain(
+      ".admin-events-page .admin-events-bulk-bar-actions .admin-series-action:not(:disabled):hover",
+    );
+    expect(globalsCss).toContain(
+      ".admin-events-page .admin-events-bulk-bar-actions .admin-series-action-subordinate:not(:disabled):hover",
+    );
+    expect(globalsCss).toMatch(
+      /\.admin-events-bulk-bar-actions[\s\S]*#f28a4b[\s\S]*#e5484d/,
+    );
   });
 
   it("wires bulk cancel/archive/lean-delete actions", () => {
