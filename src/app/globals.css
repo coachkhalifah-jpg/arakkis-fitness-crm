@@ -9232,25 +9232,19 @@ body:has(.manage-booking-detail-page) > header {
   font-size: 0.85rem;
   font-weight: 700;
 }
-.manage-booking-transfer select,
-.manage-booking-transfer button {
+.manage-booking-transfer select {
   min-height: 2.75rem;
+  border: 1px solid rgba(247, 245, 240, 0.25);
   border-radius: 999px;
   padding: 0.6rem 0.9rem;
-  font: inherit;
-}
-.manage-booking-transfer select {
-  border: 1px solid rgba(247, 245, 240, 0.25);
   background: transparent;
   color: #f7f5f0;
+  font: inherit;
 }
-.manage-booking-transfer button {
-  border: 0;
-  background: #ff7a3d;
-  color: #17191c;
-  font-weight: 700;
+.manage-booking-transfer .manage-booking-detail-secondary {
+  width: 100%;
 }
-.manage-booking-transfer button:disabled {
+.manage-booking-transfer .manage-booking-detail-secondary:disabled {
   cursor: wait;
   opacity: 0.6;
 }

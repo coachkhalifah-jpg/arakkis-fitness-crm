@@ -1,11 +1,16 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { TransferBookingDialog } from "@/components/registration/transfer-booking-dialog";
 import type { BookingAlternative, ManagedBooking } from "@/lib/registration/booking-management";
 
 vi.mock("@/lib/registration/booking-actions", () => ({
   transferBookingAction: vi.fn(),
 }));
+
+afterEach(() => {
+  cleanup();
+});
 
 const booking: ManagedBooking = {
   registration_id: "registration-1",
@@ -57,7 +62,38 @@ describe("TransferBookingDialog", () => {
       screen.getByRole("heading", { name: /choose another class in this series/i }),
     ).toBeInTheDocument();
     expect(screen.getByRole("option", { name: /September 6/i })).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Select a date")).toBeRequired();
+    expect(screen.getByDisplayValue("Select a date")).toHaveValue("");
     expect(screen.getByDisplayValue("confirmation-token")).toHaveAttribute("name", "accessToken");
+  });
+
+  it("gates Move booking on a clearable occurrence selection with secondary style", async () => {
+    const user = userEvent.setup();
+    render(
+      <TransferBookingDialog
+        booking={booking}
+        alternatives={[alternative]}
+        accessToken="confirmation-token"
+      />,
+    );
+
+    const select = screen.getByLabelText(/available occurrences/i);
+    expect(screen.queryByRole("button", { name: /move booking/i })).not.toBeInTheDocument();
+    expect(within(select).getByRole("option", { name: "Select a date" })).not.toBeDisabled();
+
+    await user.selectOptions(select, "event-2");
+    const moveButton = screen.getByRole("button", { name: /move booking/i });
+    expect(moveButton).toHaveClass("manage-booking-detail-secondary");
+    expect(moveButton).not.toHaveClass("manage-booking-detail-primary");
+
+    await user.selectOptions(select, "");
+    expect(screen.queryByRole("button", { name: /move booking/i })).not.toBeInTheDocument();
+    expect(select).toHaveValue("");
+  });
+
+  it("does not offer a Register CTA while the booking is ACTIVE", () => {
+    render(<TransferBookingDialog booking={booking} alternatives={[alternative]} />);
+
+    expect(screen.queryByRole("button", { name: /register/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /register/i })).not.toBeInTheDocument();
   });
 });
