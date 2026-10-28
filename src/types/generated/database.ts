@@ -1711,37 +1711,70 @@ export type Database = {
       };
       take_home_workouts: {
         Row: {
-          id: string;
-          slug: string;
-          title: string;
-          theme: string | null;
-          steps: Json;
-          active: boolean;
-          created_by_admin_id: string;
-          created_at: string;
-          updated_at: string;
+      id: string
+      slug: string
+      title: string
+      steps: Json
+      active: boolean
+      created_by_admin_id: string
+      created_at: string
+      updated_at: string
         };
         Insert: {
-          id?: string;
-          slug: string;
-          title: string;
-          theme?: string | null;
-          steps: Json;
-          active?: boolean;
-          created_by_admin_id: string;
-          created_at?: string;
-          updated_at?: string;
+      id?: string
+      slug: string
+      title: string
+      steps: Json
+      active?: boolean
+      created_by_admin_id: string
+      created_at?: string
+      updated_at?: string
         };
         Update: {
-          id?: string;
-          slug?: string;
-          title?: string;
-          theme?: string | null;
-          steps?: Json;
-          active?: boolean;
-          created_by_admin_id?: string;
-          created_at?: string;
-          updated_at?: string;
+      id?: string
+      slug: string
+      title: string
+      steps: Json
+      active?: boolean
+      created_by_admin_id: string
+      created_at?: string
+      updated_at?: string
+        };
+        Relationships: [];
+      };
+      event_waitlist_entries: {
+        Row: {
+      id: string
+      event_id: string
+      display_name: string
+      contact: string
+      normalized_contact: string
+      joined_at: string
+      removed_at: string | null
+      remove_token_hash: string
+      created_at: string
+        };
+        Insert: {
+      id?: string
+      event_id: string
+      display_name: string
+      contact: string
+      normalized_contact: string
+      joined_at?: string
+      removed_at?: string
+      remove_token_hash: string
+      created_at?: string
+        };
+        Update: {
+      id?: string
+      event_id: string
+      display_name: string
+      contact: string
+      normalized_contact: string
+      joined_at?: string
+      removed_at?: string
+      remove_token_hash: string
+      created_at?: string
         };
         Relationships: [];
       };

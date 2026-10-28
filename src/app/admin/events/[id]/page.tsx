@@ -13,6 +13,8 @@ import { OrganizationVenueFields, EventTimingFields } from "@/components/admin/e
 import { DesignAssetUploadForm } from "@/components/admin/design-asset-upload-form";
 import { SeriesMainImageForm } from "@/components/admin/series-main-image-form";
 import { RosterPreview } from "@/components/admin/roster-preview";
+import { EventWaitlistPanel } from "@/components/admin/event-waitlist-panel";
+import { SeriesWaitlistRollup } from "@/components/admin/series-waitlist-rollup";
 import { CalendarUtility } from "@/components/admin/calendar-utility";
 import { EventTitleOverlayControl } from "@/components/admin/event-title-overlay-control";
 import {
@@ -147,7 +149,7 @@ export default async function EventDetailPage({
     ? await db
         .from("events")
         .select(
-          "id,starts_at,status,generated_local_date,schedule_rule_id,registrations(registration_status,registration_outcome)",
+          "id,starts_at,status,capacity,generated_local_date,schedule_rule_id,registrations(registration_status,registration_outcome)",
         )
         .eq("event_series_id", event.event_series_id)
         .order("starts_at", { ascending: true })
@@ -281,6 +283,64 @@ export default async function EventDetailPage({
       registration.registration_status === "REGISTERED" &&
       attendanceByRegistration.get(registration.id)?.status === "ATTENDED",
   ).length;
+  const { data: waitlistRows } = await db
+    .from("event_waitlist_entries")
+    .select("id,display_name,contact,joined_at,removed_at")
+    .eq("event_id", id)
+    .is("removed_at", null)
+    .order("joined_at", { ascending: true });
+  const waitlistEntries = (waitlistRows ?? []).map((row) => ({
+    id: row.id,
+    displayName: row.display_name,
+    contact: row.contact,
+    joinedAt: new Intl.DateTimeFormat("en-US", {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: event.timezone,
+    }).format(new Date(row.joined_at)),
+  }));
+  const seriesOccurrenceIds = (seriesOccurrences ?? []).map((occurrence) => occurrence.id);
+  const { data: seriesWaitlistRows } = seriesOccurrenceIds.length
+    ? await db
+        .from("event_waitlist_entries")
+        .select("event_id")
+        .in("event_id", seriesOccurrenceIds)
+        .is("removed_at", null)
+    : { data: [] };
+  const seriesWaitlistCountByEvent = new Map<string, number>();
+  for (const row of seriesWaitlistRows ?? []) {
+    seriesWaitlistCountByEvent.set(
+      row.event_id,
+      (seriesWaitlistCountByEvent.get(row.event_id) ?? 0) + 1,
+    );
+  }
+  const seriesWaitlistRollup = (seriesOccurrences ?? [])
+    .filter((occurrence) => occurrence.status !== "CANCELLED")
+    .slice(-8)
+    .map((occurrence) => {
+      const registered = (
+        (occurrence.registrations ?? []) as Array<{
+          registration_status: string;
+          registration_outcome: string | null;
+        }>
+      ).filter(
+        (registration) =>
+          registration.registration_status === "REGISTERED" &&
+          registration.registration_outcome === "ACTIVE",
+      ).length;
+      return {
+        eventId: occurrence.id,
+        startsAt: occurrence.starts_at,
+        label: new Intl.DateTimeFormat("en-US", {
+          month: "short",
+          day: "numeric",
+          timeZone: event.timezone,
+        }).format(new Date(occurrence.starts_at)),
+        waitlistCount: seriesWaitlistCountByEvent.get(occurrence.id) ?? 0,
+        capacity: occurrence.capacity,
+        registered,
+      };
+    });
   const canonicalSlug = event.public_slug ?? eventSeries?.public_slug ?? null;
   const publicUrl =
     canonicalSlug && event.access_mode !== "INVITE_ONLY"
@@ -372,8 +432,13 @@ export default async function EventDetailPage({
                 <dt>Attendance</dt>
                 <dd>{checkedInCount} checked in</dd>
               </div>
+              <div>
+                <dt>Waitlist</dt>
+                <dd>{waitlistEntries.length} / 5</dd>
+              </div>
             </dl>
           </div>
+          {event.event_series_id ? <SeriesWaitlistRollup rows={seriesWaitlistRollup} /> : null}
           <div className="admin-manage-event-card admin-manage-event-calendar-card">
             <h2>Share and calendar</h2>
             {canEdit ? (
@@ -768,6 +833,7 @@ export default async function EventDetailPage({
             })}
             canViewPhone={true}
           />
+          <EventWaitlistPanel entries={waitlistEntries} count={waitlistEntries.length} />
           <ProgressiveDisclosureSection
             id="manage-event-publication"
             number="09"
