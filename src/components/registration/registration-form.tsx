@@ -14,6 +14,8 @@ import {
 } from "@/lib/registration/actions";
 import { participantDisplayName } from "@/lib/registration/display";
 import { isUnavailableEvent } from "@/lib/registration/availability";
+import { isWaitlistJoinOpen } from "@/lib/registration/waitlist";
+import { WaitlistJoinForm } from "@/components/registration/waitlist-join-form";
 import { referralSourceOptions } from "@/lib/registration/referral";
 
 const fitnessExperienceOptions = [
@@ -51,6 +53,7 @@ type Event = {
   active_registration_count: number;
   capacity: number;
   availability?: string;
+  waitlist_count?: number;
   visibility: string;
   /** When set, this remembered participant already holds an active booking. */
   manageHref?: string | null;
@@ -125,6 +128,7 @@ export function RegistrationForm({
       ? [selectionValue(eligibleEvents[0])]
       : [],
   );
+  const [waitlistEventId, setWaitlistEventId] = useState<string | null>(null);
   const [weekdayFilter, setWeekdayFilter] = useState<number | null>(null);
   const [values, setValues] = useState({
     firstName: "",
@@ -281,6 +285,7 @@ export function RegistrationForm({
           {visibleEvents.map((event) => {
             const booked = isBookedEvent(event);
             const full = !booked && isUnavailableEvent(event);
+            const waitlistOpen = Boolean(event.id && isWaitlistJoinOpen(event));
             const value = selectionValue(event);
             const isSelected = selected.includes(value);
             const displayName = participantDisplayName(event.name);
@@ -381,6 +386,20 @@ export function RegistrationForm({
                         ✓
                       </span>
                     )
+                  ) : full && waitlistOpen && event.id ? (
+                    <button
+                      type="button"
+                      className="registration-occurrence-waitlist"
+                      onClick={(clickEvent) => {
+                        clickEvent.preventDefault();
+                        clickEvent.stopPropagation();
+                        setWaitlistEventId((current) =>
+                          current === event.id ? null : (event.id ?? null),
+                        );
+                      }}
+                    >
+                      Interest list
+                    </button>
                   ) : full ? (
                     <span className="registration-occurrence-full-mark" aria-hidden="true">
                       ×
@@ -399,6 +418,27 @@ export function RegistrationForm({
             );
           })}
         </div>
+        {waitlistEventId
+          ? (() => {
+              const target = events.find((event) => event.id === waitlistEventId);
+              if (!target?.id || !isWaitlistJoinOpen(target)) return null;
+              const label = new Intl.DateTimeFormat("en-US", {
+                weekday: "long",
+                month: "short",
+                day: "numeric",
+                timeZone: target.timezone,
+              }).format(new Date(target.starts_at));
+              return (
+                <div className="waitlist-inline-panel">
+                  <WaitlistJoinForm
+                    eventId={target.id}
+                    eventLabel={label}
+                    eventInviteToken={eventInviteToken}
+                  />
+                </div>
+              );
+            })()
+          : null}
         {errorFor("selectedOccurrenceStartsAt") ? (
           <p
             id="selectedOccurrenceStartsAt-error"

@@ -160,6 +160,17 @@ export default async function EventsPage({
     });
     rosterByEvent.set(row.event_id, people);
   }
+  const { data: waitlistCountRows } = eventIds.length
+    ? await db
+        .from("event_waitlist_entries")
+        .select("event_id")
+        .in("event_id", eventIds)
+        .is("removed_at", null)
+    : { data: [] };
+  const waitlistCountByEvent = new Map<string, number>();
+  for (const row of waitlistCountRows ?? []) {
+    waitlistCountByEvent.set(row.event_id, (waitlistCountByEvent.get(row.event_id) ?? 0) + 1);
+  }
   return (
     <>
       <AdminWorkspaceMenu
@@ -472,6 +483,7 @@ export default async function EventsPage({
                   image: eventImageById.get(event.id) ?? eventCardAsset(event.name),
                   focalPosition: eventImageFocalById.get(event.id) ?? "center",
                   count,
+                  waitlistCount: waitlistCountByEvent.get(event.id) ?? 0,
                   firstClassCount: people.filter((person) => person.firstClass).length,
                   people,
                   canViewPhone: true,

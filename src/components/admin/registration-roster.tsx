@@ -31,7 +31,8 @@ const rosterFilters = [
 function registrationLabel(status: string) {
   if (status === "REGISTERED") return "Registered";
   if (status === "CANCELLED") return "Cancelled";
-  if (status === "WAITLISTED") return "Waitlisted";
+  // Historical WAITLISTED label removed — DEC-W1 demand waitlist is a separate table,
+  // not a registration_status. Do not imply a waitlisted registration state.
   return status.replaceAll("_", " ");
 }
 

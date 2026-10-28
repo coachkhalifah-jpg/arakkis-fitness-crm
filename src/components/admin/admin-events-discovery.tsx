@@ -38,6 +38,7 @@ export type AdminDiscoveryEvent = {
   image: string;
   focalPosition?: string;
   count: Parameters<typeof AdminEventCard>[0]["count"];
+  waitlistCount?: number;
   firstClassCount: number;
   people: Parameters<typeof AdminEventCard>[0]["people"];
   canViewPhone: boolean;
@@ -277,6 +278,7 @@ export function AdminEventsDiscovery({
       image={item.image}
       focalPosition={item.focalPosition}
       count={item.count}
+      waitlistCount={item.waitlistCount ?? 0}
       firstClassCount={item.firstClassCount}
       people={item.people}
       canViewPhone={item.canViewPhone}

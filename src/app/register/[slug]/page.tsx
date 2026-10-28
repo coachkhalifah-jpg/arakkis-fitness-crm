@@ -10,10 +10,12 @@ import {
   manageBookingHref,
 } from "@/lib/registration/active-bookings";
 import { isUnavailableEvent } from "@/lib/registration/availability";
+import { isWaitlistJoinOpen } from "@/lib/registration/waitlist";
 import { designAssetPublicUrl } from "@/lib/config/design-assets";
 import { legalDocuments } from "@/lib/legal/documents";
 import type { LegalPackage } from "@/lib/legal/package";
 import { PublicErrorState } from "@/components/registration/public-error-state";
+import { WaitlistJoinForm } from "@/components/registration/waitlist-join-form";
 
 export default async function PublicEventPage({
   params,
@@ -51,6 +53,7 @@ export default async function PublicEventPage({
     availability: string;
     capacity: number;
     active_registration_count: number;
+    waitlist_count?: number;
     series_slug: string | null;
     occurrences: Array<{
       id: string;
@@ -60,6 +63,7 @@ export default async function PublicEventPage({
       timezone: string;
       capacity: number;
       active_registration_count: number;
+      waitlist_count?: number;
       availability: string;
       venue_name: string;
       venue_street: string;
@@ -93,7 +97,7 @@ export default async function PublicEventPage({
   const availability = legallyBlocked ? "LEGALLY_BLOCKED" : event.availability;
   const recurringEvents = event.series_slug ? event.occurrences : [];
   const registrationEvents = recurringEvents.length ? recurringEvents : [event];
-  const available =
+  const registrationOpen =
     !legallyBlocked &&
     (event.series_slug
       ? recurringEvents.some(
@@ -109,7 +113,17 @@ export default async function PublicEventPage({
             ].includes(occurrence.availability),
         )
       : availability === "OPEN");
-  if (!available)
+  const waitlistOpen =
+    !legallyBlocked &&
+    registrationEvents.some((occurrence) =>
+      isWaitlistJoinOpen({
+        availability: occurrence.availability,
+        waitlist_count: occurrence.waitlist_count ?? 0,
+        active_registration_count: occurrence.active_registration_count,
+        capacity: occurrence.capacity,
+      }),
+    );
+  if (!registrationOpen && !waitlistOpen)
     return (
       <PublicErrorState
         code="CLOSED"
@@ -136,6 +150,7 @@ export default async function PublicEventPage({
       active_registration_count: occurrence.active_registration_count,
       capacity: occurrence.capacity,
       availability: occurrence.availability,
+      waitlist_count: occurrence.waitlist_count ?? 0,
       visibility: "PUBLIC" as const,
       manageHref: registrationId ? manageBookingHref(registrationId) : null,
     };
@@ -145,6 +160,7 @@ export default async function PublicEventPage({
   );
   const firstBookedHref = formEvents.find((occurrence) => occurrence.manageHref)?.manageHref;
   const onlyAlreadyBooked = Boolean(remembered && firstBookedHref && openUnbooked.length === 0);
+  const waitlistOnlyTargets = formEvents.filter((occurrence) => isWaitlistJoinOpen(occurrence));
   return (
     <section className="booking-environment registration-northstar mx-auto min-h-screen w-full max-w-[520px] pb-16 transition-colors duration-500">
       <EventHero
@@ -173,7 +189,7 @@ export default async function PublicEventPage({
                 </Link>
               </div>
             </div>
-          ) : (
+          ) : registrationOpen ? (
             <RegistrationForm
               events={formEvents}
               legalPackage={registrationConfig.legal_package}
@@ -185,6 +201,25 @@ export default async function PublicEventPage({
               legalDocuments={legalDocuments}
               eventInviteToken={invite ?? null}
             />
+          ) : (
+            <div className="waitlist-only-stack">
+              {waitlistOnlyTargets.map((occurrence) => {
+                const label = new Intl.DateTimeFormat("en-US", {
+                  weekday: "long",
+                  month: "short",
+                  day: "numeric",
+                  timeZone: occurrence.timezone,
+                }).format(new Date(occurrence.starts_at));
+                return (
+                  <WaitlistJoinForm
+                    key={occurrence.id}
+                    eventId={occurrence.id}
+                    eventLabel={label}
+                    eventInviteToken={invite ?? null}
+                  />
+                );
+              })}
+            </div>
           )}
         </div>
       </div>

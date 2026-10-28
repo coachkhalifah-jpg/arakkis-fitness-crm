@@ -39,6 +39,7 @@ export function AdminEventCard({
   image,
   focalPosition,
   count,
+  waitlistCount = 0,
   firstClassCount,
   people,
   canViewPhone,
@@ -67,6 +68,7 @@ export function AdminEventCard({
   image: string;
   focalPosition?: string;
   count: { booked: number; checkedIn: number };
+  waitlistCount?: number;
   firstClassCount: number;
   people: EventPerson[];
   canViewPhone: boolean;
@@ -198,6 +200,11 @@ export function AdminEventCard({
                 <strong>
                   {count.booked} / {event.capacity}
                 </strong>
+                {waitlistCount > 0 ? (
+                  <span className="event-card-waitlist-badge" title="Demand waitlist interest">
+                    WL {waitlistCount}
+                  </span>
+                ) : null}
               </span>
             </span>
           </span>
@@ -247,6 +254,7 @@ export function AdminEventCard({
                     <p className="event-roster-modal-venue">{venueName}</p>
                     <p className="event-roster-modal-status">
                       {event.publicationStatus} · {count.booked} / {event.capacity}
+                      {waitlistCount > 0 ? ` · Waitlist ${waitlistCount}` : ""}
                     </p>
                   </div>
                   <div className="event-roster-metrics mt-5" aria-label="Roster summary">
@@ -255,6 +263,9 @@ export function AdminEventCard({
                     </span>
                     <span>
                       <strong>{count.checkedIn}</strong> checked in
+                    </span>
+                    <span>
+                      <strong>{waitlistCount}</strong> waitlist
                     </span>
                     <span>
                       <strong>

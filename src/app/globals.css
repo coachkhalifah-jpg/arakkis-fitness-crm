@@ -3163,6 +3163,12 @@ html[data-participant-transition-fallback="true"][data-participant-transition-re
 .admin-manage-event-shell > .admin-roster-preview {
   order: 7;
 }
+.admin-manage-event-shell > .admin-waitlist-panel {
+  order: 7;
+}
+.admin-manage-event-shell > .admin-series-waitlist-rollup {
+  order: 5;
+}
 .admin-manage-event-shell > #attendance-roster {
   order: 8;
 }
@@ -13933,4 +13939,180 @@ body:has(.people-directory-page) .ops-template-overlay-nav {
   padding: 0;
   margin: 0;
   color: inherit;
+}
+
+/* DEC-W1 capped demand waitlist */
+.admin-events-page .event-card-waitlist-badge {
+  display: inline-block;
+  margin-left: 0.45rem;
+  color: #f0c674;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.waitlist-join-form,
+.waitlist-join-success,
+.waitlist-remove-success {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.25rem 0 1.5rem;
+  color: #f7f5f0;
+}
+.waitlist-join-eyebrow {
+  margin: 0;
+  color: var(--registration-accent, #ff7a3d);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.waitlist-join-title {
+  margin: 0;
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
+  font-weight: 700;
+  line-height: 1.15;
+}
+.waitlist-join-copy,
+.waitlist-join-success-copy {
+  margin: 0;
+  max-width: 36rem;
+  color: rgb(247 245 240 / 78%);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+.waitlist-join-field {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.waitlist-join-error,
+.waitlist-join-field-error {
+  color: #ffb4a8;
+  font-size: 0.85rem;
+}
+.waitlist-join-success-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+.waitlist-join-remove-link {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.85rem;
+}
+.waitlist-join-remove-link a {
+  color: #c7f36b;
+}
+.waitlist-only-stack,
+.waitlist-inline-panel {
+  display: grid;
+  gap: 1.5rem;
+}
+.registration-occurrence-waitlist {
+  border: 0;
+  background: transparent;
+  color: var(--registration-accent, #ff7a3d);
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.registration-occurrence-waitlist:hover,
+.registration-occurrence-waitlist:focus-visible {
+  text-decoration: underline;
+}
+.admin-waitlist-panel,
+.admin-series-waitlist-rollup {
+  margin-top: 1.25rem;
+  border: 1px solid #2d3238;
+  background: #1a1d21;
+  padding: 1rem 1.1rem 1.15rem;
+}
+.admin-waitlist-panel-heading,
+.admin-series-waitlist-rollup-heading {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+}
+.admin-waitlist-panel-kicker,
+.admin-series-waitlist-rollup-heading p,
+.admin-waitlist-panel-note {
+  margin: 0;
+  color: #aeb3bb;
+  font-size: 0.72rem;
+}
+.admin-waitlist-panel-heading h3,
+.admin-series-waitlist-rollup-heading h3 {
+  margin: 0;
+  color: #f7f5f0;
+  font-size: 1rem;
+}
+.admin-waitlist-list {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.admin-waitlist-list li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.55rem 0;
+  border-top: 1px solid #2d3238;
+  color: #f7f5f0;
+}
+.admin-waitlist-rank {
+  color: #aeb3bb;
+  font-size: 0.75rem;
+}
+.admin-waitlist-list strong,
+.admin-waitlist-list small {
+  display: block;
+}
+.admin-waitlist-list small,
+.admin-waitlist-list time {
+  color: #aeb3bb;
+  font-size: 0.75rem;
+}
+.admin-waitlist-empty {
+  margin: 0;
+  color: #aeb3bb;
+  font-size: 0.85rem;
+}
+.admin-series-waitlist-rollup-strip {
+  display: flex;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+}
+.admin-series-waitlist-rollup-strip li {
+  min-width: 4.75rem;
+  border: 1px solid #2d3238;
+  background: #22262b;
+  padding: 0.55rem 0.6rem;
+  text-align: center;
+}
+.admin-series-waitlist-rollup-strip li.has-interest {
+  border-color: #6d5a2d;
+}
+.admin-series-waitlist-date,
+.admin-series-waitlist-capacity {
+  display: block;
+  color: #aeb3bb;
+  font-size: 0.65rem;
+}
+.admin-series-waitlist-rollup-strip strong {
+  display: block;
+  margin: 0.2rem 0;
+  color: #f0c674;
+  font-size: 1rem;
 }
