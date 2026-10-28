@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { transferBookingAction } from "@/lib/registration/booking-actions";
 import type {
   BookingActionError,
@@ -37,6 +37,8 @@ export function TransferBookingDialog({
     transferBookingAction,
     undefined,
   );
+  const [targetEventId, setTargetEventId] = useState("");
+  const canMove = targetEventId.length > 0;
 
   return (
     <section className="manage-booking-transfer" aria-labelledby="transfer-booking-title">
@@ -49,10 +51,13 @@ export function TransferBookingDialog({
         <input type="hidden" name="registrationId" value={booking.registration_id} />
         {accessToken ? <input type="hidden" name="accessToken" value={accessToken} /> : null}
         <label htmlFor="target-event-id">Available occurrences</label>
-        <select id="target-event-id" name="targetEventId" required defaultValue="">
-          <option value="" disabled>
-            Select a date
-          </option>
+        <select
+          id="target-event-id"
+          name="targetEventId"
+          value={targetEventId}
+          onChange={(event) => setTargetEventId(event.target.value)}
+        >
+          <option value="">Select a date</option>
           {alternatives.map((alternative) => (
             <option key={alternative.event_id} value={alternative.event_id}>
               {formatDate(alternative.starts_at, alternative.timezone)} ·{" "}
@@ -60,9 +65,11 @@ export function TransferBookingDialog({
             </option>
           ))}
         </select>
-        <button type="submit" disabled={pending}>
-          {pending ? "Moving booking…" : "Move booking"}
-        </button>
+        {canMove ? (
+          <button type="submit" className="manage-booking-detail-secondary" disabled={pending}>
+            {pending ? "Moving booking…" : "Move booking"}
+          </button>
+        ) : null}
       </form>
       {state?.error ? <p role="alert">{state.error}</p> : null}
     </section>
