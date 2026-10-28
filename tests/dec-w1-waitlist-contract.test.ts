@@ -1,7 +1,12 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { WAITLIST_CAP, isWaitlistJoinOpen, waitlistCountLabel } from "@/lib/registration/waitlist";
+import {
+  WAITLIST_CAP,
+  isFullForWaitlist,
+  isWaitlistJoinOpen,
+  waitlistCountLabel,
+} from "@/lib/registration/waitlist";
 
 const root = process.cwd();
 
@@ -11,6 +16,7 @@ describe("DEC-W1 capped demand waitlist", () => {
     "utf8",
   );
   const actions = readFileSync(join(root, "src/lib/registration/waitlist-actions.ts"), "utf8");
+  const waitlistHelper = readFileSync(join(root, "src/lib/registration/waitlist.ts"), "utf8");
   const registerPage = readFileSync(join(root, "src/app/register/[slug]/page.tsx"), "utf8");
   const manageEvent = readFileSync(join(root, "src/app/admin/events/[id]/page.tsx"), "utf8");
   const eventsPage = readFileSync(join(root, "src/app/admin/events/page.tsx"), "utf8");
@@ -81,6 +87,58 @@ describe("DEC-W1 capped demand waitlist", () => {
     ).toBe(false);
     expect(WAITLIST_CAP).toBe(5);
     expect(waitlistCountLabel(3)).toBe("3 on waitlist");
+  });
+
+  it("D1: Interest CTA requires public FULL availability, not mere count>=capacity", () => {
+    // Helper must key off availability === FULL only (align with public Full path).
+    const fullFn = waitlistHelper.slice(
+      waitlistHelper.indexOf("export function isFullForWaitlist"),
+      waitlistHelper.indexOf("export function isWaitlistJoinOpen"),
+    );
+    expect(fullFn).toContain('event.availability === "FULL"');
+    expect(fullFn).not.toMatch(/active_registration_count/);
+    expect(
+      isFullForWaitlist({
+        availability: "FULL",
+        waitlist_count: 0,
+        active_registration_count: 10,
+        capacity: 10,
+      }),
+    ).toBe(true);
+    for (const availability of [
+      "CLOSED",
+      "PAUSED",
+      "CANCELLED",
+      "NOT_YET_OPEN",
+      "UNPUBLISHED",
+      "LEGALLY_BLOCKED",
+      "OPEN",
+    ] as const) {
+      expect(
+        isWaitlistJoinOpen({
+          availability,
+          waitlist_count: 0,
+          active_registration_count: 10,
+          capacity: 10,
+        }),
+      ).toBe(false);
+      expect(
+        isFullForWaitlist({
+          availability,
+          waitlist_count: 0,
+          active_registration_count: 10,
+          capacity: 10,
+        }),
+      ).toBe(false);
+    }
+    // Missing availability must not treat seats-full alone as joinable.
+    expect(
+      isWaitlistJoinOpen({
+        waitlist_count: 0,
+        active_registration_count: 10,
+        capacity: 10,
+      }),
+    ).toBe(false);
   });
 
   it("ships admin B.3 surfaces: manage list, events badge, series rollup", () => {

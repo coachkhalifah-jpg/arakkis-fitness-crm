@@ -9,8 +9,13 @@ export type WaitlistAvailabilityEvent = {
   capacity: number;
 };
 
+/**
+ * True only for the public registration "Full" availability state.
+ * QA D1: CLOSED/PAUSED/CANCELLED (and similar) never qualify for the Interest
+ * CTA, even when seats are exhausted — match RPC eligibility, not raw counts.
+ */
 export function isFullForWaitlist(event: WaitlistAvailabilityEvent) {
-  return event.availability === "FULL" || event.active_registration_count >= event.capacity;
+  return event.availability === "FULL";
 }
 
 /** Public may join when occurrence is Full and active waitlist count is under cap. */
