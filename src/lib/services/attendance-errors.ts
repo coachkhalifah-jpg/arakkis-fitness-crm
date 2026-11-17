@@ -81,6 +81,13 @@ export function mapAttendanceError(error: unknown): AttendanceError {
       message: "Check-in opens 30 minutes before the event starts.",
       nextAction: "Wait until 30 minutes before start, then refresh or open check-in.",
     };
+  // Publish-time phase-3 guard (must not collapse into generic "check-in is not open").
+  if (/cannot be opened with an invalid registration deadline or past start/i.test(message))
+    return {
+      code: "ATTENDANCE_NOT_OPEN",
+      message: "This event cannot be published with a past start or invalid registration deadline.",
+      nextAction: "Use a future start time and a registration deadline at or before start.",
+    };
   if (/open/i.test(message))
     return {
       code: "ATTENDANCE_NOT_OPEN",
